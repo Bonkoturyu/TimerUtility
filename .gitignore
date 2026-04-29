@@ -1,0 +1,37 @@
+# IDE / Editor
+.idea/
+.vscode/
+*.iml
+
+# Claude Code (ローカル個人設定のみ除外。共有設定 settings.json はコミット対象)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flutter / Dart（flutter create 実行後に内容が拡充される）
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock.bak
+
+# Android
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/**/gradle-wrapper.jar
+**/android/key.properties
+
+# iOS（将来対応する場合に備えて）
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+
+# Coverage
+coverage/
