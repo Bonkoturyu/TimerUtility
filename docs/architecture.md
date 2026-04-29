@@ -67,23 +67,25 @@ lib/
 │   ├── shared/
 │   │   └── duration_formatter.dart
 │   └── ports/
-│       ├── notification_scheduler.dart
+│       ├── notification_scheduler.dart   # Phase 4 で実装済み
+│       ├── permission_manager.dart       # Phase 4 で実装済み
 │       ├── alarm_sound_player.dart
 │       ├── timer_repository.dart
 │       └── preset_repository.dart
+│   └── timer/
+│       └── notification_id_generator.dart  # Phase 4 で実装済み（domain 層配置）
 │
 ├── infrastructure/
 │   ├── notification/
-│   │   ├── flutter_local_notification_adapter.dart
-│   │   └── notification_id_generator.dart
+│   │   └── flutter_local_notification_adapter.dart  # Phase 4 で実装済み
+│   ├── permission/
+│   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart
-│   ├── database/
-│   │   ├── app_database.dart
-│   │   ├── drift_timer_repository.dart
-│   │   └── drift_preset_repository.dart
-│   └── permission/
-│       └── permission_manager.dart
+│   └── database/
+│       ├── app_database.dart
+│       ├── drift_timer_repository.dart
+│       └── drift_preset_repository.dart
 │
 ├── application/                  # Riverpod Providers
 │   ├── clock_provider.dart       # Clock 抽象 (ADR 0004)
@@ -150,10 +152,16 @@ docs/                             # 設計ドキュメント
 - ❌ `Timer.periodic` / `Future.delayed` の使用
 
 **依存可能なパッケージ**:
+
 - `package:meta`
 - `package:clock`
 - `package:collection`
 - `package:uuid`（ID 生成のみ）
+
+**注**: `NotificationIdGenerator` は OS 通知に必要な int ID を導出するロジックだが、
+TimerEntity の生成時に決定的に発番されるドメインルールであり、外部依存も持たないため
+domain 層（`domain/timer/notification_id_generator.dart`）に配置する。
+infrastructure 層から見ると Pure Dart の値オブジェクト相当として参照される。
 
 ### Application Layer
 
@@ -297,4 +305,4 @@ docs/                             # 設計ドキュメント
 
 ---
 
-最終更新日: 2026-04-29
+最終更新日: 2026-04-29（Phase 4: ports/notification_scheduler / permission_manager と adapters を反映）
