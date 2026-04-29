@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/permission_notifier.dart';
 import '../../application/timer_notifier.dart';
+import '../../domain/ports/permission_manager.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
@@ -34,6 +36,15 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
 
   Timer? _ticker;
 
+  @override
+  void initState() {
+    super.initState();
+    // Refresh permission state once when entering the screen.
+    Future<void>.microtask(
+      () => ref.read(permissionNotifierProvider.notifier).refresh(),
+    );
+  }
+
   void _ensureTickerForState(TimerEntity? entity) {
     final shouldRun = entity?.status == TimerStatus.running;
     if (shouldRun && _ticker == null) {
@@ -62,9 +73,17 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
       appBar: AppBar(title: const Text('Timer')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: entity == null
-            ? _buildSetup(context, ref)
-            : _buildActive(context, ref, entity),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const _PermissionBanners(),
+            Expanded(
+              child: entity == null
+                  ? _buildSetup(context, ref)
+                  : _buildActive(context, ref, entity),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -178,5 +197,131 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
         child: const Text('Reset'),
       ),
     };
+  }
+}
+
+/// Renders up to two stacked banners depending on permission state:
+///   - POST_NOTIFICATIONS denied → warning (timer cannot show notifications)
+///   - SCHEDULE_EXACT_ALARM denied → info (alarm may fire late under Doze)
+///
+/// Each banner offers a primary action (request) and, when the OS marks the
+/// permission permanently denied, an "Open settings" fallback.
+class _PermissionBanners extends ConsumerWidget {
+  const _PermissionBanners();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(permissionNotifierProvider);
+    final notifier = ref.read(permissionNotifierProvider.notifier);
+
+    final List<Widget> banners = <Widget>[];
+
+    if (state.postNotifications == DomainPermissionStatus.denied ||
+        state.postNotifications == DomainPermissionStatus.permanentlyDenied) {
+      banners.add(
+        _PermissionBanner(
+          key: const Key('banner_post_notifications'),
+          icon: Icons.notifications_off_outlined,
+          color: Colors.red.shade100,
+          title: '通知が無効です',
+          description: 'タイマーが終了したときに通知が表示されません。',
+          actionLabel:
+              state.postNotifications ==
+                  DomainPermissionStatus.permanentlyDenied
+              ? '設定を開く'
+              : '許可する',
+          onAction:
+              state.postNotifications ==
+                  DomainPermissionStatus.permanentlyDenied
+              ? () => notifier.openSettings()
+              : () => notifier.requestNotification(),
+        ),
+      );
+    }
+
+    if (state.scheduleExactAlarm == DomainPermissionStatus.denied ||
+        state.scheduleExactAlarm == DomainPermissionStatus.permanentlyDenied) {
+      banners.add(
+        _PermissionBanner(
+          key: const Key('banner_exact_alarm'),
+          icon: Icons.alarm_off_outlined,
+          color: Colors.orange.shade100,
+          title: '正確なアラームが無効です',
+          description: '省電力モード時にアラームが数分遅れる場合があります。',
+          actionLabel:
+              state.scheduleExactAlarm ==
+                  DomainPermissionStatus.permanentlyDenied
+              ? '設定を開く'
+              : '許可する',
+          onAction:
+              state.scheduleExactAlarm ==
+                  DomainPermissionStatus.permanentlyDenied
+              ? () => notifier.openSettings()
+              : () => notifier.requestScheduleExactAlarm(),
+        ),
+      );
+    }
+
+    if (banners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        for (final banner in banners) ...<Widget>[
+          banner,
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _PermissionBanner extends StatelessWidget {
+  const _PermissionBanner({
+    required super.key,
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.description,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String description;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: <Widget>[
+            Icon(icon),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(description),
+                ],
+              ),
+            ),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ),
+      ),
+    );
   }
 }

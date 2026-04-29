@@ -2,8 +2,13 @@ import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_notifier.dart';
+import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/presentation/screens/timer_screen.dart';
 
@@ -12,10 +17,63 @@ class _MutableNow {
   DateTime now;
 }
 
-Widget _harness(_MutableNow holder) {
+class _MockNotificationScheduler extends Mock
+    implements NotificationScheduler {}
+
+class _StubPermissionManager implements PermissionManager {
+  _StubPermissionManager({
+    this.notificationStatus = DomainPermissionStatus.granted,
+    this.exactAlarmStatus = DomainPermissionStatus.granted,
+  });
+
+  DomainPermissionStatus notificationStatus;
+  DomainPermissionStatus exactAlarmStatus;
+
+  @override
+  Future<DomainPermissionStatus> checkNotification() async =>
+      notificationStatus;
+
+  @override
+  Future<DomainPermissionStatus> requestNotification() async {
+    notificationStatus = DomainPermissionStatus.granted;
+    return notificationStatus;
+  }
+
+  @override
+  Future<DomainPermissionStatus> checkScheduleExactAlarm() async =>
+      exactAlarmStatus;
+
+  @override
+  Future<DomainPermissionStatus> requestScheduleExactAlarm() async {
+    exactAlarmStatus = DomainPermissionStatus.granted;
+    return exactAlarmStatus;
+  }
+
+  @override
+  Future<bool> openAppSettings() async => true;
+}
+
+Widget _harness(_MutableNow holder, {PermissionManager? permissionManager}) {
+  final scheduler = _MockNotificationScheduler();
+  when(
+    () => scheduler.schedule(
+      notificationId: any(named: 'notificationId'),
+      fireAt: any(named: 'fireAt'),
+      title: any(named: 'title'),
+      body: any(named: 'body'),
+      exact: any(named: 'exact'),
+    ),
+  ).thenAnswer((_) async {});
+  when(() => scheduler.cancel(any())).thenAnswer((_) async {});
+  when(() => scheduler.cancelAll()).thenAnswer((_) async {});
+
   return ProviderScope(
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock(() => holder.now)),
+      notificationSchedulerProvider.overrideWithValue(scheduler),
+      permissionManagerProvider.overrideWithValue(
+        permissionManager ?? _StubPermissionManager(),
+      ),
     ],
     child: const MaterialApp(home: TimerScreen()),
   );
@@ -120,6 +178,52 @@ void main() {
 
       expect(find.text('Choose a duration'), findsOneWidget);
       expect(find.byKey(const Key('timer_display')), findsNothing);
+    });
+  });
+
+  group('TimerScreen permission banners', () {
+    testWidgets('shows POST_NOTIFICATIONS banner when denied', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final pm = _StubPermissionManager(
+        notificationStatus: DomainPermissionStatus.denied,
+        exactAlarmStatus: DomainPermissionStatus.granted,
+      );
+      await tester.pumpWidget(_harness(now, permissionManager: pm));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('banner_post_notifications')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('banner_exact_alarm')), findsNothing);
+    });
+
+    testWidgets('shows SCHEDULE_EXACT_ALARM banner when denied', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final pm = _StubPermissionManager(
+        notificationStatus: DomainPermissionStatus.granted,
+        exactAlarmStatus: DomainPermissionStatus.denied,
+      );
+      await tester.pumpWidget(_harness(now, permissionManager: pm));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('banner_exact_alarm')), findsOneWidget);
+      expect(find.byKey(const Key('banner_post_notifications')), findsNothing);
+    });
+
+    testWidgets('hides both banners when permissions granted', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      await tester.pumpWidget(_harness(now));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('banner_post_notifications')), findsNothing);
+      expect(find.byKey(const Key('banner_exact_alarm')), findsNothing);
     });
   });
 }

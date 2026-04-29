@@ -2,8 +2,13 @@ import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_notifier.dart';
+import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 
 class _ClockHolder {
@@ -11,28 +16,68 @@ class _ClockHolder {
   DateTime now;
 }
 
+class _MockNotificationScheduler extends Mock
+    implements NotificationScheduler {}
+
 /// Helper that runs [body] inside `fakeAsync`, advancing both the
 /// `fake_async` virtual time and a manually-tracked clock. The
 /// `clockProvider` reads from the manual clock so domain code computes
 /// `endAt - now` correctly even though `DateTime.now()` itself is not
-/// patched by `fake_async`.
+/// patched by `fake_async`. A mock NotificationScheduler is wired so that
+/// schedule/cancel calls can be verified per test.
 void _runWithFakeTime(
-  void Function(FakeAsync async, ProviderContainer container, _ClockHolder now)
-  body,
-) {
+  void Function(
+    FakeAsync async,
+    ProviderContainer container,
+    _ClockHolder now,
+    _MockNotificationScheduler scheduler,
+  )
+  body, {
+  DomainPermissionStatus exactAlarm = DomainPermissionStatus.granted,
+}) {
   fakeAsync((async) {
     final now = _ClockHolder(DateTime(2026, 1, 1, 12));
+    final scheduler = _MockNotificationScheduler();
+    when(
+      () => scheduler.schedule(
+        notificationId: any(named: 'notificationId'),
+        fireAt: any(named: 'fireAt'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        exact: any(named: 'exact'),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => scheduler.cancel(any())).thenAnswer((_) async {});
+    when(() => scheduler.cancelAll()).thenAnswer((_) async {});
+
     final container = ProviderContainer(
       overrides: <Override>[
         clockProvider.overrideWithValue(Clock(() => now.now)),
+        notificationSchedulerProvider.overrideWithValue(scheduler),
+        permissionNotifierProvider.overrideWith(
+          () => _FixedPermissionNotifier(
+            const PermissionState(
+              postNotifications: DomainPermissionStatus.granted,
+              scheduleExactAlarm: DomainPermissionStatus.granted,
+            ).copyWith(scheduleExactAlarm: exactAlarm),
+          ),
+        ),
       ],
     );
     try {
-      body(async, container, now);
+      body(async, container, now, scheduler);
     } finally {
       container.dispose();
     }
   });
+}
+
+class _FixedPermissionNotifier extends PermissionNotifier {
+  _FixedPermissionNotifier(this._initial);
+  final PermissionState _initial;
+
+  @override
+  PermissionState build() => _initial;
 }
 
 void _advance(FakeAsync async, _ClockHolder now, Duration d) {
@@ -43,13 +88,13 @@ void _advance(FakeAsync async, _ClockHolder now, Duration d) {
 void main() {
   group('TimerNotifier', () {
     test('initial state is null', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         expect(container.read(timerNotifierProvider), isNull);
       });
     });
 
     test('create configures an idle timer', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         container
             .read(timerNotifierProvider.notifier)
             .create(label: 'work', duration: const Duration(seconds: 5));
@@ -63,7 +108,7 @@ void main() {
     });
 
     test('start transitions idle → running and ticks to ringing', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.start();
@@ -85,7 +130,7 @@ void main() {
     });
 
     test('pause then resume preserves remaining duration', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 10));
         notifier.start();
@@ -125,7 +170,7 @@ void main() {
     });
 
     test('cancel transitions to cancelled and stops ticker', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.start();
@@ -146,7 +191,7 @@ void main() {
     });
 
     test('cancelled.start throws StateError', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.cancel();
@@ -156,7 +201,7 @@ void main() {
     });
 
     test('reset returns cancelled timer to idle preserving duration', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.cancel();
@@ -169,7 +214,7 @@ void main() {
     });
 
     test('start without create throws StateError', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         expect(
           container.read(timerNotifierProvider.notifier).start,
           throwsStateError,
@@ -178,7 +223,7 @@ void main() {
     });
 
     test('clear drops the timer entirely', () {
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.clear();
@@ -190,7 +235,7 @@ void main() {
       // Simulates the app being suspended for longer than the timer's
       // remaining duration. After the next tick (200ms) the running state
       // is detected as past-due and flips to ringing.
-      _runWithFakeTime((async, container, now) {
+      _runWithFakeTime((async, container, now, scheduler) {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 30));
         notifier.start();
