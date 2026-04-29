@@ -20,7 +20,7 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 2 完了、push + CI 緑化確認後に Phase 3 着手）
+- なし（Phase 3 完了、push + CI 緑化確認後に Phase 4 着手）
 
 ---
 
@@ -48,6 +48,20 @@
 - [x] `flutter analyze` → No issues found
 - [x] `flutter test` → All tests passed
 - [x] CI が緑になることを確認（push 後の GitHub Actions 実行で確認済み）
+
+### Phase 3 完了内容（2026-04-29）
+
+- [x] `lib/domain/timer/timer_status.dart` (enum 6 状態)
+- [x] `lib/domain/timer/timer_entity.dart` (freezed クラス、Phase 3 最小フィールド)
+- [x] `lib/domain/timer/timer_service.dart` (Clock + idGenerator 注入) + 31 ユニットテスト
+- [x] `lib/application/timer_notifier.dart` (`@Riverpod` Notifier、Timer.periodic 200ms) + 10 fake_async テスト
+- [x] `lib/presentation/screens/timer_screen.dart` (Setup/Active 2 モード) + 5 Widget テスト
+- [x] `lib/main.dart` 更新: `/timer` ルート追加、HomeScreen に導線
+- [x] flutter analyze: No issues found
+- [x] flutter test: 93 / 93 passed (Phase 2 の 47 + Phase 3 の 46)
+- [x] domain 層カバレッジ: timer_service 100%、stopwatch_service 100%、duration_formatter 100%
+- [x] バックグラウンド復帰時に endAt 過ぎていれば即 ringing（Notifier テストで検証）
+- [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### Phase 2 完了内容（2026-04-29）
 
