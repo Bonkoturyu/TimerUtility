@@ -1,0 +1,65 @@
+# tasklist.md
+
+短期タスク（直近の作業項目）を管理するファイル。
+中長期の Phase 管理は `BACKLOG.md` を参照すること。
+
+本ファイルは「今日〜数日以内に着手するもの」「進行中のもの」のみを扱う。
+完了タスクは適宜削除し、肥大化させない。
+
+---
+
+## 凡例
+
+- `[ ]` 未着手
+- `[~]` 進行中
+- `[x]` 完了（次回更新時に削除候補）
+- `[!]` ブロック中（理由を併記）
+
+---
+
+## 進行中
+
+<!-- 現在進行中のタスクをここに記載 -->
+- なし
+
+---
+
+## 直近の予定
+
+### ドキュメント整備の仕上げ（Phase 0 完了済み）
+
+- [x] ルート直下の `*.md` を `docs/` および `docs/adr/` へ移動
+- [x] `CLAUDE.md` を最低限の制約集に圧縮
+- [x] `tasklist.md` を新規作成
+- [x] `BACKLOG.md` の Phase 0 チェック項目を更新（ドキュメント整備完了を反映）
+- [x] `README.md` を最低限のプロジェクト説明に更新
+
+### Phase 1 着手準備
+
+- [x] `flutter create` 実行時の org / projectName を確定
+  - org: `com.bonkotu.timer`
+  - projectName: `timer_utility`
+- [x] `pubspec.yaml` で追加する依存パッケージリストを最終確認
+  - `freezed` / `freezed_annotation` を追加（Entity の copyWith / sealed class の網羅性検証用途）
+  - `intl` は Phase 1 では追加せず、Phase 11（ローカライズ）着手時に `flutter_localizations` とセットで追加
+  - `json_serializable` は Drift 永続化のため不要（外部 API 連携が出てきたら再検討）
+
+詳細は `BACKLOG.md` の Phase 1 を参照。
+
+---
+
+## ブロック中
+
+<!-- ブロック要因と解消条件をここに記載 -->
+- なし
+
+---
+
+## メモ
+
+- タスクの粒度: 1 タスク = 30 分〜半日程度を目安
+- 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
+
+---
+
+最終更新日: 2026-04-29

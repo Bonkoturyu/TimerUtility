@@ -1,0 +1,289 @@
+# BACKLOG.md
+
+本プロジェクトの Phase 別タスク管理ファイル。Claude Code は作業着手前に必ず本ファイルを参照し、
+対象 Phase / タスクの位置と前提条件を確認すること。
+
+---
+
+## 凡例
+
+- `[ ]` 未着手
+- `[~]` 進行中
+- `[x]` 完了
+- `[!]` ブロック中（理由を併記）
+
+各タスクには以下が含まれる:
+- **DoD**: Definition of Done（完了条件）
+- **依存**: 前提となる Phase / タスク
+- **参照**: 関連ドキュメント
+
+---
+
+## Phase 0: ドキュメント整備（最優先）
+
+Auto 運用の土台。本 Phase が完了するまで Phase 1 以降に着手しない。
+
+- [x] `CLAUDE.md` 作成
+- [x] `BACKLOG.md` 作成
+- [x] `tasklist.md` 作成（短期タスク管理）
+- [x] `docs/architecture.md` 作成
+- [x] `docs/domain-model.md` 作成
+- [x] `docs/state-management.md` 作成
+- [x] `docs/testing-strategy.md` 作成
+- [x] `docs/android-constraints.md` 作成
+- [x] `docs/platform-channels.md` 作成
+- [x] `docs/permissions.md` 作成
+- [x] `docs/assets-spec.md` 作成
+- [x] `docs/adr/0001-use-riverpod.md` 作成
+- [x] `docs/adr/0002-use-drift.md` 作成
+- [x] `docs/adr/0003-fullscreen-intent-strategy.md` 作成
+- [x] `docs/adr/0004-clock-injection-pattern.md` 作成
+- [x] `CLAUDE.md` を最低限の制約集に圧縮（詳細は `docs/` へ集約）
+- [x] `README.md` を最低限のプロジェクト説明に整備
+
+**DoD**: 上記すべて作成済み、相互リンクが正しく機能している。
+**依存**: なし
+**参照**: `CLAUDE.md`
+
+---
+
+## Phase 1: プロジェクト雛形 + CI セットアップ
+
+- [ ] `flutter create` でプロジェクト生成（org / projectName 確定）
+- [ ] ディレクトリ構造を `CLAUDE.md` の規約通りに整備
+- [ ] `pubspec.yaml` に依存追加: `flutter_riverpod`, `riverpod_annotation`, `go_router`, `clock`, `drift`, `drift_flutter`, `flutter_local_notifications`, `audioplayers`, `permission_handler`, `uuid`, `logger`, `freezed_annotation`
+- [ ] dev_dependencies: `riverpod_generator`, `build_runner`, `drift_dev`, `mocktail`, `fake_async`, `custom_lint`, `riverpod_lint`, `freezed`
+- [ ] `analysis_options.yaml` 設定（厳格 lint, import 制限）
+- [ ] `.github/workflows/ci.yml` 作成（`flutter analyze`, `flutter test`, `dart format --set-exit-if-changed`）
+- [ ] `lib/main.dart` を最小構成（ProviderScope + go_router）に書き換え
+- [ ] 動作確認（空アプリのビルドが通る）
+
+**DoD**: `flutter analyze` がエラー 0、`flutter test` がパス（テストは雛形のみで OK）、CI が緑になる。
+**依存**: Phase 0 完了
+**参照**: `docs/architecture.md`
+
+---
+
+## Phase 2: ストップウォッチ機能（ロジック + UI）
+
+- [ ] `domain/shared/clock_provider.dart` 配置（後の全 Phase で参照される）
+- [ ] `domain/shared/duration_formatter.dart` 実装 + Unit Test
+- [ ] `domain/stopwatch/stopwatch_state.dart`（freezed or sealed class で状態定義）
+- [ ] `domain/stopwatch/stopwatch_service.dart` 実装 + Unit Test
+  - 状態遷移: idle → running → paused → idle
+  - Lap 記録ロジック
+  - `Clock` 注入による時間制御
+- [ ] `application/stopwatch_notifier.dart`（Riverpod Notifier）+ Unit Test
+- [ ] `presentation/screens/stopwatch_screen.dart` 実装 + Widget Test
+- [ ] `presentation/widgets/lap_list.dart` 実装 + Widget Test
+- [ ] go_router にルート登録
+
+**DoD**:
+- ストップウォッチが Start/Pause/Resume/Reset/Lap で正しく動く
+- Unit Test カバレッジ: domain 層 90%以上
+- Widget Test: 主要操作 3 シナリオ以上
+- アプリを裏に回しても復帰時に正しい時刻表示（ライフサイクル対応）
+
+**依存**: Phase 1 完了
+**参照**: `docs/domain-model.md`, `docs/state-management.md`, `docs/testing-strategy.md`
+
+---
+
+## Phase 3: タイマー機能（単体、アラーム鳴動なし）
+
+通知 / 音再生は未対応。カウントダウン表示と状態遷移のみ。
+
+- [ ] `domain/timer/timer_status.dart`（enum: idle, running, paused, ringing, completed, cancelled）
+- [ ] `domain/timer/timer_entity.dart`（id, label, duration, endAt, status）
+- [ ] `domain/timer/timer_service.dart` 実装 + Unit Test
+  - `Clock` 注入
+  - Start 時に endAt 計算
+  - 復帰時の残り時間再計算ロジック
+- [ ] `application/timer_notifier.dart` + Unit Test（fake_async 使用）
+- [ ] `presentation/screens/timer_screen.dart` 実装 + Widget Test
+  - 単一タイマーの作成・カウントダウン表示・キャンセル
+
+**DoD**:
+- 単一タイマーで Start → カウントダウン → 0 到達で `ringing` 状態に遷移
+- 通知や音は **まだ鳴らない**（次 Phase で対応）
+- Unit Test カバレッジ: domain 層 90%以上
+
+**依存**: Phase 2 完了
+**参照**: `docs/domain-model.md`, `docs/state-management.md`
+
+---
+
+## Phase 4: 通知スケジューリング基盤
+
+- [ ] `docs/permissions.md` の権限取得フロー実装
+- [ ] `domain/ports/notification_scheduler.dart`（インターフェース定義）
+- [ ] `infrastructure/notification/flutter_local_notification_adapter.dart` 実装
+- [ ] `infrastructure/notification/notification_id_generator.dart` 実装 + Unit Test
+- [ ] `application/permission_notifier.dart`（権限状態管理）+ Unit Test
+- [ ] AndroidManifest.xml に必要権限を追加（要ユーザー確認）
+- [ ] 通知チャンネル初期化処理（main.dart）
+- [ ] Adapter のモック差し替えで `TimerService` の予約呼び出しを Unit Test
+- [ ] 実機での通知発火確認（手動）
+
+**DoD**:
+- タイマー終了時に通知が表示される
+- 権限拒否時のフォールバック UX が実装済み
+- 通知 ID の重複が発生しない設計（Unit Test 検証）
+
+**依存**: Phase 3 完了
+**参照**: `docs/android-constraints.md`, `docs/permissions.md`, `docs/adr/0003-fullscreen-intent-strategy.md`
+
+---
+
+## Phase 5: カスタム音源再生 + AlarmRingingScreen
+
+- [ ] 音源を `assets/sounds/` に配置（仕様は `docs/assets-spec.md`）
+- [ ] `domain/timer/alarm_sound.dart`（ValueObject）
+- [ ] `domain/timer/alarm_sound_catalog.dart`（同梱音源一覧）
+- [ ] `domain/ports/alarm_sound_player.dart`（インターフェース）
+- [ ] `infrastructure/audio/audioplayers_adapter.dart` 実装
+- [ ] `application/alarm_ringing_notifier.dart`
+- [ ] `presentation/screens/alarm_ringing_screen.dart` 実装 + Widget Test
+  - 停止ボタン / スヌーズボタン
+- [ ] go_router でアラーム画面ルート追加
+- [ ] 通知タップ → アラーム画面遷移の Deep Link 設定
+
+**DoD**:
+- タイマー終了時にカスタム音が鳴る
+- 停止ボタンで音が止まる
+- Widget Test で停止/スヌーズボタンの操作を検証
+
+**依存**: Phase 4 完了
+**参照**: `docs/assets-spec.md`
+
+---
+
+## Phase 6: フルスクリーン Intent 対応（最難関）
+
+- [ ] AndroidManifest に `USE_FULL_SCREEN_INTENT` 追加（要ユーザー確認）
+- [ ] MainActivity に `showOnLockScreen` / `turnScreenOn` 属性追加
+- [ ] flutter_local_notifications でフルスクリーン Intent 通知設定
+- [ ] 権限取得フロー実装（`permission_handler` で状態確認 → 設定画面誘導）
+- [ ] アプリが終了状態 / バックグラウンド / フォアグラウンドの 3 パターンで実機確認
+- [ ] フォールバック実装（権限なし時のヘッドアップ通知）
+- [ ] Native → Flutter のイベント送信仕様確定（`docs/platform-channels.md` 更新）
+
+**DoD**:
+- ロック画面上にアラーム画面が表示される（権限あり時）
+- 権限なし時はヘッドアップ通知で代替動作
+- 3 パターンの実機確認結果を `docs/` にメモ
+
+**依存**: Phase 5 完了
+**参照**: `docs/android-constraints.md`, `docs/platform-channels.md`, `docs/permissions.md`
+
+---
+
+## Phase 7: スヌーズ機能
+
+- [ ] `domain/timer/snooze_calculator.dart` 実装 + Unit Test
+- [ ] `TimerService` にスヌーズメソッド追加 + Unit Test
+- [ ] `NotificationScheduler` のキャンセル + 再予約フロー
+- [ ] AlarmRingingScreen にスヌーズボタン動作実装
+- [ ] スヌーズ時間プリセット（3 分 / 5 分 / 10 分）UI
+
+**DoD**:
+- スヌーズで指定時間後に再度アラームが鳴る
+- スヌーズ可能回数の上限ロジック（任意、要件確認）
+- Unit Test カバレッジ維持
+
+**依存**: Phase 6 完了
+**参照**: `docs/domain-model.md`
+
+---
+
+## Phase 8: 複数タイマー管理 + Drift 永続化
+
+- [ ] Drift スキーマ定義（`infrastructure/database/app_database.dart`）
+- [ ] `domain/ports/timer_repository.dart`
+- [ ] `infrastructure/database/drift_timer_repository.dart` 実装 + Unit Test（in-memory DB）
+- [ ] `domain/timer/timer_collection.dart`（複数管理ロジック）+ Unit Test
+- [ ] `application/timer_collection_notifier.dart` + Unit Test
+- [ ] 同時稼働上限のドメインルール実装
+- [ ] `presentation/screens/timer_list_screen.dart` 実装 + Widget Test
+- [ ] 各タイマーの個別操作 UI（カード形式）
+
+**DoD**:
+- 複数タイマーを同時に稼働できる
+- アプリ再起動後にタイマー状態が復元される
+- 各タイマーの通知が独立して発火する
+- Unit Test カバレッジ維持
+
+**依存**: Phase 7 完了
+**参照**: `docs/domain-model.md`, `docs/adr/0002-use-drift.md`
+
+---
+
+## Phase 9: プリセット機能
+
+- [ ] `domain/timer/preset.dart`（Entity）
+- [ ] `domain/ports/preset_repository.dart`
+- [ ] `infrastructure/database/drift_preset_repository.dart` 実装 + Unit Test
+- [ ] `application/preset_notifier.dart` + Unit Test
+- [ ] `presentation/screens/preset_manage_screen.dart` 実装 + Widget Test
+- [ ] タイマー作成画面でプリセット選択 UI
+
+**DoD**:
+- プリセットの追加・編集・削除ができる
+- プリセットからワンタップでタイマー作成可能
+- Unit Test カバレッジ維持
+
+**依存**: Phase 8 完了
+**参照**: `docs/domain-model.md`
+
+---
+
+## Phase 10: 端末再起動後の復元
+
+- [ ] `RECEIVE_BOOT_COMPLETED` 権限追加（要ユーザー確認）
+- [ ] Native 側 BootReceiver 実装（Kotlin）
+- [ ] BootReceiver から Flutter 側のタイマー復元処理を起動
+- [ ] 復元時のタイマー状態判定ロジック（既に時刻過ぎているタイマーの扱い）+ Unit Test
+- [ ] 実機での再起動テスト
+
+**DoD**:
+- 端末再起動後にアクティブだったタイマーが復元される
+- 再起動中に時刻を過ぎたタイマーは適切に処理される（即発火 or completed 扱い、要件確認）
+
+**依存**: Phase 9 完了
+**参照**: `docs/android-constraints.md`, `docs/platform-channels.md`
+
+---
+
+## Phase 11（任意）: 仕上げ
+
+- [ ] アプリアイコン・スプラッシュ
+- [ ] 設定画面（音源選択、デフォルトスヌーズ時間など）
+- [ ] ダークモード対応
+- [ ] ローカライズ（日本語 / 英語）
+- [ ] Play Store 提出準備（プライバシーポリシー、スクリーンショット）
+
+**DoD**: 公開可能な品質に到達
+**依存**: Phase 10 完了
+
+---
+
+## 進捗サマリ
+
+| Phase | 状態 | 備考 |
+|---|---|---|
+| 0 | 完了 | ドキュメント整備完了（2026-04-29） |
+| 1 | 未着手 | |
+| 2 | 未着手 | |
+| 3 | 未着手 | |
+| 4 | 未着手 | |
+| 5 | 未着手 | |
+| 6 | 未着手 | 最難関 |
+| 7 | 未着手 | |
+| 8 | 未着手 | |
+| 9 | 未着手 | |
+| 10 | 未着手 | |
+| 11 | 未着手 | 任意 |
+
+---
+
+最終更新日: 2026-04-29
