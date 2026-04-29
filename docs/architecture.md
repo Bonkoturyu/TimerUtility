@@ -65,8 +65,7 @@ lib/
 │   │   ├── alarm_sound_catalog.dart
 │   │   └── preset.dart
 │   ├── shared/
-│   │   ├── duration_formatter.dart
-│   │   └── clock_provider.dart
+│   │   └── duration_formatter.dart
 │   └── ports/
 │       ├── notification_scheduler.dart
 │       ├── alarm_sound_player.dart
@@ -87,6 +86,7 @@ lib/
 │       └── permission_manager.dart
 │
 ├── application/                  # Riverpod Providers
+│   ├── clock_provider.dart       # Clock 抽象 (ADR 0004)
 │   ├── stopwatch_notifier.dart
 │   ├── timer_notifier.dart
 │   ├── timer_collection_notifier.dart

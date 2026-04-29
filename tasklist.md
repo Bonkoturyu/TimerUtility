@@ -20,7 +20,7 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし
+- なし（Phase 2 完了、push + CI 緑化確認後に Phase 3 着手）
 
 ---
 
@@ -48,6 +48,23 @@
 - [x] `flutter analyze` → No issues found
 - [x] `flutter test` → All tests passed
 - [x] CI が緑になることを確認（push 後の GitHub Actions 実行で確認済み）
+
+### Phase 2 完了内容（2026-04-29）
+
+- [x] エコシステム互換性: `dependency_overrides: analyzer_plugin: ^0.13.0` で build_runner を解決
+- [x] `lib/domain/shared/duration_formatter.dart` (Pure Dart) + 13 ユニットテスト
+- [x] `lib/domain/stopwatch/stopwatch_state.dart` (freezed sealed class: Idle / Running / Paused + LapRecord)
+- [x] `lib/domain/stopwatch/stopwatch_service.dart` (Clock 注入、Pure Dart) + 16 ユニットテスト
+- [x] `lib/application/clock_provider.dart` (`@Riverpod(keepAlive: true)`)
+- [x] `lib/application/stopwatch_notifier.dart` (`@Riverpod` Notifier + stopwatchServiceProvider) + 8 Notifier テスト
+- [x] `lib/presentation/widgets/lap_list.dart` + 4 Widget テスト
+- [x] `lib/presentation/screens/stopwatch_screen.dart` (ConsumerStatefulWidget + Timer.periodic in dispose) + 4 Widget テスト
+- [x] `lib/main.dart` 更新: `/stopwatch` ルート追加、HomeScreen に導線
+- [x] BACKLOG / docs/architecture.md の clock_provider 配置場所修正（ADR 0004 整合）
+- [x] flutter analyze: No issues found
+- [x] flutter test: 47 / 47 passed
+- [x] domain 層カバレッジ: stopwatch_service 100%、duration_formatter 100%（DoD 90% を大幅クリア）
+- [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### Phase 1 着手準備
 
