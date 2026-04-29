@@ -35,6 +35,18 @@ void main() {
       expect(t.createdAt, DateTime(2026, 1, 1, 12));
     });
 
+    test('assigns notificationId derived from the timer id', () {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final svc = _service(now, fixedId: 'fixed-id-abc');
+
+      final t = svc.createIdle(label: '', duration: const Duration(seconds: 5));
+
+      // Same id → same notificationId, in 31-bit non-negative range.
+      expect(t.notificationId, 'fixed-id-abc'.hashCode & 0x7FFFFFFF);
+      expect(t.notificationId, greaterThanOrEqualTo(0));
+      expect(t.notificationId, lessThanOrEqualTo(0x7FFFFFFF));
+    });
+
     test('honors caller-supplied id and createdAt', () {
       final now = _MutableNow(DateTime(2026, 1, 1, 12));
       final svc = _service(now);

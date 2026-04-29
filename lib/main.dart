@@ -2,11 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'application/notification_scheduler_provider.dart';
+import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_screen.dart';
 
-void main() {
-  runApp(const ProviderScope(child: TimerUtilityApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final adapter = FlutterLocalNotificationAdapter();
+  await adapter.initialize();
+  runApp(
+    ProviderScope(
+      overrides: <Override>[
+        notificationSchedulerProvider.overrideWithValue(adapter),
+      ],
+      child: const TimerUtilityApp(),
+    ),
+  );
 }
 
 final _router = GoRouter(

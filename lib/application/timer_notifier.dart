@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/ports/permission_manager.dart';
 import '../domain/timer/timer_entity.dart';
 import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
 import 'clock_provider.dart';
+import 'notification_scheduler_provider.dart';
+import 'permission_notifier.dart';
 
 part 'timer_notifier.g.dart';
 
@@ -44,20 +47,25 @@ class TimerNotifier extends _$TimerNotifier {
 
   void start() {
     final current = _requireState('start');
-    state = ref.read(timerServiceProvider).start(current);
+    final next = ref.read(timerServiceProvider).start(current);
+    state = next;
     _startTicker();
+    _scheduleNotification(next);
   }
 
   void pause() {
     final current = _requireState('pause');
     state = ref.read(timerServiceProvider).pause(current);
     _stopTicker();
+    _cancelNotification(current.notificationId);
   }
 
   void resume() {
     final current = _requireState('resume');
-    state = ref.read(timerServiceProvider).resume(current);
+    final next = ref.read(timerServiceProvider).resume(current);
+    state = next;
     _startTicker();
+    _scheduleNotification(next);
   }
 
   void cancel() {
@@ -67,12 +75,14 @@ class TimerNotifier extends _$TimerNotifier {
     }
     state = ref.read(timerServiceProvider).cancel(current);
     _stopTicker();
+    _cancelNotification(current.notificationId);
   }
 
   void reset() {
     final current = _requireState('reset');
     state = ref.read(timerServiceProvider).reset(current);
     _stopTicker();
+    _cancelNotification(current.notificationId);
   }
 
   /// Drop the currently configured timer (returns to the "no timer" state).
@@ -87,6 +97,37 @@ class TimerNotifier extends _$TimerNotifier {
       throw StateError('No timer to $op');
     }
     return current;
+  }
+
+  /// Schedule the OS notification for the timer's `endAt`. Fire-and-forget;
+  /// errors are surfaced via the scheduler's own logging (Phase 4 has no
+  /// retry policy beyond what the OS provides).
+  void _scheduleNotification(TimerEntity entity) {
+    if (entity.status != TimerStatus.running || entity.endAt == null) {
+      return;
+    }
+    final exact =
+        ref.read(permissionNotifierProvider).scheduleExactAlarm ==
+            DomainPermissionStatus.granted ||
+        ref.read(permissionNotifierProvider).scheduleExactAlarm ==
+            DomainPermissionStatus.notRequired;
+    final title = entity.label.isEmpty ? 'Timer' : entity.label;
+    const body = 'Time is up.';
+    unawaited(
+      ref
+          .read(notificationSchedulerProvider)
+          .schedule(
+            notificationId: entity.notificationId,
+            fireAt: entity.endAt!,
+            title: title,
+            body: body,
+            exact: exact,
+          ),
+    );
+  }
+
+  void _cancelNotification(int notificationId) {
+    unawaited(ref.read(notificationSchedulerProvider).cancel(notificationId));
   }
 
   void _startTicker() {

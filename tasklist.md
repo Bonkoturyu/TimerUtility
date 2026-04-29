@@ -20,11 +20,34 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 3 完了、push + CI 緑化確認後に Phase 4 着手）
+- なし（Phase 4 完了、実機通知確認はユーザー対応・docs 更新は次セッションで Plan 提示）
 
 ---
 
 ## 直近の予定
+
+### Phase 4 完了内容（2026-04-29）
+
+- [x] `lib/domain/timer/notification_id_generator.dart`（Pure Dart、`timerId.hashCode & 0x7FFFFFFF`）+ 4 ユニットテスト
+- [x] `lib/domain/ports/notification_scheduler.dart`（schedule / cancel / cancelAll）
+- [x] `lib/domain/ports/permission_manager.dart`（DomainPermissionStatus enum + 5 メソッド）
+- [x] `lib/domain/timer/timer_entity.dart` 拡張: `notificationId` フィールド追加
+- [x] `lib/domain/timer/timer_service.dart` 更新: NotificationIdGenerator 注入で createIdle 時に id を発番
+- [x] `lib/infrastructure/notification/flutter_local_notification_adapter.dart`（`zonedSchedule` + AndroidScheduleMode 切替）
+- [x] `lib/infrastructure/permission/permission_handler_adapter.dart`
+- [x] `lib/application/notification_scheduler_provider.dart`
+- [x] `lib/application/permission_notifier.dart`（PermissionState freezed + Notifier）+ 5 ユニットテスト
+- [x] `lib/application/timer_notifier.dart` に通知連携: start/resume で schedule、pause/cancel/reset で cancel
+- [x] `lib/main.dart` で `WidgetsFlutterBinding.ensureInitialized()` + `Adapter.initialize()`
+- [x] `lib/presentation/screens/timer_screen.dart` に権限拒否時バナー（POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM）+ 3 Widget テスト
+- [x] AndroidManifest.xml に POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / WAKE_LOCK / VIBRATE 追加
+- [x] android/app/build.gradle.kts: minSdk=26、coreLibraryDesugaring 有効化
+- [x] pubspec.yaml に `flutter_local_notifications: ^17.2.4` `permission_handler: ^11.3.1` `timezone: ^0.9.4` 追加
+- [x] flutter analyze: No issues found
+- [x] flutter test: 106 / 106 passed
+- [ ] 実機での通知発火確認（Auto 範囲外、ユーザーに依頼）
+- [ ] docs/domain-model.md（TimerEntity に notificationId）と docs/architecture.md（ports/permission_manager 追加）更新（次セッションで Plan 提示）
+- [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### ドキュメント整備の仕上げ（Phase 0 完了済み）
 

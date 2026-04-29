@@ -1,6 +1,7 @@
 import 'package:clock/clock.dart';
 import 'package:uuid/uuid.dart';
 
+import 'notification_id_generator.dart';
 import 'timer_entity.dart';
 import 'timer_status.dart';
 
@@ -14,12 +15,18 @@ String _defaultIdGenerator() => const Uuid().v4();
 /// transitions throw [StateError]. Construction-time validation throws
 /// [ArgumentError].
 class TimerService {
-  TimerService({required Clock clock, String Function()? idGenerator})
-    : _clock = clock,
-      _idGenerator = idGenerator ?? _defaultIdGenerator;
+  TimerService({
+    required Clock clock,
+    String Function()? idGenerator,
+    NotificationIdGenerator? notificationIdGenerator,
+  }) : _clock = clock,
+       _idGenerator = idGenerator ?? _defaultIdGenerator,
+       _notificationIdGenerator =
+           notificationIdGenerator ?? const NotificationIdGenerator();
 
   final Clock _clock;
   final String Function() _idGenerator;
+  final NotificationIdGenerator _notificationIdGenerator;
 
   static const Duration maxDuration = Duration(hours: 99);
   static const int maxLabelLength = 50;
@@ -47,8 +54,10 @@ class TimerService {
         'must be <= $maxLabelLength characters',
       );
     }
+    final assignedId = id ?? _idGenerator();
     return TimerEntity(
-      id: id ?? _idGenerator(),
+      id: assignedId,
+      notificationId: _notificationIdGenerator.idFor(assignedId),
       label: label,
       duration: duration,
       endAt: null,

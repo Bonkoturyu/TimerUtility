@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$TimerEntity {
   String get id => throw _privateConstructorUsedError;
+  int get notificationId => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
   Duration get duration => throw _privateConstructorUsedError;
   DateTime? get endAt => throw _privateConstructorUsedError;
@@ -41,6 +42,7 @@ abstract class $TimerEntityCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
+    int notificationId,
     String label,
     Duration duration,
     DateTime? endAt,
@@ -66,6 +68,7 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
   @override
   $Res call({
     Object? id = null,
+    Object? notificationId = null,
     Object? label = null,
     Object? duration = null,
     Object? endAt = freezed,
@@ -79,6 +82,10 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
                       as String,
+            notificationId: null == notificationId
+                ? _value.notificationId
+                : notificationId // ignore: cast_nullable_to_non_nullable
+                      as int,
             label: null == label
                 ? _value.label
                 : label // ignore: cast_nullable_to_non_nullable
@@ -120,6 +127,7 @@ abstract class _$$TimerEntityImplCopyWith<$Res>
   @useResult
   $Res call({
     String id,
+    int notificationId,
     String label,
     Duration duration,
     DateTime? endAt,
@@ -144,6 +152,7 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? notificationId = null,
     Object? label = null,
     Object? duration = null,
     Object? endAt = freezed,
@@ -157,6 +166,10 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
                   as String,
+        notificationId: null == notificationId
+            ? _value.notificationId
+            : notificationId // ignore: cast_nullable_to_non_nullable
+                  as int,
         label: null == label
             ? _value.label
             : label // ignore: cast_nullable_to_non_nullable
@@ -191,6 +204,7 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
 class _$TimerEntityImpl implements _TimerEntity {
   const _$TimerEntityImpl({
     required this.id,
+    required this.notificationId,
     required this.label,
     required this.duration,
     required this.endAt,
@@ -201,6 +215,8 @@ class _$TimerEntityImpl implements _TimerEntity {
 
   @override
   final String id;
+  @override
+  final int notificationId;
   @override
   final String label;
   @override
@@ -216,7 +232,7 @@ class _$TimerEntityImpl implements _TimerEntity {
 
   @override
   String toString() {
-    return 'TimerEntity(id: $id, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt)';
+    return 'TimerEntity(id: $id, notificationId: $notificationId, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt)';
   }
 
   @override
@@ -225,6 +241,8 @@ class _$TimerEntityImpl implements _TimerEntity {
         (other.runtimeType == runtimeType &&
             other is _$TimerEntityImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.notificationId, notificationId) ||
+                other.notificationId == notificationId) &&
             (identical(other.label, label) || other.label == label) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
@@ -240,6 +258,7 @@ class _$TimerEntityImpl implements _TimerEntity {
   int get hashCode => Object.hash(
     runtimeType,
     id,
+    notificationId,
     label,
     duration,
     endAt,
@@ -260,6 +279,7 @@ class _$TimerEntityImpl implements _TimerEntity {
 abstract class _TimerEntity implements TimerEntity {
   const factory _TimerEntity({
     required final String id,
+    required final int notificationId,
     required final String label,
     required final Duration duration,
     required final DateTime? endAt,
@@ -270,6 +290,8 @@ abstract class _TimerEntity implements TimerEntity {
 
   @override
   String get id;
+  @override
+  int get notificationId;
   @override
   String get label;
   @override
