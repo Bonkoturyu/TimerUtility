@@ -43,6 +43,18 @@
   - `freezed` / `freezed_annotation` を追加（Entity の copyWith / sealed class の網羅性検証用途）
   - `intl` は Phase 1 では追加せず、Phase 11（ローカライズ）着手時に `flutter_localizations` とセットで追加
   - `json_serializable` は Drift 永続化のため不要（外部 API 連携が出てきたら再検討）
+- [x] Auto 運用ポリシーを CLAUDE.md に明文化
+  - 自動実行範囲: コード生成 + テスト実行 + ローカルコミットまで（push は手動）
+  - 停止条件: テスト 3 回連続失敗 / 同一ファイル 5 回以上連続編集 / 100 行超の新規生成 / Phase DoD 達成
+- [x] `flutter create` の実行環境を確定: HP ProDesk（本マシン）
+
+### Auto 運用開始前のユーザー側作業
+
+- [ ] GitHub リポジトリ `TimerUtility` が作成済みであることを確認
+- [ ] `git remote -v` で push 先 URL が設定済みであることを確認
+- [ ] `git ls-remote` を実行して認証が通ることを確認（パスワード求められない）
+- [ ] GitHub Settings → Actions → 有効化されていることを確認
+- [ ] 上記まで完了したら Auto 起動可能
 
 詳細は `BACKLOG.md` の Phase 1 を参照。
 
