@@ -34,6 +34,21 @@
 - [x] `BACKLOG.md` の Phase 0 チェック項目を更新（ドキュメント整備完了を反映）
 - [x] `README.md` を最低限のプロジェクト説明に更新
 
+### Phase 1 完了内容（2026-04-29）
+
+- [x] `flutter create --org com.bonkotu.timer --project-name timer_utility --platforms=android .` 実行
+- [x] レイヤー別ディレクトリ構造を作成（`lib/{domain,application,infrastructure,presentation}/`）
+- [x] `pubspec.yaml` に Phase 1 依存パッケージ追加（115 依存解決済み）
+- [x] `analysis_options.yaml` を厳格化（strict-casts/inference/raw-types、freezed 除外、custom_lint）
+- [x] `.github/workflows/ci.yml` を新規作成（format / analyze / test ジョブ）
+- [x] `lib/main.dart` を ProviderScope + GoRouter の最小構成に書き換え
+- [x] `test/widget_test.dart` を新 main.dart に対応するスモークテストに書き換え
+- [x] Kotlin パッケージパス差異を `docs/architecture.md` で実態に合わせて修正
+- [x] CLAUDE.md のテストポリシーを `flutter_test` 経由に修正（`test` 直接依存はエコシステム制約で断念）
+- [x] `flutter analyze` → No issues found
+- [x] `flutter test` → All tests passed
+- [ ] CI が緑になることを確認（push 後に GitHub Actions タブで要確認）
+
 ### Phase 1 着手準備
 
 - [x] `flutter create` 実行時の org / projectName を確定

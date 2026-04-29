@@ -119,7 +119,7 @@ test/                             # Unit Test + Widget Test
 integration_test/                 # 実機テスト
 
 android/app/src/main/kotlin/      # Native 実装
-└── com/bonkotu/timer/
+└── com/bonkotu/timer/timer_utility/
     ├── MainActivity.kt
     ├── BootReceiver.kt
     └── alarm/
