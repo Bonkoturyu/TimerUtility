@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'presentation/screens/stopwatch_screen.dart';
+
 void main() {
   runApp(const ProviderScope(child: TimerUtilityApp()));
 }
@@ -12,6 +14,11 @@ final _router = GoRouter(
       path: '/',
       builder: (BuildContext context, GoRouterState state) =>
           const HomeScreen(),
+    ),
+    GoRoute(
+      path: '/stopwatch',
+      builder: (BuildContext context, GoRouterState state) =>
+          const StopwatchScreen(),
     ),
   ],
 );
@@ -38,7 +45,20 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('TimerUtility')),
-      body: const Center(child: Text('Phase 1: Skeleton')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('TimerUtility'),
+            const SizedBox(height: 24),
+            FilledButton(
+              key: const Key('home_open_stopwatch_button'),
+              onPressed: () => context.go('/stopwatch'),
+              child: const Text('Open Stopwatch'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

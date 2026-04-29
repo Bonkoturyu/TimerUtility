@@ -38,5 +38,12 @@ dev_dependencies:
   riverpod_lint: any
   freezed: ^2.5.2
 
+# Ecosystem 互換性のための override
+# analyzer_plugin 0.12.0 は analyzer 7.6.0 と非互換でビルドスクリプト
+# コンパイルが失敗するため、新しいバージョンを強制指定する。
+# 詳細: https://github.com/dart-lang/sdk/issues (analyzer 7 移行関連)
+dependency_overrides:
+  analyzer_plugin: ^0.13.0
+
 flutter:
   uses-material-design: true
