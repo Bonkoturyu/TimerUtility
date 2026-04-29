@@ -115,17 +115,27 @@ StopwatchIdle
 
 ```
 TimerEntity {
-  id: TimerId                        // UUID v4
-  notificationId: NotificationId     // OS 通知用 int ID
+  id: TimerId                        // UUID v4（Phase 3 では String）
+  notificationId: int                // OS 通知用 int ID（Phase 4 で追加）
   label: String                      // ユーザー指定（空可、空時は表示時にデフォルト名）
   duration: Duration                 // 設定された時間
   endAt: DateTime?                   // 絶対時刻（running 時のみ非 null）
   status: TimerStatus
-  alarmSound: AlarmSound             // 鳴動時の音源
-  snooze: SnoozeState                // スヌーズ履歴
+  pausedRemaining: Duration?         // paused 時の残り時間退避
+  alarmSound: AlarmSound             // 鳴動時の音源（Phase 5 で追加予定）
+  snooze: SnoozeState                // スヌーズ履歴（Phase 7 で追加予定）
   createdAt: DateTime
 }
 ```
+
+Phase 別フィールド追加履歴:
+
+| フィールド | 追加 Phase | 備考 |
+|---|---|---|
+| `id, label, duration, endAt, status, pausedRemaining, createdAt` | Phase 3 | 単体タイマーの基本構造 |
+| `notificationId` | Phase 4 | `NotificationIdGenerator` で createIdle 時に発番、不変 |
+| `alarmSound` | Phase 5（予定） | `AlarmSoundCatalog` の ID を保持 |
+| `snooze` | Phase 7（予定） | `SnoozeState` ValueObject |
 
 不変条件:
 - `duration > Duration.zero`
@@ -133,6 +143,26 @@ TimerEntity {
 - `status == running` のとき `endAt != null`
 - `status != running` のとき `endAt == null`
 - `label.length <= 50`
+- `notificationId >= 0 && notificationId <= 0x7FFFFFFF`（Phase 4 以降）
+
+### NotificationIdGenerator（Phase 4 で追加）
+
+ドメイン層に配置（`domain/timer/notification_id_generator.dart`）。
+TimerId（String）から OS 通知の int ID を決定的に導出する。
+
+```
+class NotificationIdGenerator {
+  int idFor(String timerId) => timerId.hashCode & 0x7FFFFFFF;
+}
+```
+
+理由:
+
+- `flutter_local_notifications` は通知 ID を `int` で要求するが、
+  ドメインの `TimerId` は UUID v4 ベースの String。両者を橋渡しする。
+- `& 0x7FFFFFFF` で 31bit 正整数に丸め、Android 通知 ID の上限内に収める。
+- 決定的なので、再起動後も同じ TimerId に対して同じ通知 ID を再構築できる。
+- 同一 TimerId が衝突するのは TimerId 自体が衝突した場合のみ（UUID v4 の確率的一意性に依拠）。
 
 ### TimerStatus（enum）
 
@@ -408,4 +438,4 @@ Mapper クラスを `infrastructure/database/mappers/` に配置。
 
 ---
 
-最終更新日: 2026-04-29
+最終更新日: 2026-04-29（Phase 4: TimerEntity.notificationId と NotificationIdGenerator を反映）
