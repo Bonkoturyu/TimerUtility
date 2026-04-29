@@ -47,14 +47,20 @@
   - 自動実行範囲: コード生成 + テスト実行 + ローカルコミットまで（push は手動）
   - 停止条件: テスト 3 回連続失敗 / 同一ファイル 5 回以上連続編集 / 100 行超の新規生成 / Phase DoD 達成
 - [x] `flutter create` の実行環境を確定: HP ProDesk（本マシン）
+- [x] Flutter SDK 環境の Warning / NG 解消
+  - Android SDK Command-line Tools をインストール
+  - `flutter doctor --android-licenses` で全ライセンス承認
+  - `flutter config --no-enable-windows-desktop` で Windows desktop 無効化
+  - `flutter doctor` で `• No issues found!` を確認
 
 ### Auto 運用開始前のユーザー側作業
 
-- [ ] GitHub リポジトリ `TimerUtility` が作成済みであることを確認
-- [ ] `git remote -v` で push 先 URL が設定済みであることを確認
-- [ ] `git ls-remote` を実行して認証が通ることを確認（パスワード求められない）
-- [ ] GitHub Settings → Actions → 有効化されていることを確認
-- [ ] 上記まで完了したら Auto 起動可能
+- [x] GitHub リポジトリ作成済み（`https://github.com/Bonkoturyu/TimerUtility.git`）
+- [x] `git remote -v` で push 先 URL 設定済み
+- [x] `git ls-remote` で認証確認済み
+- [x] Phase 0 ドキュメント push 完了
+- [ ] GitHub Settings → Actions → 有効化されていることを確認（Web UI で要確認）
+- [x] 上記まで完了したら Auto 起動可能（Actions 確認のみ残）
 
 詳細は `BACKLOG.md` の Phase 1 を参照。
 
