@@ -47,7 +47,7 @@
 - [x] CLAUDE.md のテストポリシーを `flutter_test` 経由に修正（`test` 直接依存はエコシステム制約で断念）
 - [x] `flutter analyze` → No issues found
 - [x] `flutter test` → All tests passed
-- [ ] CI が緑になることを確認（push 後に GitHub Actions タブで要確認）
+- [x] CI が緑になることを確認（push 後の GitHub Actions 実行で確認済み）
 
 ### Phase 1 着手準備
 
