@@ -49,7 +49,8 @@
 - [x] flutter test: 106 / 106 passed
 - [x] Emulator (Pixel 6a API 33) での権限フロー / バナー UI 動作確認済み
 - [x] Emulator で `_plugin.show()` 経由の即時通知が表示できることを確認（チャンネル / 権限 / プラグイン初期化が正常）
-- [ ] **実機での `zonedSchedule` 経由の通知発火確認** — Emulator では AlarmManager 経由の発火が確認できない既知の問題（Android Studio Emulator + flutter_local_notifications の組み合わせで報告されている）。実機では動く想定だが、要確認
+- [x] AndroidManifest に `flutter_local_notifications` の `<receiver>` 2 つ + `RECEIVE_BOOT_COMPLETED` 権限を追加（プラグイン README で必須宣言）
+- [x] **実機 (Pixel 6a / Android 16) で 5 秒タイマー → 通知発火 + バイブ動作確認**
 - [ ] docs/domain-model.md（TimerEntity に notificationId）と docs/architecture.md（ports/permission_manager 追加）更新（次セッションで Plan 提示）
 - [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
