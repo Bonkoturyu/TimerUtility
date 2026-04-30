@@ -42,10 +42,14 @@
 - [x] `lib/presentation/screens/timer_screen.dart` に権限拒否時バナー（POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM）+ 3 Widget テスト
 - [x] AndroidManifest.xml に POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / WAKE_LOCK / VIBRATE 追加
 - [x] android/app/build.gradle.kts: minSdk=26、coreLibraryDesugaring 有効化
-- [x] pubspec.yaml に `flutter_local_notifications: ^17.2.4` `permission_handler: ^11.3.1` `timezone: ^0.9.4` 追加
+- [x] pubspec.yaml に `flutter_local_notifications: ^19.0.0` `permission_handler: ^11.3.1` `timezone: ^0.10.1` `flutter_timezone: ^5.0.2` 追加
+- [x] adapter で `tz.setLocalLocation` を実行（zonedSchedule の前提条件）
+- [x] android/app/build.gradle.kts: desugar_jdk_libs を 2.1.4 へ更新（flutter_local_notifications 19 が要求）
 - [x] flutter analyze: No issues found
 - [x] flutter test: 106 / 106 passed
-- [ ] 実機での通知発火確認（Auto 範囲外、ユーザーに依頼）
+- [x] Emulator (Pixel 6a API 33) での権限フロー / バナー UI 動作確認済み
+- [x] Emulator で `_plugin.show()` 経由の即時通知が表示できることを確認（チャンネル / 権限 / プラグイン初期化が正常）
+- [ ] **実機での `zonedSchedule` 経由の通知発火確認** — Emulator では AlarmManager 経由の発火が確認できない既知の問題（Android Studio Emulator + flutter_local_notifications の組み合わせで報告されている）。実機では動く想定だが、要確認
 - [ ] docs/domain-model.md（TimerEntity に notificationId）と docs/architecture.md（ports/permission_manager 追加）更新（次セッションで Plan 提示）
 - [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 

@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -32,6 +33,16 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
   /// `main()` after `WidgetsFlutterBinding.ensureInitialized()`.
   Future<void> initialize() async {
     tz_data.initializeTimeZones();
+    // `zonedSchedule` requires `tz.local` to be set to the device's actual
+    // timezone; without this the AlarmManager bridge can fail to fire on
+    // some Android versions even though the absolute time is computed
+    // correctly.
+    try {
+      final TimezoneInfo info = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(info.identifier));
+    } catch (_) {
+      // Fall back to UTC; absolute scheduling still works for most cases.
+    }
 
     const AndroidInitializationSettings androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -86,8 +97,6 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         ),
       ),
       androidScheduleMode: mode,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
