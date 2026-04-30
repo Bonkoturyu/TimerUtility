@@ -76,9 +76,11 @@ lib/
 │
 ├── infrastructure/
 │   ├── notification/
-│   │   └── flutter_local_notification_adapter.dart  # Phase 4 で実装済み
+│   │   └── flutter_local_notification_adapter.dart  # Phase 4 で実装済み（Phase 6c で FSI フォールバック対応）
 │   ├── permission/
-│   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み
+│   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み（Phase 6b で PermissionChannel 注入）
+│   ├── platform/
+│   │   └── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
 │   └── database/
@@ -378,4 +380,4 @@ Android 版の Phase 6（FullScreenIntent）/ Phase 7（exact alarm 完全対応
 
 ---
 
-最終更新日: 2026-04-30（Phase 4/5 の実装状況をディレクトリ構造に反映）
+最終更新日: 2026-04-30（Phase 6a/b/c の実装状況をディレクトリ構造に反映）

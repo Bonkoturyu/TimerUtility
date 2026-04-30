@@ -239,17 +239,19 @@ enum PermissionStatus {
 - 各権限の要求トリガ提供
 - アプリ復帰時 (resumed) の状態再確認
 
-### Phase 4 実装状況
+### Phase 4 / 6 実装状況
 
 - [x] `domain/ports/permission_manager.dart`: `PermissionManager` インターフェース + `DomainPermissionStatus` enum
-- [x] `infrastructure/permission/permission_handler_adapter.dart`: `permission_handler` 経由の実装
-- [x] `application/permission_notifier.dart`: `PermissionState` (postNotifications + scheduleExactAlarm) + Notifier
-- [x] `presentation/screens/timer_screen.dart`: 権限拒否時バナー UI（denied → 許可ボタン、permanentlyDenied → 設定を開く）
-- [x] AndroidManifest 宣言: POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / WAKE_LOCK / VIBRATE
-- [ ] USE_EXACT_ALARM / USE_FULL_SCREEN_INTENT / RECEIVE_BOOT_COMPLETED / バッテリー最適化除外（Phase 6 / Phase 10 で対応予定）
+- [x] `infrastructure/permission/permission_handler_adapter.dart`: `permission_handler` 経由の実装 + Phase 6b で `PermissionChannel` を注入
+- [x] `application/permission_notifier.dart`: `PermissionState` (postNotifications + scheduleExactAlarm + fullScreenIntent) + Notifier
+- [x] `presentation/screens/timer_screen.dart`: 権限拒否時バナー UI（denied → 許可ボタン、permanentlyDenied → 設定を開く、FSI denied → 設定を開く）
+- [x] AndroidManifest 宣言: POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM / USE_FULL_SCREEN_INTENT / WAKE_LOCK / VIBRATE
+- [x] USE_FULL_SCREEN_INTENT 権限取得 UX（Phase 6b、自前 MethodChannel 経由）
+- [x] FSI 拒否時の通知フォールバック（Phase 6c、adapter で `canUseFullScreenIntent()` を毎 schedule 検査し、false なら fullScreenIntent フラグを落としてヘッドアップ通知化）
+- [ ] RECEIVE_BOOT_COMPLETED / バッテリー最適化除外（Phase 10 で対応予定）
 
-Phase 4 では `PermissionState` に `fullScreenIntent` / `batteryOptimization` を含めず、
-`postNotifications` と `scheduleExactAlarm` の 2 軸のみ管理する。Phase 6 でフィールド追加。
+Phase 6b で `PermissionState` に `fullScreenIntent` フィールドを追加。
+`batteryOptimization` は Phase 10 で再起動時復元と一緒に扱う方針（ADR でなく運用判断）。
 
 ---
 
@@ -382,4 +384,4 @@ Phase 4 では `PermissionState` に `fullScreenIntent` / `batteryOptimization` 
 
 ---
 
-最終更新日: 2026-04-29（Phase 4 実装状況を反映）
+最終更新日: 2026-04-30（Phase 6a/b/c 完了範囲を実装状況に反映）
