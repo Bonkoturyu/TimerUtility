@@ -296,6 +296,62 @@ infrastructure 層から見ると Pure Dart の値オブジェクト相当とし
 
 ---
 
+## iOS 対応方針
+
+現状 Android 16 を主ターゲットとするが、Core 設計（domain / application 層）は
+Pure Dart で OS 非依存に保ち、将来の iOS 対応に備える。実装は Phase 12 で着手。
+
+### レイヤー別の OS 依存度
+
+| レイヤー | OS 依存 | 移植性 |
+|---|---|---|
+| `lib/domain/` | なし（Pure Dart） | iOS でそのまま再利用可能 |
+| `lib/application/` | なし（Riverpod、Pure Dart） | iOS でそのまま再利用可能 |
+| `lib/presentation/` | なし（Flutter Widget） | iOS でも動く（UI は MaterialApp ベース） |
+| `lib/infrastructure/` | **Android 固有ロジックあり** | Phase 12 で OS 別 Adapter を共存させる |
+
+### Phase 12 で予定する infrastructure 層の構造
+
+現状: 各 category 直下に Android 専用 Adapter のみ
+
+```text
+lib/infrastructure/
+├── notification/flutter_local_notification_adapter.dart  // Android 固有ロジック含む
+├── audio/audioplayers_adapter.dart                        // クロスプラットフォーム対応パッケージ使用
+└── permission/permission_handler_adapter.dart             // SCHEDULE_EXACT_ALARM 等 Android 前提
+```
+
+Phase 12 着手後の想定:
+
+```text
+lib/infrastructure/
+├── notification/
+│   ├── android/flutter_local_notification_adapter.dart
+│   └── ios/cupertino_notification_adapter.dart
+├── audio/audioplayers_adapter.dart                        // 両 OS 共通でいける可能性が高い
+└── permission/
+    ├── android/permission_handler_adapter.dart
+    └── ios/permission_handler_adapter.dart
+```
+
+Riverpod Provider 側で `defaultTargetPlatform` または `Platform.isAndroid` /
+`Platform.isIOS` から実装を分岐する。
+
+### iOS で実現できないことの明示
+
+- `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`: iOS には正確時刻アラームの概念なし。
+  `UNCalendarNotificationTrigger` は OS 任せの精度（数秒〜数分の遅延あり）
+- `USE_FULL_SCREEN_INTENT`（ロック画面上のフル画面アラーム）: iOS には対応する API がない。
+  CallKit は通話用途のため代替不可
+- `RECEIVE_BOOT_COMPLETED`: iOS は再起動後の通知予約復元を OS が自動処理、
+  開発者が介入できない
+
+結論として「ロック画面上で正確な時刻にアラーム鳴動 + フルスクリーン表示」という
+本アプリの核心要件は、iOS では設計レベルで実現困難。Phase 12 着手時に **iOS 版の
+要件を再定義** する必要がある（精度は妥協、フルスクリーン要件は外す等）。
+
+---
+
 ## 関連ドキュメント
 
 - `docs/domain-model.md`: Entity / ValueObject の詳細
@@ -305,4 +361,4 @@ infrastructure 層から見ると Pure Dart の値オブジェクト相当とし
 
 ---
 
-最終更新日: 2026-04-29（Phase 4: ports/notification_scheduler / permission_manager と adapters を反映）
+最終更新日: 2026-04-30（iOS 対応方針セクション追加、Phase 12 への布石）
