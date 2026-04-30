@@ -350,6 +350,21 @@ Riverpod Provider 側で `defaultTargetPlatform` または `Platform.isAndroid` 
 本アプリの核心要件は、iOS では設計レベルで実現困難。Phase 12 着手時に **iOS 版の
 要件を再定義** する必要がある（精度は妥協、フルスクリーン要件は外す等）。
 
+### iOS 版の要件レベル（確定方針）
+
+iOS 版を出す場合、Android 版と同等の体験は OS 制約により実現不可能。
+以下の要件緩和を **確定方針** として受け入れる:
+
+- **アラーム精度**: OS 任せ（±1 分程度のズレ許容）
+- **ロック画面占有**: 不要（通知バナー / Critical Alert のみ）
+- **フルスクリーン Intent**: 非対応
+- **用途想定**: 料理タイマー等、厳密な時刻精度が不要なケース
+
+Android 版の Phase 6（FullScreenIntent）/ Phase 7（exact alarm 完全対応）等で
+実装する Android 固有機能は、iOS 版では **実装しない**。
+この要件緩和を受け入れる代わりに、`lib/domain/` `lib/application/`
+`lib/presentation/` のコード共通化メリットを優先する。
+
 ---
 
 ## 関連ドキュメント
@@ -361,4 +376,4 @@ Riverpod Provider 側で `defaultTargetPlatform` または `Platform.isAndroid` 
 
 ---
 
-最終更新日: 2026-04-30（iOS 対応方針セクション追加、Phase 12 への布石）
+最終更新日: 2026-04-30（iOS 版の要件レベル確定方針を追記）
