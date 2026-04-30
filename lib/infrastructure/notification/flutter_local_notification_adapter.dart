@@ -5,22 +5,21 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/ports/notification_scheduler.dart';
 
-/// Channel constants. Centralised here so callers don't repeat them and so
-/// upgrades (Phase 6 fullScreenIntent) edit one place.
+/// Channel constants. Centralised here so callers don't repeat them.
 const String timerAlarmChannelId = 'timer_alarm';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
 /// Concrete [NotificationScheduler] backed by `flutter_local_notifications`.
 ///
-/// Phase 4 scope:
+/// Scope:
 ///   - schedule / cancel / cancelAll
 ///   - exact-vs-inexact toggle (`AndroidScheduleMode.exactAllowWhileIdle`
 ///     vs `AndroidScheduleMode.inexactAllowWhileIdle`) decided by the
 ///     caller based on permission state
-///
-/// Out of scope (later phases): fullScreenIntent (Phase 6), custom sound
-/// (Phase 5), notification taps (Phase 5/6).
+///   - fullScreenIntent + max importance/priority (Phase 6a). Sound is
+///     suppressed at the notification layer because the alarm screen
+///     plays the custom sound via `audioplayers` (Phase 5).
 class FlutterLocalNotificationAdapter implements NotificationScheduler {
   FlutterLocalNotificationAdapter({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
@@ -72,9 +71,10 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         timerAlarmChannelId,
         timerAlarmChannelName,
         description: timerAlarmChannelDescription,
-        importance: Importance.high,
+        importance: Importance.max,
         enableVibration: true,
         showBadge: false,
+        playSound: false,
       ),
     );
   }
@@ -103,10 +103,13 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
           timerAlarmChannelId,
           timerAlarmChannelName,
           channelDescription: timerAlarmChannelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
+          importance: Importance.max,
+          priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
+          fullScreenIntent: true,
+          visibility: NotificationVisibility.public,
           enableVibration: true,
+          playSound: false,
         ),
       ),
       androidScheduleMode: mode,

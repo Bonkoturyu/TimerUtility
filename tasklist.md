@@ -20,11 +20,37 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 5 完了、音再生の実機確認をユーザー側で実施予定）
+- Phase 6（フルスクリーン Intent 対応）。6a 完了、6b 着手前。
 
 ---
 
 ## 直近の予定
+
+### Phase 6a 完了内容（2026-04-30）
+
+- [x] AndroidManifest に `USE_EXACT_ALARM` / `USE_FULL_SCREEN_INTENT` 追加
+- [x] `<activity>` に `android:showOnLockScreen="true"` / `android:turnScreenOn="true"` 追加
+- [x] FlutterLocalNotificationAdapter:
+  - 通知 Channel の `importance: high` → `max`、`playSound: false` 追加
+  - `AndroidNotificationDetails` を `importance: max` / `priority: max` / `fullScreenIntent: true` /
+    `visibility: NotificationVisibility.public` / `playSound: false` に更新
+- [x] flutter analyze: No issues found
+- [x] flutter test: 120 / 120 passed
+
+### Phase 6b 予定（次セッション）
+
+- [ ] `domain/ports/permission_manager.dart` に `checkFullScreenIntent` / `openFullScreenIntentSettings` 追加
+- [ ] `infrastructure/platform/permission_channel.dart`（MethodChannel ラッパ）新規
+- [ ] Native `MainActivity.kt` に Channel 登録、`PermissionChannelHandler.kt` 新規（要ユーザー確認）
+- [ ] `application/permission_notifier.dart` の `PermissionState` に `fullScreenIntent` 追加
+- [ ] TimerScreen のバナー UI 拡張（FSI 拒否時の設定誘導）
+- [ ] PermissionChannel / Notifier / Widget テスト追加
+
+### Phase 6c 予定
+
+- [ ] adapter で `canUseFullScreenIntent() == false` 時のフォールバック判定
+- [ ] 実機 3 パターン確認（前面 / 背面 / 強制終了）
+- [ ] 検証結果を docs/android-constraints.md / docs/permissions.md に追記
 
 ### Phase 5 完了内容（2026-04-30）
 
