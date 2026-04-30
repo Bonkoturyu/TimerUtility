@@ -20,11 +20,34 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 4 完了、実機通知確認はユーザー対応・docs 更新は次セッションで Plan 提示）
+- なし（Phase 5 完了、音再生の実機確認をユーザー側で実施予定）
 
 ---
 
 ## 直近の予定
+
+### Phase 5 完了内容（2026-04-30）
+
+- [x] `assets/sounds/` に default / gentle / urgent の 3 音源を配置 + LICENSES.md
+- [x] `pubspec.yaml` の `flutter:` セクションに `assets/sounds/` 登録
+- [x] `lib/domain/timer/alarm_sound.dart`（freezed ValueObject、`AlarmSound.create` でバリデーション）
+- [x] `lib/domain/timer/alarm_sound_catalog.dart`（all / defaultSound / findById）+ 6 ユニットテスト
+- [x] `lib/domain/timer/timer_entity.dart` に `String? soundId` 追加（freezed 再生成）
+- [x] `lib/domain/timer/timer_service.dart` の `createIdle` に `soundId` 引数追加
+- [x] `lib/domain/ports/alarm_sound_player.dart`（play / stop / isPlaying / dispose）
+- [x] `lib/infrastructure/audio/audioplayers_adapter.dart`（`ReleaseMode.loop` + `AssetSource`）
+- [x] `lib/application/alarm_sound_player_provider.dart`
+- [x] `lib/application/alarm_ringing_notifier.dart`（`AlarmRingingState` freezed + start / stop / snoozeRequested）+ 4 ユニットテスト
+- [x] `lib/application/timer_notifier.dart` に ringing 連携: tick で ringing 化を検知して AlarmRingingNotifier.start を発火、cancel/reset で stop を発火
+- [x] `lib/presentation/screens/alarm_ringing_screen.dart`（Stop / Snooze ボタン）+ 3 Widget テスト
+- [x] `lib/main.dart`: `/alarm-ringing` ルート追加 + `onNotificationTap` callback で payload 経由 deep link
+- [x] `lib/presentation/screens/timer_screen.dart`: ringing 遷移時に `context.push('/alarm-ringing')` で自動遷移
+- [x] `lib/domain/ports/notification_scheduler.dart` の schedule に `payload` 引数追加（既存テストを更新）
+- [x] flutter analyze: No issues found
+- [x] flutter test: 120 / 120 passed
+- [x] dart format で全体整形済み
+- [ ] 実機で 5s タイマー → カスタム音再生 → Stop で止まる動作確認（Auto 範囲外）
+- [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### Phase 4 完了内容（2026-04-29）
 

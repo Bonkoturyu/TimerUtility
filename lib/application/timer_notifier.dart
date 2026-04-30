@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/ports/permission_manager.dart';
+import '../domain/timer/alarm_sound.dart';
+import '../domain/timer/alarm_sound_catalog.dart';
 import '../domain/timer/timer_entity.dart';
 import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
+import 'alarm_ringing_notifier.dart';
 import 'clock_provider.dart';
 import 'notification_scheduler_provider.dart';
 import 'permission_notifier.dart';
@@ -38,11 +41,15 @@ class TimerNotifier extends _$TimerNotifier {
   }
 
   /// Configure a brand new timer (state goes from null/anything to idle).
-  void create({required String label, required Duration duration}) {
+  void create({
+    required String label,
+    required Duration duration,
+    String? soundId,
+  }) {
     _stopTicker();
     state = ref
         .read(timerServiceProvider)
-        .createIdle(label: label, duration: duration);
+        .createIdle(label: label, duration: duration, soundId: soundId);
   }
 
   void start() {
@@ -76,6 +83,7 @@ class TimerNotifier extends _$TimerNotifier {
     state = ref.read(timerServiceProvider).cancel(current);
     _stopTicker();
     _cancelNotification(current.notificationId);
+    _stopRingingIfActive(current.id);
   }
 
   void reset() {
@@ -83,6 +91,7 @@ class TimerNotifier extends _$TimerNotifier {
     state = ref.read(timerServiceProvider).reset(current);
     _stopTicker();
     _cancelNotification(current.notificationId);
+    _stopRingingIfActive(current.id);
   }
 
   /// Drop the currently configured timer (returns to the "no timer" state).
@@ -122,6 +131,7 @@ class TimerNotifier extends _$TimerNotifier {
             title: title,
             body: body,
             exact: exact,
+            payload: entity.id,
           ),
     );
   }
@@ -155,6 +165,29 @@ class TimerNotifier extends _$TimerNotifier {
       if (next.status != TimerStatus.running) {
         _stopTicker();
       }
+      if (next.status == TimerStatus.ringing) {
+        _startRinging(next);
+      }
+    }
+  }
+
+  void _startRinging(TimerEntity entity) {
+    final AlarmSound sound =
+        (entity.soundId == null
+            ? null
+            : AlarmSoundCatalog.findById(entity.soundId!)) ??
+        AlarmSoundCatalog.defaultSound;
+    unawaited(
+      ref
+          .read(alarmRingingNotifierProvider.notifier)
+          .start(timerId: entity.id, sound: sound),
+    );
+  }
+
+  void _stopRingingIfActive(String timerId) {
+    final ringing = ref.read(alarmRingingNotifierProvider);
+    if (ringing.currentTimerId == timerId) {
+      unawaited(ref.read(alarmRingingNotifierProvider.notifier).stop());
     }
   }
 }

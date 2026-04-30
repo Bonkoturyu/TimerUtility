@@ -16,6 +16,7 @@ abstract class NotificationScheduler {
     required String title,
     required String body,
     required bool exact,
+    String? payload,
   });
 
   /// Cancel a previously scheduled notification by id. No-op if no such

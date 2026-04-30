@@ -25,7 +25,7 @@ final timerServiceProvider = Provider<TimerService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TimerServiceRef = ProviderRef<TimerService>;
-String _$timerNotifierHash() => r'2d0f2a17b8b97887fc2c38fabf4168cd292e277f';
+String _$timerNotifierHash() => r'b7d8b912e359da06ed688e9ff612820837d00dd1';
 
 /// Single-timer state holder for Phase 3.
 ///

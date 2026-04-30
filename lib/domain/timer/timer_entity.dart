@@ -14,9 +14,13 @@ part 'timer_entity.freezed.dart';
 ///   - any other status     ⇒ both `endAt` and `pausedRemaining` are null
 ///   - `notificationId` is in `[0, 0x7FFFFFFF]`, assigned at creation by
 ///     `NotificationIdGenerator`, immutable afterwards.
+///   - `soundId == null` means the timer plays the catalog's default sound;
+///     a non-null value should match an entry in `AlarmSoundCatalog`, but
+///     unknown ids must fall back to default rather than throw (so removing
+///     a bundled sound across releases stays backwards compatible).
 ///
-/// Phase 4 adds `notificationId`. `alarmSound` and `snooze` are added in
-/// Phases 5 / 7 respectively.
+/// Phase 4 adds `notificationId`. Phase 5 adds `soundId`. `snooze` is
+/// added in Phase 7.
 @freezed
 class TimerEntity with _$TimerEntity {
   const factory TimerEntity({
@@ -28,5 +32,6 @@ class TimerEntity with _$TimerEntity {
     required Duration? pausedRemaining,
     required TimerStatus status,
     required DateTime createdAt,
+    String? soundId,
   }) = _TimerEntity;
 }

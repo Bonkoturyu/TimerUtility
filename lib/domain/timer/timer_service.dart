@@ -40,6 +40,7 @@ class TimerService {
     required Duration duration,
     String? id,
     DateTime? createdAt,
+    String? soundId,
   }) {
     if (duration <= Duration.zero) {
       throw ArgumentError.value(duration, 'duration', 'must be > 0');
@@ -64,6 +65,7 @@ class TimerService {
       pausedRemaining: null,
       status: TimerStatus.idle,
       createdAt: createdAt ?? _clock.now(),
+      soundId: soundId,
     );
   }
 

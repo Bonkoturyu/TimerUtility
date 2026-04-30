@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../application/permission_notifier.dart';
 import '../../application/timer_notifier.dart';
@@ -68,6 +69,18 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
   Widget build(BuildContext context) {
     final entity = ref.watch(timerNotifierProvider);
     _ensureTickerForState(entity);
+    // When the timer flips to ringing for the first time, push the
+    // dedicated alarm screen so the Stop / Snooze controls are bigger
+    // and more obvious. Done as a post-frame callback to avoid
+    // navigating mid-build.
+    ref.listen<TimerEntity?>(timerNotifierProvider, (prev, next) {
+      if (next?.status == TimerStatus.ringing &&
+          prev?.status != TimerStatus.ringing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.push('/alarm-ringing');
+        });
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Timer')),

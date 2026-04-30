@@ -3,12 +3,15 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_notifier.dart';
+import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
+import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 
 class _ClockHolder {
@@ -18,6 +21,28 @@ class _ClockHolder {
 
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
+
+class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
+  bool _isPlaying = false;
+  AlarmSound? lastPlayed;
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> play(AlarmSound sound) async {
+    lastPlayed = sound;
+    _isPlaying = true;
+  }
+
+  @override
+  Future<void> stop() async {
+    _isPlaying = false;
+  }
+
+  @override
+  Future<void> dispose() async {}
+}
 
 /// Helper that runs [body] inside `fakeAsync`, advancing both the
 /// `fake_async` virtual time and a manually-tracked clock. The
@@ -45,6 +70,7 @@ void _runWithFakeTime(
         title: any(named: 'title'),
         body: any(named: 'body'),
         exact: any(named: 'exact'),
+        payload: any(named: 'payload'),
       ),
     ).thenAnswer((_) async {});
     when(() => scheduler.cancel(any())).thenAnswer((_) async {});
@@ -54,6 +80,7 @@ void _runWithFakeTime(
       overrides: <Override>[
         clockProvider.overrideWithValue(Clock(() => now.now)),
         notificationSchedulerProvider.overrideWithValue(scheduler),
+        alarmSoundPlayerProvider.overrideWithValue(_StubAlarmSoundPlayer()),
         permissionNotifierProvider.overrideWith(
           () => _FixedPermissionNotifier(
             const PermissionState(

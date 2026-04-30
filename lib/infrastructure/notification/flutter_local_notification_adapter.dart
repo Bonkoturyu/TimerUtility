@@ -31,7 +31,14 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
   ///
   /// Must be called before any `schedule()` call. Typically invoked from
   /// `main()` after `WidgetsFlutterBinding.ensureInitialized()`.
-  Future<void> initialize() async {
+  ///
+  /// [onNotificationTap] is invoked with the notification's payload (the
+  /// timer id encoded as String) when the user taps a notification.
+  /// Used by the deep-link handler to navigate to the alarm ringing
+  /// screen.
+  Future<void> initialize({
+    void Function(String? payload)? onNotificationTap,
+  }) async {
     tz_data.initializeTimeZones();
     // `zonedSchedule` requires `tz.local` to be set to the device's actual
     // timezone; without this the AlarmManager bridge can fail to fire on
@@ -49,7 +56,12 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     const InitializationSettings initSettings = InitializationSettings(
       android: androidInit,
     );
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        onNotificationTap?.call(response.payload);
+      },
+    );
 
     final AndroidFlutterLocalNotificationsPlugin? android = _plugin
         .resolvePlatformSpecificImplementation<
@@ -74,6 +86,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     required String title,
     required String body,
     required bool exact,
+    String? payload,
   }) async {
     final tz.TZDateTime scheduled = tz.TZDateTime.from(fireAt, tz.local);
     final AndroidScheduleMode mode = exact
@@ -97,6 +110,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         ),
       ),
       androidScheduleMode: mode,
+      payload: payload,
     );
   }
 
