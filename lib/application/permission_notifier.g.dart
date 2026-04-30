@@ -6,7 +6,7 @@ part of 'permission_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$permissionManagerHash() => r'cc29c49e1381f89129f5068659d403cef8532cbf';
+String _$permissionManagerHash() => r'1845660cc02a3ad656c908ae75ec094233a6a3e2';
 
 /// Default-bound permission manager. Override in tests via
 /// `permissionManagerProvider.overrideWithValue(fakePermissionManager)`.
@@ -27,7 +27,7 @@ final permissionManagerProvider = Provider<PermissionManager>.internal(
 // ignore: unused_element
 typedef PermissionManagerRef = ProviderRef<PermissionManager>;
 String _$permissionNotifierHash() =>
-    r'65c48d1fc96d40164f4f3f2207b5714a40a69f38';
+    r'04a6b06cc2d0eb08f0db8024016e6440bc129edd';
 
 /// Holds the latest known permission state and exposes request actions.
 ///

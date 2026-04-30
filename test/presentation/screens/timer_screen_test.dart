@@ -50,10 +50,14 @@ class _StubPermissionManager implements PermissionManager {
   _StubPermissionManager({
     this.notificationStatus = DomainPermissionStatus.granted,
     this.exactAlarmStatus = DomainPermissionStatus.granted,
+    this.fullScreenIntentStatus = DomainPermissionStatus.granted,
   });
 
   DomainPermissionStatus notificationStatus;
   DomainPermissionStatus exactAlarmStatus;
+  DomainPermissionStatus fullScreenIntentStatus;
+
+  int openFullScreenIntentSettingsCalls = 0;
 
   @override
   Future<DomainPermissionStatus> checkNotification() async =>
@@ -73,6 +77,15 @@ class _StubPermissionManager implements PermissionManager {
   Future<DomainPermissionStatus> requestScheduleExactAlarm() async {
     exactAlarmStatus = DomainPermissionStatus.granted;
     return exactAlarmStatus;
+  }
+
+  @override
+  Future<DomainPermissionStatus> checkFullScreenIntent() async =>
+      fullScreenIntentStatus;
+
+  @override
+  Future<void> openFullScreenIntentSettings() async {
+    openFullScreenIntentSettingsCalls++;
   }
 
   @override
@@ -258,7 +271,27 @@ void main() {
       expect(find.byKey(const Key('banner_post_notifications')), findsNothing);
     });
 
-    testWidgets('hides both banners when permissions granted', (
+    testWidgets('shows full-screen-intent banner when denied', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final pm = _StubPermissionManager(
+        fullScreenIntentStatus: DomainPermissionStatus.denied,
+      );
+      await tester.pumpWidget(_harness(now, permissionManager: pm));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('banner_full_screen_intent')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('設定を開く'));
+      await tester.pump();
+      expect(pm.openFullScreenIntentSettingsCalls, 1);
+    });
+
+    testWidgets('hides all banners when permissions granted', (
       WidgetTester tester,
     ) async {
       final now = _MutableNow(DateTime(2026, 1, 1, 12));
@@ -267,6 +300,7 @@ void main() {
 
       expect(find.byKey(const Key('banner_post_notifications')), findsNothing);
       expect(find.byKey(const Key('banner_exact_alarm')), findsNothing);
+      expect(find.byKey(const Key('banner_full_screen_intent')), findsNothing);
     });
   });
 }
