@@ -59,21 +59,20 @@ lib/
 │   │   ├── timer_status.dart
 │   │   ├── timer_entity.dart
 │   │   ├── timer_service.dart
-│   │   ├── timer_collection.dart
-│   │   ├── snooze_calculator.dart
-│   │   ├── alarm_sound.dart
-│   │   ├── alarm_sound_catalog.dart
-│   │   └── preset.dart
+│   │   ├── notification_id_generator.dart  # Phase 4 で実装済み（domain 層配置）
+│   │   ├── alarm_sound.dart                # Phase 5 で実装済み
+│   │   ├── alarm_sound_catalog.dart        # Phase 5 で実装済み
+│   │   ├── timer_collection.dart           # Phase 8 予定
+│   │   ├── snooze_calculator.dart          # Phase 7 予定
+│   │   └── preset.dart                     # Phase 9 予定
 │   ├── shared/
 │   │   └── duration_formatter.dart
 │   └── ports/
-│       ├── notification_scheduler.dart   # Phase 4 で実装済み
-│       ├── permission_manager.dart       # Phase 4 で実装済み
-│       ├── alarm_sound_player.dart
-│       ├── timer_repository.dart
-│       └── preset_repository.dart
-│   └── timer/
-│       └── notification_id_generator.dart  # Phase 4 で実装済み（domain 層配置）
+│       ├── notification_scheduler.dart     # Phase 4 で実装済み
+│       ├── permission_manager.dart         # Phase 4 で実装済み
+│       ├── alarm_sound_player.dart         # Phase 5 で実装済み
+│       ├── timer_repository.dart           # Phase 8 予定
+│       └── preset_repository.dart          # Phase 9 予定
 │
 ├── infrastructure/
 │   ├── notification/
@@ -81,28 +80,31 @@ lib/
 │   ├── permission/
 │   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み
 │   ├── audio/
-│   │   └── audioplayers_adapter.dart
+│   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
 │   └── database/
-│       ├── app_database.dart
-│       ├── drift_timer_repository.dart
-│       └── drift_preset_repository.dart
+│       ├── app_database.dart                        # Phase 8 予定
+│       ├── drift_timer_repository.dart              # Phase 8 予定
+│       └── drift_preset_repository.dart             # Phase 9 予定
 │
 ├── application/                  # Riverpod Providers
-│   ├── clock_provider.dart       # Clock 抽象 (ADR 0004)
+│   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
 │   ├── stopwatch_notifier.dart
 │   ├── timer_notifier.dart
-│   ├── timer_collection_notifier.dart
-│   ├── alarm_ringing_notifier.dart
-│   ├── preset_notifier.dart
-│   └── permission_notifier.dart
+│   ├── notification_scheduler_provider.dart  # Phase 4 で実装済み
+│   ├── permission_notifier.dart              # Phase 4 で実装済み
+│   ├── alarm_sound_player_provider.dart      # Phase 5 で実装済み
+│   ├── alarm_ringing_notifier.dart           # Phase 5 で実装済み
+│   ├── timer_collection_notifier.dart        # Phase 8 予定
+│   └── preset_notifier.dart                  # Phase 9 予定
 │
 ├── presentation/
 │   ├── screens/
 │   │   ├── stopwatch_screen.dart
-│   │   ├── timer_list_screen.dart
-│   │   ├── timer_create_screen.dart
-│   │   ├── alarm_ringing_screen.dart
-│   │   └── preset_manage_screen.dart
+│   │   ├── timer_screen.dart                # Phase 3 で実装済み（Phase 8 で list 化予定）
+│   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み
+│   │   ├── timer_list_screen.dart           # Phase 8 予定
+│   │   ├── timer_create_screen.dart         # Phase 8 予定
+│   │   └── preset_manage_screen.dart        # Phase 9 予定
 │   ├── widgets/
 │   │   ├── lap_list.dart
 │   │   ├── timer_card.dart
@@ -376,4 +378,4 @@ Android 版の Phase 6（FullScreenIntent）/ Phase 7（exact alarm 完全対応
 
 ---
 
-最終更新日: 2026-04-30（iOS 版の要件レベル確定方針を追記）
+最終更新日: 2026-04-30（Phase 4/5 の実装状況をディレクトリ構造に反映）
