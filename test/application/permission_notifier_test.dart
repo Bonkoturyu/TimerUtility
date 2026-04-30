@@ -7,6 +7,7 @@ class _StubPermissionManager implements PermissionManager {
   _StubPermissionManager({
     this.notificationStatus = DomainPermissionStatus.unknown,
     this.exactAlarmStatus = DomainPermissionStatus.unknown,
+    this.fullScreenIntentStatus = DomainPermissionStatus.unknown,
     DomainPermissionStatus? notificationAfterRequest,
     DomainPermissionStatus? exactAlarmAfterRequest,
   }) : notificationAfterRequest =
@@ -15,11 +16,13 @@ class _StubPermissionManager implements PermissionManager {
 
   DomainPermissionStatus notificationStatus;
   DomainPermissionStatus exactAlarmStatus;
+  DomainPermissionStatus fullScreenIntentStatus;
   DomainPermissionStatus notificationAfterRequest;
   DomainPermissionStatus exactAlarmAfterRequest;
 
   int requestNotificationCalls = 0;
   int requestExactAlarmCalls = 0;
+  int openFullScreenIntentSettingsCalls = 0;
   int openAppSettingsCalls = 0;
 
   @override
@@ -45,6 +48,15 @@ class _StubPermissionManager implements PermissionManager {
   }
 
   @override
+  Future<DomainPermissionStatus> checkFullScreenIntent() async =>
+      fullScreenIntentStatus;
+
+  @override
+  Future<void> openFullScreenIntentSettings() async {
+    openFullScreenIntentSettingsCalls++;
+  }
+
+  @override
   Future<bool> openAppSettings() async {
     openAppSettingsCalls++;
     return true;
@@ -61,18 +73,20 @@ ProviderContainer _container(PermissionManager pm) {
 
 void main() {
   group('PermissionNotifier', () {
-    test('initial state is unknown for both permissions', () {
+    test('initial state is unknown for all permissions', () {
       final c = _container(_StubPermissionManager());
 
       final state = c.read(permissionNotifierProvider);
       expect(state.postNotifications, DomainPermissionStatus.unknown);
       expect(state.scheduleExactAlarm, DomainPermissionStatus.unknown);
+      expect(state.fullScreenIntent, DomainPermissionStatus.unknown);
     });
 
-    test('refresh reads both statuses from the manager', () async {
+    test('refresh reads all three statuses from the manager', () async {
       final pm = _StubPermissionManager(
         notificationStatus: DomainPermissionStatus.granted,
         exactAlarmStatus: DomainPermissionStatus.denied,
+        fullScreenIntentStatus: DomainPermissionStatus.permanentlyDenied,
       );
       final c = _container(pm);
 
@@ -81,6 +95,7 @@ void main() {
       final state = c.read(permissionNotifierProvider);
       expect(state.postNotifications, DomainPermissionStatus.granted);
       expect(state.scheduleExactAlarm, DomainPermissionStatus.denied);
+      expect(state.fullScreenIntent, DomainPermissionStatus.permanentlyDenied);
     });
 
     test('requestNotification updates only the notification field', () async {
@@ -96,6 +111,7 @@ void main() {
       final state = c.read(permissionNotifierProvider);
       expect(state.postNotifications, DomainPermissionStatus.granted);
       expect(state.scheduleExactAlarm, DomainPermissionStatus.unknown);
+      expect(state.fullScreenIntent, DomainPermissionStatus.unknown);
       expect(pm.requestNotificationCalls, 1);
     });
 
@@ -115,9 +131,21 @@ void main() {
         final state = c.read(permissionNotifierProvider);
         expect(state.scheduleExactAlarm, DomainPermissionStatus.granted);
         expect(state.postNotifications, DomainPermissionStatus.unknown);
+        expect(state.fullScreenIntent, DomainPermissionStatus.unknown);
         expect(pm.requestExactAlarmCalls, 1);
       },
     );
+
+    test('openFullScreenIntentSettings delegates to the manager', () async {
+      final pm = _StubPermissionManager();
+      final c = _container(pm);
+
+      await c
+          .read(permissionNotifierProvider.notifier)
+          .openFullScreenIntentSettings();
+
+      expect(pm.openFullScreenIntentSettingsCalls, 1);
+    });
 
     test('openSettings delegates to the manager', () async {
       final pm = _StubPermissionManager();

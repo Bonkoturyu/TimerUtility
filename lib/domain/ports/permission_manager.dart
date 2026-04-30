@@ -29,6 +29,17 @@ abstract class PermissionManager {
   Future<DomainPermissionStatus> checkScheduleExactAlarm();
   Future<DomainPermissionStatus> requestScheduleExactAlarm();
 
+  /// USE_FULL_SCREEN_INTENT の許可状態。`permission_handler` ではカバーされず、
+  /// Native MethodChannel 経由で `NotificationManager.canUseFullScreenIntent()`
+  /// を読む。Android 14 (API 34) 未満では OS が自動付与するため granted を返す。
+  Future<DomainPermissionStatus> checkFullScreenIntent();
+
+  /// USE_FULL_SCREEN_INTENT の設定画面を開く。Android 14+ では
+  /// `Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT`、それ未満ではアプリ
+  /// 詳細画面にフォールバック。granted/denied は戻らないので、呼び出し側は
+  /// アプリ復帰時に [checkFullScreenIntent] を再実行して状態を取り直す。
+  Future<void> openFullScreenIntentSettings();
+
   /// Open the OS app-settings screen so the user can grant permanently
   /// denied permissions manually. Returns whether the screen was opened.
   Future<bool> openAppSettings();

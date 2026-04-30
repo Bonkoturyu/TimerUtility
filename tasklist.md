@@ -20,11 +20,25 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- Phase 6（フルスクリーン Intent 対応）。6a 完了、6b 着手前。
+- Phase 6（フルスクリーン Intent 対応）。6a / 6b 完了、6c（フォールバック判定 + 実機検証）着手前。
 
 ---
 
 ## 直近の予定
+
+### Phase 6b 完了内容（2026-04-30）
+
+- [x] `domain/ports/permission_manager.dart` に `checkFullScreenIntent` / `openFullScreenIntentSettings` 追加
+- [x] `lib/infrastructure/platform/permission_channel.dart` 新規（`com.bonkotu.timer/permission` Channel ラッパ）
+- [x] `lib/infrastructure/permission/permission_handler_adapter.dart` を const 解除し PermissionChannel 注入対応
+- [x] Native `MainActivity.kt`: `com.bonkotu.timer/permission` Channel ハンドラ登録、`canUseFullScreenIntent()` (API 34+) と `ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT` Intent 発行を実装。古い API では true 返却 + アプリ詳細画面フォールバック
+- [x] `application/permission_notifier.dart`: `PermissionState` に `fullScreenIntent` 追加（freezed 再生成）、`openFullScreenIntentSettings` メソッド追加、`refresh` で 3 軸読み込み
+- [x] `presentation/screens/timer_screen.dart`: FSI 拒否時のバナー追加（'banner_full_screen_intent'）
+- [x] `test/infrastructure/platform/permission_channel_test.dart` 新規 + 4 テスト
+- [x] `test/application/permission_notifier_test.dart` を 3 軸対応 + FSI delegate テスト追加
+- [x] `test/presentation/screens/timer_screen_test.dart` に FSI バナー Widget テスト追加 + 既存 banner テストを 3 軸対応
+- [x] flutter analyze: No issues found
+- [x] flutter test: 126 / 126 passed
 
 ### Phase 6a 完了内容（2026-04-30）
 
@@ -36,15 +50,6 @@
     `visibility: NotificationVisibility.public` / `playSound: false` に更新
 - [x] flutter analyze: No issues found
 - [x] flutter test: 120 / 120 passed
-
-### Phase 6b 予定（次セッション）
-
-- [ ] `domain/ports/permission_manager.dart` に `checkFullScreenIntent` / `openFullScreenIntentSettings` 追加
-- [ ] `infrastructure/platform/permission_channel.dart`（MethodChannel ラッパ）新規
-- [ ] Native `MainActivity.kt` に Channel 登録、`PermissionChannelHandler.kt` 新規（要ユーザー確認）
-- [ ] `application/permission_notifier.dart` の `PermissionState` に `fullScreenIntent` 追加
-- [ ] TimerScreen のバナー UI 拡張（FSI 拒否時の設定誘導）
-- [ ] PermissionChannel / Notifier / Widget テスト追加
 
 ### Phase 6c 予定
 

@@ -1,10 +1,17 @@
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
 import '../../domain/ports/permission_manager.dart';
+import '../platform/permission_channel.dart';
 
-/// Concrete [PermissionManager] backed by `permission_handler`.
+/// Concrete [PermissionManager] backed by `permission_handler` and, for
+/// permissions outside its scope (USE_FULL_SCREEN_INTENT), the
+/// `com.bonkotu.timer/permission` MethodChannel.
 class PermissionHandlerAdapter implements PermissionManager {
-  const PermissionHandlerAdapter();
+  PermissionHandlerAdapter({PermissionChannel? channel})
+    : _channel = channel ?? PermissionChannel();
+
+  final PermissionChannel _channel;
 
   @override
   Future<DomainPermissionStatus> checkNotification() async {
@@ -24,6 +31,28 @@ class PermissionHandlerAdapter implements PermissionManager {
   @override
   Future<DomainPermissionStatus> requestScheduleExactAlarm() async {
     return _toDomain(await ph.Permission.scheduleExactAlarm.request());
+  }
+
+  @override
+  Future<DomainPermissionStatus> checkFullScreenIntent() async {
+    try {
+      final bool canUse = await _channel.canUseFullScreenIntent();
+      return canUse
+          ? DomainPermissionStatus.granted
+          : DomainPermissionStatus.denied;
+    } on PlatformException {
+      return DomainPermissionStatus.unknown;
+    }
+  }
+
+  @override
+  Future<void> openFullScreenIntentSettings() async {
+    try {
+      await _channel.openFullScreenIntentSettings();
+    } on PlatformException {
+      // Best-effort; if the settings activity can't be resolved we silently
+      // give up. The caller will see the same state on the next refresh.
+    }
   }
 
   @override

@@ -275,6 +275,21 @@ class _PermissionBanners extends ConsumerWidget {
       );
     }
 
+    if (state.fullScreenIntent == DomainPermissionStatus.denied ||
+        state.fullScreenIntent == DomainPermissionStatus.permanentlyDenied) {
+      banners.add(
+        _PermissionBanner(
+          key: const Key('banner_full_screen_intent'),
+          icon: Icons.lock_outline,
+          color: Colors.amber.shade100,
+          title: 'ロック画面でのアラームが無効です',
+          description: '権限がない場合は通知バナーで代わりにお知らせします。',
+          actionLabel: '設定を開く',
+          onAction: () => notifier.openFullScreenIntentSettings(),
+        ),
+      );
+    }
+
     if (banners.isEmpty) {
       return const SizedBox.shrink();
     }

@@ -86,6 +86,7 @@ void _runWithFakeTime(
             const PermissionState(
               postNotifications: DomainPermissionStatus.granted,
               scheduleExactAlarm: DomainPermissionStatus.granted,
+              fullScreenIntent: DomainPermissionStatus.granted,
             ).copyWith(scheduleExactAlarm: exactAlarm),
           ),
         ),

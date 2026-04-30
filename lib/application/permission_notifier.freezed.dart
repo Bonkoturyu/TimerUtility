@@ -21,6 +21,8 @@ mixin _$PermissionState {
       throw _privateConstructorUsedError;
   DomainPermissionStatus get scheduleExactAlarm =>
       throw _privateConstructorUsedError;
+  DomainPermissionStatus get fullScreenIntent =>
+      throw _privateConstructorUsedError;
 
   /// Create a copy of PermissionState
   /// with the given fields replaced by the non-null parameter values.
@@ -39,6 +41,7 @@ abstract class $PermissionStateCopyWith<$Res> {
   $Res call({
     DomainPermissionStatus postNotifications,
     DomainPermissionStatus scheduleExactAlarm,
+    DomainPermissionStatus fullScreenIntent,
   });
 }
 
@@ -59,6 +62,7 @@ class _$PermissionStateCopyWithImpl<$Res, $Val extends PermissionState>
   $Res call({
     Object? postNotifications = null,
     Object? scheduleExactAlarm = null,
+    Object? fullScreenIntent = null,
   }) {
     return _then(
       _value.copyWith(
@@ -69,6 +73,10 @@ class _$PermissionStateCopyWithImpl<$Res, $Val extends PermissionState>
             scheduleExactAlarm: null == scheduleExactAlarm
                 ? _value.scheduleExactAlarm
                 : scheduleExactAlarm // ignore: cast_nullable_to_non_nullable
+                      as DomainPermissionStatus,
+            fullScreenIntent: null == fullScreenIntent
+                ? _value.fullScreenIntent
+                : fullScreenIntent // ignore: cast_nullable_to_non_nullable
                       as DomainPermissionStatus,
           )
           as $Val,
@@ -88,6 +96,7 @@ abstract class _$$PermissionStateImplCopyWith<$Res>
   $Res call({
     DomainPermissionStatus postNotifications,
     DomainPermissionStatus scheduleExactAlarm,
+    DomainPermissionStatus fullScreenIntent,
   });
 }
 
@@ -107,6 +116,7 @@ class __$$PermissionStateImplCopyWithImpl<$Res>
   $Res call({
     Object? postNotifications = null,
     Object? scheduleExactAlarm = null,
+    Object? fullScreenIntent = null,
   }) {
     return _then(
       _$PermissionStateImpl(
@@ -117,6 +127,10 @@ class __$$PermissionStateImplCopyWithImpl<$Res>
         scheduleExactAlarm: null == scheduleExactAlarm
             ? _value.scheduleExactAlarm
             : scheduleExactAlarm // ignore: cast_nullable_to_non_nullable
+                  as DomainPermissionStatus,
+        fullScreenIntent: null == fullScreenIntent
+            ? _value.fullScreenIntent
+            : fullScreenIntent // ignore: cast_nullable_to_non_nullable
                   as DomainPermissionStatus,
       ),
     );
@@ -129,16 +143,19 @@ class _$PermissionStateImpl implements _PermissionState {
   const _$PermissionStateImpl({
     required this.postNotifications,
     required this.scheduleExactAlarm,
+    required this.fullScreenIntent,
   });
 
   @override
   final DomainPermissionStatus postNotifications;
   @override
   final DomainPermissionStatus scheduleExactAlarm;
+  @override
+  final DomainPermissionStatus fullScreenIntent;
 
   @override
   String toString() {
-    return 'PermissionState(postNotifications: $postNotifications, scheduleExactAlarm: $scheduleExactAlarm)';
+    return 'PermissionState(postNotifications: $postNotifications, scheduleExactAlarm: $scheduleExactAlarm, fullScreenIntent: $fullScreenIntent)';
   }
 
   @override
@@ -149,12 +166,18 @@ class _$PermissionStateImpl implements _PermissionState {
             (identical(other.postNotifications, postNotifications) ||
                 other.postNotifications == postNotifications) &&
             (identical(other.scheduleExactAlarm, scheduleExactAlarm) ||
-                other.scheduleExactAlarm == scheduleExactAlarm));
+                other.scheduleExactAlarm == scheduleExactAlarm) &&
+            (identical(other.fullScreenIntent, fullScreenIntent) ||
+                other.fullScreenIntent == fullScreenIntent));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, postNotifications, scheduleExactAlarm);
+  int get hashCode => Object.hash(
+    runtimeType,
+    postNotifications,
+    scheduleExactAlarm,
+    fullScreenIntent,
+  );
 
   /// Create a copy of PermissionState
   /// with the given fields replaced by the non-null parameter values.
@@ -172,12 +195,15 @@ abstract class _PermissionState implements PermissionState {
   const factory _PermissionState({
     required final DomainPermissionStatus postNotifications,
     required final DomainPermissionStatus scheduleExactAlarm,
+    required final DomainPermissionStatus fullScreenIntent,
   }) = _$PermissionStateImpl;
 
   @override
   DomainPermissionStatus get postNotifications;
   @override
   DomainPermissionStatus get scheduleExactAlarm;
+  @override
+  DomainPermissionStatus get fullScreenIntent;
 
   /// Create a copy of PermissionState
   /// with the given fields replaced by the non-null parameter values.
