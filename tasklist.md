@@ -20,11 +20,23 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- Phase 6（フルスクリーン Intent 対応）。6a / 6b 完了、6c（フォールバック判定 + 実機検証）着手前。
+- Phase 6（フルスクリーン Intent 対応）。6a / 6b / 6c コード完了。実機検証 3 パターンはユーザー側で実施予定（Auto 範囲外）。
 
 ---
 
 ## 直近の予定
+
+### Phase 6c 完了内容（2026-04-30）
+
+- [x] FlutterLocalNotificationAdapter に PermissionChannel を注入
+- [x] schedule 内で `canUseFullScreenIntent()` を毎回検査し、false 時は `fullScreenIntent: false` でヘッドアップ通知化
+- [x] `MissingPluginException` / `PlatformException` 時は安全側（false）にフォールバック
+- [x] docs/permissions.md / docs/architecture.md / docs/android-constraints.md を Phase 6 完了範囲で更新
+- [x] flutter analyze: No issues found
+- [x] flutter test: 126 / 126 passed
+- [ ] 実機 (Pixel 6a / Android 16) での 3 パターン確認（前面 / 背面 / 強制終了）— ユーザー側
+- [ ] 権限なし時のヘッドアップ通知フォールバック実機確認 — ユーザー側
+- [ ] 設定画面誘導の往復動作確認 — ユーザー側
 
 ### Phase 6b 完了内容（2026-04-30）
 
@@ -50,12 +62,6 @@
     `visibility: NotificationVisibility.public` / `playSound: false` に更新
 - [x] flutter analyze: No issues found
 - [x] flutter test: 120 / 120 passed
-
-### Phase 6c 予定
-
-- [ ] adapter で `canUseFullScreenIntent() == false` 時のフォールバック判定
-- [ ] 実機 3 パターン確認（前面 / 背面 / 強制終了）
-- [ ] 検証結果を docs/android-constraints.md / docs/permissions.md に追記
 
 ### Phase 5 完了内容（2026-04-30）
 

@@ -1,9 +1,11 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/ports/notification_scheduler.dart';
+import '../platform/permission_channel.dart';
 
 /// Channel constants. Centralised here so callers don't repeat them.
 const String timerAlarmChannelId = 'timer_alarm';
@@ -20,11 +22,19 @@ const String timerAlarmChannelDescription = 'タイマー終了時のアラー�
 ///   - fullScreenIntent + max importance/priority (Phase 6a). Sound is
 ///     suppressed at the notification layer because the alarm screen
 ///     plays the custom sound via `audioplayers` (Phase 5).
+///   - per-schedule fullScreenIntent fallback (Phase 6c): when the OS
+///     denies USE_FULL_SCREEN_INTENT we drop the flag so the plugin emits
+///     a heads-up notification instead. Importance/priority stay at max,
+///     so the user still sees the banner over their current screen.
 class FlutterLocalNotificationAdapter implements NotificationScheduler {
-  FlutterLocalNotificationAdapter({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationAdapter({
+    FlutterLocalNotificationsPlugin? plugin,
+    PermissionChannel? permissionChannel,
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _permissionChannel = permissionChannel ?? PermissionChannel();
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final PermissionChannel _permissionChannel;
 
   /// Initialise the plugin and create the timer alarm channel.
   ///
@@ -88,6 +98,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     required bool exact,
     String? payload,
   }) async {
+    final bool canFsi = await _safeCanUseFullScreenIntent();
     final tz.TZDateTime scheduled = tz.TZDateTime.from(fireAt, tz.local);
     final AndroidScheduleMode mode = exact
         ? AndroidScheduleMode.exactAllowWhileIdle
@@ -98,7 +109,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
       title,
       body,
       scheduled,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           timerAlarmChannelId,
           timerAlarmChannelName,
@@ -106,7 +117,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
           importance: Importance.max,
           priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
-          fullScreenIntent: true,
+          fullScreenIntent: canFsi,
           visibility: NotificationVisibility.public,
           enableVibration: true,
           playSound: false,
@@ -115,6 +126,21 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
       androidScheduleMode: mode,
       payload: payload,
     );
+  }
+
+  /// Checks whether USE_FULL_SCREEN_INTENT is currently granted. We re-query
+  /// per schedule (rather than cache) because the user may toggle the OS
+  /// setting at any time. The MethodChannel hop is microseconds.
+  /// On test environments where the channel isn't registered we conserve
+  /// behaviour by returning false (heads-up fallback).
+  Future<bool> _safeCanUseFullScreenIntent() async {
+    try {
+      return await _permissionChannel.canUseFullScreenIntent();
+    } on PlatformException {
+      return false;
+    } on MissingPluginException {
+      return false;
+    }
   }
 
   @override
