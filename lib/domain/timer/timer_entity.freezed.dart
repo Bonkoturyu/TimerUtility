@@ -25,6 +25,7 @@ mixin _$TimerEntity {
   Duration? get pausedRemaining => throw _privateConstructorUsedError;
   TimerStatus get status => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
+  String? get soundId => throw _privateConstructorUsedError;
 
   /// Create a copy of TimerEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -49,6 +50,7 @@ abstract class $TimerEntityCopyWith<$Res> {
     Duration? pausedRemaining,
     TimerStatus status,
     DateTime createdAt,
+    String? soundId,
   });
 }
 
@@ -75,6 +77,7 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
     Object? pausedRemaining = freezed,
     Object? status = null,
     Object? createdAt = null,
+    Object? soundId = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -110,6 +113,10 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            soundId: freezed == soundId
+                ? _value.soundId
+                : soundId // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -134,6 +141,7 @@ abstract class _$$TimerEntityImplCopyWith<$Res>
     Duration? pausedRemaining,
     TimerStatus status,
     DateTime createdAt,
+    String? soundId,
   });
 }
 
@@ -159,6 +167,7 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
     Object? pausedRemaining = freezed,
     Object? status = null,
     Object? createdAt = null,
+    Object? soundId = freezed,
   }) {
     return _then(
       _$TimerEntityImpl(
@@ -194,6 +203,10 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        soundId: freezed == soundId
+            ? _value.soundId
+            : soundId // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -211,6 +224,7 @@ class _$TimerEntityImpl implements _TimerEntity {
     required this.pausedRemaining,
     required this.status,
     required this.createdAt,
+    this.soundId,
   });
 
   @override
@@ -229,10 +243,12 @@ class _$TimerEntityImpl implements _TimerEntity {
   final TimerStatus status;
   @override
   final DateTime createdAt;
+  @override
+  final String? soundId;
 
   @override
   String toString() {
-    return 'TimerEntity(id: $id, notificationId: $notificationId, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt)';
+    return 'TimerEntity(id: $id, notificationId: $notificationId, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt, soundId: $soundId)';
   }
 
   @override
@@ -251,7 +267,8 @@ class _$TimerEntityImpl implements _TimerEntity {
                 other.pausedRemaining == pausedRemaining) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.soundId, soundId) || other.soundId == soundId));
   }
 
   @override
@@ -265,6 +282,7 @@ class _$TimerEntityImpl implements _TimerEntity {
     pausedRemaining,
     status,
     createdAt,
+    soundId,
   );
 
   /// Create a copy of TimerEntity
@@ -286,6 +304,7 @@ abstract class _TimerEntity implements TimerEntity {
     required final Duration? pausedRemaining,
     required final TimerStatus status,
     required final DateTime createdAt,
+    final String? soundId,
   }) = _$TimerEntityImpl;
 
   @override
@@ -304,6 +323,8 @@ abstract class _TimerEntity implements TimerEntity {
   TimerStatus get status;
   @override
   DateTime get createdAt;
+  @override
+  String? get soundId;
 
   /// Create a copy of TimerEntity
   /// with the given fields replaced by the non-null parameter values.
