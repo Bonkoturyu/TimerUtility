@@ -74,7 +74,8 @@
 - [x] Emulator で `_plugin.show()` 経由の即時通知が表示できることを確認（チャンネル / 権限 / プラグイン初期化が正常）
 - [x] AndroidManifest に `flutter_local_notifications` の `<receiver>` 2 つ + `RECEIVE_BOOT_COMPLETED` 権限を追加（プラグイン README で必須宣言）
 - [x] **実機 (Pixel 6a / Android 16) で 5 秒タイマー → 通知発火 + バイブ動作確認**
-- [ ] docs/domain-model.md（TimerEntity に notificationId）と docs/architecture.md（ports/permission_manager 追加）更新（次セッションで Plan 提示）
+- [x] docs/domain-model.md（TimerEntity に notificationId、NotificationIdGenerator 章）反映済み
+- [x] docs/architecture.md（ports/permission_manager 追加 + ディレクトリ構造の Phase 4/5 実装状況反映）更新（2026-04-30）
 - [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### ドキュメント整備の仕上げ（Phase 0 完了済み）
@@ -177,4 +178,4 @@
 
 ---
 
-最終更新日: 2026-04-29
+最終更新日: 2026-04-30
