@@ -2,13 +2,17 @@ import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_notifier.dart';
+import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
+import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/presentation/screens/timer_screen.dart';
 
@@ -19,6 +23,28 @@ class _MutableNow {
 
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
+
+class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
+  bool _isPlaying = false;
+  AlarmSound? lastPlayed;
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> play(AlarmSound sound) async {
+    lastPlayed = sound;
+    _isPlaying = true;
+  }
+
+  @override
+  Future<void> stop() async {
+    _isPlaying = false;
+  }
+
+  @override
+  Future<void> dispose() async {}
+}
 
 class _StubPermissionManager implements PermissionManager {
   _StubPermissionManager({
@@ -62,10 +88,26 @@ Widget _harness(_MutableNow holder, {PermissionManager? permissionManager}) {
       title: any(named: 'title'),
       body: any(named: 'body'),
       exact: any(named: 'exact'),
+      payload: any(named: 'payload'),
     ),
   ).thenAnswer((_) async {});
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
   when(() => scheduler.cancelAll()).thenAnswer((_) async {});
+
+  final router = GoRouter(
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) =>
+            const TimerScreen(),
+      ),
+      GoRoute(
+        path: '/alarm-ringing',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('alarm-ringing-stub')),
+      ),
+    ],
+  );
 
   return ProviderScope(
     overrides: <Override>[
@@ -74,8 +116,9 @@ Widget _harness(_MutableNow holder, {PermissionManager? permissionManager}) {
       permissionManagerProvider.overrideWithValue(
         permissionManager ?? _StubPermissionManager(),
       ),
+      alarmSoundPlayerProvider.overrideWithValue(_StubAlarmSoundPlayer()),
     ],
-    child: const MaterialApp(home: TimerScreen()),
+    child: MaterialApp.router(routerConfig: router),
   );
 }
 

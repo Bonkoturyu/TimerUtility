@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../application/alarm_ringing_notifier.dart';
+
+/// Phase 5 ringing screen. Shown when a timer reaches `ringing` (either
+/// via foreground tick or via tapping the OS notification). Lets the
+/// user dismiss the alarm or request a snooze.
+///
+/// Snooze in Phase 5 is a flag only — actual rescheduling lands in
+/// Phase 7 with `SnoozeCalculator`.
+class AlarmRingingScreen extends ConsumerWidget {
+  const AlarmRingingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(alarmRingingNotifierProvider);
+    final notifier = ref.read(alarmRingingNotifierProvider.notifier);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Alarm')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                "Time's up!",
+                key: Key('alarm_ringing_title'),
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                state.currentTimerId == null
+                    ? 'No active timer'
+                    : 'Timer: ${state.currentTimerId}',
+                key: const Key('alarm_ringing_label'),
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 48),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  FilledButton(
+                    key: const Key('alarm_stop_button'),
+                    onPressed: () async {
+                      await notifier.stop();
+                      if (context.mounted && context.canPop()) {
+                        context.pop();
+                      }
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      child: Text('Stop', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                  OutlinedButton(
+                    key: const Key('alarm_snooze_button'),
+                    onPressed: () async {
+                      await notifier.snoozeRequested();
+                      if (context.mounted && context.canPop()) {
+                        context.pop();
+                      }
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      child: Text('Snooze', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
