@@ -20,11 +20,22 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 6 完全完了。実機 3 パターンすべて期待動作。次は Phase 7 着手前のユーザー確認）
+- なし（カスタム時間タイマー UI 実装完了、2026-05-01）
 
 ---
 
 ## 直近の予定
+
+### カスタム時間タイマー UI 完了内容（2026-05-01）
+
+- [x] `lib/presentation/widgets/duration_picker.dart` 新規（CupertinoPicker × 3 のホイール、確定/キャンセル）
+- [x] `test/presentation/widgets/duration_picker_test.dart` 新規（7 シナリオ: 初期値表示 / 0:00:00 disabled / positive enabled / 99:00:00 確定 OK + 戻り値検証 / 99h+1s で disabled / Cancel で null pop / drag で値変化）
+- [x] `lib/presentation/screens/timer_screen.dart` 編集: プリセット行末尾に「カスタム」FilledButton.tonal を追加 → `showModalBottomSheet<Duration>` 経由で DurationPicker 表示 → 確定値で `TimerNotifier.create` 呼び出し
+- [x] `test/presentation/screens/timer_screen_test.dart` 編集: setup mode に 3 シナリオ追加（カスタムボタン表示 / モーダル表示 / 確定で active 遷移）+ 1 シナリオ（キャンセルで setup 維持）
+- [x] flutter analyze: No issues found
+- [x] flutter test: 136 / 136 passed（既存 126 + 新規 10）
+- [x] dart format で整形済み
+- [ ] 実機で「カスタム時間（例: 1h 30m）→ Start → カウントダウン → 鳴動」の動作確認（Auto 範囲外）
 
 ### Phase 6 実機検証結果（2026-04-30、Pixel 6a / Android 16）
 
@@ -229,4 +240,4 @@
 
 ---
 
-最終更新日: 2026-04-30
+最終更新日: 2026-05-01（カスタム時間タイマー UI 実装完了）
