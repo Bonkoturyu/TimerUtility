@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +7,14 @@ import '../../application/alarm_ringing_notifier.dart';
 import '../../application/timer_notifier.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
+
+/// Native channel used to release the keyguard-override state set by
+/// Android when this screen was launched via FullScreenIntent. Reuses
+/// the existing permission channel rather than spinning up a second
+/// channel just for one method.
+const MethodChannel _permissionChannel = MethodChannel(
+  'com.bonkotu.timer/permission',
+);
 
 /// Phase 5 ringing screen. Shown when a timer reaches `ringing` (either
 /// via foreground tick or via tapping the OS notification). Lets the
@@ -140,7 +149,18 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// strand the user on a stale "Time's up" screen — so we replace the
   /// whole stack to guarantee the user lands on the preset chooser in
   /// one tap regardless of how they got here.
+  ///
+  /// Also releases the keyguard-override window flags that Android leaves
+  /// set when the Activity was launched via FullScreenIntent. Without
+  /// this, the recents (■) navigation button stays suppressed for the
+  /// rest of the process lifetime.
   void _leaveAlarmScreen(BuildContext context) {
+    // Fire-and-forget; missing-plugin / platform errors are non-fatal
+    // (the worst outcome is the recents button stays hidden, which the
+    // user can recover from by relaunching the app).
+    _permissionChannel
+        .invokeMethod<void>('clearShowWhenLocked')
+        .catchError((_) {});
     context.go('/timer');
   }
 }
