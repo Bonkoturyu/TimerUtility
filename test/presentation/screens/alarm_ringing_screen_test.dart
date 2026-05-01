@@ -103,6 +103,57 @@ void main() {
       expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
     });
 
+    testWidgets('self-bootstraps audio on cold-start (TimerNotifier is null)', (
+      WidgetTester tester,
+    ) async {
+      // Simulates the cold-launch / FSI path where the screen appears
+      // without TimerNotifier._onTick ever firing. The screen must
+      // start the player itself so the user is not left in silence
+      // after the OS notification was dismissed.
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(_harness(player));
+      await tester.pumpAndSettle();
+
+      final BuildContext context = tester.element(
+        find.byType(AlarmRingingScreen),
+      );
+      final container = ProviderScope.containerOf(context);
+
+      expect(player.playCalls, 1);
+      final ringing = container.read(alarmRingingNotifierProvider);
+      expect(ringing.isPlaying, isTrue);
+      expect(ringing.currentTimerId, 'unknown');
+      expect(ringing.currentSoundId, 'default');
+    });
+
+    testWidgets('start is idempotent — second start while playing is a no-op', (
+      WidgetTester tester,
+    ) async {
+      // Self-bootstrap fires on mount. A subsequent `start()` (e.g. a
+      // late foreground tick) must NOT re-trigger play / cancel — that
+      // would cause stuttering or re-fetching the asset.
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(_harness(player));
+      await tester.pumpAndSettle();
+      expect(player.playCalls, 1);
+
+      final BuildContext context = tester.element(
+        find.byType(AlarmRingingScreen),
+      );
+      final container = ProviderScope.containerOf(context);
+      await container
+          .read(alarmRingingNotifierProvider.notifier)
+          .start(
+            timerId: 'late-tick',
+            sound: AlarmSoundCatalog.defaultSound,
+            notificationId: 99,
+          );
+      await tester.pumpAndSettle();
+
+      // Still 1: the second start saw isPlaying=true and bailed.
+      expect(player.playCalls, 1);
+    });
+
     testWidgets('Stop button stops the player and clears the timer', (
       WidgetTester tester,
     ) async {

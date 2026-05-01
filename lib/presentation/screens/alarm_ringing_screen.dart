@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_ringing_notifier.dart';
 import '../../application/timer_notifier.dart';
+import '../../domain/timer/alarm_sound.dart';
+import '../../domain/timer/alarm_sound_catalog.dart';
 
 /// Phase 5 ringing screen. Shown when a timer reaches `ringing` (either
 /// via foreground tick or via tapping the OS notification). Lets the
@@ -11,11 +13,58 @@ import '../../application/timer_notifier.dart';
 ///
 /// Snooze in Phase 5 is a flag only — actual rescheduling lands in
 /// Phase 7 with `SnoozeCalculator`.
-class AlarmRingingScreen extends ConsumerWidget {
+///
+/// `initState` self-bootstraps `AlarmRingingNotifier.start` whenever the
+/// notifier is still idle on entry. This covers the FSI / cold-start
+/// paths where `TimerNotifier._onTick` either hasn't fired yet (background
+/// → resume race) or never will (cold launch with no in-memory timer
+/// state). Without this fallback the user lands on the ringing screen
+/// after the bundled-sound notification gets cancelled, leaving them in
+/// silence.
+class AlarmRingingScreen extends ConsumerStatefulWidget {
   const AlarmRingingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
+}
+
+class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _bootstrapRingingIfNeeded();
+    });
+  }
+
+  /// Ensures audio is playing once we're on this screen. The foreground
+  /// tick path may already have called `start`; in that case the notifier
+  /// is idempotent and returns early.
+  void _bootstrapRingingIfNeeded() {
+    final ringing = ref.read(alarmRingingNotifierProvider);
+    if (ringing.isPlaying) return;
+
+    final entity = ref.read(timerNotifierProvider);
+    final String timerId = entity?.id ?? 'unknown';
+    final AlarmSound sound =
+        (entity?.soundId == null
+            ? null
+            : AlarmSoundCatalog.findById(entity!.soundId!)) ??
+        AlarmSoundCatalog.defaultSound;
+    // Cold start may have lost the entity, so we have no notification id
+    // to cancel. -1 is harmless: cancel on a non-existent id is a no-op
+    // on Android, and the OS notification has typically already been
+    // dismissed by the time we reach here on the cold-launch path.
+    final int notificationId = entity?.notificationId ?? -1;
+
+    ref
+        .read(alarmRingingNotifierProvider.notifier)
+        .start(timerId: timerId, sound: sound, notificationId: notificationId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(alarmRingingNotifierProvider);
     final ringing = ref.read(alarmRingingNotifierProvider.notifier);
     final timer = ref.read(timerNotifierProvider.notifier);
