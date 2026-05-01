@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_ringing_notifier.dart';
+import '../../application/timer_notifier.dart';
 
 /// Phase 5 ringing screen. Shown when a timer reaches `ringing` (either
 /// via foreground tick or via tapping the OS notification). Lets the
@@ -16,7 +17,8 @@ class AlarmRingingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(alarmRingingNotifierProvider);
-    final notifier = ref.read(alarmRingingNotifierProvider.notifier);
+    final ringing = ref.read(alarmRingingNotifierProvider.notifier);
+    final timer = ref.read(timerNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Alarm')),
@@ -46,7 +48,10 @@ class AlarmRingingScreen extends ConsumerWidget {
                   FilledButton(
                     key: const Key('alarm_stop_button'),
                     onPressed: () async {
-                      await notifier.stop();
+                      await ringing.stop();
+                      // Drop the timer entity so TimerScreen returns to the
+                      // setup view rather than staying in "Time's up" state.
+                      timer.clear();
                       if (context.mounted && context.canPop()) {
                         context.pop();
                       }
@@ -62,7 +67,10 @@ class AlarmRingingScreen extends ConsumerWidget {
                   OutlinedButton(
                     key: const Key('alarm_snooze_button'),
                     onPressed: () async {
-                      await notifier.snoozeRequested();
+                      await ringing.snoozeRequested();
+                      // Phase 5 snooze is intent-only; treat dismissal the
+                      // same as Stop until Phase 7 wires up rescheduling.
+                      timer.clear();
                       if (context.mounted && context.canPop()) {
                         context.pop();
                       }

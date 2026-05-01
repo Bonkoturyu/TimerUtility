@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -19,6 +20,23 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     companion object {
         private const val PERMISSION_CHANNEL = "com.bonkotu.timer/permission"
+    }
+
+    /**
+     * Mark the activity to display over the keyguard and to turn the screen
+     * on when launched. AndroidManifest's `showOnLockScreen` / `turnScreenOn`
+     * attributes work for older API levels, but on Android 8.1+ Google
+     * recommends calling these runtime APIs as well — without them, a
+     * full-screen intent on Android 14+ may light up the screen but stay
+     * behind the keyguard. See:
+     * https://developer.android.com/develop/ui/views/notifications/time-sensitive
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
