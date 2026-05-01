@@ -52,9 +52,8 @@ class AlarmRingingScreen extends ConsumerWidget {
                       // Drop the timer entity so TimerScreen returns to the
                       // setup view rather than staying in "Time's up" state.
                       timer.clear();
-                      if (context.mounted && context.canPop()) {
-                        context.pop();
-                      }
+                      if (!context.mounted) return;
+                      _leaveAlarmScreen(context);
                     },
                     child: const Padding(
                       padding: EdgeInsets.symmetric(
@@ -71,9 +70,8 @@ class AlarmRingingScreen extends ConsumerWidget {
                       // Phase 5 snooze is intent-only; treat dismissal the
                       // same as Stop until Phase 7 wires up rescheduling.
                       timer.clear();
-                      if (context.mounted && context.canPop()) {
-                        context.pop();
-                      }
+                      if (!context.mounted) return;
+                      _leaveAlarmScreen(context);
                     },
                     child: const Padding(
                       padding: EdgeInsets.symmetric(
@@ -90,5 +88,19 @@ class AlarmRingingScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Leaves the alarm screen back to the timer setup view. When the screen
+  /// was reached by foreground navigation we can simply pop. When it was
+  /// reached via the notification deep link or a full-screen intent (which
+  /// uses `go()` and replaces the stack) `canPop()` is false, so we fall
+  /// back to navigating to `/timer` directly. Either way the user lands on
+  /// the timer preset chooser.
+  void _leaveAlarmScreen(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/timer');
+    }
   }
 }
