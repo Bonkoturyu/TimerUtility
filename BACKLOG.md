@@ -357,6 +357,103 @@ Phase 10 BootReceiver は Alarm 再予約も含めて実装する（Phase 10 の
 
 ---
 
+## Phase 10.5: 世界時計 (World Clock)
+
+タイマー / アラームと並列の独立タブ「時計」機能。最大 6 都市の現在時刻を 1 画面で
+見渡せ、3 種類のデザインを `PageView` の横スワイプで切り替えられる。初回起動時のみ
+GPS で現在地のタイムゾーンを取得し、それ以降は端末タイムゾーン (FlutterTimezone)
+を使用する。
+
+ホーム画面ウィジェット (Android App Widget) 化は本 Phase スコープ外（将来 Phase）。
+
+### Domain 層
+
+- [ ] `domain/clock/clock_location.dart`（freezed Entity: id / displayName / timezoneId / isCurrentLocation / displayOrder / createdAt）
+- [ ] `domain/clock/clock_collection.dart`（集約ルート、最大 6 件のドメインルール、add / remove / reorder）
+- [ ] `domain/clock/clock_time.dart`（ValueObject、`computeAt(DateTime now, String timezoneId) → DateTime`）
+- [ ] `domain/clock/exceptions.dart`（`MaxClockLocationCountExceededException`、`InvalidTimezoneIdException` 等）
+- [ ] `domain/ports/clock_location_repository.dart`（add / update / delete / findById / findAll / replaceAll）
+- [ ] `domain/ports/location_detector.dart`（`Future<String> detectTimezoneId()` 抽象、GPS → 国コード → 代表 TZ。失敗時は実装側で fallback）
+
+### Infrastructure 層
+
+- [ ] `infrastructure/database/app_database.dart` に `clock_locations` テーブル追加（Drift schema migration）
+- [ ] `infrastructure/database/drift_clock_location_repository.dart` 実装 + Unit Test（in-memory DB）
+- [ ] `infrastructure/database/mappers/clock_location_mapper.dart`（ClockLocation ⇔ ClockLocationsCompanion）
+- [ ] `infrastructure/location/location_detector_adapter.dart`
+  - `geolocator` で coarse location 取得 → `geocoding` で逆ジオコーディング → 国コード + administrative_area_1 → 代表 TZ マップで解決
+  - 失敗時 (権限拒否 / オフライン / 逆ジオコ失敗) は `FlutterTimezone.getLocalTimezone()` にフォールバック
+- [ ] `infrastructure/clock/timezone_catalog.dart`
+  - プリセット主要都市 20-30 件（東京 / NY / LA / シカゴ / デンバー / ロンドン / パリ / ベルリン / モスクワ / ドバイ / 上海 / シンガポール / シドニー / オークランド / ホノルル / バンクーバー / メキシコシティ / サンパウロ 等）
+  - 国コード → 代表 TZ マップ（US はデフォルト LA、CA / AU 等の複数 TZ 国もデフォルト 1 件）
+
+### Application 層
+
+- [ ] `application/clock_location_repository_provider.dart`
+- [ ] `application/location_detector_provider.dart`
+- [ ] `application/clock_collection_notifier.dart` 実装 + Unit Test
+  - State: `List<ClockLocation>`
+  - `load` / `addPreset(timezoneId, displayName)` / `remove(id)` / `reorder(oldIndex, newIndex)`
+  - 起動時 DB 復元
+  - 初回起動時（DB 空）に `LocationDetector.detectTimezoneId()` → 「現在地」として登録
+- [ ] `application/clock_tick/current_time_stream_provider.dart` 実装（既存 `docs/state-management.md` で定義済み、ここで実装）
+  - 1 秒周期 `Stream.periodic` + `Clock` 経由で `DateTime` を流す
+  - autoDispose、画面表示中のみ active
+
+### Presentation 層
+
+- [ ] `presentation/widgets/analog_clock_widget.dart` + Widget Test
+  - `CustomPainter` で時針 / 分針 / 秒針描画、引数で `DateTime` と `Size` を受け取る
+- [ ] `presentation/widgets/digital_clock_widget.dart` + Widget Test
+  - `HH:mm:ss` + 都市名 + UTC オフセット表示
+- [ ] `presentation/widgets/clock_design_a.dart` / `clock_design_b.dart` / `clock_design_c.dart`
+  - 3 種類のデザインバリエーション。Grid 内で `ClockLocation` × `DateTime` を描画
+- [ ] `presentation/screens/clock_screen.dart` + Widget Test
+  - `PageView` でデザイン A/B/C 切替（横スワイプ + ドットインジケーター）
+  - 各ページに最大 6 個の時計を 2x3 Grid 表示
+  - FAB / Edit ボタンで `/clock/locations` へ
+- [ ] `presentation/screens/clock_location_picker_screen.dart` + Widget Test
+  - プリセット都市から追加選択（上限 6 個に達したら disable）
+  - 並べ替え（`ReorderableListView`）+ 削除
+- [ ] `lib/main.dart` の `go_router` に `/clock` / `/clock/locations` ルート追加
+- [ ] `HomeScreen` に「Open Clock」ボタンを追加（Stopwatch / Timer / Clock の 3 本柱、または BottomNavigationBar 化検討）
+
+### Manifest / pubspec（要ユーザー確認）
+
+- [ ] `pubspec.yaml` に `geolocator: ^14.x` / `geocoding: ^4.x` 追加
+- [ ] `android/app/src/main/AndroidManifest.xml` に `ACCESS_COARSE_LOCATION` 追加
+- [ ] `docs/permissions.md` に位置情報権限フローを追記（取得タイミング: 初回起動時の現在地検出時のみ、拒否時は FlutterTimezone fallback）
+
+### docs 更新
+
+- [ ] `docs/architecture.md` のディレクトリ構造図に `lib/domain/clock/`, `infrastructure/location/`, `infrastructure/clock/` を追記
+- [ ] `docs/domain-model.md` に Clock Aggregate（ClockLocation / ClockCollection / ClockTime）を追加
+- [ ] `docs/state-management.md` に `clockCollectionNotifierProvider` 等を追加、`currentTimeStreamProvider` を実装済みに更新
+
+### 実機検証（Pixel 6a / Android 16）
+
+- [ ] 初回起動 → 位置情報許可 → 「現在地」時計が自動追加される
+- [ ] 位置情報拒否 → 端末タイムゾーン（例: Asia/Tokyo）で「現在地」が登録される
+- [ ] 地域追加（LA / NY / London 等）→ Grid に表示、秒単位で更新
+- [ ] PageView スワイプでデザイン A/B/C 切替
+- [ ] アプリ強制終了 → 再起動 → 時計リストが復元される（Drift）
+- [ ] 並べ替え / 削除動作
+
+**DoD**:
+
+- 1 画面で最大 6 都市の現在時刻が秒単位で更新される
+- 初回起動時に GPS で現在地を 1 度だけ取得、以降は端末 TZ
+- アナログ / デジタル両表示、3 デザイン切替が動作
+- Unit Test カバレッジ: domain 層 90% 以上、ClockCollectionNotifier 80% 以上
+- Widget Test: 主要 5 シナリオ以上（デザイン切替 / 地域追加 / 削除 / 並替 / 上限 6 件 disable）
+
+**依存**: Phase 10 完了（Drift 基盤と起動時復元パターンを利用）。pubspec.yaml /
+AndroidManifest 編集はユーザー確認必須。
+**参照**: `docs/state-management.md`（currentTimeStreamProvider）, `docs/domain-model.md`,
+`docs/permissions.md`, `docs/adr/0004-clock-injection-pattern.md`
+
+---
+
 ## Phase 11（任意）: 仕上げ
 
 - [ ] アプリアイコン・スプラッシュ
@@ -366,7 +463,7 @@ Phase 10 BootReceiver は Alarm 再予約も含めて実装する（Phase 10 の
 - [ ] Play Store 提出準備（プライバシーポリシー、スクリーンショット）
 
 **DoD**: 公開可能な品質に到達
-**依存**: Phase 10 完了
+**依存**: Phase 10 / Phase 10.5 完了
 
 ---
 
@@ -406,14 +503,15 @@ Phase 10 BootReceiver は Alarm 再予約も含めて実装する（Phase 10 の
 | 4 | 完了（CI 緑化待ち） | ローカル DoD 達成、Pixel 6a 実機通知 + バイブ確認済み（2026-04-29） |
 | 5 | 完了（実機音再生確認待ち） | ローカル DoD 達成、120 テストパス（2026-04-30） |
 | 6 | 完了 | 6a/6b/6c 実装 + 実機 3 パターン全部 OK（Pixel 6a / Android 16、2026-04-30）、126 テストパス |
-| 7 | 未着手 | スヌーズ + カスタム時間タイマー UI（後者は先行着手可） |
+| 7 | 完了（実機検証済み） | スヌーズ + カスタム時間タイマー UI 完了（2026-05-01）、162 テストパス、Pixel 6a 動作確認済 |
 | 8 | 未着手 | |
 | 9 | 未着手 | |
 | 9.5 | 未着手 | 指定時刻アラーム機能（曜日繰り返し + スヌーズ）。Phase 9 完了後 |
 | 10 | 未着手 | Timer + Alarm 両方の再起動復元 |
+| 10.5 | 未着手 | 世界時計（最大 6 都市、3 デザイン PageView 切替、初回 GPS 取得）。Phase 10 完了後 |
 | 11 | 未着手 | 任意 |
 | 12 | 未着手 | 任意 / iOS 版（Android 版完成後） |
 
 ---
 
-最終更新日: 2026-05-01（Phase 9.5「指定時刻アラーム機能」を新規追加、Phase 7 にカスタム時間タイマー UI を追記、Phase 10 を Timer + Alarm 両方の再起動復元に拡張）
+最終更新日: 2026-05-01（Phase 7 完了反映 + 新規 Phase 10.5「世界時計」を Phase 10 と Phase 11 の間に追加）

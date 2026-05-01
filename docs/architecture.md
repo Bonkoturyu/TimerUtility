@@ -62,9 +62,14 @@ lib/
 │   │   ├── notification_id_generator.dart  # Phase 4 で実装済み（domain 層配置）
 │   │   ├── alarm_sound.dart                # Phase 5 で実装済み
 │   │   ├── alarm_sound_catalog.dart        # Phase 5 で実装済み
+│   │   ├── snooze_calculator.dart          # Phase 7 で実装済み
 │   │   ├── timer_collection.dart           # Phase 8 予定
-│   │   ├── snooze_calculator.dart          # Phase 7 予定
 │   │   └── preset.dart                     # Phase 9 予定
+│   ├── clock/                              # Phase 10.5 予定（世界時計）
+│   │   ├── clock_location.dart
+│   │   ├── clock_collection.dart
+│   │   ├── clock_time.dart
+│   │   └── exceptions.dart
 │   ├── shared/
 │   │   └── duration_formatter.dart
 │   └── ports/
@@ -72,7 +77,9 @@ lib/
 │       ├── permission_manager.dart         # Phase 4 で実装済み
 │       ├── alarm_sound_player.dart         # Phase 5 で実装済み
 │       ├── timer_repository.dart           # Phase 8 予定
-│       └── preset_repository.dart          # Phase 9 予定
+│       ├── preset_repository.dart          # Phase 9 予定
+│       ├── clock_location_repository.dart  # Phase 10.5 予定
+│       └── location_detector.dart          # Phase 10.5 予定（GPS → IANA TZ）
 │
 ├── infrastructure/
 │   ├── notification/
@@ -83,10 +90,15 @@ lib/
 │   │   └── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
+│   ├── location/                                    # Phase 10.5 予定
+│   │   └── location_detector_adapter.dart           # geolocator + geocoding、失敗時 FlutterTimezone fallback
+│   ├── clock/                                       # Phase 10.5 予定
+│   │   └── timezone_catalog.dart                    # 主要都市プリセット + 国コード → 代表 TZ マップ
 │   └── database/
 │       ├── app_database.dart                        # Phase 8 予定
 │       ├── drift_timer_repository.dart              # Phase 8 予定
-│       └── drift_preset_repository.dart             # Phase 9 予定
+│       ├── drift_preset_repository.dart             # Phase 9 予定
+│       └── drift_clock_location_repository.dart     # Phase 10.5 予定
 │
 ├── application/                  # Riverpod Providers
 │   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
@@ -97,7 +109,11 @@ lib/
 │   ├── alarm_sound_player_provider.dart      # Phase 5 で実装済み
 │   ├── alarm_ringing_notifier.dart           # Phase 5 で実装済み
 │   ├── timer_collection_notifier.dart        # Phase 8 予定
-│   └── preset_notifier.dart                  # Phase 9 予定
+│   ├── preset_notifier.dart                  # Phase 9 予定
+│   ├── clock_collection_notifier.dart        # Phase 10.5 予定
+│   ├── location_detector_provider.dart       # Phase 10.5 予定
+│   └── clock_tick/
+│       └── current_time_stream_provider.dart # Phase 10.5 で実装予定（1 秒周期）
 │
 ├── presentation/
 │   ├── screens/
@@ -106,11 +122,18 @@ lib/
 │   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み
 │   │   ├── timer_list_screen.dart           # Phase 8 予定
 │   │   ├── timer_create_screen.dart         # Phase 8 予定
-│   │   └── preset_manage_screen.dart        # Phase 9 予定
+│   │   ├── preset_manage_screen.dart        # Phase 9 予定
+│   │   ├── clock_screen.dart                # Phase 10.5 予定（PageView でデザイン切替）
+│   │   └── clock_location_picker_screen.dart # Phase 10.5 予定
 │   ├── widgets/
 │   │   ├── lap_list.dart
 │   │   ├── timer_card.dart
-│   │   └── duration_picker.dart
+│   │   ├── duration_picker.dart
+│   │   ├── analog_clock_widget.dart         # Phase 10.5 予定（CustomPainter）
+│   │   ├── digital_clock_widget.dart        # Phase 10.5 予定
+│   │   ├── clock_design_a.dart              # Phase 10.5 予定（PageView 1 ページ目）
+│   │   ├── clock_design_b.dart              # Phase 10.5 予定
+│   │   └── clock_design_c.dart              # Phase 10.5 予定
 │   └── routing/
 │       └── app_router.dart
 │
@@ -369,6 +392,16 @@ Android 版の Phase 6（FullScreenIntent）/ Phase 7（exact alarm 完全対応
 この要件緩和を受け入れる代わりに、`lib/domain/` `lib/application/`
 `lib/presentation/` のコード共通化メリットを優先する。
 
+### Phase 10.5（世界時計）の iOS 親和性
+
+世界時計は OS 固有の機能（exact alarm / FSI 等）に一切依存しないため、
+iOS 移植時の追加コストは最小:
+
+- Domain / Application / Presentation 層: そのまま再利用可能
+- `geolocator` / `geocoding` / `flutter_timezone` はいずれも iOS 対応済みパッケージ
+- 必要な iOS 設定は `Info.plist` の `NSLocationWhenInUseUsageDescription` 追加のみ
+- App Widget 化（将来 Phase）は OS 別に Native 実装が分岐するが、本 Phase スコープ外
+
 ---
 
 ## 関連ドキュメント
@@ -380,4 +413,4 @@ Android 版の Phase 6（FullScreenIntent）/ Phase 7（exact alarm 完全対応
 
 ---
 
-最終更新日: 2026-04-30（Phase 6a/b/c の実装状況をディレクトリ構造に反映）
+最終更新日: 2026-05-01（Phase 10.5 世界時計のディレクトリ構造を追記、Phase 7 完了反映、iOS 親和性メモ追加）
