@@ -3,14 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/notification_scheduler_provider.dart';
+import 'application/timer_repository_provider.dart';
+import 'infrastructure/database/app_database.dart';
+import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
-import 'presentation/screens/timer_screen.dart';
+import 'presentation/screens/timer_list_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final adapter = FlutterLocalNotificationAdapter();
+  final AppDatabase database = AppDatabase();
+  final DriftTimerRepository repository = DriftTimerRepository(database);
 
   // `late final` lets the warm-launch tap callback reference the router
   // that's only constructed after we know the cold-launch payload below.
@@ -56,7 +61,7 @@ Future<void> main() async {
       GoRoute(
         path: '/timer',
         builder: (BuildContext context, GoRouterState state) =>
-            const TimerScreen(),
+            const TimerListScreen(),
       ),
       GoRoute(
         path: '/alarm-ringing',
@@ -70,6 +75,7 @@ Future<void> main() async {
     ProviderScope(
       overrides: <Override>[
         notificationSchedulerProvider.overrideWithValue(adapter),
+        timerRepositoryProvider.overrideWithValue(repository),
       ],
       child: TimerUtilityApp(router: router),
     ),

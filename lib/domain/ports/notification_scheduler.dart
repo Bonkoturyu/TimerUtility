@@ -19,6 +19,20 @@ abstract class NotificationScheduler {
     String? payload,
   });
 
+  /// Show a notification immediately (no scheduling).
+  ///
+  /// Used by Phase 8 collection restore to surface a one-shot "timer
+  /// ended while you were away" message for timers whose `endAt` was
+  /// already in the past when the app came back. The OS heads-up
+  /// notification fires with the same channel as `schedule()` so the
+  /// user sees a consistent alarm-style banner.
+  Future<void> show({
+    required int notificationId,
+    required String title,
+    required String body,
+    String? payload,
+  });
+
   /// Cancel a previously scheduled notification by id. No-op if no such
   /// notification exists.
   Future<void> cancel(int notificationId);
