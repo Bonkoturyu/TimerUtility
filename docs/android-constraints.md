@@ -386,6 +386,41 @@ dependencies {
   `audioAttributesUsage: AudioAttributesUsage.alarm` を明示する。Channel
   の sound / audio 設定は OS 上で変更不可のため、変更時は channel id を
   バンプして再作成する
+- アラーム音が二重再生される（OS Channel の bundled sound + audioplayers
+  のループが同時に鳴る） → Phase 6 のコメントでは「OS 音はフォールバック /
+  AlarmRingingScreen が前面化したら audioplayers がレイヤー」設計だったが
+  実装は両方常時鳴動になっていた。`AlarmRingingNotifier.start` に
+  `notificationId` 引数を追加し、内部で `NotificationScheduler.cancel` を
+  呼んで OS 通知（音含む）を停止する責務を負わせる。`start` 自体は
+  `isPlaying` 検査で idempotent にし、複数経路から呼ばれても二重再生
+  しないようにする
+- 二重再生対策で OS 通知を即 cancel すると背景時に FullScreenIntent /
+  heads-up banner が発火しない → `TimerNotifier._onTick` で ringing 検知と
+  同時に cancel を呼んでいたため、AlarmManager が通知を発火する前にスケ
+  ジュールが消えていた。ringing 起動時の cancel + audioplayers.play 責務
+  を `AlarmRingingScreen.initState` の post-frame callback に一本化し、
+  TimerNotifier 側からは start 呼び出しを削除する。これで「画面が表示
+  されてから音が切り替わる」順序が保証され、FSI も普通に発火する
+- 背景 (FSI) / コールドスタート経路で AlarmRingingScreen に着地しても音が
+  出ない → `TimerNotifier._onTick` を起動源にしている設計だと、背景中は
+  tick が走らずコールドスタート時はそもそも entity が無いので start が
+  呼ばれない。AlarmRingingScreen を `ConsumerStatefulWidget` 化して
+  `initState` の post-frame で「`isPlaying` が false なら自分で start を
+  呼ぶ」フォールバックを入れる。entity が無ければ `AlarmSoundCatalog.defaultSound`
+  と `notificationId = -1` (no-op cancel) で起動
+- ロック → 復帰のたびに recents (■) ナビゲーションボタンが消える →
+  Phase 6 で MainActivity に常時 `setShowWhenLocked(true)` /
+  `setTurnScreenOn(true)` を立てていたため、Android が Activity を
+  「ロック画面 overlay」として扱い recents を抑制していた。Manifest 属性
+  と onCreate の常時呼び出しを削除し、`KeyguardManager.isKeyguardLocked()`
+  が true の時だけフラグを立てる動的切替にする。`launchMode="singleTop"`
+  で warm launch では `onCreate` ではなく `onNewIntent` が呼ばれるため、
+  両ライフサイクルからヘルパーを呼ぶ必要がある
+- アラーム発火後に AlarmRingingScreen から離れた後も recents が消えたまま
+  → `setShowWhenLocked(true)` は明示的に false に戻さないと残り続ける。
+  `com.bonkotu.timer/permission` Channel に `clearShowWhenLocked` を追加
+  し、`AlarmRingingScreen._leaveAlarmScreen` から呼んで Stop / Snooze 時に
+  確実に解除する
 
 ### 起動時復元
 - [ ] 端末再起動後にタイマーが復元される
@@ -416,4 +451,4 @@ dependencies {
 
 ---
 
-最終更新日: 2026-04-30（Phase 6 実機 3 パターン全部 OK、見つかった問題と修正の再発防止メモを追記）
+最終更新日: 2026-05-01（Phase 6 後フォローで見つかった「アラーム音二重再生」「FSI 阻止」「recents 抑制」の連鎖問題と修正経緯を再発防止メモに追記）
