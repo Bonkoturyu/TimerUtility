@@ -60,6 +60,13 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     required AlarmSound sound,
     required int notificationId,
   }) async {
+    // Idempotent: AlarmRingingScreen self-bootstraps on mount, and
+    // TimerNotifier._onTick also calls start when the foreground ticker
+    // detects the ringing transition. Whichever fires first wins; the
+    // second call is dropped so we don't re-trigger play / cancel.
+    if (state.isPlaying) {
+      return;
+    }
     state = state.copyWith(
       isPlaying: true,
       snoozeRequested: false,
