@@ -350,16 +350,42 @@ dependencies {
 
 ### アラーム発火
 - [x] アプリ前面時に発火する（Phase 4 で確認済み、Pixel 6a / Android 16）
-- [ ] アプリ背面時に発火する（Phase 6c 実機検証で確認予定）
-- [ ] アプリ強制終了状態で発火する（Phase 6c 実機検証で確認予定）
+- [x] アプリ背面時に発火する（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30）
+- [x] アプリ強制終了状態で発火する（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30。バンドル音源 + AudioAttributesUsage.alarm でアラーム音量で鳴動）
 - [ ] 端末スリープ中に発火する（数分後 / 数時間後）
-- [ ] サイレントモード時の挙動が想定通り
+- [x] サイレントモード時の挙動が想定通り（パターン 3 検証時に「サイレントモード ON/OFF 問わず鳴動」を確認、2026-04-30）
 - [ ] DND モード時の挙動が想定通り
 
-### フルスクリーン Intent（Phase 6c 実機検証で確認予定）
-- [ ] 権限あり: ロック画面上にアラーム画面が出る
-- [ ] 権限なし: ヘッドアップ通知で代替動作（adapter で `canUseFullScreenIntent()` を毎 schedule 検査して `fullScreenIntent` フラグを動的に切り替える実装は Phase 6c 完了済み）
-- [ ] 設定画面誘導が機能する（`com.bonkotu.timer/permission` Channel の `openFullScreenIntentSettings` 実装は Phase 6b 完了済み）
+### フルスクリーン Intent（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30）
+- [x] 権限あり: ロック画面上にアラーム画面が出る（MainActivity.onCreate で `setShowWhenLocked(true)` / `setTurnScreenOn(true)` をランタイム呼び出し）
+- [x] 権限なし: ヘッドアップ通知で代替動作（adapter で `canUseFullScreenIntent()` を毎 schedule 検査して `fullScreenIntent` フラグを動的に切り替える）
+- [x] 設定画面誘導が機能する（`com.bonkotu.timer/permission` Channel の `openFullScreenIntentSettings`）
+
+### Phase 6 実機検証で見つかって修正した問題（再発防止メモ）
+
+実機検証中に出現した症状とコード修正の対応。今後類似 Phase で再発したら同じ
+チェックポイントを当てる。
+
+- ロック画面上にアラーム画面が出ない（背景時 / 通知層は出るが Activity が
+  キーガード下） → AndroidManifest の `showOnLockScreen` / `turnScreenOn`
+  だけでは Android 14+ で不十分。MainActivity.onCreate で
+  `setShowWhenLocked(true)` / `setTurnScreenOn(true)` をランタイム呼び出し
+- Stop 押下しても "Time's up!" が再表示される（背景時のみ） →
+  `main()` の通知タップ callback と `TimerScreen` の ringing listener が
+  両方発火し AlarmRingingScreen が二重スタックになっていた。両経路に
+  「現在地が `/alarm-ringing` なら no-op」のガードを入れ、`_leaveAlarmScreen`
+  は常に `context.go('/timer')` でスタック全置換する
+- 強制終了後の通知タップで HomeScreen に着地する →
+  `onDidReceiveNotificationResponse` はプロセス生存時しか呼ばれない。
+  `getNotificationAppLaunchDetails()` をコールドスタート判定に使い、
+  `GoRouter.initialLocation` を `/alarm-ringing` に切り替える
+- 通知音が鳴らない（背景時 / 強制終了時） → Channel の sound 未指定 +
+  audioAttributesUsage 未指定が原因。`assets/sounds/alarm_default.mp3` を
+  `android/app/src/main/res/raw/` にもコピーし、Channel の
+  `sound: RawResourceAndroidNotificationSound('alarm_default')` と
+  `audioAttributesUsage: AudioAttributesUsage.alarm` を明示する。Channel
+  の sound / audio 設定は OS 上で変更不可のため、変更時は channel id を
+  バンプして再作成する
 
 ### 起動時復元
 - [ ] 端末再起動後にタイマーが復元される
@@ -390,4 +416,4 @@ dependencies {
 
 ---
 
-最終更新日: 2026-04-30（Phase 6 完了範囲を検証チェックリストに反映）
+最終更新日: 2026-04-30（Phase 6 実機 3 パターン全部 OK、見つかった問題と修正の再発防止メモを追記）
