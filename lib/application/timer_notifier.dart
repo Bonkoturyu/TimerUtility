@@ -95,7 +95,15 @@ class TimerNotifier extends _$TimerNotifier {
   }
 
   /// Drop the currently configured timer (returns to the "no timer" state).
+  ///
+  /// Also cancels any OS notification still in the shade so the user can't
+  /// re-tap it after dismissing the alarm and trigger a duplicate
+  /// AlarmRingingScreen via the notification deep link.
   void clear() {
+    final current = state;
+    if (current != null) {
+      _cancelNotification(current.notificationId);
+    }
     _stopTicker();
     state = null;
   }

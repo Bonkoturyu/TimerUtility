@@ -8,57 +8,73 @@ import 'presentation/screens/alarm_ringing_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_screen.dart';
 
-final GoRouter _router = GoRouter(
-  routes: <RouteBase>[
-    GoRoute(
-      path: '/',
-      builder: (BuildContext context, GoRouterState state) =>
-          const HomeScreen(),
-    ),
-    GoRoute(
-      path: '/stopwatch',
-      builder: (BuildContext context, GoRouterState state) =>
-          const StopwatchScreen(),
-    ),
-    GoRoute(
-      path: '/timer',
-      builder: (BuildContext context, GoRouterState state) =>
-          const TimerScreen(),
-    ),
-    GoRoute(
-      path: '/alarm-ringing',
-      builder: (BuildContext context, GoRouterState state) =>
-          const AlarmRingingScreen(),
-    ),
-  ],
-);
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final adapter = FlutterLocalNotificationAdapter();
+
+  // `late final` lets the warm-launch tap callback reference the router
+  // that's only constructed after we know the cold-launch payload below.
+  late final GoRouter router;
   await adapter.initialize(
     onNotificationTap: (String? payload) {
-      // Phase 5 deep-link: tapping the timer-end notification jumps
-      // straight to the alarm ringing screen. The payload (timer id) is
-      // not used yet — Phase 8 will need it once multiple timers can
-      // ring concurrently.
+      // Warm-launch path (app already running): navigate to the alarm
+      // screen. The payload (timer id) is not used yet — Phase 8 will
+      // need it once multiple timers can ring concurrently.
       if (payload != null) {
-        _router.go('/alarm-ringing');
+        router.go('/alarm-ringing');
       }
     },
   );
+
+  // Cold-launch path: if the user tapped the notification while the
+  // process was dead, the `onNotificationTap` callback above does not
+  // fire. We probe the plugin for that case and adjust the initial
+  // location so the user lands on the alarm screen instead of the home.
+  final String? coldLaunchPayload = await adapter.coldLaunchPayload();
+  final String initialLocation = coldLaunchPayload != null
+      ? '/alarm-ringing'
+      : '/';
+
+  router = GoRouter(
+    initialLocation: initialLocation,
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (BuildContext context, GoRouterState state) =>
+            const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/stopwatch',
+        builder: (BuildContext context, GoRouterState state) =>
+            const StopwatchScreen(),
+      ),
+      GoRoute(
+        path: '/timer',
+        builder: (BuildContext context, GoRouterState state) =>
+            const TimerScreen(),
+      ),
+      GoRoute(
+        path: '/alarm-ringing',
+        builder: (BuildContext context, GoRouterState state) =>
+            const AlarmRingingScreen(),
+      ),
+    ],
+  );
+
   runApp(
     ProviderScope(
       overrides: <Override>[
         notificationSchedulerProvider.overrideWithValue(adapter),
       ],
-      child: const TimerUtilityApp(),
+      child: TimerUtilityApp(router: router),
     ),
   );
 }
 
 class TimerUtilityApp extends StatelessWidget {
-  const TimerUtilityApp({super.key});
+  const TimerUtilityApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +83,7 @@ class TimerUtilityApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      routerConfig: _router,
+      routerConfig: router,
     );
   }
 }
