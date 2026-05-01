@@ -20,11 +20,22 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- Phase 6（フルスクリーン Intent 対応）。6a / 6b / 6c コード完了。実機検証 3 パターンはユーザー側で実施予定（Auto 範囲外）。
+- なし（Phase 6 完全完了。実機 3 パターンすべて期待動作。次は Phase 7 着手前のユーザー確認）
 
 ---
 
 ## 直近の予定
+
+### Phase 6 実機検証結果（2026-04-30、Pixel 6a / Android 16）
+
+- [x] パターン 1（前面）: AlarmRingingScreen 遷移 + カスタム音再生 + Stop 動作
+- [x] パターン 2（背景）: ロック画面上に AlarmRingingScreen + バンドル音源再生 + Stop 1 回で setup mode
+- [x] パターン 3（強制終了）: コールドスタート deep link + バンドル音源がアラーム音量で再生 + Stop で setup mode
+- [x] 権限なし時のヘッドアップ通知フォールバック（adapter の動的判定で動作）
+- [x] 設定画面誘導の往復動作
+
+検証中に発見した問題と修正は docs/android-constraints.md の「Phase 6 実機検証で
+見つかって修正した問題（再発防止メモ）」に集約。
 
 ### Phase 6c 完了内容（2026-04-30）
 
@@ -32,11 +43,14 @@
 - [x] schedule 内で `canUseFullScreenIntent()` を毎回検査し、false 時は `fullScreenIntent: false` でヘッドアップ通知化
 - [x] `MissingPluginException` / `PlatformException` 時は安全側（false）にフォールバック
 - [x] docs/permissions.md / docs/architecture.md / docs/android-constraints.md を Phase 6 完了範囲で更新
+- [x] 実機検証フォロー修正:
+  - MainActivity.onCreate で `setShowWhenLocked(true)` / `setTurnScreenOn(true)` のランタイム呼び出し
+  - main() の通知タップ callback と TimerScreen の ringing listener に重複ガード、`_leaveAlarmScreen` は `context.go('/timer')` で全置換
+  - コールドスタート deep link（`getNotificationAppLaunchDetails()` で `initialLocation` 切替）
+  - TimerNotifier.clear() で notification cancel
+  - `assets/sounds/alarm_default.mp3` を `android/app/src/main/res/raw/` にもコピー、Channel に `RawResourceAndroidNotificationSound` + `AudioAttributesUsage.alarm` を明示。Channel id を v4 までバンプ（旧 id は init 時に削除）
 - [x] flutter analyze: No issues found
 - [x] flutter test: 126 / 126 passed
-- [ ] 実機 (Pixel 6a / Android 16) での 3 パターン確認（前面 / 背面 / 強制終了）— ユーザー側
-- [ ] 権限なし時のヘッドアップ通知フォールバック実機確認 — ユーザー側
-- [ ] 設定画面誘導の往復動作確認 — ユーザー側
 
 ### Phase 6b 完了内容（2026-04-30）
 
