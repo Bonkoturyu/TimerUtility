@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/timer/alarm_sound.dart';
 import 'alarm_sound_player_provider.dart';
+import 'notification_scheduler_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
@@ -31,7 +32,10 @@ class AlarmRingingState with _$AlarmRingingState {
 /// Responsibilities are intentionally narrow per `docs/state-management.md`:
 ///   - manages the currently ringing timer's metadata and player state
 ///   - does NOT modify timer state (TimerNotifier owns that)
-///   - does NOT cancel notifications (NotificationScheduler owns that)
+///   - cancels ONLY the OS notification it is taking over from, so the
+///     bundled-sound notification does not double up with the audioplayers
+///     loop. Other lifecycle (scheduling, cancelAll) stays with
+///     NotificationScheduler / TimerNotifier.
 ///
 /// Phase 5 implements `start` and `stop`. `snoozeRequested` records intent
 /// only — the actual reschedule happens in Phase 7 once `SnoozeCalculator`
@@ -43,9 +47,18 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
 
   /// Begin playing [sound] for the timer identified by [timerId].
   /// Replaces any in-progress playback.
+  ///
+  /// [notificationId] is the OS notification id for the firing timer. We
+  /// cancel it here so the channel-bundled alarm tone (which the OS plays
+  /// while Flutter was asleep) stops the moment audioplayers takes over —
+  /// otherwise the user hears the same tone twice, slightly out of phase.
+  /// Required because every entry path into the ringing state has a
+  /// corresponding scheduled notification (foreground tick, FSI, cold
+  /// launch).
   Future<void> start({
     required String timerId,
     required AlarmSound sound,
+    required int notificationId,
   }) async {
     state = state.copyWith(
       isPlaying: true,
@@ -53,6 +66,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
       currentTimerId: timerId,
       currentSoundId: sound.id,
     );
+    unawaited(ref.read(notificationSchedulerProvider).cancel(notificationId));
     unawaited(ref.read(alarmSoundPlayerProvider).play(sound));
   }
 

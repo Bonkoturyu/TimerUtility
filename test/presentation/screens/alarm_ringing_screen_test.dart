@@ -120,7 +120,11 @@ void main() {
           .create(label: '', duration: const Duration(seconds: 5));
       await container
           .read(alarmRingingNotifierProvider.notifier)
-          .start(timerId: 't-1', sound: AlarmSoundCatalog.defaultSound);
+          .start(
+            timerId: 't-1',
+            sound: AlarmSoundCatalog.defaultSound,
+            notificationId: 1,
+          );
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('alarm_stop_button')));
@@ -153,7 +157,11 @@ void main() {
             .create(label: '', duration: const Duration(seconds: 5));
         await container
             .read(alarmRingingNotifierProvider.notifier)
-            .start(timerId: 't-1', sound: AlarmSoundCatalog.defaultSound);
+            .start(
+              timerId: 't-1',
+              sound: AlarmSoundCatalog.defaultSound,
+              notificationId: 1,
+            );
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const Key('alarm_snooze_button')));
