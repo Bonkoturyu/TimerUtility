@@ -1,10 +1,16 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
+import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/timer_notifier.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
@@ -33,7 +39,24 @@ class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   Future<void> dispose() async {}
 }
 
-Widget _harness(_StubAlarmSoundPlayer player) {
+class _MockNotificationScheduler extends Mock
+    implements NotificationScheduler {}
+
+Widget _harness(_StubAlarmSoundPlayer player, {DateTime? now}) {
+  final scheduler = _MockNotificationScheduler();
+  when(
+    () => scheduler.schedule(
+      notificationId: any(named: 'notificationId'),
+      fireAt: any(named: 'fireAt'),
+      title: any(named: 'title'),
+      body: any(named: 'body'),
+      exact: any(named: 'exact'),
+      payload: any(named: 'payload'),
+    ),
+  ).thenAnswer((_) async {});
+  when(() => scheduler.cancel(any())).thenAnswer((_) async {});
+  when(() => scheduler.cancelAll()).thenAnswer((_) async {});
+
   final router = GoRouter(
     initialLocation: '/alarm-ringing',
     routes: <RouteBase>[
@@ -51,7 +74,11 @@ Widget _harness(_StubAlarmSoundPlayer player) {
   );
 
   return ProviderScope(
-    overrides: <Override>[alarmSoundPlayerProvider.overrideWithValue(player)],
+    overrides: <Override>[
+      alarmSoundPlayerProvider.overrideWithValue(player),
+      clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
+      notificationSchedulerProvider.overrideWithValue(scheduler),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }
@@ -71,18 +98,21 @@ void main() {
       expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
     });
 
-    testWidgets('Stop button stops the player and resets state', (
+    testWidgets('Stop button stops the player and clears the timer', (
       WidgetTester tester,
     ) async {
       final player = _StubAlarmSoundPlayer();
       await tester.pumpWidget(_harness(player));
       await tester.pumpAndSettle();
 
-      // Simulate that the alarm is currently ringing.
       final BuildContext context = tester.element(
         find.byType(AlarmRingingScreen),
       );
       final container = ProviderScope.containerOf(context);
+      // Pre-populate a timer so we can prove `clear()` runs.
+      container
+          .read(timerNotifierProvider.notifier)
+          .create(label: '', duration: const Duration(seconds: 5));
       await container
           .read(alarmRingingNotifierProvider.notifier)
           .start(timerId: 't-1', sound: AlarmSoundCatalog.defaultSound);
@@ -92,34 +122,40 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(player.stopCalls, greaterThanOrEqualTo(1));
-      final state = container.read(alarmRingingNotifierProvider);
-      expect(state.isPlaying, isFalse);
-      expect(state.currentTimerId, isNull);
+      final ringing = container.read(alarmRingingNotifierProvider);
+      expect(ringing.isPlaying, isFalse);
+      expect(ringing.currentTimerId, isNull);
+      expect(container.read(timerNotifierProvider), isNull);
     });
 
-    testWidgets('Snooze button flips snoozeRequested and stops audio', (
-      WidgetTester tester,
-    ) async {
-      final player = _StubAlarmSoundPlayer();
-      await tester.pumpWidget(_harness(player));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Snooze button flips snoozeRequested, stops audio, clears the timer',
+      (WidgetTester tester) async {
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player));
+        await tester.pumpAndSettle();
 
-      final BuildContext context = tester.element(
-        find.byType(AlarmRingingScreen),
-      );
-      final container = ProviderScope.containerOf(context);
-      await container
-          .read(alarmRingingNotifierProvider.notifier)
-          .start(timerId: 't-1', sound: AlarmSoundCatalog.defaultSound);
-      await tester.pumpAndSettle();
+        final BuildContext context = tester.element(
+          find.byType(AlarmRingingScreen),
+        );
+        final container = ProviderScope.containerOf(context);
+        container
+            .read(timerNotifierProvider.notifier)
+            .create(label: '', duration: const Duration(seconds: 5));
+        await container
+            .read(alarmRingingNotifierProvider.notifier)
+            .start(timerId: 't-1', sound: AlarmSoundCatalog.defaultSound);
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('alarm_snooze_button')));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('alarm_snooze_button')));
+        await tester.pumpAndSettle();
 
-      final state = container.read(alarmRingingNotifierProvider);
-      expect(state.snoozeRequested, isTrue);
-      expect(state.isPlaying, isFalse);
-      expect(player.stopCalls, greaterThanOrEqualTo(1));
-    });
+        final ringing = container.read(alarmRingingNotifierProvider);
+        expect(ringing.snoozeRequested, isTrue);
+        expect(ringing.isPlaying, isFalse);
+        expect(player.stopCalls, greaterThanOrEqualTo(1));
+        expect(container.read(timerNotifierProvider), isNull);
+      },
+    );
   });
 }
