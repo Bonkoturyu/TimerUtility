@@ -182,29 +182,37 @@ void main() {
     expect(find.byKey(const Key('timer_list_empty_hint')), findsOneWidget);
   });
 
-  testWidgets('FAB is disabled when collection is at max capacity', (
-    tester,
-  ) async {
-    final List<TimerEntity> seed = <TimerEntity>[
-      for (int i = 0; i < TimerCollection.maxSize; i++)
-        TimerEntity(
-          id: 't-$i',
-          notificationId: 100 + i,
-          label: '',
-          duration: const Duration(seconds: 5),
-          endAt: null,
-          pausedRemaining: null,
-          status: TimerStatus.idle,
-          createdAt: DateTime(2026, 5, 1),
-        ),
-    ];
-    final repo = _InMemoryRepo(seed);
-    await tester.pumpWidget(_harness(repo));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'FAB tap at max capacity surfaces a SnackBar instead of opening picker',
+    (tester) async {
+      final List<TimerEntity> seed = <TimerEntity>[
+        for (int i = 0; i < TimerCollection.maxSize; i++)
+          TimerEntity(
+            id: 't-$i',
+            notificationId: 100 + i,
+            label: '',
+            duration: const Duration(seconds: 5),
+            endAt: null,
+            pausedRemaining: null,
+            status: TimerStatus.idle,
+            createdAt: DateTime(2026, 5, 1),
+          ),
+      ];
+      final repo = _InMemoryRepo(seed);
+      await tester.pumpWidget(_harness(repo));
+      await tester.pumpAndSettle();
 
-    final FloatingActionButton fab = tester.widget<FloatingActionButton>(
-      find.byKey(const Key('timer_list_add_fab')),
-    );
-    expect(fab.onPressed, isNull);
-  });
+      // FAB stays tappable on purpose (FloatingActionButton.extended's
+      // disabled state is too subtle to read as "limit reached"); tap
+      // should produce a SnackBar and not open the duration picker.
+      await tester.tap(find.byKey(const Key('timer_list_add_fab')));
+      await tester.pump();
+
+      expect(
+        find.text('上限 ${TimerCollection.maxSize} 件に達しています'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('duration_picker_confirm')), findsNothing);
+    },
+  );
 }

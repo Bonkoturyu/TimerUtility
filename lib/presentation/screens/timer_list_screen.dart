@@ -21,8 +21,9 @@ import '../widgets/duration_picker.dart';
 /// list.
 ///
 /// FAB opens the existing [DurationPicker]; when the collection is at
-/// the 10-timer cap the FAB is disabled and a SnackBar tells the user
-/// to delete one first.
+/// the 10-timer cap, tapping the FAB instead surfaces a SnackBar telling
+/// the user to delete an existing timer first (rather than disabling
+/// the button, which is visually too subtle on FloatingActionButton).
 class TimerListScreen extends ConsumerStatefulWidget {
   const TimerListScreen({super.key});
 
@@ -116,7 +117,13 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('timer_list_add_fab'),
-        onPressed: collection.isFull ? null : () => _onAddTap(context),
+        // Always tappable. We could pass `null` when full to disable
+        // the button, but FloatingActionButton.extended's disabled
+        // state is visually subtle (no obvious greyout) so users see
+        // a "broken" button rather than a meaningful "limit reached"
+        // signal. Instead we keep it active and route the limit case
+        // through a SnackBar in `_onAddTap` below.
+        onPressed: () => _onAddTap(context),
         icon: const Icon(Icons.add),
         label: const Text('Add Timer'),
       ),
@@ -124,6 +131,16 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
   }
 
   Future<void> _onAddTap(BuildContext context) async {
+    // Surface the limit before opening the picker so the user doesn't
+    // configure a duration only to have it rejected on confirm.
+    final TimerCollection current = ref.read(timerCollectionNotifierProvider);
+    if (current.isFull) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('上限 ${TimerCollection.maxSize} 件に達しています')),
+      );
+      return;
+    }
+
     final Duration? chosen = await showModalBottomSheet<Duration>(
       context: context,
       isScrollControlled: true,

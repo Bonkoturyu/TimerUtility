@@ -23,6 +23,17 @@ const String timerAlarmChannelId = 'timer_alarm_v4';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
+/// Silent channel used by [show] for the Phase 8 background-restore
+/// notification path. The alarm channel above plays the bundled tone
+/// at alarm-stream volume — that is wrong for "you missed the timer
+/// while away", which should be a low-key heads-up only. We keep this
+/// channel on a separate id so the user can also toggle it
+/// independently in OS settings.
+const String timerCompletedChannelId = 'timer_completed_v1';
+const String timerCompletedChannelName = 'Timer Completed (Background)';
+const String timerCompletedChannelDescription =
+    'バックグラウンド中にタイマーが終了したことを知らせる無音通知';
+
 /// Resource id of the default alarm sound bundled at
 /// `android/app/src/main/res/raw/alarm_default.mp3`. This is what the
 /// notification layer plays when the OS fires the alarm while the Flutter
@@ -123,6 +134,21 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        timerCompletedChannelId,
+        timerCompletedChannelName,
+        description: timerCompletedChannelDescription,
+        importance: Importance.high,
+        enableVibration: false,
+        showBadge: false,
+        // Silent: this path is used to surface a missed-timer message,
+        // not to ring the alarm again. The alarm channel above already
+        // produced the sound (or would have) at endAt; replaying it here
+        // would be jarring after the user opened the app.
+        playSound: false,
+      ),
+    );
   }
 
   @override
@@ -187,24 +213,24 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     required String body,
     String? payload,
   }) async {
-    final bool canFsi = await _safeCanUseFullScreenIntent();
+    // Phase 8 background-restore notification: silent heads-up only.
+    // No fullScreenIntent, no alarm sound, no vibration — those belong
+    // to the live ringing path (`schedule()` + AlarmRingingScreen).
     await _plugin.show(
       notificationId,
       title,
       body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
-          timerAlarmChannelId,
-          timerAlarmChannelName,
-          channelDescription: timerAlarmChannelDescription,
-          importance: Importance.max,
-          priority: Priority.max,
-          category: AndroidNotificationCategory.alarm,
-          fullScreenIntent: canFsi,
+          timerCompletedChannelId,
+          timerCompletedChannelName,
+          channelDescription: timerCompletedChannelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          category: AndroidNotificationCategory.reminder,
           visibility: NotificationVisibility.public,
-          enableVibration: true,
-          playSound: true,
-          sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
+          enableVibration: false,
+          playSound: false,
         ),
       ),
       payload: payload,
