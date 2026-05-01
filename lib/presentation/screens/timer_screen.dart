@@ -77,7 +77,15 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
       if (next?.status == TimerStatus.ringing &&
           prev?.status != TimerStatus.ringing) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.push('/alarm-ringing');
+          if (!mounted) return;
+          // The notification tap callback in main() also navigates to
+          // /alarm-ringing on warm launch, which races with this listener.
+          // Skip if we're already there to avoid stacking two copies of
+          // the alarm screen (which would force the user to press Stop
+          // twice).
+          final String here = GoRouterState.of(context).matchedLocation;
+          if (here == '/alarm-ringing') return;
+          context.push('/alarm-ringing');
         });
       }
     });

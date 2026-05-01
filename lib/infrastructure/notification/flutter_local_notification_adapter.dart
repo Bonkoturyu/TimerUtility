@@ -9,16 +9,26 @@ import '../platform/permission_channel.dart';
 
 /// Channel constants. Centralised here so callers don't repeat them.
 ///
-/// The `_v2` suffix on the id is intentional: Android does not let an app
-/// re-configure an existing channel's importance / sound / vibration after
-/// it's been created. To roll out the Phase 6 changes (max importance,
-/// audible default tone, full-screen-intent support) on devices that
-/// already have the v1 channel, we delete the legacy channel on
-/// initialise and recreate under a new id.
-const String _legacyTimerAlarmChannelId = 'timer_alarm';
-const String timerAlarmChannelId = 'timer_alarm_v2';
+/// Channel id bumps (`_v2`, `_v3`, …) are intentional: Android does not let
+/// an app re-configure an existing channel's importance / sound / vibration
+/// after it's been created. Each id bump bundles a delete + recreate so the
+/// new settings actually take effect on devices that already had an older
+/// channel.
+const List<String> _legacyTimerAlarmChannelIds = <String>[
+  'timer_alarm',
+  'timer_alarm_v2',
+];
+const String timerAlarmChannelId = 'timer_alarm_v3';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
+
+/// Resource id of the default alarm sound bundled at
+/// `android/app/src/main/res/raw/alarm_default.mp3`. This is what the
+/// notification layer plays when the OS fires the alarm while the Flutter
+/// engine is asleep (background or cold start). The richer audioplayers
+/// playback driven by `AlarmRingingScreen` layers on top once the user
+/// brings the app to the foreground.
+const String _alarmRawResource = 'alarm_default';
 
 /// Concrete [NotificationScheduler] backed by `flutter_local_notifications`.
 ///
@@ -84,9 +94,11 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    // Drop the legacy v1 channel so users who upgraded from Phase 5/6a get
-    // the new sound + importance settings without needing to clear data.
-    await android?.deleteNotificationChannel(_legacyTimerAlarmChannelId);
+    // Drop legacy channels so users who upgraded from earlier phases pick
+    // up the new sound + importance settings without needing to clear data.
+    for (final String legacyId in _legacyTimerAlarmChannelIds) {
+      await android?.deleteNotificationChannel(legacyId);
+    }
     await android?.createNotificationChannel(
       const AndroidNotificationChannel(
         timerAlarmChannelId,
@@ -95,11 +107,12 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         importance: Importance.max,
         enableVibration: true,
         showBadge: false,
-        // playSound: true so the OS plays the default alarm tone when the
-        // notification fires while the app is in the background or fully
-        // killed. The custom audioplayers playback layered on top by
-        // AlarmRingingScreen still works once the user taps in.
         playSound: true,
+        // Bind the channel to the bundled alarm tone. Without an explicit
+        // sound the OS picks an empty / silent default for category=alarm
+        // on some Pixel builds, which is what we hit during Phase 6
+        // testing.
+        sound: RawResourceAndroidNotificationSound(_alarmRawResource),
       ),
     );
   }
@@ -136,6 +149,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
           visibility: NotificationVisibility.public,
           enableVibration: true,
           playSound: true,
+          sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
         ),
       ),
       androidScheduleMode: mode,

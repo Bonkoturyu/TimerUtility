@@ -20,9 +20,14 @@ Future<void> main() async {
       // Warm-launch path (app already running): navigate to the alarm
       // screen. The payload (timer id) is not used yet — Phase 8 will
       // need it once multiple timers can ring concurrently.
-      if (payload != null) {
-        router.go('/alarm-ringing');
-      }
+      if (payload == null) return;
+      // Skip if we're already on the alarm screen. TimerScreen's ringing
+      // listener also pushes when the timer flips to `ringing`, so without
+      // this guard the screen can end up stacked twice (warm-launch tap
+      // race) and Stop only pops one layer at a time.
+      final RouteMatch last = router.routerDelegate.currentConfiguration.last;
+      if (last.matchedLocation == '/alarm-ringing') return;
+      router.go('/alarm-ringing');
     },
   );
 
