@@ -20,11 +20,81 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 7 スヌーズ機能本体まで完了、2026-05-01）
+- [x] Phase 8「複数タイマー管理 + Drift 永続化」コア実装完了、docs 反映待ち（2026-05-01）
+
+---
+
+## Phase 8 Plan（着手前確認用、2026-05-01）
+
+### 事前確定事項（ユーザー確認済）
+
+| # | 項目 | 決定 |
+| --- | --- | --- |
+| 1 | 同時稼働上限 | **10 本**（`MaxTimerCountExceededException`） |
+| 2 | `/timer` ルート | **一覧画面に置換**、単一画面 (`TimerScreen`) は廃止 |
+| 3 | Provider 構造 | `timerNotifierProvider`（単一）廃止、`timerCollectionNotifierProvider` に統一。docs/state-management.md の `timerNotifierProvider(TimerId)` family 案も廃止（docs 反映時に削除提案） |
+| 4 | 復元時の過去タイマー | `endAt < now` の running は **completed 扱い + `NotificationScheduler.show()` で 1 度だけ通知**。AlarmRingingScreen は起動しない、音も鳴らさない |
+
+### 削除予定ファイル
+
+- `lib/application/timer_notifier.dart` + `.g.dart`
+- `lib/presentation/screens/timer_screen.dart`
+- `test/application/timer_notifier_test.dart`
+- `test/presentation/screens/timer_screen_test.dart`
+
+### 新規作成ファイル
+
+- `lib/infrastructure/database/app_database.dart` (+ `.g.dart`)
+- `lib/infrastructure/database/mappers/timer_mapper.dart`
+- `lib/infrastructure/database/drift_timer_repository.dart`
+- `lib/domain/ports/timer_repository.dart`
+- `lib/domain/timer/timer_collection.dart`
+- `lib/domain/timer/exceptions.dart` (`MaxTimerCountExceededException`, `TimerNotFoundException`)
+- `lib/application/timer_collection_notifier.dart` (+ `.g.dart`)
+- `lib/application/timer_repository_provider.dart`
+- `lib/presentation/screens/timer_list_screen.dart`
+- 各レイヤーに対応する `test/`
+
+### 編集予定ファイル
+
+- `lib/domain/ports/notification_scheduler.dart`: `show(notificationId, title, body, payload)` メソッド追加
+- `lib/infrastructure/notification/flutter_local_notification_adapter.dart`: `show()` 実装
+- `lib/presentation/screens/alarm_ringing_screen.dart`: `_bootstrapRingingIfNeeded` / `_onSnoozeTap` を Collection 参照に書き換え、`Stop` ボタンも Collection.cancel + clear に書き換え
+- `lib/main.dart`: `/timer` を `TimerListScreen` に差し替え、HomeScreen ボタン文言は維持
+- `test/application/alarm_ringing_notifier_test.dart`: 必要に応じて regression 追加
+
+### 影響を受ける既存テスト
+
+- `test/presentation/screens/alarm_ringing_screen_test.dart` の `_SeededTimerNotifier` を `_SeededTimerCollectionNotifier` に置換
+- `test/widget_test.dart`（HomeScreen スモーク）
 
 ---
 
 ## 直近の予定
+
+### Phase 8「複数タイマー管理 + Drift 永続化」完了内容（2026-05-01）
+
+- [x] `lib/domain/ports/timer_repository.dart` 新規（findAll / findById / upsert / delete）
+- [x] `lib/domain/timer/timer_collection.dart` 新規（集約ルート、最大 10 件、add/update/remove）+ 13 テスト
+- [x] `lib/domain/timer/exceptions.dart` 新規（`MaxTimerCountExceededException` / `TimerNotFoundException`）
+- [x] `lib/domain/ports/notification_scheduler.dart` に `show()` 追加（復元時の即時通知用）
+- [x] `lib/infrastructure/database/app_database.dart` 新規（Drift スキーマ、`Timers` テーブル + `forTesting` factory）
+- [x] `lib/infrastructure/database/mappers/timer_mapper.dart` 新規（TimerEntity ⇔ TimerRow / TimersCompanion）+ 8 テスト
+- [x] `lib/infrastructure/database/drift_timer_repository.dart` 新規（in-memory 対応）+ 8 テスト
+- [x] `lib/infrastructure/notification/flutter_local_notification_adapter.dart` に `show()` 実装
+- [x] `lib/application/timer_service_provider.dart` 新規（旧 timer_notifier.dart から TimerService Provider を分離）
+- [x] `lib/application/timer_repository_provider.dart` 新規（main.dart で override）
+- [x] `lib/application/timer_collection_notifier.dart` 新規 + 10 テスト（CRUD / 起動時 DB 復元 / 過去到達タイマーの completed 化 + show 通知 / 200ms ticker）
+- [x] `lib/presentation/screens/timer_list_screen.dart` 新規 + 5 Widget テスト（empty hint / FAB / Start / Delete / FAB disabled at cap 10）
+- [x] `lib/presentation/screens/alarm_ringing_screen.dart` を Collection ベースに書き換え（`findRinging` で対象選択、Stop で `cancel`、snooze で `snooze` 呼び出し）
+- [x] `test/presentation/screens/alarm_ringing_screen_test.dart` を Collection 対応に全面書き換え（in-memory repo 経由でリンギング状態を seed）
+- [x] `lib/main.dart`: AppDatabase + DriftTimerRepository を生成して `timerRepositoryProvider` に override、`/timer` を `TimerListScreen` に差し替え
+- [x] **削除**: `lib/application/timer_notifier.dart` + `.g.dart` / `lib/presentation/screens/timer_screen.dart` / `test/application/timer_notifier_test.dart` / `test/presentation/screens/timer_screen_test.dart`
+- [x] flutter analyze: No issues found
+- [x] flutter test: 180 / 180 passed（既存 162 - 削除分 + 新規 50 強）
+- [x] dart format で整形済み
+- [ ] docs/architecture.md / docs/domain-model.md / docs/state-management.md / docs/adr/0002-use-drift.md への Phase 8 反映 diff 提示（ユーザー確認後にコミット）
+- [ ] 実機検証: 複数タイマー同時稼働 + アプリ再起動後の状態復元 + 過去到達タイマーの completed + ヘッドアップ通知（Auto 範囲外）
 
 ### Phase 7「スヌーズ機能本体」完了内容（2026-05-01）
 
@@ -255,4 +325,4 @@
 
 ---
 
-最終更新日: 2026-05-01（Phase 7 スヌーズ機能本体まで完了、162 テストパス）
+最終更新日: 2026-05-01（Phase 8 複数タイマー + Drift 永続化コア実装完了、180 テストパス、docs 反映待ち）

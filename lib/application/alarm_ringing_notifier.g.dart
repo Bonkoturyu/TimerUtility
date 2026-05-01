@@ -7,7 +7,7 @@ part of 'alarm_ringing_notifier.dart';
 // **************************************************************************
 
 String _$alarmRingingNotifierHash() =>
-    r'08b7661626ac54aa75f5eaf58806bd904caedf9f';
+    r'ff05f53a1c91434ce837d50eeca5bbbb4891142a';
 
 /// Coordinates the alarm ringing experience: tells the [AlarmSoundPlayer]
 /// what to play when a timer reaches `ringing`, and exposes user actions
@@ -16,7 +16,10 @@ String _$alarmRingingNotifierHash() =>
 /// Responsibilities are intentionally narrow per `docs/state-management.md`:
 ///   - manages the currently ringing timer's metadata and player state
 ///   - does NOT modify timer state (TimerNotifier owns that)
-///   - does NOT cancel notifications (NotificationScheduler owns that)
+///   - cancels ONLY the OS notification it is taking over from, so the
+///     bundled-sound notification does not double up with the audioplayers
+///     loop. Other lifecycle (scheduling, cancelAll) stays with
+///     NotificationScheduler / TimerNotifier.
 ///
 /// Phase 5 implements `start` and `stop`. `snoozeRequested` records intent
 /// only — the actual reschedule happens in Phase 7 once `SnoozeCalculator`

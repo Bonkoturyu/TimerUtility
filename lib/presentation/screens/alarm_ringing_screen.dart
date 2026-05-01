@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_ringing_notifier.dart';
-import '../../application/timer_notifier.dart';
+import '../../application/timer_collection_notifier.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
+import '../../domain/timer/timer_entity.dart';
 
 /// Native channel used to release the keyguard-override state set by
 /// Android when this screen was launched via FullScreenIntent. Reuses
@@ -17,20 +18,19 @@ const MethodChannel _permissionChannel = MethodChannel(
   'com.bonkotu.timer/permission',
 );
 
-/// Phase 5 ringing screen. Shown when a timer reaches `ringing` (either
-/// via foreground tick or via tapping the OS notification). Lets the
-/// user dismiss the alarm or request a snooze.
+/// Phase 8 ringing screen. Reads the currently ringing timer from
+/// [TimerCollectionNotifier]. If multiple timers ring concurrently we
+/// service the first one in collection order — Stop / Snooze still
+/// only act on that single entry, so a second ringing timer surfaces
+/// once the user dismisses this one.
 ///
-/// Snooze in Phase 5 is a flag only — actual rescheduling lands in
-/// Phase 7 with `SnoozeCalculator`.
-///
-/// `initState` self-bootstraps `AlarmRingingNotifier.start` whenever the
-/// notifier is still idle on entry. This covers the FSI / cold-start
-/// paths where `TimerNotifier._onTick` either hasn't fired yet (background
-/// → resume race) or never will (cold launch with no in-memory timer
-/// state). Without this fallback the user lands on the ringing screen
-/// after the bundled-sound notification gets cancelled, leaving them in
-/// silence.
+/// `initState` self-bootstraps `AlarmRingingNotifier.start` whenever
+/// the notifier is still idle on entry, covering the FSI / cold-start
+/// paths where the foreground tick path either hasn't fired or doesn't
+/// know which timer fired (cold launch with no in-memory state). When
+/// no ringing timer is found in the collection, we still bootstrap
+/// audio with a synthetic 'unknown' id so the user is never met with
+/// silence on this screen.
 class AlarmRingingScreen extends ConsumerStatefulWidget {
   const AlarmRingingScreen({super.key});
 
@@ -48,14 +48,13 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     });
   }
 
-  /// Ensures audio is playing once we're on this screen. The foreground
-  /// tick path may already have called `start`; in that case the notifier
-  /// is idempotent and returns early.
   void _bootstrapRingingIfNeeded() {
     final ringing = ref.read(alarmRingingNotifierProvider);
     if (ringing.isPlaying) return;
 
-    final entity = ref.read(timerNotifierProvider);
+    final TimerEntity? entity = ref
+        .read(timerCollectionNotifierProvider.notifier)
+        .findRinging();
     final String timerId = entity?.id ?? 'unknown';
     final AlarmSound sound =
         (entity?.soundId == null
@@ -64,8 +63,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
         AlarmSoundCatalog.defaultSound;
     // Cold start may have lost the entity, so we have no notification id
     // to cancel. -1 is harmless: cancel on a non-existent id is a no-op
-    // on Android, and the OS notification has typically already been
-    // dismissed by the time we reach here on the cold-launch path.
+    // on Android.
     final int notificationId = entity?.notificationId ?? -1;
 
     ref
@@ -75,8 +73,8 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ringing = ref.read(alarmRingingNotifierProvider.notifier);
-    final timer = ref.read(timerNotifierProvider.notifier);
+    final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
+    final collection = ref.read(timerCollectionNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Alarm')),
@@ -98,10 +96,14 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                   FilledButton(
                     key: const Key('alarm_stop_button'),
                     onPressed: () async {
-                      await ringing.stop();
-                      // Drop the timer entity so TimerScreen returns to the
-                      // setup view rather than staying in "Time's up" state.
-                      timer.clear();
+                      await ringingNotifier.stop();
+                      // Cancel the ringing timer (if any) so the list
+                      // moves it to `cancelled` and the OS notification
+                      // is taken down.
+                      final TimerEntity? ringing = collection.findRinging();
+                      if (ringing != null) {
+                        collection.cancel(ringing.id);
+                      }
                       if (!context.mounted) return;
                       _leaveAlarmScreen(context);
                     },
@@ -133,11 +135,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     );
   }
 
-  /// Show the 3 / 5 / 10-minute snooze chooser, then arm the timer for
-  /// re-fire. Stops the audioplayers loop synchronously so the user gets
-  /// silence between dismiss and re-fire; AlarmRingingNotifier.start will
-  /// be called again automatically by AlarmRingingScreen's self-bootstrap
-  /// when the rescheduled notification fires.
   Future<void> _onSnoozeTap(BuildContext context) async {
     final int? minutes = await showModalBottomSheet<int>(
       context: context,
@@ -181,29 +178,23 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     if (minutes == null) return;
     if (!context.mounted) return;
 
-    ref.read(timerNotifierProvider.notifier).snooze(minutes);
+    final collection = ref.read(timerCollectionNotifierProvider.notifier);
+    final TimerEntity? ringing = collection.findRinging();
+    if (ringing == null) return;
+    await ref.read(alarmRingingNotifierProvider.notifier).stop();
+    collection.snooze(ringing.id, minutes);
+    if (!context.mounted) return;
     _leaveAlarmScreen(context);
   }
 
-  /// Leaves the alarm screen back to the timer setup view.
+  /// Leaves the alarm screen back to the timer list view.
   ///
-  /// We always `go('/timer')` rather than `pop()`-ing, even when there is
-  /// a back stack: warm-launch from the notification can cause both
-  /// `TimerScreen`'s ringing-listener (which `push`-es) and `main()`'s
-  /// notification tap callback (which `go`-es) to fire, leaving two
-  /// AlarmRingingScreen frames stacked. Popping only one of them would
-  /// strand the user on a stale "Time's up" screen — so we replace the
-  /// whole stack to guarantee the user lands on the preset chooser in
-  /// one tap regardless of how they got here.
-  ///
-  /// Also releases the keyguard-override window flags that Android leaves
-  /// set when the Activity was launched via FullScreenIntent. Without
-  /// this, the recents (■) navigation button stays suppressed for the
-  /// rest of the process lifetime.
+  /// We always `go('/timer')` rather than `pop()`-ing for the same
+  /// reason as Phase 5: warm-launch from notification can stack two
+  /// frames (TimerListScreen ringing listener + main()'s tap callback),
+  /// and we want a single source of truth for "after Stop you land on
+  /// the list view".
   void _leaveAlarmScreen(BuildContext context) {
-    // Fire-and-forget; missing-plugin / platform errors are non-fatal
-    // (the worst outcome is the recents button stays hidden, which the
-    // user can recover from by relaunching the app).
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});

@@ -5,50 +5,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/permission_notifier.dart';
-import '../../application/timer_notifier.dart';
+import '../../application/timer_collection_notifier.dart';
+import '../../application/timer_service_provider.dart';
 import '../../domain/ports/permission_manager.dart';
 import '../../domain/shared/duration_formatter.dart';
+import '../../domain/timer/exceptions.dart';
+import '../../domain/timer/timer_collection.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
 import '../widgets/duration_picker.dart';
 
-/// Phase 3 single-timer screen. No notifications, no sound — those land in
-/// Phase 4 / 5. The screen has two visual modes:
-///   1. Setup: no timer configured (notifier state = null) — shows duration
-///      preset chips. Picking one creates an idle timer.
-///   2. Active: timer present (idle/running/paused/ringing/completed/cancelled)
-///      — shows countdown, primary action button, and Cancel.
-class TimerScreen extends ConsumerStatefulWidget {
-  const TimerScreen({super.key});
+/// Phase 8 multi-timer screen. Replaces the Phase 3 single-timer
+/// screen; reads the entire [TimerCollection] from
+/// [TimerCollectionNotifier] and exposes per-timer controls in a card
+/// list.
+///
+/// FAB opens the existing [DurationPicker]; when the collection is at
+/// the 10-timer cap the FAB is disabled and a SnackBar tells the user
+/// to delete one first.
+class TimerListScreen extends ConsumerStatefulWidget {
+  const TimerListScreen({super.key});
 
   @override
-  ConsumerState<TimerScreen> createState() => _TimerScreenState();
+  ConsumerState<TimerListScreen> createState() => _TimerListScreenState();
 }
 
-class _TimerScreenState extends ConsumerState<TimerScreen> {
-  static const DurationFormatter _formatter = DurationFormatter();
-  static const List<Duration> _presets = <Duration>[
-    Duration(seconds: 5),
-    Duration(seconds: 30),
-    Duration(minutes: 1),
-    Duration(minutes: 3),
-    Duration(minutes: 5),
-    Duration(minutes: 10),
-  ];
-
+class _TimerListScreenState extends ConsumerState<TimerListScreen> {
   Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
-    // Refresh permission state once when entering the screen.
     Future<void>.microtask(
       () => ref.read(permissionNotifierProvider.notifier).refresh(),
     );
   }
 
-  void _ensureTickerForState(TimerEntity? entity) {
-    final shouldRun = entity?.status == TimerStatus.running;
+  void _ensureTickerForState(TimerCollection collection) {
+    final bool shouldRun = collection.runningCount > 0;
     if (shouldRun && _ticker == null) {
       _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) {
         if (mounted) setState(() {});
@@ -68,22 +62,30 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final entity = ref.watch(timerNotifierProvider);
-    _ensureTickerForState(entity);
-    // When the timer flips to ringing for the first time, push the
-    // dedicated alarm screen so the Stop / Snooze controls are bigger
-    // and more obvious. Done as a post-frame callback to avoid
-    // navigating mid-build.
-    ref.listen<TimerEntity?>(timerNotifierProvider, (prev, next) {
-      if (next?.status == TimerStatus.ringing &&
-          prev?.status != TimerStatus.ringing) {
+    final TimerCollection collection = ref.watch(
+      timerCollectionNotifierProvider,
+    );
+    _ensureTickerForState(collection);
+
+    // When any timer flips to `ringing` for the first time, push the
+    // dedicated alarm screen. We compare the previous ringing-count to
+    // the next one to decide whether to navigate so re-renders during
+    // the alarm screen don't re-push.
+    ref.listen<TimerCollection>(timerCollectionNotifierProvider, (
+      TimerCollection? prev,
+      TimerCollection next,
+    ) {
+      final int prevRinging =
+          prev?.all
+              .where((TimerEntity t) => t.status == TimerStatus.ringing)
+              .length ??
+          0;
+      final int nextRinging = next.all
+          .where((TimerEntity t) => t.status == TimerStatus.ringing)
+          .length;
+      if (nextRinging > prevRinging) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          // The notification tap callback in main() also navigates to
-          // /alarm-ringing on warm launch, which races with this listener.
-          // Skip if we're already there to avoid stacking two copies of
-          // the alarm screen (which would force the user to press Stop
-          // twice).
           final String here = GoRouterState.of(context).matchedLocation;
           if (here == '/alarm-ringing') return;
           context.push('/alarm-ringing');
@@ -92,7 +94,7 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Timer')),
+      appBar: AppBar(title: const Text('Timers')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -100,153 +102,161 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
           children: <Widget>[
             const _PermissionBanners(),
             Expanded(
-              child: entity == null
-                  ? _buildSetup(context, ref)
-                  : _buildActive(context, ref, entity),
+              child: collection.isEmpty
+                  ? const _EmptyHint()
+                  : ListView.separated(
+                      itemCount: collection.size,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (BuildContext context, int index) =>
+                          _TimerCard(entity: collection.all[index]),
+                    ),
             ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('timer_list_add_fab'),
+        onPressed: collection.isFull ? null : () => _onAddTap(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Timer'),
+      ),
     );
   }
 
-  Widget _buildSetup(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(timerNotifierProvider.notifier);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Text(
-            'Choose a duration',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 12,
-          runSpacing: 12,
-          children: <Widget>[
-            for (final d in _presets)
-              FilledButton(
-                key: Key('timer_preset_${d.inSeconds}s'),
-                onPressed: () => notifier.create(label: '', duration: d),
-                child: Text(_formatter.formatTimer(d)),
-              ),
-            FilledButton.tonal(
-              key: const Key('timer_preset_custom'),
-              onPressed: () => _openCustomPicker(context, notifier),
-              child: const Text('カスタム'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _openCustomPicker(
-    BuildContext context,
-    TimerNotifier notifier,
-  ) async {
+  Future<void> _onAddTap(BuildContext context) async {
     final Duration? chosen = await showModalBottomSheet<Duration>(
       context: context,
       isScrollControlled: true,
       builder: (_) => const DurationPicker(),
     );
-    if (chosen != null) {
-      notifier.create(label: '', duration: chosen);
+    if (chosen == null) return;
+    if (!context.mounted) return;
+    try {
+      ref
+          .read(timerCollectionNotifierProvider.notifier)
+          .create(label: '', duration: chosen);
+    } on MaxTimerCountExceededException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('上限 ${e.maxSize} 件に達しています')));
     }
   }
+}
 
-  Widget _buildActive(BuildContext context, WidgetRef ref, TimerEntity entity) {
-    final notifier = ref.read(timerNotifierProvider.notifier);
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(32),
+        child: Text(
+          'タイマーがありません。\n右下の「Add Timer」から追加できます。',
+          key: Key('timer_list_empty_hint'),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimerCard extends ConsumerWidget {
+  const _TimerCard({required this.entity});
+
+  final TimerEntity entity;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(timerCollectionNotifierProvider.notifier);
     final liveRemaining = ref.read(timerServiceProvider).remaining(entity);
-    // For non-active statuses, show the configured duration instead of zero.
-    final displayDuration = switch (entity.status) {
+    final Duration display = switch (entity.status) {
       TimerStatus.running || TimerStatus.paused => liveRemaining,
       TimerStatus.idle ||
       TimerStatus.completed ||
       TimerStatus.cancelled => entity.duration,
       TimerStatus.ringing => Duration.zero,
     };
+    const DurationFormatter formatter = DurationFormatter();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        const SizedBox(height: 24),
-        Center(
-          child: Text(
-            entity.status == TimerStatus.ringing
-                ? "Time's up!"
-                : _formatter.formatTimer(displayDuration),
-            key: const Key('timer_display'),
-            style: const TextStyle(
-              fontSize: 56,
-              fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: Text(
-            'Status: ${entity.status.name}',
-            key: const Key('timer_status_label'),
-          ),
-        ),
-        const SizedBox(height: 32),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Card(
+      key: Key('timer_card_${entity.id}'),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            _buildPrimaryButton(entity, notifier),
-            OutlinedButton(
-              key: const Key('timer_cancel_button'),
-              onPressed: notifier.clear,
-              child: const Text('Back'),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    entity.status == TimerStatus.ringing
+                        ? "Time's up!"
+                        : formatter.formatTimer(display),
+                    key: Key('timer_display_${entity.id}'),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                Chip(label: Text(entity.status.name)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                _buildPrimaryButton(notifier),
+                OutlinedButton(
+                  key: Key('timer_card_${entity.id}_delete'),
+                  onPressed: () => notifier.delete(entity.id),
+                  child: const Text('Delete'),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPrimaryButton(TimerEntity entity, TimerNotifier notifier) {
+  Widget _buildPrimaryButton(TimerCollectionNotifier notifier) {
     return switch (entity.status) {
       TimerStatus.idle => FilledButton(
-        key: const Key('timer_start_button'),
-        onPressed: notifier.start,
+        key: Key('timer_card_${entity.id}_start'),
+        onPressed: () => notifier.start(entity.id),
         child: const Text('Start'),
       ),
       TimerStatus.running => FilledButton(
-        key: const Key('timer_pause_button'),
-        onPressed: notifier.pause,
+        key: Key('timer_card_${entity.id}_pause'),
+        onPressed: () => notifier.pause(entity.id),
         child: const Text('Pause'),
       ),
       TimerStatus.paused => FilledButton(
-        key: const Key('timer_resume_button'),
-        onPressed: notifier.resume,
+        key: Key('timer_card_${entity.id}_resume'),
+        onPressed: () => notifier.resume(entity.id),
         child: const Text('Resume'),
       ),
       TimerStatus.ringing => FilledButton(
-        key: const Key('timer_dismiss_button'),
-        onPressed: notifier.cancel,
+        key: Key('timer_card_${entity.id}_dismiss'),
+        onPressed: () => notifier.cancel(entity.id),
         child: const Text('Dismiss'),
       ),
       TimerStatus.completed || TimerStatus.cancelled => FilledButton(
-        key: const Key('timer_reset_button'),
-        onPressed: notifier.reset,
+        key: Key('timer_card_${entity.id}_reset'),
+        onPressed: () => notifier.reset(entity.id),
         child: const Text('Reset'),
       ),
     };
   }
 }
 
-/// Renders up to two stacked banners depending on permission state:
-///   - POST_NOTIFICATIONS denied → warning (timer cannot show notifications)
-///   - SCHEDULE_EXACT_ALARM denied → info (alarm may fire late under Doze)
-///
-/// Each banner offers a primary action (request) and, when the OS marks the
-/// permission permanently denied, an "Open settings" fallback.
+/// Same banner stack as the Phase 3 screen, copied because the Phase 3
+/// screen is being deleted as part of Phase 8 cleanup. Future home is
+/// a shared `presentation/widgets/permission_banners.dart` whenever a
+/// third caller appears.
 class _PermissionBanners extends ConsumerWidget {
   const _PermissionBanners();
 

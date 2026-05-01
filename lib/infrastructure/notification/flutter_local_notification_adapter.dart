@@ -181,6 +181,37 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
   }
 
   @override
+  Future<void> show({
+    required int notificationId,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    final bool canFsi = await _safeCanUseFullScreenIntent();
+    await _plugin.show(
+      notificationId,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          timerAlarmChannelId,
+          timerAlarmChannelName,
+          channelDescription: timerAlarmChannelDescription,
+          importance: Importance.max,
+          priority: Priority.max,
+          category: AndroidNotificationCategory.alarm,
+          fullScreenIntent: canFsi,
+          visibility: NotificationVisibility.public,
+          enableVibration: true,
+          playSound: true,
+          sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
+        ),
+      ),
+      payload: payload,
+    );
+  }
+
+  @override
   Future<void> cancel(int notificationId) => _plugin.cancel(notificationId);
 
   @override
