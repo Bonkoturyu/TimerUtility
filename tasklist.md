@@ -20,11 +20,26 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（カスタム時間タイマー UI 実装完了、2026-05-01）
+- なし（Phase 7 スヌーズ機能本体まで完了、2026-05-01）
 
 ---
 
 ## 直近の予定
+
+### Phase 7「スヌーズ機能本体」完了内容（2026-05-01）
+
+- [x] `lib/domain/timer/snooze_calculator.dart` 新規（Pure Dart、Clock 注入、3/5/10 分プリセット限定 + ArgumentError、Set 定数 `allowedMinutes`）
+- [x] `test/domain/timer/snooze_calculator_test.dart` 新規（8 シナリオ: 3/5/10 分の正常 + 日付跨ぎ + プリセット外 3 種 + allowedMinutes 検証）
+- [x] `lib/domain/timer/timer_service.dart` に `snooze(entity, snoozeMinutes)` 追加（ringing → running、endAt = now + N 分、duration 不変）
+- [x] `test/domain/timer/timer_service_test.dart` にスヌーズ 9 シナリオ追加
+- [x] `lib/application/timer_notifier.dart` に `snooze(int)` 追加（state 更新 + ticker 再開 + NotificationScheduler.schedule + AlarmRingingNotifier.stop で audioplayers 停止）
+- [x] `test/application/timer_notifier_test.dart` にスヌーズ 3 シナリオ追加（5 分 re-arm + scheduler verify + StateError）
+- [x] `lib/presentation/screens/alarm_ringing_screen.dart` のスヌーズボタンをモーダル + 3/5/10 分選択 + `TimerNotifier.snooze` 呼び出しに置き換え（snooze_calculator import）
+- [x] `test/presentation/screens/alarm_ringing_screen_test.dart` 旧スヌーズテストを 3 つの新シナリオに置き換え（チョイスシート表示 / 5 分選択で running + 画面遷移 / キャンセルで現状維持）。`_SeededTimerNotifier` で ringing 状態をシード、`super.build()` で _ticker dispose を継承
+- [x] flutter analyze: No issues found
+- [x] flutter test: 162 / 162 passed（既存 140 + 新規 22）
+- [x] dart format 整形済み
+- [ ] 実機検証: ringing → snooze 5 分 → 5 分後に再鳴動 + 通知音 + AlarmRingingScreen 自動表示（Auto 範囲外）
 
 ### カスタム時間タイマー UI 完了内容（2026-05-01）
 
@@ -240,4 +255,4 @@
 
 ---
 
-最終更新日: 2026-05-01（カスタム時間タイマー UI 実装完了）
+最終更新日: 2026-05-01（Phase 7 スヌーズ機能本体まで完了、162 テストパス）
