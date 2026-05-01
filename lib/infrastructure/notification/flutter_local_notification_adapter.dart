@@ -17,8 +17,9 @@ import '../platform/permission_channel.dart';
 const List<String> _legacyTimerAlarmChannelIds = <String>[
   'timer_alarm',
   'timer_alarm_v2',
+  'timer_alarm_v3',
 ];
-const String timerAlarmChannelId = 'timer_alarm_v3';
+const String timerAlarmChannelId = 'timer_alarm_v4';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
@@ -113,6 +114,13 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         // on some Pixel builds, which is what we hit during Phase 6
         // testing.
         sound: RawResourceAndroidNotificationSound(_alarmRawResource),
+        // Route the channel through the alarm audio stream rather than
+        // the default notification stream. This is what makes Pixel /
+        // Android 16 actually play the tone when AlarmManager fires the
+        // notification from a killed-app state. Without it the Channel
+        // is silent in the cold-launch path even though it works in the
+        // foreground / background paths.
+        audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
   }
