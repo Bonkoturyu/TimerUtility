@@ -118,3 +118,30 @@
 - `docs/architecture.md`: Repository の配置と依存方向
 - `docs/domain-model.md`: Entity と DB スキーマのマッピング
 - `docs/testing-strategy.md`: in-memory DB でのテスト方法
+
+---
+
+## Phase 8 Implementation Note (2026-05-01)
+
+初版スキーマは `Timers` テーブル 1 つのみ。`schemaVersion = 1`。
+
+- **テーブル定義**: `lib/infrastructure/database/app_database.dart`
+  （`@DriftDatabase(tables: [Timers])`）
+- **Mapper**: `lib/infrastructure/database/mappers/timer_mapper.dart`
+  （`TimerEntity` ⇔ `TimerRow` / `TimersCompanion` の双方向変換）
+- **Repository 実装**: `lib/infrastructure/database/drift_timer_repository.dart`
+  （`upsert` は `insertOnConflictUpdate`、`findById` は `getSingleOrNull`）
+- **本番接続**: `main()` で `AppDatabase()` (`drift_flutter` の `driftDatabase(name: 'timer_utility')`)
+  を生成、`DriftTimerRepository(database)` でラップして
+  `timerRepositoryProvider.overrideWithValue(...)`
+- **テスト接続**: `AppDatabase.forTesting(NativeDatabase.memory())` で
+  in-memory SQLite を起動。Mapper / Repository / TimerCollectionNotifier
+  の Unit Test に使用
+- **エンコーディング**:
+  - `DateTime` → `INTEGER` (UTC epoch ms)。DST / ロケール変更で値が動かない
+  - `Duration` → `INTEGER` (ms)
+  - `TimerStatus` → `TEXT` (`enum.name`)。enum 値追加に対し前方互換、
+    未知の name は `cancelled` フォールバック
+- **次のスキーマ Bump タイミング**: Preset (Phase 9) / Alarm (Phase 9.5) /
+  ClockLocation (Phase 10.5) のテーブル追加時。`schemaVersion` を bump し
+  `migration` を書く。当面は単一テーブルのため migration コードは未整備。

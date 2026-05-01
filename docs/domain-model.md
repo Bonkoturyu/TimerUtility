@@ -255,32 +255,71 @@ TimerIdle ──start()──▶ TimerRunning ──(時刻到達)──▶ Time
 - `completed.start()` → `StateError`（再利用したい場合は新規作成）
 - `cancelled.<any>()` → `StateError`
 
-### TimerCollection（集約ルート）
+### TimerCollection（集約ルート、Phase 8 で実装済み）
 
-複数タイマーを管理する集約。
+複数タイマーを管理する純値型の集約ルート（Pure Dart）。
+`lib/domain/timer/timer_collection.dart`
 
 責務:
-- タイマーの追加 / 削除 / 取得
-- 同時稼働数の制約管理
-- 全タイマーの状態スナップショット提供
+
+- タイマーの追加 / 更新 / 削除 / 取得
+- 同時稼働数の制約管理（status 区別なくサイズ上限）
+- 全タイマーのスナップショット提供（変更操作はすべて新しい
+  `TimerCollection` を返す）
 
 ドメインルール:
-- 同時稼働（`running` + `paused` + `ringing`）の上限: **10 本**
+
+- 全エントリ数の上限: **10 本**（`maxSize` 定数）
 - 上限超過時は `MaxTimerCountExceededException` を throw
-- `completed` / `cancelled` はカウント外
+- 未知の id への `update` / `remove` は `TimerNotFoundException`
+- `add` で既存 id を渡したら暗黙的に `update` 動作（Notifier の DB 復元
+  ループ簡略化のため）
 
 メソッド:
 
 ```
 TimerCollection {
-  add(TimerEntity)
-  remove(TimerId)
-  get(TimerId): TimerEntity?
-  activeCount(): int             // running + paused + ringing
-  ringingTimers(): List<TimerEntity>
-  snapshotAt(DateTime now): List<TimerSnapshot>  // 残り時間を含む表示用
+  TimerCollection.empty()
+  TimerCollection.fromList(List<TimerEntity>)
+
+  size: int
+  isEmpty: bool
+  isFull: bool                       // size >= maxSize
+  all: List<TimerEntity>             // unmodifiable view
+  runningCount: int                  // status == running の数
+
+  findById(String): TimerEntity?
+  add(TimerEntity): TimerCollection      // throws MaxTimerCountExceeded
+  update(TimerEntity): TimerCollection   // throws TimerNotFound
+  remove(String): TimerCollection        // throws TimerNotFound
 }
 ```
+
+### TimerEntity の永続化マッピング（Phase 8、Drift `Timers` テーブル）
+
+`infrastructure/database/app_database.dart` の `Timers` テーブルおよび
+`infrastructure/database/mappers/timer_mapper.dart` で双方向変換する。
+
+| ドメインフィールド | 列名 | 型 | 備考 |
+| --- | --- | --- | --- |
+| `id` | `id` | `TEXT` (PK) | UUID v4 |
+| `notificationId` | `notificationId` | `INTEGER` | 31bit 非負 |
+| `label` | `label` | `TEXT` | <= 50 文字 |
+| `duration` | `durationMs` | `INTEGER` | ミリ秒 |
+| `endAt` | `endAtUtcMs` | `INTEGER?` | UTC epoch ms |
+| `pausedRemaining` | `pausedRemainingMs` | `INTEGER?` | ミリ秒 |
+| `status` | `status` | `TEXT` | `TimerStatus.name` |
+| `soundId` | `soundId` | `TEXT?` | カタログ id |
+| `createdAt` | `createdAtUtcMs` | `INTEGER` | UTC epoch ms |
+
+エンコーディング方針:
+
+- `DateTime` は UTC epoch ms に正規化（DST やロケール変更で値が動かない
+  ように）
+- `Duration` は ms（Drift に専用列なし）
+- `TimerStatus` は `name` 文字列（enum 値の追加に対し前方互換）
+- 未知の status 文字列は `TimerStatus.cancelled` にフォールバック
+  （将来 enum を増やしたとき既存 DB を壊さない）
 
 ---
 
@@ -639,4 +678,4 @@ Mapper クラスを `infrastructure/database/mappers/` に配置。
 
 ---
 
-最終更新日: 2026-05-01（Phase 10.5: Clock Aggregate を追加 + ClockLocationId / Clock 関連例外）
+最終更新日: 2026-05-01（Phase 8 完了反映: TimerCollection を実装済みに更新 + TimerEntity の Drift 永続化マッピングを追加）

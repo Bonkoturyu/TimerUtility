@@ -63,7 +63,8 @@ lib/
 │   │   ├── alarm_sound.dart                # Phase 5 で実装済み
 │   │   ├── alarm_sound_catalog.dart        # Phase 5 で実装済み
 │   │   ├── snooze_calculator.dart          # Phase 7 で実装済み
-│   │   ├── timer_collection.dart           # Phase 8 予定
+│   │   ├── timer_collection.dart           # Phase 8 で実装済み（最大 10 本、集約ルート）
+│   │   ├── exceptions.dart                 # Phase 8 で実装済み（MaxTimerCountExceededException 等）
 │   │   └── preset.dart                     # Phase 9 予定
 │   ├── clock/                              # Phase 10.5 予定（世界時計）
 │   │   ├── clock_location.dart
@@ -73,10 +74,10 @@ lib/
 │   ├── shared/
 │   │   └── duration_formatter.dart
 │   └── ports/
-│       ├── notification_scheduler.dart     # Phase 4 で実装済み
+│       ├── notification_scheduler.dart     # Phase 4 で実装済み（Phase 8 で show() 追加）
 │       ├── permission_manager.dart         # Phase 4 で実装済み
 │       ├── alarm_sound_player.dart         # Phase 5 で実装済み
-│       ├── timer_repository.dart           # Phase 8 予定
+│       ├── timer_repository.dart           # Phase 8 で実装済み
 │       ├── preset_repository.dart          # Phase 9 予定
 │       ├── clock_location_repository.dart  # Phase 10.5 予定
 │       └── location_detector.dart          # Phase 10.5 予定（GPS → IANA TZ）
@@ -95,20 +96,24 @@ lib/
 │   ├── clock/                                       # Phase 10.5 予定
 │   │   └── timezone_catalog.dart                    # 主要都市プリセット + 国コード → 代表 TZ マップ
 │   └── database/
-│       ├── app_database.dart                        # Phase 8 予定
-│       ├── drift_timer_repository.dart              # Phase 8 予定
+│       ├── app_database.dart                        # Phase 8 で実装済み（@DriftDatabase + Timers テーブル）
+│       ├── app_database.g.dart                      # 自動生成
+│       ├── drift_timer_repository.dart              # Phase 8 で実装済み
+│       ├── mappers/
+│       │   └── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
 │       ├── drift_preset_repository.dart             # Phase 9 予定
 │       └── drift_clock_location_repository.dart     # Phase 10.5 予定
 │
 ├── application/                  # Riverpod Providers
 │   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
 │   ├── stopwatch_notifier.dart
-│   ├── timer_notifier.dart
+│   ├── timer_service_provider.dart           # Phase 8 で分離済み（旧 timer_notifier.dart から）
+│   ├── timer_repository_provider.dart        # Phase 8 で実装済み（main.dart で override）
+│   ├── timer_collection_notifier.dart        # Phase 8 で実装済み（複数タイマー、起動時 DB 復元）
 │   ├── notification_scheduler_provider.dart  # Phase 4 で実装済み
 │   ├── permission_notifier.dart              # Phase 4 で実装済み
 │   ├── alarm_sound_player_provider.dart      # Phase 5 で実装済み
 │   ├── alarm_ringing_notifier.dart           # Phase 5 で実装済み
-│   ├── timer_collection_notifier.dart        # Phase 8 予定
 │   ├── preset_notifier.dart                  # Phase 9 予定
 │   ├── clock_collection_notifier.dart        # Phase 10.5 予定
 │   ├── location_detector_provider.dart       # Phase 10.5 予定
@@ -118,17 +123,14 @@ lib/
 ├── presentation/
 │   ├── screens/
 │   │   ├── stopwatch_screen.dart
-│   │   ├── timer_screen.dart                # Phase 3 で実装済み（Phase 8 で list 化予定）
-│   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み
-│   │   ├── timer_list_screen.dart           # Phase 8 予定
-│   │   ├── timer_create_screen.dart         # Phase 8 予定
+│   │   ├── timer_list_screen.dart           # Phase 8 で実装済み（Phase 3 の単一 timer_screen を置換）
+│   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み（Phase 8 で Collection 参照に書き換え）
 │   │   ├── preset_manage_screen.dart        # Phase 9 予定
 │   │   ├── clock_screen.dart                # Phase 10.5 予定（PageView でデザイン切替）
 │   │   └── clock_location_picker_screen.dart # Phase 10.5 予定
 │   ├── widgets/
 │   │   ├── lap_list.dart
-│   │   ├── timer_card.dart
-│   │   ├── duration_picker.dart
+│   │   ├── duration_picker.dart             # Phase 7 で実装済み
 │   │   ├── analog_clock_widget.dart         # Phase 10.5 予定（CustomPainter）
 │   │   ├── digital_clock_widget.dart        # Phase 10.5 予定
 │   │   ├── clock_design_a.dart              # Phase 10.5 予定（PageView 1 ページ目）
@@ -413,4 +415,4 @@ iOS 移植時の追加コストは最小:
 
 ---
 
-最終更新日: 2026-05-01（Phase 10.5 世界時計のディレクトリ構造を追記、Phase 7 完了反映、iOS 親和性メモ追加）
+最終更新日: 2026-05-01（Phase 8 完了反映: infrastructure/database/ + timer_collection_notifier 等を実装済みに更新、timer_screen は timer_list_screen に置換）
