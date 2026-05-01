@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:uuid/uuid.dart';
 
 import 'notification_id_generator.dart';
+import 'snooze_calculator.dart';
 import 'timer_entity.dart';
 import 'timer_status.dart';
 
@@ -19,14 +20,17 @@ class TimerService {
     required Clock clock,
     String Function()? idGenerator,
     NotificationIdGenerator? notificationIdGenerator,
+    SnoozeCalculator? snoozeCalculator,
   }) : _clock = clock,
        _idGenerator = idGenerator ?? _defaultIdGenerator,
        _notificationIdGenerator =
-           notificationIdGenerator ?? const NotificationIdGenerator();
+           notificationIdGenerator ?? const NotificationIdGenerator(),
+       _snoozeCalculator = snoozeCalculator ?? SnoozeCalculator(clock: clock);
 
   final Clock _clock;
   final String Function() _idGenerator;
   final NotificationIdGenerator _notificationIdGenerator;
+  final SnoozeCalculator _snoozeCalculator;
 
   static const Duration maxDuration = Duration(hours: 99);
   static const int maxLabelLength = 50;
@@ -152,6 +156,27 @@ class TimerService {
       );
     }
     return entity;
+  }
+
+  /// Snooze a `ringing` timer for [snoozeMinutes] more minutes.
+  ///
+  /// Transitions the entity back to `running` with `endAt = now + N min`.
+  /// The original `duration` is preserved untouched, so a later `reset`
+  /// still returns the timer to its originally-configured length.
+  ///
+  /// Throws [StateError] when called from any state other than `ringing`,
+  /// and [ArgumentError] (via [SnoozeCalculator]) for snoozeMinutes
+  /// outside `{3, 5, 10}`.
+  TimerEntity snooze(TimerEntity entity, int snoozeMinutes) {
+    if (entity.status != TimerStatus.ringing) {
+      throw StateError('Cannot snooze from ${entity.status}');
+    }
+    final newEndAt = _snoozeCalculator.snoozeUntil(snoozeMinutes);
+    return entity.copyWith(
+      endAt: newEndAt,
+      pausedRemaining: null,
+      status: TimerStatus.running,
+    );
   }
 
   /// Reset a `completed` or `cancelled` timer back to `idle`, preserving the

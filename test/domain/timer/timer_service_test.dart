@@ -439,4 +439,110 @@ void main() {
       );
     });
   });
+
+  group('TimerService.snooze', () {
+    test('ringing から 5 分スヌーズで running 化し endAt が now + 5 分になる', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final ringing = svc
+          .createIdle(label: '', duration: const Duration(seconds: 5))
+          .copyWith(status: TimerStatus.ringing);
+
+      final snoozed = svc.snooze(ringing, 5);
+
+      expect(snoozed.status, TimerStatus.running);
+      expect(snoozed.endAt, DateTime(2026, 5, 1, 7, 35));
+      expect(snoozed.pausedRemaining, isNull);
+    });
+
+    test('スヌーズ後も元の duration は変わらない（reset で元に戻せる）', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final ringing = svc
+          .createIdle(label: '', duration: const Duration(seconds: 30))
+          .copyWith(status: TimerStatus.ringing);
+
+      final snoozed = svc.snooze(ringing, 3);
+
+      expect(snoozed.duration, const Duration(seconds: 30));
+    });
+
+    test('スヌーズ後の remaining が指定分後の残り時間と一致する', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final ringing = svc
+          .createIdle(label: '', duration: const Duration(seconds: 5))
+          .copyWith(status: TimerStatus.ringing);
+
+      final snoozed = svc.snooze(ringing, 10);
+
+      expect(svc.remaining(snoozed), const Duration(minutes: 10));
+    });
+
+    test('idle からのスヌーズは StateError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final idle = svc.createIdle(
+        label: '',
+        duration: const Duration(seconds: 5),
+      );
+
+      expect(() => svc.snooze(idle, 5), throwsStateError);
+    });
+
+    test('running からのスヌーズは StateError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final running = svc.start(
+        svc.createIdle(label: '', duration: const Duration(seconds: 5)),
+      );
+
+      expect(() => svc.snooze(running, 5), throwsStateError);
+    });
+
+    test('paused からのスヌーズは StateError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final running = svc.start(
+        svc.createIdle(label: '', duration: const Duration(seconds: 5)),
+      );
+      final paused = svc.pause(running);
+
+      expect(() => svc.snooze(paused, 5), throwsStateError);
+    });
+
+    test('completed からのスヌーズは StateError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final idle = svc.createIdle(
+        label: '',
+        duration: const Duration(seconds: 5),
+      );
+      final completed = idle.copyWith(status: TimerStatus.completed);
+
+      expect(() => svc.snooze(completed, 5), throwsStateError);
+    });
+
+    test('cancelled からのスヌーズは StateError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final idle = svc.createIdle(
+        label: '',
+        duration: const Duration(seconds: 5),
+      );
+      final cancelled = svc.cancel(idle);
+
+      expect(() => svc.snooze(cancelled, 5), throwsStateError);
+    });
+
+    test('プリセット外の分数（4 分）は ArgumentError', () {
+      final now = _MutableNow(DateTime(2026, 5, 1, 7, 30));
+      final svc = _service(now);
+      final ringing = svc
+          .createIdle(label: '', duration: const Duration(seconds: 5))
+          .copyWith(status: TimerStatus.ringing);
+
+      expect(() => svc.snooze(ringing, 4), throwsArgumentError);
+    });
+  });
 }

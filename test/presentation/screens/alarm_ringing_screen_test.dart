@@ -13,6 +13,8 @@ import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
+import 'package:timer_utility/domain/timer/timer_entity.dart';
+import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
 
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
@@ -194,40 +196,148 @@ void main() {
       expect(find.byType(AlarmRingingScreen), findsNothing);
     });
 
+    testWidgets('Snooze button opens 3/5/10-minute chooser sheet', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(_snoozeHarness(player));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('alarm_snooze_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('スヌーズ時間を選択'), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_choice_3m')), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_choice_5m')), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_choice_10m')), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_cancel')), findsOneWidget);
+    });
+
     testWidgets(
-      'Snooze button flips snoozeRequested, stops audio, clears the timer',
+      'selecting 5 minutes snoozes the timer and leaves the alarm screen',
       (WidgetTester tester) async {
         final player = _StubAlarmSoundPlayer();
-        await tester.pumpWidget(_harness(player));
+        await tester.pumpWidget(_snoozeHarness(player));
         await tester.pumpAndSettle();
 
         final BuildContext context = tester.element(
           find.byType(AlarmRingingScreen),
         );
         final container = ProviderScope.containerOf(context);
-        container
-            .read(timerNotifierProvider.notifier)
-            .create(label: '', duration: const Duration(seconds: 5));
-        await container
-            .read(alarmRingingNotifierProvider.notifier)
-            .start(
-              timerId: 't-1',
-              sound: AlarmSoundCatalog.defaultSound,
-              notificationId: 1,
-            );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const Key('alarm_snooze_button')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('alarm_snooze_choice_5m')));
+        await tester.pumpAndSettle();
 
-        final ringing = container.read(alarmRingingNotifierProvider);
-        expect(ringing.snoozeRequested, isTrue);
-        expect(ringing.isPlaying, isFalse);
-        expect(player.stopCalls, greaterThanOrEqualTo(1));
-        expect(container.read(timerNotifierProvider), isNull);
+        // Timer transitioned ringing → running with the snoozed endAt.
+        final entity = container.read(timerNotifierProvider)!;
+        expect(entity.status, TimerStatus.running);
+        expect(entity.endAt, isNotNull);
+        // No longer on the alarm screen — replaced with /timer stub.
         expect(find.text('timer-stub'), findsOneWidget);
         expect(find.byType(AlarmRingingScreen), findsNothing);
       },
     );
+
+    testWidgets(
+      'cancelling the snooze chooser keeps the alarm screen and timer ringing',
+      (WidgetTester tester) async {
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_snoozeHarness(player));
+        await tester.pumpAndSettle();
+
+        final BuildContext context = tester.element(
+          find.byType(AlarmRingingScreen),
+        );
+        final container = ProviderScope.containerOf(context);
+
+        await tester.tap(find.byKey(const Key('alarm_snooze_button')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('alarm_snooze_cancel')));
+        await tester.pumpAndSettle();
+
+        // Sheet closed, but the alarm screen stays and the timer remains
+        // ringing.
+        expect(find.text('スヌーズ時間を選択'), findsNothing);
+        expect(find.byType(AlarmRingingScreen), findsOneWidget);
+        expect(
+          container.read(timerNotifierProvider)!.status,
+          TimerStatus.ringing,
+        );
+      },
+    );
   });
+}
+
+/// Harness for snooze flow tests: seeds TimerNotifier with a ringing
+/// TimerEntity so the user-facing snooze button has something to act on
+/// without requiring fake_async for ticker-driven ringing transitions.
+Widget _snoozeHarness(_StubAlarmSoundPlayer player) {
+  final scheduler = _MockNotificationScheduler();
+  when(
+    () => scheduler.schedule(
+      notificationId: any(named: 'notificationId'),
+      fireAt: any(named: 'fireAt'),
+      title: any(named: 'title'),
+      body: any(named: 'body'),
+      exact: any(named: 'exact'),
+      payload: any(named: 'payload'),
+    ),
+  ).thenAnswer((_) async {});
+  when(() => scheduler.cancel(any())).thenAnswer((_) async {});
+  when(() => scheduler.cancelAll()).thenAnswer((_) async {});
+
+  final fixedNow = DateTime(2026, 5, 1, 7, 30);
+  final ringing = TimerEntity(
+    id: 'test-id',
+    notificationId: 42,
+    label: '',
+    duration: const Duration(seconds: 5),
+    endAt: null,
+    pausedRemaining: null,
+    status: TimerStatus.ringing,
+    createdAt: fixedNow,
+  );
+
+  final router = GoRouter(
+    initialLocation: '/alarm-ringing',
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/timer',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('timer-stub')),
+      ),
+      GoRoute(
+        path: '/alarm-ringing',
+        builder: (BuildContext context, GoRouterState state) =>
+            const AlarmRingingScreen(),
+      ),
+    ],
+  );
+
+  return ProviderScope(
+    overrides: <Override>[
+      alarmSoundPlayerProvider.overrideWithValue(player),
+      clockProvider.overrideWithValue(Clock.fixed(fixedNow)),
+      notificationSchedulerProvider.overrideWithValue(scheduler),
+      timerNotifierProvider.overrideWith(() => _SeededTimerNotifier(ringing)),
+    ],
+    child: MaterialApp.router(routerConfig: router),
+  );
+}
+
+/// Seeds the TimerNotifier state with a pre-built entity. We still call
+/// `super.build()` so the parent's `ref.onDispose(_stopTicker)` runs and
+/// any snooze-spawned Timer.periodic gets cancelled at widget teardown
+/// (otherwise flutter_test fails the test for a leaked timer).
+class _SeededTimerNotifier extends TimerNotifier {
+  _SeededTimerNotifier(this._seed);
+  final TimerEntity _seed;
+
+  @override
+  TimerEntity? build() {
+    super.build();
+    return _seed;
+  }
 }

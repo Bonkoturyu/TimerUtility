@@ -299,5 +299,80 @@ void main() {
         );
       });
     });
+
+    test('snooze(5) re-arms a ringing timer and re-fires after 5 minutes', () {
+      _runWithFakeTime((async, container, now, scheduler) {
+        final notifier = container.read(timerNotifierProvider.notifier);
+        notifier.create(label: 'x', duration: const Duration(seconds: 5));
+        notifier.start();
+
+        // Drive to ringing.
+        _advance(async, now, const Duration(seconds: 6));
+        expect(
+          container.read(timerNotifierProvider)!.status,
+          TimerStatus.ringing,
+        );
+
+        notifier.snooze(5);
+        expect(
+          container.read(timerNotifierProvider)!.status,
+          TimerStatus.running,
+        );
+        expect(
+          container.read(timerNotifierProvider)!.endAt,
+          // ringing happened at t=6s; snooze() runs immediately after, so
+          // the new endAt is now + 5 min = 12:00:06 + 5min = 12:05:06.
+          DateTime(2026, 1, 1, 12, 5, 6),
+        );
+
+        // Just before re-fire: still running.
+        _advance(async, now, const Duration(minutes: 4, seconds: 59));
+        expect(
+          container.read(timerNotifierProvider)!.status,
+          TimerStatus.running,
+        );
+
+        // Past the new endAt: re-rings.
+        _advance(async, now, const Duration(seconds: 2));
+        expect(
+          container.read(timerNotifierProvider)!.status,
+          TimerStatus.ringing,
+        );
+      });
+    });
+
+    test('snooze reschedules the OS notification with the new endAt', () {
+      _runWithFakeTime((async, container, now, scheduler) {
+        final notifier = container.read(timerNotifierProvider.notifier);
+        notifier.create(label: 'x', duration: const Duration(seconds: 5));
+        notifier.start();
+        _advance(async, now, const Duration(seconds: 6));
+        // ringing reached
+        clearInteractions(scheduler);
+
+        notifier.snooze(3);
+
+        // Verify schedule was called once with the snoozed endAt.
+        verify(
+          () => scheduler.schedule(
+            notificationId: any(named: 'notificationId'),
+            fireAt: DateTime(2026, 1, 1, 12, 3, 6),
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            exact: any(named: 'exact'),
+            payload: any(named: 'payload'),
+          ),
+        ).called(1);
+      });
+    });
+
+    test('snooze without a current timer throws StateError', () {
+      _runWithFakeTime((async, container, now, scheduler) {
+        expect(
+          () => container.read(timerNotifierProvider.notifier).snooze(5),
+          throwsStateError,
+        );
+      });
+    });
   });
 }

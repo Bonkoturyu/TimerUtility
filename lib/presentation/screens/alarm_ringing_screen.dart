@@ -7,6 +7,7 @@ import '../../application/alarm_ringing_notifier.dart';
 import '../../application/timer_notifier.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
+import '../../domain/timer/snooze_calculator.dart';
 
 /// Native channel used to release the keyguard-override state set by
 /// Android when this screen was launched via FullScreenIntent. Reuses
@@ -114,14 +115,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                   ),
                   OutlinedButton(
                     key: const Key('alarm_snooze_button'),
-                    onPressed: () async {
-                      await ringing.snoozeRequested();
-                      // Phase 5 snooze is intent-only; treat dismissal the
-                      // same as Stop until Phase 7 wires up rescheduling.
-                      timer.clear();
-                      if (!context.mounted) return;
-                      _leaveAlarmScreen(context);
-                    },
+                    onPressed: () => _onSnoozeTap(context),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 24,
@@ -137,6 +131,58 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
         ),
       ),
     );
+  }
+
+  /// Show the 3 / 5 / 10-minute snooze chooser, then arm the timer for
+  /// re-fire. Stops the audioplayers loop synchronously so the user gets
+  /// silence between dismiss and re-fire; AlarmRingingNotifier.start will
+  /// be called again automatically by AlarmRingingScreen's self-bootstrap
+  /// when the rescheduled notification fires.
+  Future<void> _onSnoozeTap(BuildContext context) async {
+    final int? minutes = await showModalBottomSheet<int>(
+      context: context,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'スヌーズ時間を選択',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              for (final int m in SnoozeCalculator.allowedMinutes) ...<Widget>[
+                FilledButton(
+                  key: Key('alarm_snooze_choice_${m}m'),
+                  onPressed: () => Navigator.of(sheetContext).pop(m),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text('$m 分', style: const TextStyle(fontSize: 18)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              TextButton(
+                key: const Key('alarm_snooze_cancel'),
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                child: const Text('キャンセル'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (minutes == null) return;
+    if (!context.mounted) return;
+
+    ref.read(timerNotifierProvider.notifier).snooze(minutes);
+    _leaveAlarmScreen(context);
   }
 
   /// Leaves the alarm screen back to the timer setup view.

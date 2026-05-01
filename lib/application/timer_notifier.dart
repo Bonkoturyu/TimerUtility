@@ -73,6 +73,22 @@ class TimerNotifier extends _$TimerNotifier {
     _scheduleNotification(next);
   }
 
+  /// Re-arm the ringing timer to fire again [snoozeMinutes] later.
+  ///
+  /// Transitions ringing → running and reschedules the OS notification
+  /// at the new endAt. Stops the current AlarmRingingNotifier playback
+  /// so audioplayers and the screen go quiet between snooze and re-fire.
+  /// AlarmRingingScreen.self-bootstrap will start playback again on the
+  /// next ringing transition.
+  void snooze(int snoozeMinutes) {
+    final current = _requireState('snooze');
+    final next = ref.read(timerServiceProvider).snooze(current, snoozeMinutes);
+    state = next;
+    _startTicker();
+    _scheduleNotification(next);
+    _stopRingingIfActive(current.id);
+  }
+
   void cancel() {
     final current = state;
     if (current == null) {
