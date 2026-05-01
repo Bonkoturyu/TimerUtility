@@ -8,7 +8,15 @@ import '../../domain/ports/notification_scheduler.dart';
 import '../platform/permission_channel.dart';
 
 /// Channel constants. Centralised here so callers don't repeat them.
-const String timerAlarmChannelId = 'timer_alarm';
+///
+/// The `_v2` suffix on the id is intentional: Android does not let an app
+/// re-configure an existing channel's importance / sound / vibration after
+/// it's been created. To roll out the Phase 6 changes (max importance,
+/// audible default tone, full-screen-intent support) on devices that
+/// already have the v1 channel, we delete the legacy channel on
+/// initialise and recreate under a new id.
+const String _legacyTimerAlarmChannelId = 'timer_alarm';
+const String timerAlarmChannelId = 'timer_alarm_v2';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
@@ -76,6 +84,9 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
+    // Drop the legacy v1 channel so users who upgraded from Phase 5/6a get
+    // the new sound + importance settings without needing to clear data.
+    await android?.deleteNotificationChannel(_legacyTimerAlarmChannelId);
     await android?.createNotificationChannel(
       const AndroidNotificationChannel(
         timerAlarmChannelId,
@@ -84,7 +95,11 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         importance: Importance.max,
         enableVibration: true,
         showBadge: false,
-        playSound: false,
+        // playSound: true so the OS plays the default alarm tone when the
+        // notification fires while the app is in the background or fully
+        // killed. The custom audioplayers playback layered on top by
+        // AlarmRingingScreen still works once the user taps in.
+        playSound: true,
       ),
     );
   }
@@ -120,7 +135,7 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
           fullScreenIntent: canFsi,
           visibility: NotificationVisibility.public,
           enableVibration: true,
-          playSound: false,
+          playSound: true,
         ),
       ),
       androidScheduleMode: mode,
@@ -148,4 +163,17 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
 
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  /// Returns the payload of the notification that launched the app, or
+  /// `null` if the app was started normally. Used by `main()` to pick the
+  /// initial route so a cold-start tap on the alarm notification lands on
+  /// `/alarm-ringing` instead of the home screen.
+  Future<String?> coldLaunchPayload() async {
+    final NotificationAppLaunchDetails? details = await _plugin
+        .getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp ?? false) {
+      return details?.notificationResponse?.payload;
+    }
+    return null;
+  }
 }
