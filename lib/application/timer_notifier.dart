@@ -188,7 +188,11 @@ class TimerNotifier extends _$TimerNotifier {
     unawaited(
       ref
           .read(alarmRingingNotifierProvider.notifier)
-          .start(timerId: entity.id, sound: sound),
+          .start(
+            timerId: entity.id,
+            sound: sound,
+            notificationId: entity.notificationId,
+          ),
     );
   }
 

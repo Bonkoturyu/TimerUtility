@@ -140,6 +140,9 @@ void main() {
         final notifier = container.read(timerNotifierProvider.notifier);
         notifier.create(label: 'x', duration: const Duration(seconds: 5));
         notifier.start();
+        final int notificationId = container
+            .read(timerNotifierProvider)!
+            .notificationId;
 
         // Halfway: still running
         _advance(async, now, const Duration(seconds: 3));
@@ -154,6 +157,11 @@ void main() {
           container.read(timerNotifierProvider)!.status,
           TimerStatus.ringing,
         );
+
+        // Ringing handoff must cancel the OS notification so the bundled
+        // alarm tone (played by the channel) does not double up with the
+        // audioplayers loop in AlarmRingingNotifier.
+        verify(() => scheduler.cancel(notificationId)).called(1);
       });
     });
 
