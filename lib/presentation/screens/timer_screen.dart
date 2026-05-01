@@ -10,6 +10,7 @@ import '../../domain/ports/permission_manager.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
+import '../widgets/duration_picker.dart';
 
 /// Phase 3 single-timer screen. No notifications, no sound — those land in
 /// Phase 4 / 5. The screen has two visual modes:
@@ -133,10 +134,29 @@ class _TimerScreenState extends ConsumerState<TimerScreen> {
                 onPressed: () => notifier.create(label: '', duration: d),
                 child: Text(_formatter.formatTimer(d)),
               ),
+            FilledButton.tonal(
+              key: const Key('timer_preset_custom'),
+              onPressed: () => _openCustomPicker(context, notifier),
+              child: const Text('カスタム'),
+            ),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _openCustomPicker(
+    BuildContext context,
+    TimerNotifier notifier,
+  ) async {
+    final Duration? chosen = await showModalBottomSheet<Duration>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const DurationPicker(),
+    );
+    if (chosen != null) {
+      notifier.create(label: '', duration: chosen);
+    }
   }
 
   Widget _buildActive(BuildContext context, WidgetRef ref, TimerEntity entity) {

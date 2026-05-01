@@ -147,7 +147,76 @@ void main() {
       expect(find.text('Choose a duration'), findsOneWidget);
       expect(find.byKey(const Key('timer_preset_5s')), findsOneWidget);
       expect(find.byKey(const Key('timer_preset_60s')), findsOneWidget);
+      expect(find.byKey(const Key('timer_preset_custom')), findsOneWidget);
     });
+
+    testWidgets('tapping カスタム opens the duration picker modal', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      await tester.pumpWidget(_harness(now));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('timer_preset_custom')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('カスタム時間を選択'), findsOneWidget);
+      expect(find.byKey(const Key('duration_picker_confirm')), findsOneWidget);
+      expect(find.byKey(const Key('duration_picker_cancel')), findsOneWidget);
+    });
+
+    testWidgets('confirming the custom picker creates an active timer', (
+      WidgetTester tester,
+    ) async {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      await tester.pumpWidget(_harness(now));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('timer_preset_custom')));
+      await tester.pumpAndSettle();
+
+      // Default initial is 1 minute, which is positive and within the cap,
+      // so confirm should be enabled and immediately tappable.
+      await tester.tap(find.byKey(const Key('duration_picker_confirm')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('timer_display')), findsOneWidget);
+      expect(find.byKey(const Key('timer_start_button')), findsOneWidget);
+      expect(
+        (tester.widget<Text>(find.byKey(const Key('timer_display')))).data,
+        '01:00',
+      );
+
+      final BuildContext context = tester.element(find.byType(TimerScreen));
+      final container = ProviderScope.containerOf(context);
+      expect(
+        container.read(timerNotifierProvider)!.duration,
+        const Duration(minutes: 1),
+      );
+      expect(container.read(timerNotifierProvider)!.status, TimerStatus.idle);
+    });
+
+    testWidgets(
+      'cancelling the custom picker leaves the setup view untouched',
+      (WidgetTester tester) async {
+        final now = _MutableNow(DateTime(2026, 1, 1, 12));
+        await tester.pumpWidget(_harness(now));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('timer_preset_custom')));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('duration_picker_cancel')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Choose a duration'), findsOneWidget);
+        expect(find.byKey(const Key('timer_display')), findsNothing);
+
+        final BuildContext context = tester.element(find.byType(TimerScreen));
+        final container = ProviderScope.containerOf(context);
+        expect(container.read(timerNotifierProvider), isNull);
+      },
+    );
 
     testWidgets('tapping a preset transitions to active idle view', (
       WidgetTester tester,
