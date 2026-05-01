@@ -90,17 +90,17 @@ class AlarmRingingScreen extends ConsumerWidget {
     );
   }
 
-  /// Leaves the alarm screen back to the timer setup view. When the screen
-  /// was reached by foreground navigation we can simply pop. When it was
-  /// reached via the notification deep link or a full-screen intent (which
-  /// uses `go()` and replaces the stack) `canPop()` is false, so we fall
-  /// back to navigating to `/timer` directly. Either way the user lands on
-  /// the timer preset chooser.
+  /// Leaves the alarm screen back to the timer setup view.
+  ///
+  /// We always `go('/timer')` rather than `pop()`-ing, even when there is
+  /// a back stack: warm-launch from the notification can cause both
+  /// `TimerScreen`'s ringing-listener (which `push`-es) and `main()`'s
+  /// notification tap callback (which `go`-es) to fire, leaving two
+  /// AlarmRingingScreen frames stacked. Popping only one of them would
+  /// strand the user on a stale "Time's up" screen — so we replace the
+  /// whole stack to guarantee the user lands on the preset chooser in
+  /// one tap regardless of how they got here.
   void _leaveAlarmScreen(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/timer');
-    }
+    context.go('/timer');
   }
 }
