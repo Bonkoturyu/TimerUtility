@@ -66,6 +66,11 @@ Widget _harness(_StubAlarmSoundPlayer player, {DateTime? now}) {
             const Scaffold(body: Text('home-stub')),
       ),
       GoRoute(
+        path: '/timer',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('timer-stub')),
+      ),
+      GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
             const AlarmRingingScreen(),
@@ -126,6 +131,10 @@ void main() {
       expect(ringing.isPlaying, isFalse);
       expect(ringing.currentTimerId, isNull);
       expect(container.read(timerNotifierProvider), isNull);
+      // The harness starts at /alarm-ringing (no back stack), so the
+      // screen should navigate to /timer rather than try to pop.
+      expect(find.text('timer-stub'), findsOneWidget);
+      expect(find.byType(AlarmRingingScreen), findsNothing);
     });
 
     testWidgets(
@@ -155,6 +164,8 @@ void main() {
         expect(ringing.isPlaying, isFalse);
         expect(player.stopCalls, greaterThanOrEqualTo(1));
         expect(container.read(timerNotifierProvider), isNull);
+        expect(find.text('timer-stub'), findsOneWidget);
+        expect(find.byType(AlarmRingingScreen), findsNothing);
       },
     );
   });
