@@ -98,9 +98,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('alarm_ringing_title')), findsOneWidget);
-      expect(find.byKey(const Key('alarm_ringing_label')), findsOneWidget);
       expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
       expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
+      // The "Timer: <id>" debug label is intentionally absent — there's no
+      // user-facing label input, so showing the internal id was noise.
+      expect(find.byKey(const Key('alarm_ringing_label')), findsNothing);
     });
 
     testWidgets('self-bootstraps audio on cold-start (TimerNotifier is null)', (

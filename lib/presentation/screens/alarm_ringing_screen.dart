@@ -65,7 +65,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(alarmRingingNotifierProvider);
     final ringing = ref.read(alarmRingingNotifierProvider.notifier);
     final timer = ref.read(timerNotifierProvider.notifier);
 
@@ -81,14 +80,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                 "Time's up!",
                 key: Key('alarm_ringing_title'),
                 style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                state.currentTimerId == null
-                    ? 'No active timer'
-                    : 'Timer: ${state.currentTimerId}',
-                key: const Key('alarm_ringing_label'),
-                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 48),
               Row(

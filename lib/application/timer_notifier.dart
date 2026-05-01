@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/ports/permission_manager.dart';
-import '../domain/timer/alarm_sound.dart';
-import '../domain/timer/alarm_sound_catalog.dart';
 import '../domain/timer/timer_entity.dart';
 import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
@@ -173,27 +171,14 @@ class TimerNotifier extends _$TimerNotifier {
       if (next.status != TimerStatus.running) {
         _stopTicker();
       }
-      if (next.status == TimerStatus.ringing) {
-        _startRinging(next);
-      }
+      // Intentionally do NOT call AlarmRingingNotifier.start here. Doing
+      // so cancels the OS notification before AlarmManager has a chance
+      // to fire its FullScreenIntent / heads-up banner, which made the
+      // alarm screen invisible in the background path. AlarmRingingScreen
+      // self-bootstraps once it mounts (foreground push from TimerScreen,
+      // FSI launch, or cold-start), and that is now the single point
+      // that takes the bundled-sound channel down and starts audioplayers.
     }
-  }
-
-  void _startRinging(TimerEntity entity) {
-    final AlarmSound sound =
-        (entity.soundId == null
-            ? null
-            : AlarmSoundCatalog.findById(entity.soundId!)) ??
-        AlarmSoundCatalog.defaultSound;
-    unawaited(
-      ref
-          .read(alarmRingingNotifierProvider.notifier)
-          .start(
-            timerId: entity.id,
-            sound: sound,
-            notificationId: entity.notificationId,
-          ),
-    );
   }
 
   void _stopRingingIfActive(String timerId) {
