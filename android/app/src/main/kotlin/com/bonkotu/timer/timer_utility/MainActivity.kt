@@ -1,5 +1,6 @@
 package com.bonkotu.timer.timer_utility
 
+import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -23,20 +24,39 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * Mark the activity to display over the keyguard and to turn the screen
-     * on when launched. AndroidManifest's `showOnLockScreen` / `turnScreenOn`
-     * attributes work for older API levels, but on Android 8.1+ Google
-     * recommends calling these runtime APIs as well — without them, a
-     * full-screen intent on Android 14+ may light up the screen but stay
-     * behind the keyguard. See:
-     * https://developer.android.com/develop/ui/views/notifications/time-sensitive
+     * Sets the keyguard-override flags when the device is currently
+     * locked. Called from both `onCreate` (cold-launch via FSI) and
+     * `onNewIntent` (warm-launch into a pre-existing singleTop Activity
+     * via FSI). Without the `onNewIntent` hook the flags only get set on
+     * cold-launch FSI, so a background-app + lock-screen alarm just
+     * flashes the alarm screen and bounces back to the keyguard.
+     *
+     * For non-locked launches we leave the flags off so the Activity
+     * stays in the regular task stack — otherwise lock/unlock cycles
+     * strand it in "lock-screen overlay" mode and the recents (■)
+     * navigation button disappears for the rest of the process lifetime.
+     *
+     * The flags are released in `clearShowWhenLockedInternal` once the
+     * user dismisses the alarm.
      */
+    private fun applyKeyguardOverrideIfLocked() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            if (km.isKeyguardLocked) {
+                setShowWhenLocked(true)
+                setTurnScreenOn(true)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        }
+        applyKeyguardOverrideIfLocked()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        applyKeyguardOverrideIfLocked()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -49,9 +69,27 @@ class MainActivity : FlutterActivity() {
                         openFullScreenIntentSettingsInternal()
                         result.success(null)
                     }
+                    "clearShowWhenLocked" -> {
+                        clearShowWhenLockedInternal()
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    /**
+     * Releases the keyguard-override state set by Android when the
+     * Activity was launched via FullScreenIntent. Without this the
+     * Activity stays in "lock-screen overlay" mode after the user
+     * dismisses the alarm, which keeps the recents (■) navigation
+     * button suppressed until the process is killed.
+     */
+    private fun clearShowWhenLockedInternal() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(false)
+            setTurnScreenOn(false)
+        }
     }
 
     /**
