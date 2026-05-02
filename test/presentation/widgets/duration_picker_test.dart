@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/widgets/duration_picker.dart';
 
-/// Wraps the picker in a MaterialApp + bottom sheet so that the test can
-/// inspect both the Confirm button state and the value popped via Navigator.
+/// Pumps an opener button that, when tapped, shows the picker as a modal
+/// bottom sheet. Forces the Japanese locale so existing assertions for
+/// "カスタム時間を選択" / "決定" / "キャンセル" remain stable regardless of
+/// the host machine's locale.
 Future<Duration?> _showPicker(
   WidgetTester tester, {
   Duration initial = const Duration(minutes: 1),
@@ -11,6 +14,9 @@ Future<Duration?> _showPicker(
   Duration? popped;
   await tester.pumpWidget(
     MaterialApp(
+      locale: const Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
       home: Scaffold(
         body: Builder(
           builder: (BuildContext context) => Center(
@@ -32,6 +38,39 @@ Future<Duration?> _showPicker(
   await tester.tap(find.byKey(const Key('open')));
   await tester.pumpAndSettle();
   return popped;
+}
+
+Future<void> _showPickerWith(
+  WidgetTester tester,
+  Duration initial,
+  void Function(Duration?) capture,
+) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      locale: const Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+      home: Scaffold(
+        body: Builder(
+          builder: (BuildContext context) => Center(
+            child: ElevatedButton(
+              key: const Key('open'),
+              onPressed: () async {
+                final Duration? d = await showModalBottomSheet<Duration>(
+                  context: context,
+                  builder: (_) => DurationPicker(initial: initial),
+                );
+                capture(d);
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.byKey(const Key('open')));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -78,29 +117,11 @@ void main() {
       WidgetTester tester,
     ) async {
       Duration? popped;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (BuildContext context) => Center(
-                child: ElevatedButton(
-                  key: const Key('open'),
-                  onPressed: () async {
-                    popped = await showModalBottomSheet<Duration>(
-                      context: context,
-                      builder: (_) =>
-                          const DurationPicker(initial: Duration(hours: 99)),
-                    );
-                  },
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
-        ),
+      await _showPickerWith(
+        tester,
+        const Duration(hours: 99),
+        (d) => popped = d,
       );
-      await tester.tap(find.byKey(const Key('open')));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('duration_picker_confirm')));
       await tester.pumpAndSettle();
@@ -124,29 +145,11 @@ void main() {
 
     testWidgets('cancel pops null', (WidgetTester tester) async {
       Duration? popped = const Duration(minutes: 99);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (BuildContext context) => Center(
-                child: ElevatedButton(
-                  key: const Key('open'),
-                  onPressed: () async {
-                    popped = await showModalBottomSheet<Duration>(
-                      context: context,
-                      builder: (_) =>
-                          const DurationPicker(initial: Duration(seconds: 5)),
-                    );
-                  },
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
-        ),
+      await _showPickerWith(
+        tester,
+        const Duration(seconds: 5),
+        (d) => popped = d,
       );
-      await tester.tap(find.byKey(const Key('open')));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('duration_picker_cancel')));
       await tester.pumpAndSettle();
@@ -158,29 +161,11 @@ void main() {
       WidgetTester tester,
     ) async {
       Duration? popped;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (BuildContext context) => Center(
-                child: ElevatedButton(
-                  key: const Key('open'),
-                  onPressed: () async {
-                    popped = await showModalBottomSheet<Duration>(
-                      context: context,
-                      builder: (_) =>
-                          const DurationPicker(initial: Duration(seconds: 5)),
-                    );
-                  },
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
-        ),
+      await _showPickerWith(
+        tester,
+        const Duration(seconds: 5),
+        (d) => popped = d,
       );
-      await tester.tap(find.byKey(const Key('open')));
-      await tester.pumpAndSettle();
 
       // Drag upward on the seconds wheel; itemExtent is 32 px, so dragging
       // by ~96 px advances the selection by roughly 3 items. Exact pixel

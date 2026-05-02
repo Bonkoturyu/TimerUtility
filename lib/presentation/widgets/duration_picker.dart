@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// Modal-friendly hours/minutes/seconds wheel picker.
 ///
 /// Returns the chosen [Duration] via `Navigator.pop` when the user confirms,
@@ -47,15 +49,16 @@ class _DurationPickerState extends State<DurationPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Text(
-              'カスタム時間を選択',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              l.durationPickerTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -64,21 +67,21 @@ class _DurationPickerState extends State<DurationPicker> {
                 children: <Widget>[
                   _column(
                     keyName: 'duration_picker_hours',
-                    label: '時',
+                    label: l.durationPickerHours,
                     max: 100,
                     initial: _hours,
                     onChanged: (v) => setState(() => _hours = v),
                   ),
                   _column(
                     keyName: 'duration_picker_minutes',
-                    label: '分',
+                    label: l.durationPickerMinutes,
                     max: 60,
                     initial: _minutes,
                     onChanged: (v) => setState(() => _minutes = v),
                   ),
                   _column(
                     keyName: 'duration_picker_seconds',
-                    label: '秒',
+                    label: l.durationPickerSeconds,
                     max: 60,
                     initial: _seconds,
                     onChanged: (v) => setState(() => _seconds = v),
@@ -93,14 +96,14 @@ class _DurationPickerState extends State<DurationPicker> {
                 TextButton(
                   key: const Key('duration_picker_cancel'),
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
+                  child: Text(l.durationPickerCancel),
                 ),
                 FilledButton(
                   key: const Key('duration_picker_confirm'),
                   onPressed: _confirmEnabled
                       ? () => Navigator.of(context).pop(_selected)
                       : null,
-                  child: const Text('決定'),
+                  child: Text(l.durationPickerConfirm),
                 ),
               ],
             ),

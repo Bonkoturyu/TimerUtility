@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/stopwatch_notifier.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/stopwatch/stopwatch_state.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Vertical list of recorded laps. Newest at the top.
 class LapList extends ConsumerWidget {
@@ -14,6 +15,7 @@ class LapList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(stopwatchNotifierProvider);
+    final AppLocalizations l = AppLocalizations.of(context);
     final laps = switch (state) {
       StopwatchIdle() => const <LapRecord>[],
       StopwatchRunning(:final laps) => laps,
@@ -21,10 +23,10 @@ class LapList extends ConsumerWidget {
     };
 
     if (laps.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text('No laps recorded'),
+          padding: const EdgeInsets.all(16),
+          child: Text(l.stopwatchNoLaps),
         ),
       );
     }
@@ -39,11 +41,15 @@ class LapList extends ConsumerWidget {
         return ListTile(
           dense: true,
           leading: Text(
-            'Lap ${lap.index}',
+            l.stopwatchLapLabel(lap.index),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          title: Text('Split ${formatter.formatStopwatch(lap.splitTime)}'),
-          trailing: Text('Total ${formatter.formatStopwatch(lap.totalTime)}'),
+          title: Text(
+            l.stopwatchSplit(formatter.formatStopwatch(lap.splitTime)),
+          ),
+          trailing: Text(
+            l.stopwatchTotal(formatter.formatStopwatch(lap.totalTime)),
+          ),
         );
       },
     );

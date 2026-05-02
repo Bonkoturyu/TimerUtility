@@ -17,6 +17,7 @@ import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
 
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
@@ -132,7 +133,15 @@ Widget _harness(
       notificationSchedulerProvider.overrideWithValue(scheduler),
       timerRepositoryProvider.overrideWithValue(repo),
     ],
-    child: MaterialApp.router(routerConfig: router),
+    // Force Japanese so existing assertions for "スヌーズ時間を選択"
+    // remain stable; the alarm screen text now resolves through
+    // AppLocalizations.
+    child: MaterialApp.router(
+      routerConfig: router,
+      locale: const Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+    ),
   );
 }
 

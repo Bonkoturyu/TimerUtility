@@ -18,7 +18,6 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$AlarmSound {
   String get id => throw _privateConstructorUsedError;
-  String get displayName => throw _privateConstructorUsedError;
   String get assetPath => throw _privateConstructorUsedError;
 
   /// Create a copy of AlarmSound
@@ -35,7 +34,7 @@ abstract class $AlarmSoundCopyWith<$Res> {
     $Res Function(AlarmSound) then,
   ) = _$AlarmSoundCopyWithImpl<$Res, AlarmSound>;
   @useResult
-  $Res call({String id, String displayName, String assetPath});
+  $Res call({String id, String assetPath});
 }
 
 /// @nodoc
@@ -52,20 +51,12 @@ class _$AlarmSoundCopyWithImpl<$Res, $Val extends AlarmSound>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? displayName = null,
-    Object? assetPath = null,
-  }) {
+  $Res call({Object? id = null, Object? assetPath = null}) {
     return _then(
       _value.copyWith(
             id: null == id
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            displayName: null == displayName
-                ? _value.displayName
-                : displayName // ignore: cast_nullable_to_non_nullable
                       as String,
             assetPath: null == assetPath
                 ? _value.assetPath
@@ -86,7 +77,7 @@ abstract class _$$AlarmSoundImplCopyWith<$Res>
   ) = __$$AlarmSoundImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String displayName, String assetPath});
+  $Res call({String id, String assetPath});
 }
 
 /// @nodoc
@@ -102,20 +93,12 @@ class __$$AlarmSoundImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? displayName = null,
-    Object? assetPath = null,
-  }) {
+  $Res call({Object? id = null, Object? assetPath = null}) {
     return _then(
       _$AlarmSoundImpl(
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        displayName: null == displayName
-            ? _value.displayName
-            : displayName // ignore: cast_nullable_to_non_nullable
                   as String,
         assetPath: null == assetPath
             ? _value.assetPath
@@ -129,22 +112,16 @@ class __$$AlarmSoundImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$AlarmSoundImpl implements _AlarmSound {
-  const _$AlarmSoundImpl({
-    required this.id,
-    required this.displayName,
-    required this.assetPath,
-  });
+  const _$AlarmSoundImpl({required this.id, required this.assetPath});
 
   @override
   final String id;
-  @override
-  final String displayName;
   @override
   final String assetPath;
 
   @override
   String toString() {
-    return 'AlarmSound(id: $id, displayName: $displayName, assetPath: $assetPath)';
+    return 'AlarmSound(id: $id, assetPath: $assetPath)';
   }
 
   @override
@@ -153,14 +130,12 @@ class _$AlarmSoundImpl implements _AlarmSound {
         (other.runtimeType == runtimeType &&
             other is _$AlarmSoundImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.displayName, displayName) ||
-                other.displayName == displayName) &&
             (identical(other.assetPath, assetPath) ||
                 other.assetPath == assetPath));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, displayName, assetPath);
+  int get hashCode => Object.hash(runtimeType, id, assetPath);
 
   /// Create a copy of AlarmSound
   /// with the given fields replaced by the non-null parameter values.
@@ -174,14 +149,11 @@ class _$AlarmSoundImpl implements _AlarmSound {
 abstract class _AlarmSound implements AlarmSound {
   const factory _AlarmSound({
     required final String id,
-    required final String displayName,
     required final String assetPath,
   }) = _$AlarmSoundImpl;
 
   @override
   String get id;
-  @override
-  String get displayName;
   @override
   String get assetPath;
 

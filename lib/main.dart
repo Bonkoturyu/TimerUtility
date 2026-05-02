@@ -7,9 +7,38 @@ import 'application/timer_repository_provider.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
+import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
+
+/// Compile-time feature flag for experimental locales (zh-Hans / zh-Hant /
+/// ko). The public release ships with Japanese + English only; the other
+/// locales' ARB files exist for internal development and are reachable
+/// from a debug build with `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`.
+///
+/// Phase 11 (settings screen) will likely flip this to a runtime
+/// preference; for now the compile-time gate keeps test surface small.
+const bool kEnableExperimentalLocales = bool.fromEnvironment(
+  'ENABLE_EXPERIMENTAL_LOCALES',
+  defaultValue: false,
+);
+
+const List<Locale> _publicSupportedLocales = <Locale>[
+  Locale('ja'),
+  Locale('en'),
+];
+
+const List<Locale> _experimentalSupportedLocales = <Locale>[
+  Locale('zh'),
+  Locale('zh', 'Hant'),
+  Locale('ko'),
+];
+
+List<Locale> get supportedLocales => <Locale>[
+  ..._publicSupportedLocales,
+  if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,
+];
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,6 +124,10 @@ class TimerUtilityApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       routerConfig: router,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: supportedLocales,
+      onGenerateTitle: (BuildContext context) =>
+          AppLocalizations.of(context).appTitle,
     );
   }
 }
@@ -104,24 +137,25 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('TimerUtility')),
+      appBar: AppBar(title: Text(l.appTitle)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('TimerUtility'),
+            Text(l.appTitle),
             const SizedBox(height: 24),
             FilledButton(
               key: const Key('home_open_stopwatch_button'),
               onPressed: () => context.go('/stopwatch'),
-              child: const Text('Open Stopwatch'),
+              child: Text(l.homeOpenStopwatch),
             ),
             const SizedBox(height: 12),
             FilledButton(
               key: const Key('home_open_timer_button'),
               onPressed: () => context.go('/timer'),
-              child: const Text('Open Timer'),
+              child: Text(l.homeOpenTimer),
             ),
           ],
         ),

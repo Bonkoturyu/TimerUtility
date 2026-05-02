@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/stopwatch_notifier.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/stopwatch/stopwatch_state.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/lap_list.dart';
 
 class StopwatchScreen extends ConsumerStatefulWidget {
@@ -46,8 +47,9 @@ class _StopwatchScreenState extends ConsumerState<StopwatchScreen> {
 
     final elapsed = ref.read(stopwatchServiceProvider).elapsed(state);
 
+    final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Stopwatch')),
+      appBar: AppBar(title: Text(l.stopwatchAppBarTitle)),
       body: Column(
         children: <Widget>[
           const SizedBox(height: 24),
@@ -79,6 +81,7 @@ class _ControlBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(stopwatchNotifierProvider.notifier);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -87,28 +90,28 @@ class _ControlBar extends ConsumerWidget {
           StopwatchIdle() => FilledButton(
             key: const Key('stopwatch_start_button'),
             onPressed: notifier.start,
-            child: const Text('Start'),
+            child: Text(l.stopwatchStart),
           ),
           StopwatchRunning() => FilledButton(
             key: const Key('stopwatch_pause_button'),
             onPressed: notifier.pause,
-            child: const Text('Pause'),
+            child: Text(l.stopwatchPause),
           ),
           StopwatchPaused() => FilledButton(
             key: const Key('stopwatch_resume_button'),
             onPressed: notifier.resume,
-            child: const Text('Resume'),
+            child: Text(l.stopwatchResume),
           ),
         },
         OutlinedButton(
           key: const Key('stopwatch_lap_button'),
           onPressed: state is StopwatchRunning ? notifier.lap : null,
-          child: const Text('Lap'),
+          child: Text(l.stopwatchLap),
         ),
         OutlinedButton(
           key: const Key('stopwatch_reset_button'),
           onPressed: state is StopwatchIdle ? null : notifier.reset,
-          child: const Text('Reset'),
+          child: Text(l.stopwatchReset),
         ),
       ],
     );

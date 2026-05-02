@@ -9,6 +9,7 @@ import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Native channel used to release the keyguard-override state set by
 /// Android when this screen was launched via FullScreenIntent. Reuses
@@ -75,19 +76,23 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   Widget build(BuildContext context) {
     final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
     final collection = ref.read(timerCollectionNotifierProvider.notifier);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Alarm')),
+      appBar: AppBar(title: Text(l.alarmAppBarTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Text(
-                "Time's up!",
-                key: Key('alarm_ringing_title'),
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              Text(
+                l.alarmTimesUp,
+                key: const Key('alarm_ringing_title'),
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 48),
               Row(
@@ -107,23 +112,29 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                       if (!context.mounted) return;
                       _leaveAlarmScreen(context);
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
                       ),
-                      child: Text('Stop', style: TextStyle(fontSize: 18)),
+                      child: Text(
+                        l.alarmStop,
+                        style: const TextStyle(fontSize: 18),
+                      ),
                     ),
                   ),
                   OutlinedButton(
                     key: const Key('alarm_snooze_button'),
                     onPressed: () => _onSnoozeTap(context),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
                       ),
-                      child: Text('Snooze', style: TextStyle(fontSize: 18)),
+                      child: Text(
+                        l.alarmSnooze,
+                        style: const TextStyle(fontSize: 18),
+                      ),
                     ),
                   ),
                 ],
@@ -136,6 +147,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   }
 
   Future<void> _onSnoozeTap(BuildContext context) async {
+    final AppLocalizations l = AppLocalizations.of(context);
     final int? minutes = await showModalBottomSheet<int>(
       context: context,
       builder: (BuildContext sheetContext) => SafeArea(
@@ -145,12 +157,15 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'スヌーズ時間を選択',
+                  l.alarmSnoozePickerTitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               for (final int m in SnoozeCalculator.allowedMinutes) ...<Widget>[
@@ -159,7 +174,10 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                   onPressed: () => Navigator.of(sheetContext).pop(m),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text('$m 分', style: const TextStyle(fontSize: 18)),
+                    child: Text(
+                      l.alarmSnoozeMinutes(m),
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -167,7 +185,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
               TextButton(
                 key: const Key('alarm_snooze_cancel'),
                 onPressed: () => Navigator.of(sheetContext).pop(),
-                child: const Text('キャンセル'),
+                child: Text(l.alarmSnoozeCancel),
               ),
             ],
           ),

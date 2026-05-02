@@ -13,7 +13,6 @@ void main() {
       for (final AlarmSound s in AlarmSoundCatalog.all) {
         expect(seen.add(s.id), isTrue, reason: 'duplicate id: ${s.id}');
         expect(s.id, isNotEmpty);
-        expect(s.displayName, isNotEmpty);
         expect(s.assetPath, startsWith('assets/sounds/'));
       }
     });
@@ -36,22 +35,14 @@ void main() {
   group('AlarmSound.create', () {
     test('throws when id is empty', () {
       expect(
-        () => AlarmSound.create(
-          id: '',
-          displayName: 'x',
-          assetPath: 'assets/sounds/x.mp3',
-        ),
+        () => AlarmSound.create(id: '', assetPath: 'assets/sounds/x.mp3'),
         throwsArgumentError,
       );
     });
 
     test('throws when assetPath is outside assets/sounds/', () {
       expect(
-        () => AlarmSound.create(
-          id: 'x',
-          displayName: 'x',
-          assetPath: 'sounds/x.mp3',
-        ),
+        () => AlarmSound.create(id: 'x', assetPath: 'sounds/x.mp3'),
         throwsArgumentError,
       );
     });

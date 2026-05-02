@@ -15,6 +15,7 @@ import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/timer_collection.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/timer_list_screen.dart';
 
 class _MockScheduler extends Mock implements NotificationScheduler {}
@@ -96,7 +97,15 @@ Widget _harness(_InMemoryRepo repo) {
         () => _GrantedPermissionNotifier(),
       ),
     ],
-    child: MaterialApp.router(routerConfig: router),
+    // Force Japanese so the existing "上限 N 件に達しています" SnackBar
+    // assertion stays stable (the SnackBar's text is now resolved via
+    // AppLocalizations).
+    child: MaterialApp.router(
+      routerConfig: router,
+      locale: const Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+    ),
   );
 }
 

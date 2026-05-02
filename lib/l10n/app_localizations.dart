@@ -1,0 +1,476 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_ja.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('ja'),
+  ];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'TimerUtility'**
+  String get appTitle;
+
+  /// No description provided for @homeOpenStopwatch.
+  ///
+  /// In ja, this message translates to:
+  /// **'ストップウォッチを開く'**
+  String get homeOpenStopwatch;
+
+  /// No description provided for @homeOpenTimer.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマーを開く'**
+  String get homeOpenTimer;
+
+  /// No description provided for @stopwatchAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'ストップウォッチ'**
+  String get stopwatchAppBarTitle;
+
+  /// No description provided for @stopwatchStart.
+  ///
+  /// In ja, this message translates to:
+  /// **'開始'**
+  String get stopwatchStart;
+
+  /// No description provided for @stopwatchPause.
+  ///
+  /// In ja, this message translates to:
+  /// **'一時停止'**
+  String get stopwatchPause;
+
+  /// No description provided for @stopwatchResume.
+  ///
+  /// In ja, this message translates to:
+  /// **'再開'**
+  String get stopwatchResume;
+
+  /// No description provided for @stopwatchLap.
+  ///
+  /// In ja, this message translates to:
+  /// **'ラップ'**
+  String get stopwatchLap;
+
+  /// No description provided for @stopwatchReset.
+  ///
+  /// In ja, this message translates to:
+  /// **'リセット'**
+  String get stopwatchReset;
+
+  /// No description provided for @stopwatchNoLaps.
+  ///
+  /// In ja, this message translates to:
+  /// **'ラップ未記録'**
+  String get stopwatchNoLaps;
+
+  /// No description provided for @stopwatchLapLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'ラップ {index}'**
+  String stopwatchLapLabel(int index);
+
+  /// No description provided for @stopwatchSplit.
+  ///
+  /// In ja, this message translates to:
+  /// **'区間 {time}'**
+  String stopwatchSplit(String time);
+
+  /// No description provided for @stopwatchTotal.
+  ///
+  /// In ja, this message translates to:
+  /// **'合計 {time}'**
+  String stopwatchTotal(String time);
+
+  /// No description provided for @timerListAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマー'**
+  String get timerListAppBarTitle;
+
+  /// No description provided for @timerListAddFab.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマーを追加'**
+  String get timerListAddFab;
+
+  /// No description provided for @timerListEmptyHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマーがありません。\n右下の「タイマーを追加」から追加できます。'**
+  String get timerListEmptyHint;
+
+  /// No description provided for @timerListLimitReached.
+  ///
+  /// In ja, this message translates to:
+  /// **'上限 {count} 件に達しています'**
+  String timerListLimitReached(int count);
+
+  /// No description provided for @timerCardTimesUp.
+  ///
+  /// In ja, this message translates to:
+  /// **'終了！'**
+  String get timerCardTimesUp;
+
+  /// No description provided for @timerCardActionStart.
+  ///
+  /// In ja, this message translates to:
+  /// **'開始'**
+  String get timerCardActionStart;
+
+  /// No description provided for @timerCardActionPause.
+  ///
+  /// In ja, this message translates to:
+  /// **'一時停止'**
+  String get timerCardActionPause;
+
+  /// No description provided for @timerCardActionResume.
+  ///
+  /// In ja, this message translates to:
+  /// **'再開'**
+  String get timerCardActionResume;
+
+  /// No description provided for @timerCardActionDismiss.
+  ///
+  /// In ja, this message translates to:
+  /// **'解除'**
+  String get timerCardActionDismiss;
+
+  /// No description provided for @timerCardActionReset.
+  ///
+  /// In ja, this message translates to:
+  /// **'リセット'**
+  String get timerCardActionReset;
+
+  /// No description provided for @timerCardActionDelete.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除'**
+  String get timerCardActionDelete;
+
+  /// No description provided for @timerStatusIdle.
+  ///
+  /// In ja, this message translates to:
+  /// **'待機'**
+  String get timerStatusIdle;
+
+  /// No description provided for @timerStatusRunning.
+  ///
+  /// In ja, this message translates to:
+  /// **'進行中'**
+  String get timerStatusRunning;
+
+  /// No description provided for @timerStatusPaused.
+  ///
+  /// In ja, this message translates to:
+  /// **'一時停止'**
+  String get timerStatusPaused;
+
+  /// No description provided for @timerStatusRinging.
+  ///
+  /// In ja, this message translates to:
+  /// **'鳴動中'**
+  String get timerStatusRinging;
+
+  /// No description provided for @timerStatusCompleted.
+  ///
+  /// In ja, this message translates to:
+  /// **'完了'**
+  String get timerStatusCompleted;
+
+  /// No description provided for @timerStatusCancelled.
+  ///
+  /// In ja, this message translates to:
+  /// **'取消'**
+  String get timerStatusCancelled;
+
+  /// No description provided for @alarmAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラーム'**
+  String get alarmAppBarTitle;
+
+  /// No description provided for @alarmTimesUp.
+  ///
+  /// In ja, this message translates to:
+  /// **'時間です！'**
+  String get alarmTimesUp;
+
+  /// No description provided for @alarmStop.
+  ///
+  /// In ja, this message translates to:
+  /// **'停止'**
+  String get alarmStop;
+
+  /// No description provided for @alarmSnooze.
+  ///
+  /// In ja, this message translates to:
+  /// **'スヌーズ'**
+  String get alarmSnooze;
+
+  /// No description provided for @alarmSnoozePickerTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'スヌーズ時間を選択'**
+  String get alarmSnoozePickerTitle;
+
+  /// No description provided for @alarmSnoozeMinutes.
+  ///
+  /// In ja, this message translates to:
+  /// **'{minutes} 分'**
+  String alarmSnoozeMinutes(int minutes);
+
+  /// No description provided for @alarmSnoozeCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get alarmSnoozeCancel;
+
+  /// No description provided for @durationPickerTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'カスタム時間を選択'**
+  String get durationPickerTitle;
+
+  /// No description provided for @durationPickerHours.
+  ///
+  /// In ja, this message translates to:
+  /// **'時'**
+  String get durationPickerHours;
+
+  /// No description provided for @durationPickerMinutes.
+  ///
+  /// In ja, this message translates to:
+  /// **'分'**
+  String get durationPickerMinutes;
+
+  /// No description provided for @durationPickerSeconds.
+  ///
+  /// In ja, this message translates to:
+  /// **'秒'**
+  String get durationPickerSeconds;
+
+  /// No description provided for @durationPickerCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get durationPickerCancel;
+
+  /// No description provided for @durationPickerConfirm.
+  ///
+  /// In ja, this message translates to:
+  /// **'決定'**
+  String get durationPickerConfirm;
+
+  /// No description provided for @permissionBannerNotificationsTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'通知が無効です'**
+  String get permissionBannerNotificationsTitle;
+
+  /// No description provided for @permissionBannerNotificationsDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマーが終了したときに通知が表示されません。'**
+  String get permissionBannerNotificationsDescription;
+
+  /// No description provided for @permissionBannerExactAlarmTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'正確なアラームが無効です'**
+  String get permissionBannerExactAlarmTitle;
+
+  /// No description provided for @permissionBannerExactAlarmDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'省電力モード時にアラームが数分遅れる場合があります。'**
+  String get permissionBannerExactAlarmDescription;
+
+  /// No description provided for @permissionBannerFullScreenIntentTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'ロック画面でのアラームが無効です'**
+  String get permissionBannerFullScreenIntentTitle;
+
+  /// No description provided for @permissionBannerFullScreenIntentDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'権限がない場合は通知バナーで代わりにお知らせします。'**
+  String get permissionBannerFullScreenIntentDescription;
+
+  /// No description provided for @permissionBannerActionAllow.
+  ///
+  /// In ja, this message translates to:
+  /// **'許可する'**
+  String get permissionBannerActionAllow;
+
+  /// No description provided for @permissionBannerActionOpenSettings.
+  ///
+  /// In ja, this message translates to:
+  /// **'設定を開く'**
+  String get permissionBannerActionOpenSettings;
+
+  /// No description provided for @alarmSoundDefault.
+  ///
+  /// In ja, this message translates to:
+  /// **'デフォルト'**
+  String get alarmSoundDefault;
+
+  /// No description provided for @alarmSoundGentle.
+  ///
+  /// In ja, this message translates to:
+  /// **'やさしい'**
+  String get alarmSoundGentle;
+
+  /// No description provided for @alarmSoundUrgent.
+  ///
+  /// In ja, this message translates to:
+  /// **'急ぎ'**
+  String get alarmSoundUrgent;
+
+  /// No description provided for @notificationTimerEndedTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマー'**
+  String get notificationTimerEndedTitle;
+
+  /// No description provided for @notificationTimerEndedBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'時間になりました。'**
+  String get notificationTimerEndedBody;
+
+  /// No description provided for @notificationTimerCompletedBackgroundBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリのバックグラウンド中にタイマーが終了しました。'**
+  String get notificationTimerCompletedBackgroundBody;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'ja'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'ja':
+      return AppLocalizationsJa();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

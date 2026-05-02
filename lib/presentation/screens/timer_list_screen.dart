@@ -13,7 +13,21 @@ import '../../domain/timer/exceptions.dart';
 import '../../domain/timer/timer_collection.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart';
+
+/// Maps a [TimerStatus] enum value to the localized string used in the
+/// status badge / chip on each timer card.
+String _localizedStatus(AppLocalizations l, TimerStatus status) {
+  return switch (status) {
+    TimerStatus.idle => l.timerStatusIdle,
+    TimerStatus.running => l.timerStatusRunning,
+    TimerStatus.paused => l.timerStatusPaused,
+    TimerStatus.ringing => l.timerStatusRinging,
+    TimerStatus.completed => l.timerStatusCompleted,
+    TimerStatus.cancelled => l.timerStatusCancelled,
+  };
+}
 
 /// Phase 8 multi-timer screen. Replaces the Phase 3 single-timer
 /// screen; reads the entire [TimerCollection] from
@@ -94,8 +108,9 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
       }
     });
 
+    final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Timers')),
+      appBar: AppBar(title: Text(l.timerListAppBarTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -125,18 +140,21 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
         // through a SnackBar in `_onAddTap` below.
         onPressed: () => _onAddTap(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add Timer'),
+        label: Text(l.timerListAddFab),
       ),
     );
   }
 
   Future<void> _onAddTap(BuildContext context) async {
+    final AppLocalizations l = AppLocalizations.of(context);
     // Surface the limit before opening the picker so the user doesn't
     // configure a duration only to have it rejected on confirm.
     final TimerCollection current = ref.read(timerCollectionNotifierProvider);
     if (current.isFull) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('上限 ${TimerCollection.maxSize} 件に達しています')),
+        SnackBar(
+          content: Text(l.timerListLimitReached(TimerCollection.maxSize)),
+        ),
       );
       return;
     }
@@ -153,9 +171,9 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
           .read(timerCollectionNotifierProvider.notifier)
           .create(label: '', duration: chosen);
     } on MaxTimerCountExceededException catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('上限 ${e.maxSize} 件に達しています')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.timerListLimitReached(e.maxSize))),
+      );
     }
   }
 }
@@ -165,14 +183,15 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final AppLocalizations l = AppLocalizations.of(context);
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Text(
-          'タイマーがありません。\n右下の「Add Timer」から追加できます。',
-          key: Key('timer_list_empty_hint'),
+          l.timerListEmptyHint,
+          key: const Key('timer_list_empty_hint'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16),
+          style: const TextStyle(fontSize: 16),
         ),
       ),
     );
@@ -187,6 +206,7 @@ class _TimerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(timerCollectionNotifierProvider.notifier);
+    final AppLocalizations l = AppLocalizations.of(context);
     final liveRemaining = ref.read(timerServiceProvider).remaining(entity);
     final Duration display = switch (entity.status) {
       TimerStatus.running || TimerStatus.paused => liveRemaining,
@@ -209,7 +229,7 @@ class _TimerCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     entity.status == TimerStatus.ringing
-                        ? "Time's up!"
+                        ? l.timerCardTimesUp
                         : formatter.formatTimer(display),
                     key: Key('timer_display_${entity.id}'),
                     style: const TextStyle(
@@ -218,18 +238,18 @@ class _TimerCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Chip(label: Text(entity.status.name)),
+                Chip(label: Text(_localizedStatus(l, entity.status))),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                _buildPrimaryButton(notifier),
+                _buildPrimaryButton(notifier, l),
                 OutlinedButton(
                   key: Key('timer_card_${entity.id}_delete'),
                   onPressed: () => notifier.delete(entity.id),
-                  child: const Text('Delete'),
+                  child: Text(l.timerCardActionDelete),
                 ),
               ],
             ),
@@ -239,32 +259,35 @@ class _TimerCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildPrimaryButton(TimerCollectionNotifier notifier) {
+  Widget _buildPrimaryButton(
+    TimerCollectionNotifier notifier,
+    AppLocalizations l,
+  ) {
     return switch (entity.status) {
       TimerStatus.idle => FilledButton(
         key: Key('timer_card_${entity.id}_start'),
         onPressed: () => notifier.start(entity.id),
-        child: const Text('Start'),
+        child: Text(l.timerCardActionStart),
       ),
       TimerStatus.running => FilledButton(
         key: Key('timer_card_${entity.id}_pause'),
         onPressed: () => notifier.pause(entity.id),
-        child: const Text('Pause'),
+        child: Text(l.timerCardActionPause),
       ),
       TimerStatus.paused => FilledButton(
         key: Key('timer_card_${entity.id}_resume'),
         onPressed: () => notifier.resume(entity.id),
-        child: const Text('Resume'),
+        child: Text(l.timerCardActionResume),
       ),
       TimerStatus.ringing => FilledButton(
         key: Key('timer_card_${entity.id}_dismiss'),
         onPressed: () => notifier.cancel(entity.id),
-        child: const Text('Dismiss'),
+        child: Text(l.timerCardActionDismiss),
       ),
       TimerStatus.completed || TimerStatus.cancelled => FilledButton(
         key: Key('timer_card_${entity.id}_reset'),
         onPressed: () => notifier.reset(entity.id),
-        child: const Text('Reset'),
+        child: Text(l.timerCardActionReset),
       ),
     };
   }
@@ -281,6 +304,7 @@ class _PermissionBanners extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(permissionNotifierProvider);
     final notifier = ref.read(permissionNotifierProvider.notifier);
+    final AppLocalizations l = AppLocalizations.of(context);
 
     final List<Widget> banners = <Widget>[];
 
@@ -291,13 +315,13 @@ class _PermissionBanners extends ConsumerWidget {
           key: const Key('banner_post_notifications'),
           icon: Icons.notifications_off_outlined,
           color: Colors.red.shade100,
-          title: '通知が無効です',
-          description: 'タイマーが終了したときに通知が表示されません。',
+          title: l.permissionBannerNotificationsTitle,
+          description: l.permissionBannerNotificationsDescription,
           actionLabel:
               state.postNotifications ==
                   DomainPermissionStatus.permanentlyDenied
-              ? '設定を開く'
-              : '許可する',
+              ? l.permissionBannerActionOpenSettings
+              : l.permissionBannerActionAllow,
           onAction:
               state.postNotifications ==
                   DomainPermissionStatus.permanentlyDenied
@@ -314,13 +338,13 @@ class _PermissionBanners extends ConsumerWidget {
           key: const Key('banner_exact_alarm'),
           icon: Icons.alarm_off_outlined,
           color: Colors.orange.shade100,
-          title: '正確なアラームが無効です',
-          description: '省電力モード時にアラームが数分遅れる場合があります。',
+          title: l.permissionBannerExactAlarmTitle,
+          description: l.permissionBannerExactAlarmDescription,
           actionLabel:
               state.scheduleExactAlarm ==
                   DomainPermissionStatus.permanentlyDenied
-              ? '設定を開く'
-              : '許可する',
+              ? l.permissionBannerActionOpenSettings
+              : l.permissionBannerActionAllow,
           onAction:
               state.scheduleExactAlarm ==
                   DomainPermissionStatus.permanentlyDenied
@@ -337,9 +361,9 @@ class _PermissionBanners extends ConsumerWidget {
           key: const Key('banner_full_screen_intent'),
           icon: Icons.lock_outline,
           color: Colors.amber.shade100,
-          title: 'ロック画面でのアラームが無効です',
-          description: '権限がない場合は通知バナーで代わりにお知らせします。',
-          actionLabel: '設定を開く',
+          title: l.permissionBannerFullScreenIntentTitle,
+          description: l.permissionBannerFullScreenIntentDescription,
+          actionLabel: l.permissionBannerActionOpenSettings,
           onAction: () => notifier.openFullScreenIntentSettings(),
         ),
       );
