@@ -13,8 +13,7 @@ part 'alarm_sound.freezed.dart';
 /// stored on this value object. The domain layer is Pure Dart and must
 /// not depend on flutter localization. Resolve display names in the
 /// presentation layer via `AppLocalizations` keyed off [id]
-/// (`alarmSoundDefault` / `alarmSoundGentle` / `alarmSoundWarning` for
-/// soundId `'urgent'`).
+/// (`alarmSoundDefault` / `alarmSoundGentle` / `alarmSoundWarning`).
 ///
 /// Invariants enforced by the [AlarmSound.create] factory:
 ///   - `id` is non-empty

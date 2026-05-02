@@ -12,7 +12,7 @@ assets/
 ├── sounds/
 │   ├── alarm_default.mp3
 │   ├── alarm_gentle.mp3
-│   ├── alarm_urgent.mp3
+│   ├── alarm_warning.mp3
 │   ├── alarm_chime.mp3
 │   └── ...
 ├── images/
@@ -58,7 +58,7 @@ assets/
 |---|---|---|---|---|
 | `alarm_default.mp3` | `default` | デフォルト | Default | 標準的なアラーム音 |
 | `alarm_gentle.mp3` | `gentle` | やさしい | Gentle | 穏やかな起床向け |
-| `alarm_urgent.mp3` | `urgent` | 急ぎ | Urgent | 強めの注意喚起 |
+| `alarm_warning.mp3` | `warning` | 警告 | Warning | 強めの注意喚起 |
 | `alarm_chime.mp3` | `chime` | チャイム | Chime | 学校チャイム風 |
 | `alarm_bell.mp3` | `bell` | ベル | Bell | 単音ベル |
 | `alarm_digital.mp3` | `digital` | デジタル | Digital | 電子音 |

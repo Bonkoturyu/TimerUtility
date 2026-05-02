@@ -128,8 +128,8 @@ void main() {
 
     test('updates soundId to a new value', () {
       final s = _service();
-      final updated = s.update(seed(), soundId: 'urgent');
-      expect(updated.soundId, 'urgent');
+      final updated = s.update(seed(), soundId: 'warning');
+      expect(updated.soundId, 'warning');
     });
 
     test('updates soundId to null (clears default override)', () {

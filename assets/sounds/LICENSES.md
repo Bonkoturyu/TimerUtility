@@ -12,7 +12,7 @@
 - 取得日: 2026-04-30
 - 加工: なし
 
-## alarm_urgent.mp3
+## alarm_warning.mp3
 - 出典: https://pixabay.com/sound-effects/spain-eas-alarm-spain-437846/
 - 作者: JeremayJimenez
 - ライセンス: Pixabay Content License
