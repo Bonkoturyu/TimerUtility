@@ -153,6 +153,9 @@ void main() {
       final player = _StubAlarmSoundPlayer();
       await tester.pumpWidget(_harness(player));
       await tester.pumpAndSettle();
+      // Drain the 500ms cancel→play delay AlarmRingingNotifier.start
+      // schedules so no Timer is left pending at teardown.
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.byKey(const Key('alarm_ringing_title')), findsOneWidget);
       expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
@@ -169,6 +172,7 @@ void main() {
         final player = _StubAlarmSoundPlayer();
         await tester.pumpWidget(_harness(player));
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
 
         final BuildContext context = tester.element(
           find.byType(AlarmRingingScreen),
@@ -189,6 +193,7 @@ void main() {
       final player = _StubAlarmSoundPlayer();
       await tester.pumpWidget(_harness(player));
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
       expect(player.playCalls, 1);
 
       final BuildContext context = tester.element(
@@ -203,6 +208,7 @@ void main() {
             notificationId: 99,
           );
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(player.playCalls, 1);
     });
@@ -224,6 +230,7 @@ void main() {
       await tester.pumpWidget(_harness(player, seedRinging: seeded));
       // Pump the microtask that loads the collection from the repo.
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
 
       await tester.tap(find.byKey(const Key('alarm_stop_button')));
       await tester.pumpAndSettle();
@@ -247,6 +254,7 @@ void main() {
       final TimerEntity seeded = _seedRinging();
       await tester.pumpWidget(_harness(player, seedRinging: seeded));
       await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
 
       await tester.tap(find.byKey(const Key('alarm_snooze_button')));
       await tester.pumpAndSettle();
@@ -268,6 +276,7 @@ void main() {
           _harness(player, now: fixedNow, seedRinging: seeded),
         );
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
 
         await tester.tap(find.byKey(const Key('alarm_snooze_button')));
         await tester.pumpAndSettle();
@@ -293,6 +302,7 @@ void main() {
         final TimerEntity seeded = _seedRinging();
         await tester.pumpWidget(_harness(player, seedRinging: seeded));
         await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
 
         await tester.tap(find.byKey(const Key('alarm_snooze_button')));
         await tester.pumpAndSettle();

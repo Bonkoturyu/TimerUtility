@@ -20,7 +20,36 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 8 + ローカライズ土台 (Phase 8.5) 完了、2026-05-02）
+- なし（Phase 8 + ローカライズ土台 (Phase 8.5) + アラーム二重音修正 (Phase 8.5 follow-up) 完了、2026-05-02）
+
+---
+
+## Phase 8.5 follow-up: アラーム再鳴動時の二重音修正（2026-05-02）
+
+スヌーズ後の再鳴動時、heads-up 通知 → タップで AlarmRingingScreen に遷移する経路で、
+OS チャンネル音 (alarm-stream の `RawResourceAndroidNotificationSound`) と
+audioplayers のループ再生が重なって聞こえる問題を修正。
+
+### 経緯
+
+1. **Option A 試行**: [AlarmRingingNotifier.start()](lib/application/alarm_ringing_notifier.dart) の `unawaited` を `await` 化して cancel→play の順序を保証。実機では二重音残留 (Pixel 6a / Android 16)。
+2. **Option B 試行**: チャンネルの `playSound: false` でチャンネル音を切り audioplayers に一本化。FSI 経由は OK だが、heads-up 経路 (画面 ON で他アプリ操作中 / ホーム画面待機 / スヌーズ後再鳴動) で OS が FSI を抑制するため**音なし**になる UX 劣化が判明。
+3. **Option C 採用**: チャンネルは `playSound: true` に戻し、`start()` で `cancel → 500ms 遅延 → play` の 3 段順序にして OS 通知音が完全に止まってから audioplayers が引き継ぐ動作に。
+
+### 変更内容
+
+- [x] [alarm_ringing_notifier.dart](lib/application/alarm_ringing_notifier.dart): `start()` を `await cancel → await Future.delayed(500ms) → await play` に変更。why コメント追記
+- [x] [flutter_local_notification_adapter.dart](lib/infrastructure/notification/flutter_local_notification_adapter.dart): Channel id を `timer_alarm_v4` → `timer_alarm_v6` にバンプ (途中で v5 に下げて Option B を試したため)、`_legacyTimerAlarmChannelIds` に v4/v5 を追加。`playSound: true` + `RawResourceAndroidNotificationSound('alarm_default')` + `audioAttributesUsage: alarm` の v4 構成を維持。クラスドキュメントに Option B 試行と Option C 着地の経緯を記録
+- [x] [alarm_ringing_screen_test.dart](test/presentation/screens/alarm_ringing_screen_test.dart): 全 7 シナリオに `await tester.pump(Duration(milliseconds: 600))` を挿入して 500ms 遅延の Future を完了させる
+- [x] flutter analyze: No issues found
+- [x] flutter test: 180 / 180 passed
+- [x] 実機検証 (Pixel 6a / Android 16、2026-05-02): 6 シナリオすべて単音、二重音解消
+  - 初回 foreground (自動遷移) / 初回 background (heads-up タップ) / 初回 FSI (ロック画面) /
+    強制終了 → ロック画面 / 強制終了 → ホーム画面待機 / **スヌーズ後再鳴動 (heads-up タップ)**
+
+### 残タスク
+
+- [x] [docs/android-constraints.md](docs/android-constraints.md) の「Phase 6 実機検証で見つかって修正した問題」セクションに本件を追記 (Phase 8.5 follow-up サブセクション追加)
 
 ---
 
@@ -163,7 +192,7 @@
 - [x] flutter analyze: No issues found
 - [x] flutter test: 162 / 162 passed（既存 140 + 新規 22）
 - [x] dart format 整形済み
-- [ ] 実機検証: ringing → snooze 5 分 → 5 分後に再鳴動 + 通知音 + AlarmRingingScreen 自動表示（Auto 範囲外）
+- [x] 実機検証: ringing → snooze 5 分 → 5 分後に再鳴動 + 通知音 + AlarmRingingScreen（heads-up タップで遷移）→ 単音化（Pixel 6a / Android 16、2026-05-02、Phase 8.5 follow-up で audioplayers と OS 通知音の二重音問題を修正後に確認済）
 
 ### カスタム時間タイマー UI 完了内容（2026-05-01）
 
@@ -247,7 +276,7 @@
 - [x] flutter analyze: No issues found
 - [x] flutter test: 120 / 120 passed
 - [x] dart format で全体整形済み
-- [ ] 実機で 5s タイマー → カスタム音再生 → Stop で止まる動作確認（Auto 範囲外）
+- [x] 実機で 5s タイマー → カスタム音再生 → Stop で止まる動作確認（Phase 6 実機検証 2026-04-30 のパターン 1〜3 + Phase 8 検証 6 で実質カバー済）
 - [ ] CI が緑になることを確認（push 後に GitHub Actions で確認）
 
 ### Phase 4 完了内容（2026-04-29）
