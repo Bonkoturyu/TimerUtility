@@ -91,5 +91,63 @@
 
   "notificationTimerEndedTitle": "Timer",
   "notificationTimerEndedBody": "Time is up.",
-  "notificationTimerCompletedBackgroundBody": "Timer ended while the app was in the background."
+  "notificationTimerCompletedBackgroundBody": "Timer ended while the app was in the background.",
+
+  "presetSheetTitle": "Choose preset",
+  "presetSheetCustomButton": "Create with custom time",
+
+  "presetManageAppBarTitle": "Manage presets",
+  "presetManageMenuOverflow": "Manage presets",
+  "presetManageEmptyHint": "No presets yet.\nTap + to add one or replace from a template.",
+  "presetManageReplaceTemplate": "Replace from template",
+
+  "presetEditTitleNew": "Add preset",
+  "presetEditTitleEdit": "Edit preset",
+  "presetEditLabelHint": "Label (optional)",
+  "presetEditDurationLabel": "Duration",
+  "presetEditSoundLabel": "Sound",
+  "presetEditCancel": "Cancel",
+  "presetEditSave": "Save",
+
+  "presetDeleteConfirmTitle": "Delete this preset?",
+  "presetDeleteConfirmDontAsk": "Don't ask again",
+  "presetDeleteConfirmDelete": "Delete",
+  "presetDeleteConfirmCancel": "Cancel",
+
+  "presetTemplateReplaceTitle": "Replace from template",
+  "presetTemplateReplaceProfileGeneral": "General",
+  "presetTemplateReplaceProfileCooking": "Cooking",
+  "presetTemplateReplaceProfilePomodoro": "Pomodoro",
+  "presetTemplateReplaceMode": "You already have presets. What would you like to do?",
+  "presetTemplateReplaceModeOverwrite": "Overwrite",
+  "presetTemplateReplaceModeAppend": "Append",
+  "presetTemplateReplaceModeCancel": "Cancel",
+  "presetTemplateReplaceLimitWarning": "{discarded, plural, =0{} =1{1 preset was skipped because the limit was reached} other{{discarded} presets were skipped because the limit was reached}}",
+  "@presetTemplateReplaceLimitWarning": {
+    "placeholders": {
+      "discarded": {"type": "int"}
+    }
+  },
+
+  "presetLabelSeconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@presetLabelSeconds": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "presetLabelMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@presetLabelMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "presetLabelHours": "{count, plural, =1{1 hour} other{{count} hours}}",
+  "@presetLabelHours": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "timerCardSoundChange": "Change sound",
+  "timerSoundSheetTitle": "Choose sound"
 }

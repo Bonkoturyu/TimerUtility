@@ -192,4 +192,112 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get notificationTimerCompletedBackgroundBody =>
       'アプリのバックグラウンド中にタイマーが終了しました。';
+
+  @override
+  String get presetSheetTitle => 'プリセットから選択';
+
+  @override
+  String get presetSheetCustomButton => 'カスタム時間で作成';
+
+  @override
+  String get presetManageAppBarTitle => 'プリセット管理';
+
+  @override
+  String get presetManageMenuOverflow => 'プリセット管理';
+
+  @override
+  String get presetManageEmptyHint =>
+      'プリセットがありません。\n+ ボタンから追加するか、テンプレートから差し替えてください。';
+
+  @override
+  String get presetManageReplaceTemplate => 'テンプレートから差し替え';
+
+  @override
+  String get presetEditTitleNew => 'プリセットを追加';
+
+  @override
+  String get presetEditTitleEdit => 'プリセットを編集';
+
+  @override
+  String get presetEditLabelHint => 'ラベル（任意）';
+
+  @override
+  String get presetEditDurationLabel => '時間';
+
+  @override
+  String get presetEditSoundLabel => '音源';
+
+  @override
+  String get presetEditCancel => 'キャンセル';
+
+  @override
+  String get presetEditSave => '保存';
+
+  @override
+  String get presetDeleteConfirmTitle => 'このプリセットを削除しますか？';
+
+  @override
+  String get presetDeleteConfirmDontAsk => '次から確認しない';
+
+  @override
+  String get presetDeleteConfirmDelete => '削除';
+
+  @override
+  String get presetDeleteConfirmCancel => 'キャンセル';
+
+  @override
+  String get presetTemplateReplaceTitle => 'テンプレートから差し替え';
+
+  @override
+  String get presetTemplateReplaceProfileGeneral => '一般用';
+
+  @override
+  String get presetTemplateReplaceProfileCooking => '料理向け';
+
+  @override
+  String get presetTemplateReplaceProfilePomodoro => 'Pomodoro';
+
+  @override
+  String get presetTemplateReplaceMode => '既存のプリセットがあります。どうしますか？';
+
+  @override
+  String get presetTemplateReplaceModeOverwrite => '上書き';
+
+  @override
+  String get presetTemplateReplaceModeAppend => '追加';
+
+  @override
+  String get presetTemplateReplaceModeCancel => 'キャンセル';
+
+  @override
+  String presetTemplateReplaceLimitWarning(int discarded) {
+    String _temp0 = intl.Intl.pluralLogic(
+      discarded,
+      locale: localeName,
+      other: 'プリセット件数の上限を超えたため、$discarded 件が追加されませんでした',
+      zero: '',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String presetLabelSeconds(int count) {
+    return '$count秒';
+  }
+
+  @override
+  String presetLabelMinutes(int count) {
+    return '$count分';
+  }
+
+  @override
+  String presetLabelHours(int count) {
+    return '$count時間';
+  }
+
+  @override
+  String get timerCardSoundChange => '音源を変更';
+
+  @override
+  String get timerSoundSheetTitle => '音源を選択';
 }

@@ -166,6 +166,17 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _persist(next);
   }
 
+  /// Replace a timer's `soundId` (Phase 9). The mutation is purely a
+  /// configuration change: status / endAt / pausedRemaining are
+  /// preserved, so a running countdown isn't disturbed. Pass `null` to
+  /// fall back to the catalog default.
+  void changeSound(String id, String? soundId) {
+    final TimerEntity current = _require(id);
+    final TimerEntity next = current.copyWith(soundId: soundId);
+    state = state.update(next);
+    _persist(next);
+  }
+
   /// Permanently remove a timer from the collection (and DB).
   void delete(String id) {
     final TimerEntity? current = state.findById(id);

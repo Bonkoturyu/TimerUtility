@@ -91,5 +91,63 @@
 
   "notificationTimerEndedTitle": "タイマー",
   "notificationTimerEndedBody": "時間になりました。",
-  "notificationTimerCompletedBackgroundBody": "アプリのバックグラウンド中にタイマーが終了しました。"
+  "notificationTimerCompletedBackgroundBody": "アプリのバックグラウンド中にタイマーが終了しました。",
+
+  "presetSheetTitle": "プリセットから選択",
+  "presetSheetCustomButton": "カスタム時間で作成",
+
+  "presetManageAppBarTitle": "プリセット管理",
+  "presetManageMenuOverflow": "プリセット管理",
+  "presetManageEmptyHint": "プリセットがありません。\n+ ボタンから追加するか、テンプレートから差し替えてください。",
+  "presetManageReplaceTemplate": "テンプレートから差し替え",
+
+  "presetEditTitleNew": "プリセットを追加",
+  "presetEditTitleEdit": "プリセットを編集",
+  "presetEditLabelHint": "ラベル（任意）",
+  "presetEditDurationLabel": "時間",
+  "presetEditSoundLabel": "音源",
+  "presetEditCancel": "キャンセル",
+  "presetEditSave": "保存",
+
+  "presetDeleteConfirmTitle": "このプリセットを削除しますか？",
+  "presetDeleteConfirmDontAsk": "次から確認しない",
+  "presetDeleteConfirmDelete": "削除",
+  "presetDeleteConfirmCancel": "キャンセル",
+
+  "presetTemplateReplaceTitle": "テンプレートから差し替え",
+  "presetTemplateReplaceProfileGeneral": "一般用",
+  "presetTemplateReplaceProfileCooking": "料理向け",
+  "presetTemplateReplaceProfilePomodoro": "Pomodoro",
+  "presetTemplateReplaceMode": "既存のプリセットがあります。どうしますか？",
+  "presetTemplateReplaceModeOverwrite": "上書き",
+  "presetTemplateReplaceModeAppend": "追加",
+  "presetTemplateReplaceModeCancel": "キャンセル",
+  "presetTemplateReplaceLimitWarning": "{discarded, plural, =0{} other{プリセット件数の上限を超えたため、{discarded} 件が追加されませんでした}}",
+  "@presetTemplateReplaceLimitWarning": {
+    "placeholders": {
+      "discarded": {"type": "int"}
+    }
+  },
+
+  "presetLabelSeconds": "{count}秒",
+  "@presetLabelSeconds": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "presetLabelMinutes": "{count}分",
+  "@presetLabelMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "presetLabelHours": "{count}時間",
+  "@presetLabelHours": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "timerCardSoundChange": "音源を変更",
+  "timerSoundSheetTitle": "音源を選択"
 }

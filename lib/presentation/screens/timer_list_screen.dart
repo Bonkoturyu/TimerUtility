@@ -10,11 +10,14 @@ import '../../application/timer_service_provider.dart';
 import '../../domain/ports/permission_manager.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/timer/exceptions.dart';
+import '../../domain/timer/preset.dart';
 import '../../domain/timer/timer_collection.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart';
+import '../widgets/preset_select_sheet.dart';
+import '../widgets/sound_select_sheet.dart';
 
 /// Maps a [TimerStatus] enum value to the localized string used in the
 /// status badge / chip on each timer card.
@@ -110,7 +113,26 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
 
     final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.timerListAppBarTitle)),
+      appBar: AppBar(
+        title: Text(l.timerListAppBarTitle),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            key: const Key('timer_list_menu'),
+            onSelected: (String value) {
+              if (value == 'manage_presets') {
+                context.push('/presets');
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                key: const Key('timer_list_menu_manage_presets'),
+                value: 'manage_presets',
+                child: Text(l.presetManageMenuOverflow),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -159,17 +181,56 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
       return;
     }
 
-    final Duration? chosen = await showModalBottomSheet<Duration>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const DurationPicker(),
-    );
-    if (chosen == null) return;
+    // Phase 9: bottom sheet first — pick a saved preset, or fall back
+    // to the existing custom-time DurationPicker via the explicit
+    // "Create with custom time" button.
+    final PresetSelectResult? selection =
+        await showModalBottomSheet<PresetSelectResult>(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => const PresetSelectSheet(),
+        );
+    if (selection == null) return;
     if (!context.mounted) return;
+
+    if (selection.preset != null) {
+      _createTimerFrom(context, selection.preset!);
+      return;
+    }
+    if (selection.customRequested) {
+      final Duration? chosen = await showModalBottomSheet<Duration>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => const DurationPicker(),
+      );
+      if (chosen == null) return;
+      if (!context.mounted) return;
+      // Custom-time creation uses the catalog default sound; the
+      // user can swap it from the timer card's sound icon afterwards.
+      _createTimer(context, label: '', duration: chosen, soundId: null);
+    }
+  }
+
+  void _createTimerFrom(BuildContext context, Preset preset) {
+    _createTimer(
+      context,
+      label: preset.label,
+      duration: preset.duration,
+      soundId: preset.soundId,
+    );
+  }
+
+  void _createTimer(
+    BuildContext context, {
+    required String label,
+    required Duration duration,
+    required String? soundId,
+  }) {
+    final AppLocalizations l = AppLocalizations.of(context);
     try {
       ref
           .read(timerCollectionNotifierProvider.notifier)
-          .create(label: '', duration: chosen);
+          .create(label: label, duration: duration, soundId: soundId);
     } on MaxTimerCountExceededException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.timerListLimitReached(e.maxSize))),
@@ -246,6 +307,12 @@ class _TimerCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
                 _buildPrimaryButton(notifier, l),
+                IconButton(
+                  key: Key('timer_card_${entity.id}_sound'),
+                  tooltip: l.timerCardSoundChange,
+                  icon: const Icon(Icons.music_note),
+                  onPressed: () => _onChangeSound(context, ref),
+                ),
                 OutlinedButton(
                   key: Key('timer_card_${entity.id}_delete'),
                   onPressed: () => notifier.delete(entity.id),
@@ -257,6 +324,18 @@ class _TimerCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onChangeSound(BuildContext context, WidgetRef ref) async {
+    final String? picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SoundSelectSheet(initialSoundId: entity.soundId),
+    );
+    if (picked == null) return;
+    ref
+        .read(timerCollectionNotifierProvider.notifier)
+        .changeSound(entity.id, picked);
   }
 
   Widget _buildPrimaryButton(
