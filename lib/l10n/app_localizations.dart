@@ -625,6 +625,12 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'音源を選択'**
   String get timerSoundSheetTitle;
+
+  /// No description provided for @licenseMenuOverflow.
+  ///
+  /// In ja, this message translates to:
+  /// **'ライセンス'**
+  String get licenseMenuOverflow;
 }
 
 class _AppLocalizationsDelegate
