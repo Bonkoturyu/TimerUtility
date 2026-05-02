@@ -334,4 +334,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timerSoundSheetTitle => 'Choose sound';
+
+  @override
+  String get licenseMenuOverflow => 'Licenses';
 }

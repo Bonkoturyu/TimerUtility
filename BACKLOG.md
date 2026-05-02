@@ -560,9 +560,11 @@ AndroidManifest 編集はユーザー確認必須。
 
 - [ ] アプリアイコン・スプラッシュ
 - [ ] 設定画面（音源選択、デフォルトスヌーズ時間など）
-- [ ] ライセンス表示画面（設定画面 → 「ライセンス」エントリ → `showLicensePage`）
+- [x] ライセンス表示画面（2026-05-02、Phase 11 先行小タスクとして実装）
       Flutter 標準 `showLicensePage` + `LicenseRegistry.addLicense` で
-      pub 依存 + 同梱音源（`assets/sounds/LICENSES.md`）を統合表示
+      pub 依存 + 同梱音源（`assets/sounds/LICENSES.md`）を統合表示。
+      設定画面が未実装のため、暫定で TimerListScreen の AppBar overflow
+      メニューに「ライセンス」エントリを追加。設定画面実装時に移設する
 - [ ] ダークモード対応
 - [~] ローカライズ（日本語 / 英語、内部対応で中国語簡体字 / 繁体字 / 韓国語）
   - Phase 8.5 で土台 (flutter_localizations + gen-l10n + ARB) を導入済 (2026-05-02):
@@ -577,6 +579,29 @@ AndroidManifest 編集はユーザー確認必須。
 ---
 
 ## Phase 12（任意）: iOS 版実装（Android 版完成後に着手）
+
+### 事前タスク（Phase 12 着手前にまとめて実施、2026-05-02 ユーザ判断で持ち越し）
+
+iOS 版開始時または Play Store 公開前のタイミングで、以下の依存メジャーバンプを
+別ブランチでまとめて検証する。Phase 9 完了時点 (2026-05-02) では現状で
+特に困っていないため Phase 11 までは現行版を維持する方針:
+
+- [ ] `freezed` / `freezed_annotation` 2.x → 3.x（codegen 全件再生成、copyWith
+  semantics 確認）
+- [ ] `flutter_riverpod` / `riverpod_annotation` / `riverpod_generator` /
+  `riverpod_lint` 2.x → 3.x / 4.x（AsyncNotifier の build セマンティクス、
+  `.notifier` 生成形、`.invalidate()` スコープの breaking。全 Notifier の
+  挙動を Widget Test + 実機で再検証）
+- [ ] `flutter_local_notifications` 19.x → 21.x（Phase 8.5 follow-up で
+  チューニングした「Channel v6 + cancel→500ms→play」が FLN 21 でも単音化
+  する確認、6 シナリオ実機検証）
+- [ ] 上記に紐づいて自動的に unlock される `drift` / `drift_dev` /
+  `drift_flutter` / `timezone` / `build_runner` の最新化
+- [ ] `go_router` 14.x → 17.x（3 メジャー分 / ルート登録 API 確認）
+- [ ] `permission_handler_android` の継続バージョン追従（Android compileSdk
+  要求の追従）
+
+### iOS 化本体
 
 - [ ] `flutter create --platforms=ios .` で iOS プロジェクト生成
 - [ ] iOS シミュレータでビルド確認（既存 adapter がクロスプラットフォーム対応パッケージを使っているため、ビルドは通る可能性あり）
@@ -625,4 +650,4 @@ AndroidManifest 編集はユーザー確認必須。
 
 ---
 
-最終更新日: 2026-05-02（Phase 9 完了: プリセット機能 + テンプレート差し替え、275 テストパス、Pixel 6a で 10 シナリオ + フィードバック 6 件反映済）
+最終更新日: 2026-05-02（Phase 11 ライセンス表示先行実装 + Phase 12 事前タスク（依存メジャーバンプ繰り越し）追記、276 テストパス）

@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart'
+    show LicenseEntryWithLineBreaks, LicenseRegistry;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,8 +48,24 @@ List<Locale> get supportedLocales => <Locale>[
   if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,
 ];
 
+/// Register the bundled-sound license file (`assets/sounds/LICENSES.md`)
+/// so Flutter's `showLicensePage` lists it alongside pub-package licenses.
+///
+/// `LicenseRegistry.addLicense` takes a callback that returns a stream of
+/// entries — the asset is read lazily the first time the license page is
+/// opened, so this adds no startup cost.
+void _registerBundledSoundsLicense() {
+  LicenseRegistry.addLicense(() async* {
+    final String content = await rootBundle.loadString(
+      'assets/sounds/LICENSES.md',
+    );
+    yield LicenseEntryWithLineBreaks(<String>['Bundled sounds'], content);
+  });
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _registerBundledSoundsLicense();
   final adapter = FlutterLocalNotificationAdapter();
   final AppDatabase database = AppDatabase();
   final DriftTimerRepository repository = DriftTimerRepository(database);
