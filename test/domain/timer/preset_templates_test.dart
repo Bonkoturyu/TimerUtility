@@ -101,7 +101,7 @@ void main() {
         const Duration(minutes: 25),
       ]);
       for (final t in PresetTemplates.pomodoro.templates) {
-        expect(t.soundId, 'urgent');
+        expect(t.soundId, 'warning');
       }
     });
   });

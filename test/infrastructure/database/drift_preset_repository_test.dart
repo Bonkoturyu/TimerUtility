@@ -37,7 +37,7 @@ void main() {
     String id = 'p-custom',
     String label = 'Custom',
     Duration duration = const Duration(minutes: 7),
-    String? soundId = 'urgent',
+    String? soundId = 'warning',
     DateTime? createdAt,
   }) {
     return Preset(

@@ -74,7 +74,7 @@
 
 - `alarm_default.mp3` — Pixabay (`freesound_community`)
 - `alarm_gentle.mp3` — Pixabay (`JeremayJimenez`)
-- `alarm_urgent.mp3` — Pixabay (`JeremayJimenez`)
+- `alarm_warning.mp3` — Pixabay (`JeremayJimenez`)
 
 **Pixabay Content License** (商用利用可・帰属表示不要・再配布可)。
 2024 年に追加された「Pixabay コンテンツのみで作られた音源コレクションの

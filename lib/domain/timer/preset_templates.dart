@@ -127,32 +127,32 @@ class PresetTemplates {
       PresetTemplate(
         label: '',
         duration: Duration(seconds: 5),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
       PresetTemplate(
         label: '',
         duration: Duration(seconds: 30),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
       PresetTemplate(
         label: '',
         duration: Duration(minutes: 1),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
       PresetTemplate(
         label: '',
         duration: Duration(minutes: 5),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
       PresetTemplate(
         label: '',
         duration: Duration(minutes: 10),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
       PresetTemplate(
         label: '',
         duration: Duration(minutes: 25),
-        soundId: 'urgent',
+        soundId: 'warning',
       ),
     ],
   );

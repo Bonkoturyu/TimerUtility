@@ -63,10 +63,10 @@ void main() {
 
   group('PresetMapper.toCompanion', () {
     test('non-null optional fields produce Value(...) instead of absent', () {
-      final Preset p = makeEntity(soundId: 'urgent');
+      final Preset p = makeEntity(soundId: 'warning');
       final companion = mapper.toCompanion(p);
       expect(companion.id.value, 'p-1');
-      expect(companion.soundId.value, 'urgent');
+      expect(companion.soundId.value, 'warning');
       expect(companion.label.value, 'Tea');
     });
 

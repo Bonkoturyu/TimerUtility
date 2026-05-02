@@ -110,13 +110,13 @@ void main() {
     test('non-null optional fields produce Value(...) instead of absent', () {
       final TimerEntity entity = makeEntity(
         endAt: DateTime.utc(2026, 5, 1, 10, 25),
-        soundId: 'urgent',
+        soundId: 'warning',
         status: TimerStatus.running,
       );
       final TimersCompanion companion = mapper.toCompanion(entity);
       expect(companion.id.value, 'timer-1');
       expect(companion.endAtUtcMs.value, isNotNull);
-      expect(companion.soundId.value, 'urgent');
+      expect(companion.soundId.value, 'warning');
       expect(companion.status.value, 'running');
     });
   });
