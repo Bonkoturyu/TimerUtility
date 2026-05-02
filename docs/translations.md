@@ -112,7 +112,7 @@
 | --- | --- | --- | --- |
 | `alarmSoundDefault` | デフォルト | Default | カタログ表示名 |
 | `alarmSoundGentle` | やさしい | Gentle | カタログ表示名 |
-| `alarmSoundUrgent` | 急ぎ | Urgent | カタログ表示名 |
+| `alarmSoundWarning` | 警告 | Warning | カタログ表示名（soundId='urgent'） |
 | `timerSoundSheetTitle` | 音源を選択 | Choose sound | bottom sheet タイトル（タイマー / プリセット共通） |
 
 > 将来 ~10 音源まで増える予定。新規音源を追加するときは `alarmSound<XXX>` 形式で本表に追記する。

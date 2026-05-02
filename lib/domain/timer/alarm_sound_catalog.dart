@@ -9,9 +9,11 @@ import 'alarm_sound.dart';
 /// release), callers should fall back to [defaultSound].
 ///
 /// Display names live in `lib/l10n/app_*.arb` keyed as
-/// `alarmSoundDefault` / `alarmSoundGentle` / `alarmSoundUrgent`. The
-/// presentation layer resolves them via `AppLocalizations` because the
-/// domain layer is Pure Dart and may not depend on Flutter localization.
+/// `alarmSoundDefault` / `alarmSoundGentle` / `alarmSoundWarning`
+/// (the 'urgent' soundId is intentionally kept on the domain side —
+/// only the display key was renamed for clarity). The presentation
+/// layer resolves them via `AppLocalizations` because the domain
+/// layer is Pure Dart and may not depend on Flutter localization.
 class AlarmSoundCatalog {
   const AlarmSoundCatalog();
 
