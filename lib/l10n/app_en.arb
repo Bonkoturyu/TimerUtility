@@ -1,0 +1,95 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "TimerUtility",
+  "homeOpenStopwatch": "Open Stopwatch",
+  "homeOpenTimer": "Open Timer",
+
+  "stopwatchAppBarTitle": "Stopwatch",
+  "stopwatchStart": "Start",
+  "stopwatchPause": "Pause",
+  "stopwatchResume": "Resume",
+  "stopwatchLap": "Lap",
+  "stopwatchReset": "Reset",
+  "stopwatchNoLaps": "No laps recorded",
+  "stopwatchLapLabel": "Lap {index}",
+  "@stopwatchLapLabel": {
+    "placeholders": {
+      "index": {"type": "int"}
+    }
+  },
+  "stopwatchSplit": "Split {time}",
+  "@stopwatchSplit": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "stopwatchTotal": "Total {time}",
+  "@stopwatchTotal": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+
+  "timerListAppBarTitle": "Timers",
+  "timerListAddFab": "Add Timer",
+  "timerListEmptyHint": "No timers yet.\nTap “Add Timer” at the bottom-right to create one.",
+  "timerListLimitReached": "{count, plural, =1{Limit reached: 1 timer} other{Limit reached: {count} timers}}",
+  "@timerListLimitReached": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "timerCardTimesUp": "Time's up!",
+  "timerCardActionStart": "Start",
+  "timerCardActionPause": "Pause",
+  "timerCardActionResume": "Resume",
+  "timerCardActionDismiss": "Dismiss",
+  "timerCardActionReset": "Reset",
+  "timerCardActionDelete": "Delete",
+
+  "timerStatusIdle": "idle",
+  "timerStatusRunning": "running",
+  "timerStatusPaused": "paused",
+  "timerStatusRinging": "ringing",
+  "timerStatusCompleted": "completed",
+  "timerStatusCancelled": "cancelled",
+
+  "alarmAppBarTitle": "Alarm",
+  "alarmTimesUp": "Time's up!",
+  "alarmStop": "Stop",
+  "alarmSnooze": "Snooze",
+  "alarmSnoozePickerTitle": "Choose snooze duration",
+  "alarmSnoozeMinutes": "{minutes, plural, =1{1 minute} other{{minutes} minutes}}",
+  "@alarmSnoozeMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "alarmSnoozeCancel": "Cancel",
+
+  "durationPickerTitle": "Choose custom duration",
+  "durationPickerHours": "h",
+  "durationPickerMinutes": "m",
+  "durationPickerSeconds": "s",
+  "durationPickerCancel": "Cancel",
+  "durationPickerConfirm": "Confirm",
+
+  "permissionBannerNotificationsTitle": "Notifications disabled",
+  "permissionBannerNotificationsDescription": "Timer-end notifications won't be shown.",
+  "permissionBannerExactAlarmTitle": "Exact alarms disabled",
+  "permissionBannerExactAlarmDescription": "Alarms may fire several minutes late while the device is in power-saving mode.",
+  "permissionBannerFullScreenIntentTitle": "Lock-screen alarms disabled",
+  "permissionBannerFullScreenIntentDescription": "Without this permission, alarms will appear as a heads-up banner instead.",
+  "permissionBannerActionAllow": "Allow",
+  "permissionBannerActionOpenSettings": "Open settings",
+
+  "alarmSoundDefault": "Default",
+  "alarmSoundGentle": "Gentle",
+  "alarmSoundUrgent": "Urgent",
+
+  "notificationTimerEndedTitle": "Timer",
+  "notificationTimerEndedBody": "Time is up.",
+  "notificationTimerCompletedBackgroundBody": "Timer ended while the app was in the background."
+}

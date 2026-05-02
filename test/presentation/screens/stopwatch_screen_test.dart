@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/stopwatch_notifier.dart';
 import 'package:timer_utility/domain/stopwatch/stopwatch_state.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/stopwatch_screen.dart';
 
 class _MutableNow {
@@ -17,7 +18,14 @@ Widget _harness(_MutableNow holder) {
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock(() => holder.now)),
     ],
-    child: const MaterialApp(home: StopwatchScreen()),
+    // English locale so the existing "Lap N" / "00:00.00" assertions
+    // remain valid regardless of the host machine's locale.
+    child: const MaterialApp(
+      locale: Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: <Locale>[Locale('en'), Locale('ja')],
+      home: StopwatchScreen(),
+    ),
   );
 }
 

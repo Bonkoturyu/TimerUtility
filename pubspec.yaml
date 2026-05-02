@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   flutter_riverpod: ^2.5.1
@@ -25,6 +27,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   timezone: ^0.10.1
   flutter_timezone: ^5.0.2
+  intl: any  # flutter_localizations と整合する版を Flutter SDK が選ぶ
 
 dev_dependencies:
   flutter_test:
@@ -49,5 +52,6 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/sounds/

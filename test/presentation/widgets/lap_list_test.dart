@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/stopwatch_notifier.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/widgets/lap_list.dart';
 
 class _MutableNow {
@@ -16,7 +17,15 @@ Widget _harness(_MutableNow holder) {
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock(() => holder.now)),
     ],
-    child: const MaterialApp(home: Scaffold(body: LapList())),
+    // Force English locale so the test assertions can match literal
+    // "Lap N" / "Split ..." / "No laps recorded" strings without
+    // depending on the host machine's locale.
+    child: const MaterialApp(
+      locale: Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: <Locale>[Locale('en'), Locale('ja')],
+      home: Scaffold(body: LapList()),
+    ),
   );
 }
 

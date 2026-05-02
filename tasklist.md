@@ -20,7 +20,54 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 8 実機検証 6 シナリオすべて完了、2026-05-02）
+- なし（Phase 8 + ローカライズ土台 (Phase 8.5) 完了、2026-05-02）
+
+---
+
+## ローカライズ土台導入完了内容（2026-05-02）
+
+中国語簡体字 / 繁体字 / 韓国語までの拡張可能性を担保する設計を採用。
+
+- [x] `pubspec.yaml`: `flutter_localizations` (SDK) + `intl` 追加、
+  `flutter:` 配下に `generate: true` 追加
+- [x] `l10n.yaml` 新規 (テンプレート ja、出力先 lib/l10n)
+- [x] `lib/l10n/app_ja.arb` / `app_en.arb` 新規 (約 50 キー、ICU plural
+  含む)
+- [x] `lib/main.dart`: `localizationsDelegates` / `supportedLocales` 設定。
+  `kEnableExperimentalLocales` (compile-time flag) で zh / zh-Hant / ko
+  を社内ビルドのみ有効化可能
+- [x] `lib/domain/timer/alarm_sound.dart`: `displayName` フィールドを削除
+  (Pure Dart 制約遵守)。表示名は presentation 層で `AppLocalizations`
+  経由で解決
+- [x] `lib/domain/timer/alarm_sound_catalog.dart`: 同上、id + assetPath のみに
+- [x] `lib/presentation/screens/timer_list_screen.dart`: AppBar / FAB /
+  empty hint / カード内の表示・状態 chip・各ボタン / 上限 SnackBar /
+  権限バナー 3 種すべて ARB 経由に置換
+- [x] `lib/presentation/screens/alarm_ringing_screen.dart`: AppBar /
+  Time's up! / Stop / Snooze / モーダル内タイトル + 分単位 + キャンセル
+  すべて ARB 経由に置換
+- [x] `lib/presentation/screens/stopwatch_screen.dart`: AppBar / Start /
+  Pause / Resume / Lap / Reset すべて ARB 経由に置換
+- [x] `lib/presentation/widgets/duration_picker.dart`: タイトル / 時 /
+  分 / 秒 / キャンセル / 決定すべて ARB 経由に置換
+- [x] `lib/presentation/widgets/lap_list.dart`: 空表示 / Lap N / Split /
+  Total すべて ARB 経由に置換
+- [x] `lib/main.dart` HomeScreen: appTitle / Open Stopwatch /
+  Open Timer すべて ARB 経由に置換
+- [x] テストハーネスに `localizationsDelegates` + 固定 Locale を追加
+  (lap_list_test / stopwatch_screen_test は en、duration_picker_test /
+  alarm_ringing_screen_test / timer_list_screen_test は ja)
+- [x] `test/domain/timer/alarm_sound_catalog_test.dart`: displayName
+  削除に追従
+- [x] flutter analyze: No issues found
+- [x] flutter test: 180 / 180 passed
+- [x] dart format で整形済み
+- [ ] 通知 channel 名 / 通知本文の i18n 対応 (Phase 11)
+- [ ] 設定画面での手動切替 UI (Phase 11)
+- [ ] 中韓 ARB の本格翻訳 (Phase 11)
+
+`docs/oss-publishing-notes.md` のローカライズ言語ポリシー記載は今後 Phase 11
+着手時にまとめて更新する。
 
 ---
 
@@ -332,4 +379,4 @@
 
 ---
 
-最終更新日: 2026-05-02（Phase 8 実機検証 6 シナリオすべて完了、Pixel 6a / Android 16）
+最終更新日: 2026-05-02（ローカライズ土台導入: 日英 ARB + 中韓 experimental flag、180 テストパス）

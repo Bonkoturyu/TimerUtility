@@ -485,7 +485,11 @@ AndroidManifest 編集はユーザー確認必須。
 - [ ] アプリアイコン・スプラッシュ
 - [ ] 設定画面（音源選択、デフォルトスヌーズ時間など）
 - [ ] ダークモード対応
-- [ ] ローカライズ（日本語 / 英語）
+- [~] ローカライズ（日本語 / 英語、内部対応で中国語簡体字 / 繁体字 / 韓国語）
+  - Phase 8.5 で土台 (flutter_localizations + gen-l10n + ARB) を導入済 (2026-05-02):
+    日英 ARB 完備、`--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で
+    zh / zh-Hant / ko を有効化可能。Phase 11 で実翻訳 + 中韓 ARB 追加 +
+    通知 channel 名/通知本文の i18n 対応 + 設定画面での手動切替 UI を整備
 - [ ] Play Store 提出準備（プライバシーポリシー、スクリーンショット）
 
 **DoD**: 公開可能な品質に到達
@@ -531,6 +535,7 @@ AndroidManifest 編集はユーザー確認必須。
 | 6 | 完了 | 6a/6b/6c 実装 + 実機 3 パターン全部 OK（Pixel 6a / Android 16、2026-04-30）、126 テストパス |
 | 7 | 完了（実機検証済み） | スヌーズ + カスタム時間タイマー UI 完了（2026-05-01）、162 テストパス、Pixel 6a 動作確認済 |
 | 8 | 完了（実機検証済み） | 複数タイマー (上限 10) + Drift 永続化 + 起動時復元 (過去到達は completed + show 通知)、180 テストパス、Pixel 6a で 6 シナリオ検証済（2026-05-02） |
+| 8.5 | 完了（土台のみ、本番翻訳は Phase 11） | ローカライズ土台 (flutter_localizations + gen-l10n + 日英 ARB)。中国語簡体字 / 繁体字 / 韓国語は `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で内部対応可能（2026-05-02、180 テストパス） |
 | 9 | 未着手 | |
 | 9.5 | 未着手 | 指定時刻アラーム機能（曜日繰り返し + スヌーズ）。Phase 9 完了後 |
 | 10 | 未着手 | Timer + Alarm 両方の再起動復元 |
@@ -540,4 +545,4 @@ AndroidManifest 編集はユーザー確認必須。
 
 ---
 
-最終更新日: 2026-05-02（Phase 8 実機検証 6 シナリオすべて完了、Pixel 6a / Android 16）
+最終更新日: 2026-05-02（ローカライズ土台導入: flutter_localizations + gen-l10n + 日英 ARB、中韓は experimental flag で内部対応可能、180 テストパス）

@@ -18,6 +18,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The "TimerUtility" string is the localized appTitle. It appears
+    // in both ja and en ARB as the same literal so any host locale works.
     expect(find.text('TimerUtility'), findsAtLeastNWidgets(1));
     expect(find.byKey(const Key('home_open_stopwatch_button')), findsOneWidget);
   });

@@ -1,0 +1,95 @@
+{
+  "@@locale": "ja",
+
+  "appTitle": "TimerUtility",
+  "homeOpenStopwatch": "ストップウォッチを開く",
+  "homeOpenTimer": "タイマーを開く",
+
+  "stopwatchAppBarTitle": "ストップウォッチ",
+  "stopwatchStart": "開始",
+  "stopwatchPause": "一時停止",
+  "stopwatchResume": "再開",
+  "stopwatchLap": "ラップ",
+  "stopwatchReset": "リセット",
+  "stopwatchNoLaps": "ラップ未記録",
+  "stopwatchLapLabel": "ラップ {index}",
+  "@stopwatchLapLabel": {
+    "placeholders": {
+      "index": {"type": "int"}
+    }
+  },
+  "stopwatchSplit": "区間 {time}",
+  "@stopwatchSplit": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "stopwatchTotal": "合計 {time}",
+  "@stopwatchTotal": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+
+  "timerListAppBarTitle": "タイマー",
+  "timerListAddFab": "タイマーを追加",
+  "timerListEmptyHint": "タイマーがありません。\n右下の「タイマーを追加」から追加できます。",
+  "timerListLimitReached": "上限 {count} 件に達しています",
+  "@timerListLimitReached": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "timerCardTimesUp": "終了！",
+  "timerCardActionStart": "開始",
+  "timerCardActionPause": "一時停止",
+  "timerCardActionResume": "再開",
+  "timerCardActionDismiss": "解除",
+  "timerCardActionReset": "リセット",
+  "timerCardActionDelete": "削除",
+
+  "timerStatusIdle": "待機",
+  "timerStatusRunning": "進行中",
+  "timerStatusPaused": "一時停止",
+  "timerStatusRinging": "鳴動中",
+  "timerStatusCompleted": "完了",
+  "timerStatusCancelled": "取消",
+
+  "alarmAppBarTitle": "アラーム",
+  "alarmTimesUp": "時間です！",
+  "alarmStop": "停止",
+  "alarmSnooze": "スヌーズ",
+  "alarmSnoozePickerTitle": "スヌーズ時間を選択",
+  "alarmSnoozeMinutes": "{minutes} 分",
+  "@alarmSnoozeMinutes": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "alarmSnoozeCancel": "キャンセル",
+
+  "durationPickerTitle": "カスタム時間を選択",
+  "durationPickerHours": "時",
+  "durationPickerMinutes": "分",
+  "durationPickerSeconds": "秒",
+  "durationPickerCancel": "キャンセル",
+  "durationPickerConfirm": "決定",
+
+  "permissionBannerNotificationsTitle": "通知が無効です",
+  "permissionBannerNotificationsDescription": "タイマーが終了したときに通知が表示されません。",
+  "permissionBannerExactAlarmTitle": "正確なアラームが無効です",
+  "permissionBannerExactAlarmDescription": "省電力モード時にアラームが数分遅れる場合があります。",
+  "permissionBannerFullScreenIntentTitle": "ロック画面でのアラームが無効です",
+  "permissionBannerFullScreenIntentDescription": "権限がない場合は通知バナーで代わりにお知らせします。",
+  "permissionBannerActionAllow": "許可する",
+  "permissionBannerActionOpenSettings": "設定を開く",
+
+  "alarmSoundDefault": "デフォルト",
+  "alarmSoundGentle": "やさしい",
+  "alarmSoundUrgent": "急ぎ",
+
+  "notificationTimerEndedTitle": "タイマー",
+  "notificationTimerEndedBody": "時間になりました。",
+  "notificationTimerCompletedBackgroundBody": "アプリのバックグラウンド中にタイマーが終了しました。"
+}
