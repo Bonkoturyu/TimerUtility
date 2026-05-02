@@ -18,8 +18,10 @@ const List<String> _legacyTimerAlarmChannelIds = <String>[
   'timer_alarm',
   'timer_alarm_v2',
   'timer_alarm_v3',
+  'timer_alarm_v4',
+  'timer_alarm_v5',
 ];
-const String timerAlarmChannelId = 'timer_alarm_v4';
+const String timerAlarmChannelId = 'timer_alarm_v6';
 const String timerAlarmChannelName = 'Timer Alarm';
 const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
@@ -37,9 +39,9 @@ const String timerCompletedChannelDescription =
 /// Resource id of the default alarm sound bundled at
 /// `android/app/src/main/res/raw/alarm_default.mp3`. This is what the
 /// notification layer plays when the OS fires the alarm while the Flutter
-/// engine is asleep (background or cold start). The richer audioplayers
-/// playback driven by `AlarmRingingScreen` layers on top once the user
-/// brings the app to the foreground.
+/// engine is asleep (background or cold start) AND the user is in a
+/// state where Android only emits a heads-up (no FullScreenIntent) —
+/// that path has no other way to make sound.
 const String _alarmRawResource = 'alarm_default';
 
 /// Concrete [NotificationScheduler] backed by `flutter_local_notifications`.
@@ -49,13 +51,34 @@ const String _alarmRawResource = 'alarm_default';
 ///   - exact-vs-inexact toggle (`AndroidScheduleMode.exactAllowWhileIdle`
 ///     vs `AndroidScheduleMode.inexactAllowWhileIdle`) decided by the
 ///     caller based on permission state
-///   - fullScreenIntent + max importance/priority (Phase 6a). Sound is
-///     suppressed at the notification layer because the alarm screen
-///     plays the custom sound via `audioplayers` (Phase 5).
+///   - fullScreenIntent + max importance/priority (Phase 6a)
 ///   - per-schedule fullScreenIntent fallback (Phase 6c): when the OS
 ///     denies USE_FULL_SCREEN_INTENT we drop the flag so the plugin emits
 ///     a heads-up notification instead. Importance/priority stay at max,
 ///     so the user still sees the banner over their current screen.
+///
+/// Channel sound rationale (Phase 8.5 follow-ups, 2026-05-02):
+///
+/// The OS-level channel sound is intentionally ON. Android does not
+/// always honor FullScreenIntent — when the screen is on and the user
+/// is actively in another app or on the home screen, Pixel 6a / Android
+/// 16 emits a heads-up notification only (QoS gate) and never starts
+/// AlarmRingingScreen. In that path the OS-played alarm tone is the
+/// only thing that makes sound until the user taps the heads-up.
+///
+/// The downside: when FullScreenIntent does fire, the OS-played tone
+/// continues on its own lifecycle for a few seconds after
+/// `_plugin.cancel(notificationId)` (alarm-stream behavior on Pixel),
+/// which would overlap with the audioplayers loop kicked off by the
+/// alarm screen and produce a double-tone. We mitigate that in
+/// [AlarmRingingNotifier.start] by sequencing cancel → small delay →
+/// play, giving the OS a window to release the tone before audioplayers
+/// takes over.
+///
+/// We tried `playSound: false` (Phase 8.5 first attempt) to suppress
+/// the channel tone entirely and own audio from audioplayers only, but
+/// that left heads-up paths silent until the user tapped — losing the
+/// "I hear my timer go off in the background" property.
 class FlutterLocalNotificationAdapter implements NotificationScheduler {
   FlutterLocalNotificationAdapter({
     FlutterLocalNotificationsPlugin? plugin,
@@ -120,17 +143,9 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         enableVibration: true,
         showBadge: false,
         playSound: true,
-        // Bind the channel to the bundled alarm tone. Without an explicit
-        // sound the OS picks an empty / silent default for category=alarm
-        // on some Pixel builds, which is what we hit during Phase 6
-        // testing.
+        // Bundled tone, alarm stream. Required so heads-up paths (FSI
+        // not granted by Android) still produce sound. See class doc.
         sound: RawResourceAndroidNotificationSound(_alarmRawResource),
-        // Route the channel through the alarm audio stream rather than
-        // the default notification stream. This is what makes Pixel /
-        // Android 16 actually play the tone when AlarmManager fires the
-        // notification from a killed-app state. Without it the Channel
-        // is silent in the cold-launch path even though it works in the
-        // foreground / background paths.
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );

@@ -422,6 +422,75 @@ dependencies {
   し、`AlarmRingingScreen._leaveAlarmScreen` から呼んで Stop / Snooze 時に
   確実に解除する
 
+### Phase 8.5 follow-up: アラーム再鳴動時の二重音修正（2026-05-02）
+
+Phase 6 で「`AlarmRingingNotifier.start` が `cancel` を呼ぶことで二重再生を
+防ぐ」設計にしたつもりだったが、Phase 8 でスヌーズ機能を実機検証したところ
+heads-up 経路で二重音が再現した。以下に経緯と着地を残す。
+
+**問題**: スヌーズ後の再鳴動時、heads-up 通知 → タップで AlarmRingingScreen に
+遷移する経路で、OS チャンネル音 (alarm-stream の
+`RawResourceAndroidNotificationSound`) と audioplayers のループ再生が重なって
+聞こえる。Pixel 6a / Android 16 で再現。
+
+**根本原因**: `_plugin.cancel(notificationId)` は通知バナーを消すが、
+`AudioAttributesUsage.alarm` で再生中のチャンネル音は別ライフサイクルで継続
+再生され、cancel 後も数秒持続する。AlarmRingingScreen の bootstrap が
+audioplayers.play() を即時実行すると、その間に重なる。Phase 6 の検証時は OS 音と
+audioplayers が同じ MP3 を鳴らしていたため二重音が「位相のずれた一つの音」に
+聞こえて気づかれず、Phase 7 / 8 でもこのまま残っていた。
+
+**試行と着地**:
+
+- **Option A (await 化)**: `AlarmRingingNotifier.start` の `cancel` と `play` を
+  順次 await にして順序を保証。実機ではまだ二重音が残った（cancel 完了後も OS
+  通知音が止まらないため）。
+- **Option B (`playSound: false`)**: チャンネルの sound を切って audioplayers
+  に音を一本化。FSI 経由は OK だが、heads-up 経路 (画面 ON で他アプリ操作中、
+  ホーム画面待機、スヌーズ後再鳴動) で Android が FSI を抑制するため**音なし**
+  になる別問題が発生したので不採用。
+- **Option C (採用)**: チャンネル音は `playSound: true` のままにして、
+  `AlarmRingingNotifier.start` を `cancel → 500ms 遅延 → play` の 3 段順序にし、
+  OS 通知音が完全に止まってから audioplayers が引き継ぐ動作にした。500ms は
+  Pixel 6a での empirical sweet spot（短すぎると重なる、長すぎると体感切替遅延
+  が目立つ）。
+
+**変更箇所**:
+
+- `lib/application/alarm_ringing_notifier.dart`: `start()` を
+  `await cancel → await Future.delayed(500ms) → await play` に変更
+- `lib/infrastructure/notification/flutter_local_notification_adapter.dart`:
+  Channel id を `timer_alarm_v4` → `timer_alarm_v6` にバンプ (Option B 試行で
+  v5 を経由したため)。`_legacyTimerAlarmChannelIds` に v4 / v5 を追加。
+  `playSound: true` + `RawResourceAndroidNotificationSound('alarm_default')` +
+  `audioAttributesUsage: alarm` の v4 構成は維持
+- `test/presentation/screens/alarm_ringing_screen_test.dart`: 全 7 シナリオで
+  `await tester.pump(const Duration(milliseconds: 600))` を bootstrap 後に
+  挿入し、500ms 遅延の Future を完了させて pending Timer を解消
+
+**実機検証** (Pixel 6a / Android 16、2026-05-02): 6 シナリオすべて単音、
+二重音解消。
+
+| # | シナリオ | 結果 |
+| --- | --- | --- |
+| 1 | 初回 foreground 鳴動 (自動遷移) | OK 単音、500ms 待機は気にならないレベル |
+| 2 | 初回 background 鳴動 (heads-up タップで遷移) | OK 単音、500ms でバトンタッチ |
+| 3 | 初回 FSI 経由 (ロック画面) | OK 単音、二重音解消 |
+| 4 | 強制終了 → ロック画面 (コールドスタート + FSI) | OK 単音 |
+| 5 | 強制終了 → ホーム画面待機 (heads-up タップで遷移) | OK 単音 |
+| 6 | **スヌーズ後再鳴動 (heads-up タップで遷移)** | **OK 単音、二重音解消** |
+
+**再発防止メモ**:
+
+- Channel に `RawResourceAndroidNotificationSound` + `AudioAttributesUsage.alarm`
+  をセットしている限り、`_plugin.cancel(notificationId)` だけでは再生中の音が
+  即座には止まらない。Pixel / Android 16 では数秒持続する。同じ MP3 を
+  audioplayers でも鳴らす場合、cancel と play の間に 500ms 程度の遅延を必ず
+  挟むこと。
+- スヌーズなど「短い時間内に同じ通知 ID で再 schedule する」経路では、Android
+  が FSI を抑制し heads-up になりやすい。FSI 経路だけ検証して通知音問題を
+  「OK」と判定するのは不十分。heads-up 経路でも音と画面遷移の整合を確認する。
+
 ### 起動時復元
 - [ ] 端末再起動後にタイマーが復元される
 - [ ] 再起動中に過ぎたタイマーが適切に処理される
@@ -451,4 +520,4 @@ dependencies {
 
 ---
 
-最終更新日: 2026-05-01（Phase 6 後フォローで見つかった「アラーム音二重再生」「FSI 阻止」「recents 抑制」の連鎖問題と修正経緯を再発防止メモに追記）
+最終更新日: 2026-05-02（Phase 8.5 follow-up: アラーム再鳴動時の二重音修正、Channel v6 + cancel→500ms→play 順序、Pixel 6a で 6 シナリオ単音化確認済を追記）

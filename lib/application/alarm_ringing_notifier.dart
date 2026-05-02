@@ -73,8 +73,18 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
       currentTimerId: timerId,
       currentSoundId: sound.id,
     );
-    unawaited(ref.read(notificationSchedulerProvider).cancel(notificationId));
-    unawaited(ref.read(alarmSoundPlayerProvider).play(sound));
+    // Sequencing matters: cancel the OS notification first, wait briefly
+    // so Pixel / Android 16 actually releases the alarm-stream tone (the
+    // banner disappears immediately but the tone keeps going on its own
+    // lifecycle for a few seconds), then start the audioplayers loop.
+    // Without the delay the user hears a double tone on the snooze-fired
+    // / heads-up-tap paths (#2 verification, 2026-05-02). 500 ms is the
+    // empirical sweet spot — long enough for the OS tone to drop, short
+    // enough that the foreground path (where cancel is a no-op) is not
+    // perceptibly slower.
+    await ref.read(notificationSchedulerProvider).cancel(notificationId);
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    await ref.read(alarmSoundPlayerProvider).play(sound);
   }
 
   /// Stop the ringing alarm and reset state to idle.
