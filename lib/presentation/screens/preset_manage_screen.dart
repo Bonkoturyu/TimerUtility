@@ -12,6 +12,7 @@ import '../widgets/duration_picker.dart' show soundDisplayName;
 import '../widgets/preset_delete_confirm_dialog.dart';
 import '../widgets/preset_edit_sheet.dart';
 import '../widgets/preset_label_formatter.dart';
+import '../widgets/sound_select_sheet.dart';
 
 /// Phase 9 preset management screen. Reached from
 /// `TimerListScreen`'s AppBar overflow menu (`案 P`).
@@ -70,7 +71,10 @@ class PresetManageScreen extends ConsumerWidget {
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              // Bottom padding keeps the last card clear of the FAB —
+              // FloatingActionButton is ~56dp; 96dp leaves headroom
+              // for the action row icons inside the bottom card.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               itemCount: presets.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (BuildContext context, int index) {
@@ -146,6 +150,13 @@ class PresetManageScreen extends ConsumerWidget {
       mode = await showDialog<ReplaceTemplateMode>(
         context: context,
         builder: (BuildContext ctx) {
+          // Append is the safe / primary action → FilledButton.
+          // Overwrite is destructive → TextButton with the
+          // colorScheme.error foreground so the user pauses.
+          // Earlier this was reversed and a real-device tester tapped
+          // Overwrite thinking it was the confirm CTA — keep this
+          // emphasis to avoid a repeat.
+          final ColorScheme cs = Theme.of(ctx).colorScheme;
           return AlertDialog(
             title: Text(l.presetTemplateReplaceTitle),
             content: Text(l.presetTemplateReplaceMode),
@@ -156,16 +167,17 @@ class PresetManageScreen extends ConsumerWidget {
                 child: Text(l.presetTemplateReplaceModeCancel),
               ),
               TextButton(
+                key: const Key('preset_template_mode_overwrite'),
+                style: TextButton.styleFrom(foregroundColor: cs.error),
+                onPressed: () =>
+                    Navigator.of(ctx).pop(ReplaceTemplateMode.overwrite),
+                child: Text(l.presetTemplateReplaceModeOverwrite),
+              ),
+              FilledButton(
                 key: const Key('preset_template_mode_append'),
                 onPressed: () =>
                     Navigator.of(ctx).pop(ReplaceTemplateMode.append),
                 child: Text(l.presetTemplateReplaceModeAppend),
-              ),
-              FilledButton(
-                key: const Key('preset_template_mode_overwrite'),
-                onPressed: () =>
-                    Navigator.of(ctx).pop(ReplaceTemplateMode.overwrite),
-                child: Text(l.presetTemplateReplaceModeOverwrite),
               ),
             ],
           );
@@ -242,8 +254,15 @@ class _PresetCard extends ConsumerWidget {
               children: <Widget>[
                 IconButton(
                   key: Key('preset_card_${preset.id}_edit'),
+                  tooltip: l.presetEditTitleEdit,
                   icon: const Icon(Icons.edit),
                   onPressed: () => _onEdit(context, ref, notifier),
+                ),
+                IconButton(
+                  key: Key('preset_card_${preset.id}_sound'),
+                  tooltip: l.timerCardSoundChange,
+                  icon: const Icon(Icons.music_note),
+                  onPressed: () => _onChangeSound(context, notifier),
                 ),
                 IconButton(
                   key: Key('preset_card_${preset.id}_delete'),
@@ -256,6 +275,19 @@ class _PresetCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onChangeSound(
+    BuildContext context,
+    PresetCollectionNotifier notifier,
+  ) async {
+    final String? picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SoundSelectSheet(initialSoundId: preset.soundId),
+    );
+    if (picked == null) return;
+    notifier.update(preset.id, soundId: picked);
   }
 
   Future<void> _onEdit(

@@ -72,11 +72,11 @@ Widget _harness({Iterable<Preset>? presets, _MemoryUserPrefs? userPrefs}) {
         userPrefs ?? _MemoryUserPrefs(),
       ),
     ],
-    child: MaterialApp(
-      locale: const Locale('ja'),
+    child: const MaterialApp(
+      locale: Locale('ja'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
-      home: const PresetManageScreen(),
+      supportedLocales: <Locale>[Locale('ja'), Locale('en')],
+      home: PresetManageScreen(),
     ),
   );
 }
