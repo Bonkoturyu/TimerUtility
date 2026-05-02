@@ -71,10 +71,13 @@ class PresetManageScreen extends ConsumerWidget {
               ),
             )
           : ListView.separated(
-              // Bottom padding keeps the last card clear of the FAB —
-              // FloatingActionButton is ~56dp; 96dp leaves headroom
-              // for the action row icons inside the bottom card.
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              // Bottom padding keeps the last card clear of the FAB.
+              // The FAB sits at endFloat (56dp + 16dp margin = ~72dp
+              // from the screen edge) and the bottom card's right-most
+              // IconButton (Delete) lives in the same column; 128dp
+              // gives the Delete button a clear tap target even when
+              // the card is scrolled flush against the bottom.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
               itemCount: presets.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (BuildContext context, int index) {
