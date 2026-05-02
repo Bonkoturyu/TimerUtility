@@ -12,7 +12,7 @@ String soundDisplayName(AppLocalizations l, String soundId) {
   return switch (soundId) {
     'default' => l.alarmSoundDefault,
     'gentle' => l.alarmSoundGentle,
-    'urgent' => l.alarmSoundUrgent,
+    'urgent' => l.alarmSoundWarning,
     _ => soundId,
   };
 }

@@ -87,7 +87,7 @@
 
   "alarmSoundDefault": "Default",
   "alarmSoundGentle": "Gentle",
-  "alarmSoundUrgent": "Urgent",
+  "alarmSoundWarning": "Warning",
 
   "notificationTimerEndedTitle": "Timer",
   "notificationTimerEndedBody": "Time is up.",

@@ -181,7 +181,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmSoundGentle => 'やさしい';
 
   @override
-  String get alarmSoundUrgent => '急ぎ';
+  String get alarmSoundWarning => '警告';
 
   @override
   String get notificationTimerEndedTitle => 'タイマー';

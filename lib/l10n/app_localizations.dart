@@ -416,11 +416,11 @@ abstract class AppLocalizations {
   /// **'やさしい'**
   String get alarmSoundGentle;
 
-  /// No description provided for @alarmSoundUrgent.
+  /// No description provided for @alarmSoundWarning.
   ///
   /// In ja, this message translates to:
-  /// **'急ぎ'**
-  String get alarmSoundUrgent;
+  /// **'警告'**
+  String get alarmSoundWarning;
 
   /// No description provided for @notificationTimerEndedTitle.
   ///

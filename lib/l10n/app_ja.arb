@@ -87,7 +87,7 @@
 
   "alarmSoundDefault": "デフォルト",
   "alarmSoundGentle": "やさしい",
-  "alarmSoundUrgent": "急ぎ",
+  "alarmSoundWarning": "警告",
 
   "notificationTimerEndedTitle": "タイマー",
   "notificationTimerEndedBody": "時間になりました。",
