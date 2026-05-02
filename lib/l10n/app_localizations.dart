@@ -439,6 +439,192 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'アプリのバックグラウンド中にタイマーが終了しました。'**
   String get notificationTimerCompletedBackgroundBody;
+
+  /// No description provided for @presetSheetTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセットから選択'**
+  String get presetSheetTitle;
+
+  /// No description provided for @presetSheetCustomButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'カスタム時間で作成'**
+  String get presetSheetCustomButton;
+
+  /// No description provided for @presetManageAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセット管理'**
+  String get presetManageAppBarTitle;
+
+  /// No description provided for @presetManageMenuOverflow.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセット管理'**
+  String get presetManageMenuOverflow;
+
+  /// No description provided for @presetManageEmptyHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセットがありません。\n+ ボタンから追加するか、テンプレートから差し替えてください。'**
+  String get presetManageEmptyHint;
+
+  /// No description provided for @presetManageReplaceTemplate.
+  ///
+  /// In ja, this message translates to:
+  /// **'テンプレートから差し替え'**
+  String get presetManageReplaceTemplate;
+
+  /// No description provided for @presetEditTitleNew.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセットを追加'**
+  String get presetEditTitleNew;
+
+  /// No description provided for @presetEditTitleEdit.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセットを編集'**
+  String get presetEditTitleEdit;
+
+  /// No description provided for @presetEditLabelHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'ラベル（任意）'**
+  String get presetEditLabelHint;
+
+  /// No description provided for @presetEditDurationLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'時間'**
+  String get presetEditDurationLabel;
+
+  /// No description provided for @presetEditSoundLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源'**
+  String get presetEditSoundLabel;
+
+  /// No description provided for @presetEditCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get presetEditCancel;
+
+  /// No description provided for @presetEditSave.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存'**
+  String get presetEditSave;
+
+  /// No description provided for @presetDeleteConfirmTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'このプリセットを削除しますか？'**
+  String get presetDeleteConfirmTitle;
+
+  /// No description provided for @presetDeleteConfirmDontAsk.
+  ///
+  /// In ja, this message translates to:
+  /// **'次から確認しない'**
+  String get presetDeleteConfirmDontAsk;
+
+  /// No description provided for @presetDeleteConfirmDelete.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除'**
+  String get presetDeleteConfirmDelete;
+
+  /// No description provided for @presetDeleteConfirmCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get presetDeleteConfirmCancel;
+
+  /// No description provided for @presetTemplateReplaceTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'テンプレートから差し替え'**
+  String get presetTemplateReplaceTitle;
+
+  /// No description provided for @presetTemplateReplaceProfileGeneral.
+  ///
+  /// In ja, this message translates to:
+  /// **'一般用'**
+  String get presetTemplateReplaceProfileGeneral;
+
+  /// No description provided for @presetTemplateReplaceProfileCooking.
+  ///
+  /// In ja, this message translates to:
+  /// **'料理向け'**
+  String get presetTemplateReplaceProfileCooking;
+
+  /// No description provided for @presetTemplateReplaceProfilePomodoro.
+  ///
+  /// In ja, this message translates to:
+  /// **'Pomodoro'**
+  String get presetTemplateReplaceProfilePomodoro;
+
+  /// No description provided for @presetTemplateReplaceMode.
+  ///
+  /// In ja, this message translates to:
+  /// **'既存のプリセットがあります。どうしますか？'**
+  String get presetTemplateReplaceMode;
+
+  /// No description provided for @presetTemplateReplaceModeOverwrite.
+  ///
+  /// In ja, this message translates to:
+  /// **'上書き'**
+  String get presetTemplateReplaceModeOverwrite;
+
+  /// No description provided for @presetTemplateReplaceModeAppend.
+  ///
+  /// In ja, this message translates to:
+  /// **'追加'**
+  String get presetTemplateReplaceModeAppend;
+
+  /// No description provided for @presetTemplateReplaceModeCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get presetTemplateReplaceModeCancel;
+
+  /// No description provided for @presetTemplateReplaceLimitWarning.
+  ///
+  /// In ja, this message translates to:
+  /// **'{discarded, plural, =0{} other{プリセット件数の上限を超えたため、{discarded} 件が追加されませんでした}}'**
+  String presetTemplateReplaceLimitWarning(int discarded);
+
+  /// No description provided for @presetLabelSeconds.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}秒'**
+  String presetLabelSeconds(int count);
+
+  /// No description provided for @presetLabelMinutes.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}分'**
+  String presetLabelMinutes(int count);
+
+  /// No description provided for @presetLabelHours.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}時間'**
+  String presetLabelHours(int count);
+
+  /// No description provided for @timerCardSoundChange.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を変更'**
+  String get timerCardSoundChange;
+
+  /// No description provided for @timerSoundSheetTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を選択'**
+  String get timerSoundSheetTitle;
 }
 
 class _AppLocalizationsDelegate

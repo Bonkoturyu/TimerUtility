@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/notification_scheduler_provider.dart';
+import 'application/preset_repository_provider.dart';
 import 'application/timer_repository_provider.dart';
+import 'application/user_preferences_provider.dart';
 import 'infrastructure/database/app_database.dart';
+import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
+import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
+import 'presentation/screens/preset_manage_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
 
@@ -45,6 +50,9 @@ Future<void> main() async {
   final adapter = FlutterLocalNotificationAdapter();
   final AppDatabase database = AppDatabase();
   final DriftTimerRepository repository = DriftTimerRepository(database);
+  final DriftPresetRepository presetRepo = DriftPresetRepository(database);
+  final SharedPreferencesUserPreferences userPrefs =
+      await SharedPreferencesUserPreferences.create();
 
   // `late final` lets the warm-launch tap callback reference the router
   // that's only constructed after we know the cold-launch payload below.
@@ -97,6 +105,11 @@ Future<void> main() async {
         builder: (BuildContext context, GoRouterState state) =>
             const AlarmRingingScreen(),
       ),
+      GoRoute(
+        path: '/presets',
+        builder: (BuildContext context, GoRouterState state) =>
+            const PresetManageScreen(),
+      ),
     ],
   );
 
@@ -105,6 +118,8 @@ Future<void> main() async {
       overrides: <Override>[
         notificationSchedulerProvider.overrideWithValue(adapter),
         timerRepositoryProvider.overrideWithValue(repository),
+        presetRepositoryProvider.overrideWithValue(presetRepo),
+        userPreferencesProvider.overrideWithValue(userPrefs),
       ],
       child: TimerUtilityApp(router: router),
     ),

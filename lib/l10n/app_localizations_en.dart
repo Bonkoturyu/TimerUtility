@@ -206,4 +206,132 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationTimerCompletedBackgroundBody =>
       'Timer ended while the app was in the background.';
+
+  @override
+  String get presetSheetTitle => 'Choose preset';
+
+  @override
+  String get presetSheetCustomButton => 'Create with custom time';
+
+  @override
+  String get presetManageAppBarTitle => 'Manage presets';
+
+  @override
+  String get presetManageMenuOverflow => 'Manage presets';
+
+  @override
+  String get presetManageEmptyHint =>
+      'No presets yet.\nTap + to add one or replace from a template.';
+
+  @override
+  String get presetManageReplaceTemplate => 'Replace from template';
+
+  @override
+  String get presetEditTitleNew => 'Add preset';
+
+  @override
+  String get presetEditTitleEdit => 'Edit preset';
+
+  @override
+  String get presetEditLabelHint => 'Label (optional)';
+
+  @override
+  String get presetEditDurationLabel => 'Duration';
+
+  @override
+  String get presetEditSoundLabel => 'Sound';
+
+  @override
+  String get presetEditCancel => 'Cancel';
+
+  @override
+  String get presetEditSave => 'Save';
+
+  @override
+  String get presetDeleteConfirmTitle => 'Delete this preset?';
+
+  @override
+  String get presetDeleteConfirmDontAsk => 'Don\'t ask again';
+
+  @override
+  String get presetDeleteConfirmDelete => 'Delete';
+
+  @override
+  String get presetDeleteConfirmCancel => 'Cancel';
+
+  @override
+  String get presetTemplateReplaceTitle => 'Replace from template';
+
+  @override
+  String get presetTemplateReplaceProfileGeneral => 'General';
+
+  @override
+  String get presetTemplateReplaceProfileCooking => 'Cooking';
+
+  @override
+  String get presetTemplateReplaceProfilePomodoro => 'Pomodoro';
+
+  @override
+  String get presetTemplateReplaceMode =>
+      'You already have presets. What would you like to do?';
+
+  @override
+  String get presetTemplateReplaceModeOverwrite => 'Overwrite';
+
+  @override
+  String get presetTemplateReplaceModeAppend => 'Append';
+
+  @override
+  String get presetTemplateReplaceModeCancel => 'Cancel';
+
+  @override
+  String presetTemplateReplaceLimitWarning(int discarded) {
+    String _temp0 = intl.Intl.pluralLogic(
+      discarded,
+      locale: localeName,
+      other: '$discarded presets were skipped because the limit was reached',
+      one: '1 preset was skipped because the limit was reached',
+      zero: '',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String presetLabelSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds',
+      one: '1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String presetLabelMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String presetLabelHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get timerCardSoundChange => 'Change sound';
+
+  @override
+  String get timerSoundSheetTitle => 'Choose sound';
 }
