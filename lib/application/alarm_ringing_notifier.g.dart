@@ -7,7 +7,7 @@ part of 'alarm_ringing_notifier.dart';
 // **************************************************************************
 
 String _$alarmRingingNotifierHash() =>
-    r'ff05f53a1c91434ce837d50eeca5bbbb4891142a';
+    r'acbf87cdf96ef60b7a0d838f84b6942a0b83072d';
 
 /// Coordinates the alarm ringing experience: tells the [AlarmSoundPlayer]
 /// what to play when a timer reaches `ringing`, and exposes user actions
