@@ -20,7 +20,7 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- [x] Phase 8「複数タイマー管理 + Drift 永続化」コア実装完了、docs 反映待ち（2026-05-01）
+- なし（Phase 8 実機検証 6 シナリオすべて完了、2026-05-02）
 
 ---
 
@@ -93,8 +93,15 @@
 - [x] flutter analyze: No issues found
 - [x] flutter test: 180 / 180 passed（既存 162 - 削除分 + 新規 50 強）
 - [x] dart format で整形済み
-- [ ] docs/architecture.md / docs/domain-model.md / docs/state-management.md / docs/adr/0002-use-drift.md への Phase 8 反映 diff 提示（ユーザー確認後にコミット）
-- [ ] 実機検証: 複数タイマー同時稼働 + アプリ再起動後の状態復元 + 過去到達タイマーの completed + ヘッドアップ通知（Auto 範囲外）
+- [x] docs/architecture.md / docs/domain-model.md / docs/state-management.md / docs/adr/0002-use-drift.md への Phase 8 反映 (1c585db)
+- [x] 実機検証フィードバックでの 2 件修正 (62add6a): show() 用無音チャンネル timer_completed_v1 新設 / FAB は disable せず SnackBar 方式に変更
+- [x] 実機検証 (Pixel 6a / Android 16、2026-05-02): 6 シナリオすべて想定通り
+  - 検証 1: 複数タイマー (3 本) 同時稼働
+  - 検証 2: アプリ強制終了 → 再起動で状態保持で復元
+  - 検証 3: 過去到達 running が completed + 無音ヘッドアップ通知 1 回
+  - 検証 4: 上限 10 本到達後の FAB タップで SnackBar
+  - 検証 5: 各カードの個別操作 (Start/Pause/Resume/Delete/Reset/Stop) が独立
+  - 検証 6: 通知タップ → AlarmRingingScreen → Stop で該当タイマー cancelled
 
 ### Phase 7「スヌーズ機能本体」完了内容（2026-05-01）
 
@@ -325,4 +332,4 @@
 
 ---
 
-最終更新日: 2026-05-01（Phase 8 複数タイマー + Drift 永続化コア実装完了、180 テストパス、docs 反映待ち）
+最終更新日: 2026-05-02（Phase 8 実機検証 6 シナリオすべて完了、Pixel 6a / Android 16）
