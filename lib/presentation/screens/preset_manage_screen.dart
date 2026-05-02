@@ -229,22 +229,56 @@ class _PresetCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 Expanded(
-                  child: Text(
-                    formatPresetLabel(
-                      duration: preset.duration,
-                      l: l,
-                      userLabel: preset.label,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        formatPresetLabel(
+                          duration: preset.duration,
+                          l: l,
+                          userLabel: preset.label,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      // When the user gave the preset a label, the
+                      // primary line already shows that label and the
+                      // duration is no longer visible — surface it as
+                      // a smaller subtitle so card-only browsing still
+                      // tells you "what's this for + how long".
+                      if (preset.label.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            formatPresetDurationOnly(
+                              duration: preset.duration,
+                              l: l,
+                            ),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                Chip(
-                  label: Text(soundDisplayName(l, preset.soundId ?? 'default')),
+                // The Chip is display-only. IgnorePointer prevents
+                // Material ink / focus from being fired by stray taps
+                // on the top-right corner — without it, a momentary
+                // ripple after closing the SoundSelectSheet caused a
+                // visible AppBar-area flicker on real devices.
+                IgnorePointer(
+                  child: Chip(
+                    label: Text(
+                      soundDisplayName(l, preset.soundId ?? 'default'),
+                    ),
+                  ),
                 ),
               ],
             ),

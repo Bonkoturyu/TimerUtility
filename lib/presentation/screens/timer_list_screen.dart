@@ -285,6 +285,22 @@ class _TimerCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            // When the source preset had a user label (or the user typed
+            // one), keep it visible above the big duration so a list of
+            // multiple cards is still distinguishable at a glance.
+            if (entity.label.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  entity.label,
+                  key: Key('timer_label_${entity.id}'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             Row(
               children: <Widget>[
                 Expanded(
