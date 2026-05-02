@@ -300,4 +300,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get timerSoundSheetTitle => '音源を選択';
+
+  @override
+  String get licenseMenuOverflow => 'ライセンス';
 }

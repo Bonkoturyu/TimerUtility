@@ -236,6 +236,23 @@ void main() {
     expect(find.text('presets-stub'), findsOneWidget);
   });
 
+  testWidgets('AppBar overflow menu opens the license page', (tester) async {
+    await tester.pumpWidget(_harness(_InMemoryRepo()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('timer_list_menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('timer_list_menu_licenses')));
+    // Flutter's showLicensePage runs an async asset scan; allow the
+    // scaffold to push but don't wait for the scan to complete.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // The LicensePage's AppBar shows the application title (provided
+    // via `applicationName: l.appTitle`).
+    expect(find.text('TimerUtility'), findsWidgets);
+  });
+
   testWidgets('Start button on a card transitions to running', (tester) async {
     final TimerEntity idle = TimerEntity(
       id: 't-1',

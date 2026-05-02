@@ -149,5 +149,7 @@
   },
 
   "timerCardSoundChange": "Change sound",
-  "timerSoundSheetTitle": "Choose sound"
+  "timerSoundSheetTitle": "Choose sound",
+
+  "licenseMenuOverflow": "Licenses"
 }
