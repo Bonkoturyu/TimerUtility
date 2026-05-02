@@ -20,7 +20,229 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- なし（Phase 8 + ローカライズ土台 (Phase 8.5) + アラーム二重音修正 (Phase 8.5 follow-up) 完了、2026-05-02）
+- [~] Phase 9（プリセット機能）着手準備中、Plan ユーザ承認待ち（2026-05-02）
+
+---
+
+## Phase 9 Plan（着手前確認用、2026-05-02）
+
+### 事前確定事項（ユーザ確認済、再確認不要）
+
+| # | 項目 | 決定 |
+| --- | --- | --- |
+| 1 | Preset Entity フィールド | id (uuid) / label / duration / soundId / createdAt |
+| 2 | Drift schema migration | schemaVersion 1 → 2、Presets 新設、既存 Timers 不変、migration 内で seed 6 件 atomic insert（案 X） |
+| 3 | プリセット選択 UI 配置 | 案 A: FAB → bottom sheet（6 チップ + 区切り + カスタムボタン） |
+| 4-1 | 削除確認 dialog | ON、「次から確認しない」チェック + SharedPreferences 保存 |
+| 4-2 | 空状態表示 | 案 a: テキスト「プリセットがありません。+ ボタンから追加するか、テンプレートから差し替えてください」 |
+| 4-3 | 管理画面導線 | 案 P: TimerListScreen AppBar overflow メニューに「プリセット管理」 |
+| 4-4 | テンプレート差し替えラベル | 候補 1: "テンプレートから差し替え" / "Replace from template" |
+| 5 | 件数上限 | 10 件（TimerCollection と同じ） |
+| 7 | 切替 UX | 案 Y: 管理画面 overflow メニューから 3 プロファイル切替、3 択 dialog |
+| 7 | 初期 seed | a) 一般用: 30s / 1m / 3m / 5m / 10m / 30m |
+| 7 | label ローカライズ | ARB plural 3 キー + presentation 層フォーマッタ |
+| 7 | 定数配置 | `lib/domain/timer/preset_templates.dart`（Pure Dart） |
+| 7 | プロファイル | 一般用 (default), 料理向け (gentle), Pomodoro (urgent) |
+
+### 着手前に必要な依存追加（ユーザ承認必須）
+
+- [ ] `flutter pub add shared_preferences`（または `pubspec.yaml` 手動編集）を**ユーザに実行してもらう**
+  - 理由: 削除確認 dialog の「次から確認しない」状態を端末ローカルに保存するため
+  - **Auto 側からは pubspec.yaml を編集しない**
+  - 完了後、その旨を Auto セッションで通知してもらえれば実装着手する
+
+### A. 管理画面の細かい UI レイアウト案
+
+#### A-1. プリセット bottom sheet（FAB タップで開く）
+
+```text
+┌──────────────────────┐
+│ プリセットから選択   │  ← presetSheetTitle
+├──────────────────────┤
+│ [30秒] [1分] [3分]   │
+│ [5分] [10分] [30分]  │  ← 2x3 GridView、各タップで
+│                      │     即タイマー作成（音源は
+│                      │     プリセットの soundId 使用）
+├──────────────────────┤
+│ [カスタム時間で作成] │  ← FilledButton.tonal、タップで
+└──────────────────────┘     既存 DurationPicker（音源
+                             選択付き）モーダルへ遷移
+```
+
+実装: `lib/presentation/widgets/preset_select_sheet.dart`
+
+#### A-2. プリセット編集モーダル（管理画面の追加 / 編集）
+
+縦並びのフォーム、`showModalBottomSheet<Preset>` で開いて結果を pop:
+
+```text
+┌──────────────────────┐
+│ プリセットを追加 / 編集 │
+├──────────────────────┤
+│ ラベル (任意)        │
+│ [TextField]          │
+├──────────────────────┤
+│ 時間                 │
+│ [HH:MM:SS ホイール]  │  ← DurationPicker のホイール部分を
+│                      │     再利用（StatelessWidget 化して
+│                      │     ピッカー部分を切り出す）
+├──────────────────────┤
+│ 音源                 │
+│ [Dropdown ▼]         │  ← AlarmSoundCatalog.all から動的生成
+│                      │     項目数に応じて自動スクロール
+├──────────────────────┤
+│ [キャンセル] [保存]  │
+└──────────────────────┘
+```
+
+実装: `lib/presentation/screens/preset_edit_sheet.dart`
+
+#### A-3. プリセット管理画面
+
+```text
+┌──────────────────────┐
+│ プリセット管理   [⋮] │  ← overflow に「テンプレートから差し替え」
+├──────────────────────┤
+│ ┌──────────────────┐ │
+│ │ 30秒 [標準]      │ │  ← Card、タップで編集モーダル、
+│ │ [編集] [削除]    │ │     右下に編集 / 削除アイコン
+│ └──────────────────┘ │
+│ ┌──────────────────┐ │
+│ │ 1分 [標準]       │ │
+│ │ [編集] [削除]    │ │
+│ └──────────────────┘ │
+│ ...                  │
+│                  [+] │  ← 追加 FAB
+└──────────────────────┘
+```
+
+実装: `lib/presentation/screens/preset_manage_screen.dart`
+
+#### A-4. DurationPicker への音源ドロップダウン追加
+
+ホイール 3 本の**下**、Cancel / Confirm ボタンの**上**に音源選択 Dropdown を追加。
+
+```text
+┌──────────────────────┐
+│ カスタム時間で作成   │
+├──────────────────────┤
+│ [HH] [MM] [SS] ホイール│
+├──────────────────────┤
+│ 音源: [Dropdown ▼]   │  ← New
+├──────────────────────┤
+│ [キャンセル] [決定]  │
+└──────────────────────┘
+```
+
+戻り値を `Duration` から `({Duration duration, String soundId})` の record に変更（呼び出し側の `_onAddTap` も追従）。
+
+#### A-5. タイマーカードに音源変更アイコン
+
+既存カードの「Delete」ボタンの**前**に `IconButton(icon: Icons.music_note)` を追加。タップで音源選択 bottom sheet（RadioListTile ベース）を開く。選択結果は `TimerCollectionNotifier.changeSound(id, soundId)`（新メソッド）で適用。
+
+#### A-6. 音源選択 UI のスケーラビリティ
+
+- DurationPicker / 編集モーダル: `DropdownButton<String>` で `AlarmSoundCatalog.all` を `map((s) => DropdownMenuItem(value: s.id, child: Text(...)))` で動的生成
+- 既存カードの音源変更 sheet: `ListView.builder` + `RadioListTile`、項目数に応じて自動スクロール
+- ハードコード 3 件は禁止、すべて `AlarmSoundCatalog.all.map(...)` 経由
+
+### B. ARB キー一覧（推定 27 キー、ja / en 両方追加予定）
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| presetSheetTitle | プリセットから選択 | Choose preset | bottom sheet タイトル |
+| presetSheetCustomButton | カスタム時間で作成 | Create with custom time | bottom sheet 内のカスタムボタン |
+| presetManageAppBarTitle | プリセット管理 | Manage presets | 管理画面 AppBar |
+| presetManageMenuOverflow | プリセット管理 | Manage presets | TimerList の overflow メニュー項目 |
+| presetManageEmptyHint | プリセットがありません。+ ボタンから追加するか、テンプレートから差し替えてください。 | No presets yet. Tap + to add one or replace from a template. | 管理画面の空状態 |
+| presetManageReplaceTemplate | テンプレートから差し替え | Replace from template | 管理画面 overflow メニュー項目 |
+| presetEditTitleNew | プリセットを追加 | Add preset | 編集モーダル（新規時） |
+| presetEditTitleEdit | プリセットを編集 | Edit preset | 編集モーダル（編集時） |
+| presetEditLabelHint | ラベル（任意） | Label (optional) | TextField placeholder |
+| presetEditDurationLabel | 時間 | Duration | section header |
+| presetEditSoundLabel | 音源 | Sound | section header |
+| presetEditCancel | キャンセル | Cancel | モーダルボタン |
+| presetEditSave | 保存 | Save | モーダルボタン |
+| presetDeleteConfirmTitle | このプリセットを削除しますか？ | Delete this preset? | 確認 dialog タイトル |
+| presetDeleteConfirmDontAsk | 次から確認しない | Don't ask again | チェックボックスラベル |
+| presetDeleteConfirmDelete | 削除 | Delete | dialog 削除アクション |
+| presetDeleteConfirmCancel | キャンセル | Cancel | dialog キャンセルアクション |
+| presetTemplateReplaceTitle | テンプレートから差し替え | Replace from template | プロファイル選択 dialog タイトル |
+| presetTemplateReplaceProfileGeneral | 一般用 | General | プロファイル名 |
+| presetTemplateReplaceProfileCooking | 料理向け | Cooking | プロファイル名 |
+| presetTemplateReplaceProfilePomodoro | Pomodoro | Pomodoro | プロファイル名 |
+| presetTemplateReplaceMode | 既存のプリセットがあります。どうしますか？ | You already have presets. What would you like to do? | 3 択 dialog 説明 |
+| presetTemplateReplaceModeOverwrite | 上書き | Overwrite | 3 択 dialog アクション |
+| presetTemplateReplaceModeAppend | 追加 | Append | 3 択 dialog アクション |
+| presetTemplateReplaceModeCancel | キャンセル | Cancel | 3 択 dialog アクション |
+| presetTemplateReplaceLimitWarning (plural) | プリセット件数の上限（{max} 件）を超えたため、{discarded} 件が追加されませんでした | {discarded, plural, one{1 preset was skipped} other{{discarded} presets were skipped}} because the limit ({max}) was reached | SnackBar 警告（appendで上限超過時） |
+| presetLabelSeconds (plural) | {count}秒 | {count, plural, =1{1 second} other{{count} seconds}} | seed プリセット表示 |
+| presetLabelMinutes (plural) | {count}分 | {count, plural, =1{1 minute} other{{count} minutes}} | seed プリセット表示 |
+| presetLabelHours (plural) | {count}時間 | {count, plural, =1{1 hour} other{{count} hours}} | seed プリセット表示 |
+| timerCardSoundChange | 音源を変更 | Change sound | カード音源アイコンの tooltip |
+| timerSoundSheetTitle | 音源を選択 | Choose sound | 音源選択 bottom sheet タイトル |
+| timerSoundDefault | 標準 | Default | 音源表示名（'default'） |
+| timerSoundGentle | やさしい | Gentle | 音源表示名（'gentle'） |
+| timerSoundUrgent | 緊急 | Urgent | 音源表示名（'urgent'） |
+
+### C. 新規ファイル予定
+
+#### Domain 層
+
+- `lib/domain/timer/preset.dart`（Entity, freezed）
+- `lib/domain/timer/preset_collection.dart`（集約ルート、最大 10 件、add/update/remove）
+- `lib/domain/timer/preset_templates.dart`（3 プロファイル定数 Pure Dart）
+- `lib/domain/timer/preset_exceptions.dart`（`MaxPresetCountExceededException` / `PresetNotFoundException`）
+- `lib/domain/ports/preset_repository.dart`
+- `lib/domain/ports/user_preferences.dart`（`shared_preferences` の抽象、`getBool` / `setBool`）
+
+#### Infrastructure 層
+
+- `lib/infrastructure/database/app_database.dart` 編集（Presets テーブル追加 + schemaVersion 2 + onUpgrade）
+- `lib/infrastructure/database/mappers/preset_mapper.dart`
+- `lib/infrastructure/database/drift_preset_repository.dart`
+- `lib/infrastructure/preferences/shared_preferences_user_preferences.dart`（adapter）
+
+#### Application 層
+
+- `lib/application/preset_repository_provider.dart`
+- `lib/application/preset_collection_notifier.dart`
+- `lib/application/user_preferences_provider.dart`
+
+#### Presentation 層
+
+- `lib/presentation/screens/preset_manage_screen.dart`
+- `lib/presentation/widgets/preset_select_sheet.dart`
+- `lib/presentation/widgets/preset_edit_sheet.dart`
+- `lib/presentation/widgets/preset_delete_confirm_dialog.dart`
+- `lib/presentation/widgets/preset_label_formatter.dart`（formatPresetLabel）
+- `lib/presentation/widgets/sound_select_sheet.dart`
+- `lib/presentation/widgets/duration_picker.dart` 編集（音源 dropdown 追加 + 戻り値変更）
+- `lib/presentation/screens/timer_list_screen.dart` 編集（FAB の挙動変更 / overflow メニュー / カード音源アイコン）
+
+#### ルーティング
+
+- `lib/main.dart` 編集（`/presets` ルート追加）
+
+#### ARB
+
+- `lib/l10n/app_ja.arb` / `app_en.arb` 編集（27 キー追加）
+
+### 進め方
+
+Phase 8 のパターンを踏襲、層単位でコミット:
+1. domain 層（Preset / PresetCollection / preset_templates / preset_exceptions / ports）+ Unit Test
+2. infrastructure 層（Drift schema bump + migration + mapper + repository + shared_preferences adapter）+ Unit Test
+3. application 層（PresetCollectionNotifier + UserPreferences provider）+ Unit Test
+4. presentation 層（管理画面 + bottom sheet + 編集モーダル + DurationPicker 拡張 + カード変更）+ Widget Test
+5. main.dart 配線
+6. flutter analyze + flutter test 緑、層単位コミット
+
+### Plan 承認のお願い
+
+- A 案（UI レイアウト 6 種）: OK / 修正案
+- B 案（ARB 27 キー）: OK / 訳の修正
+- shared_preferences 追加: ユーザ側で `flutter pub add shared_preferences` を実行 → 完了通知をお願いします
 
 ---
 
