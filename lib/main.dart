@@ -163,13 +163,15 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton(
               key: const Key('home_open_stopwatch_button'),
-              onPressed: () => context.go('/stopwatch'),
+              // push (not go) so back from the inner screen returns to
+              // home rather than exiting the app.
+              onPressed: () => context.push('/stopwatch'),
               child: Text(l.homeOpenStopwatch),
             ),
             const SizedBox(height: 12),
             FilledButton(
               key: const Key('home_open_timer_button'),
-              onPressed: () => context.go('/timer'),
+              onPressed: () => context.push('/timer'),
               child: Text(l.homeOpenTimer),
             ),
           ],

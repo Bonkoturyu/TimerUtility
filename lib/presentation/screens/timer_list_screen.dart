@@ -48,15 +48,28 @@ class TimerListScreen extends ConsumerStatefulWidget {
   ConsumerState<TimerListScreen> createState() => _TimerListScreenState();
 }
 
-class _TimerListScreenState extends ConsumerState<TimerListScreen> {
+class _TimerListScreenState extends ConsumerState<TimerListScreen>
+    with WidgetsBindingObserver {
   Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future<void>.microtask(
       () => ref.read(permissionNotifierProvider.notifier).refresh(),
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When the user returns from the system Settings page (granted /
+    // revoked a permission), Android sends `resumed`. Re-query so the
+    // permission banners reflect the new state without requiring the
+    // user to navigate away and back.
+    if (state == AppLifecycleState.resumed) {
+      ref.read(permissionNotifierProvider.notifier).refresh();
+    }
   }
 
   void _ensureTickerForState(TimerCollection collection) {
@@ -73,6 +86,7 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     _ticker = null;
     super.dispose();
