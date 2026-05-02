@@ -20,7 +20,59 @@
 ## 進行中
 
 <!-- 現在進行中のタスクをここに記載 -->
-- [~] Phase 9（プリセット機能）着手準備中、Plan ユーザ承認待ち（2026-05-02）
+（なし）
+
+---
+
+## Phase 9 完了内容（2026-05-02）
+
+プリセット機能 + テンプレート差し替え（Plan A / Plan P / Plan Y）+ 削除確認ダイアログ +
+音源変更 UI を実装。Phase 8 のレイヤー単位コミットパターンを踏襲して 5 commits でレイヤーを
+積み上げ、その後フィードバック反映 4 commits で UX 微調整した。
+
+### 実装サマリ
+
+- Domain: Preset / PresetCollection / PresetService / PresetTemplates（3 プロファイル）/
+  preset_exceptions / PresetRepository / UserPreferences ports
+- Infrastructure: Drift schemaVersion 1 → 2、Presets テーブル + onCreate/onUpgrade で
+  general profile を atomic seed、PresetMapper、DriftPresetRepository、
+  SharedPreferencesUserPreferences
+- Application: PresetCollectionNotifier（keepAlive、`replaceFromTemplate(profileId, mode)`、
+  ReplaceTemplateResult で discardedCount 返却）、TimerCollectionNotifier に
+  `changeSound(id, soundId)` 追加
+- Presentation: PresetSelectSheet（FAB 経由 2x3 GridView）/ PresetEditSheet /
+  PresetDeleteConfirmDialog / SoundSelectSheet / PresetManageScreen / TimerListScreen 編集
+- ARB: 約 27 キー追加（plural ラベル + 音源 sheet + テンプレート差し替え）
+- 実機検証 (Pixel 6a / Android 16): 10 シナリオすべて OK
+- 計 275 テストパス、analyze 緑
+
+### 実機検証フィードバック反映（合計 6 件、4 commits）
+
+1. **テンプレート差し替えダイアログ**: 追加 = FilledButton、上書き = error 色 TextButton に
+   強調入れ替え。実機で「追加」意図のタップが「上書き」に流れた事故への対処
+2. **プリセット管理 リスト下端 padding 96 → 128 dp**: FAB と最下カードの右端 Delete
+   ボタンが至近で被っていた件
+3. **各プリセットカードに ♪ IconButton 追加**: TimerCard と同位置（Edit と Delete の間）、
+   右上の音源 Chip は表示専用として維持
+4. **音源 Chip の Material ink 起因の AppBar チラつき**: `IgnorePointer` で囲んで
+   gesture を ListView に流す
+5. **ラベル指定時に時間が見えない件**: プリセット管理カードはサブタイトル併記、
+   タイマー一覧カードは duration の上に小さくラベル
+6. **soundId 'urgent' → 'warning' に統一**: pre-release 段階のため互換性配慮なしで
+   i18n キー / soundId / アセットファイル名 / Pomodoro テンプレート / テスト 全て更新
+
+### 仕様変更ログ
+
+- DurationPicker 内に音源 dropdown を統合する当初プランは取り下げ。
+  CupertinoPicker と Dropdown の hit-test 干渉が発生したため、カスタム時間作成時は
+  カタログ既定音 → カードの ♪ ボタンで後から変更、という UX に変更。実機で
+  こちらの方が直感的との確認済
+
+### 関連 docs 追加・更新
+
+- `docs/translations.md` 新規（ARB 全キー × ja / en の対訳ミラー）
+- `docs/assets-spec.md` / `docs/oss-publishing-notes.md` /
+  `assets/sounds/LICENSES.md` を `alarm_warning.mp3` に追従
 
 ---
 
