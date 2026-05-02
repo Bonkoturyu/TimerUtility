@@ -203,7 +203,7 @@ audioplayers のループ再生が重なって聞こえる問題を修正。
 - [x] flutter analyze: No issues found
 - [x] flutter test: 136 / 136 passed（既存 126 + 新規 10）
 - [x] dart format で整形済み
-- [ ] 実機で「カスタム時間（例: 1h 30m）→ Start → カウントダウン → 鳴動」の動作確認（Auto 範囲外）
+- [x] 実機で「カスタム時間（例: 1h 30m）→ Start → カウントダウン → 鳴動」の動作確認（Pixel 6a / Android 16、2026-05-02、初期表示 01:30:00 + Start 後の秒単位カウントダウン + Pause/Resume すべて想定通り）
 
 ### Phase 6 実機検証結果（2026-04-30、Pixel 6a / Android 16）
 
