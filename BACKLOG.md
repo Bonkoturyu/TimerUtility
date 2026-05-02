@@ -484,6 +484,9 @@ AndroidManifest 編集はユーザー確認必須。
 
 - [ ] アプリアイコン・スプラッシュ
 - [ ] 設定画面（音源選択、デフォルトスヌーズ時間など）
+- [ ] ライセンス表示画面（設定画面 → 「ライセンス」エントリ → `showLicensePage`）
+      Flutter 標準 `showLicensePage` + `LicenseRegistry.addLicense` で
+      pub 依存 + 同梱音源（`assets/sounds/LICENSES.md`）を統合表示
 - [ ] ダークモード対応
 - [~] ローカライズ（日本語 / 英語、内部対応で中国語簡体字 / 繁体字 / 韓国語）
   - Phase 8.5 で土台 (flutter_localizations + gen-l10n + ARB) を導入済 (2026-05-02):
