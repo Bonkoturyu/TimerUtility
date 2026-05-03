@@ -20,6 +20,17 @@ Flutter 製のストップウォッチ + タイマーアプリ。Android 16 (API
 - **通知**: flutter_local_notifications
 - **音声再生**: audioplayers
 
+## 開発セットアップ
+
+クローン後 1 回だけ実行（フォーマット差分による CI 失敗を予防する pre-commit
+hook を有効化）:
+
+```sh
+git config core.hooksPath tool/git-hooks
+```
+
+詳細は [tool/git-hooks/README.md](tool/git-hooks/README.md)。
+
 ## ドキュメント
 
 - [CLAUDE.md](CLAUDE.md) — Claude Code 向けの絶対制約集
