@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
-import 'package:timer_utility/application/notification_strings_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
@@ -75,7 +74,7 @@ ProviderContainer _makeContainer({
       clockProvider.overrideWithValue(clock),
       timerRepositoryProvider.overrideWithValue(repo),
       notificationSchedulerProvider.overrideWithValue(scheduler),
-      notificationStringsProvider.overrideWithValue(testNotificationStrings),
+      testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
         () => _GrantedPermissionNotifier(),
       ),

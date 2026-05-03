@@ -210,6 +210,19 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     unawaited(ref.read(timerRepositoryProvider).upsert(entity));
   }
 
+  /// Re-issue scheduled notifications for every currently-running timer.
+  /// Called when the device locale changes so the OS banner reflects the
+  /// new language. flutter_local_notifications keys by `notificationId`,
+  /// so re-scheduling with the same id replaces the pending entry in
+  /// place — the firing time is preserved.
+  void rescheduleAllRunning() {
+    for (final TimerEntity t in state.all) {
+      if (t.status == TimerStatus.running) {
+        _scheduleNotification(t);
+      }
+    }
+  }
+
   void _scheduleNotification(TimerEntity entity) {
     if (entity.status != TimerStatus.running || entity.endAt == null) return;
     final DomainPermissionStatus exact = ref
@@ -218,7 +231,9 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     final bool useExact =
         exact == DomainPermissionStatus.granted ||
         exact == DomainPermissionStatus.notRequired;
-    final NotificationStrings strings = ref.read(notificationStringsProvider);
+    final NotificationStrings strings = ref.read(
+      notificationStringsNotifierProvider,
+    );
     final String title = entity.label.isEmpty
         ? strings.timerEndedTitle
         : entity.label;
@@ -241,7 +256,9 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
   }
 
   void _showRestoredCompletionNotification(TimerEntity entity) {
-    final NotificationStrings strings = ref.read(notificationStringsProvider);
+    final NotificationStrings strings = ref.read(
+      notificationStringsNotifierProvider,
+    );
     final String title = entity.label.isEmpty
         ? strings.timerEndedTitle
         : entity.label;
