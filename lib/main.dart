@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-    show LicenseEntryWithLineBreaks, LicenseRegistry;
+    show LicenseEntry, LicenseParagraph, LicenseRegistry;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,16 +51,69 @@ List<Locale> get supportedLocales => <Locale>[
 /// Register the bundled-sound license file (`assets/sounds/LICENSES.md`)
 /// so Flutter's `showLicensePage` lists it alongside pub-package licenses.
 ///
-/// `LicenseRegistry.addLicense` takes a callback that returns a stream of
-/// entries — the asset is read lazily the first time the license page is
-/// opened, so this adds no startup cost.
+/// We split the markdown by `## <file>.mp3` headers and yield one entry
+/// per audio file. Naming each entry `<file>.mp3 (bundled)` makes it
+/// obvious in the license list that these are app-owned resources, not
+/// pub dependencies. The body is split into one paragraph per line so
+/// `showLicensePage` renders the bullet list legibly — by default
+/// `LicenseEntryWithLineBreaks` joins single newlines and you'd see
+/// every bullet collapsed into a single wall of text.
+///
+/// `LicenseRegistry.addLicense` takes a callback that returns a stream
+/// of entries — the asset is read lazily the first time the license page
+/// is opened, so this adds no startup cost.
 void _registerBundledSoundsLicense() {
   LicenseRegistry.addLicense(() async* {
     final String content = await rootBundle.loadString(
       'assets/sounds/LICENSES.md',
     );
-    yield LicenseEntryWithLineBreaks(<String>['Bundled sounds'], content);
+    final List<String> lines = content.split('\n');
+    String? currentName;
+    final List<String> currentLines = <String>[];
+
+    Iterable<_BundledSoundLicenseEntry> flush() sync* {
+      if (currentName != null) {
+        yield _BundledSoundLicenseEntry(
+          packageName: '$currentName (bundled)',
+          lines: List<String>.unmodifiable(currentLines),
+        );
+      }
+    }
+
+    for (final String raw in lines) {
+      final String line = raw.trimRight();
+      if (line.startsWith('## ')) {
+        for (final _BundledSoundLicenseEntry entry in flush()) {
+          yield entry;
+        }
+        currentName = line.substring(3).trim();
+        currentLines.clear();
+      } else if (currentName != null) {
+        currentLines.add(line);
+      }
+    }
+    for (final _BundledSoundLicenseEntry entry in flush()) {
+      yield entry;
+    }
   });
+}
+
+/// Custom [LicenseEntry] that emits each source line as its own
+/// `LicenseParagraph` — fixes the "wall of text" rendering of
+/// `LicenseEntryWithLineBreaks` when the source uses single newlines
+/// between bullets.
+class _BundledSoundLicenseEntry extends LicenseEntry {
+  _BundledSoundLicenseEntry({required this.packageName, required this.lines});
+  final String packageName;
+  final List<String> lines;
+
+  @override
+  Iterable<String> get packages => <String>[packageName];
+
+  @override
+  Iterable<LicenseParagraph> get paragraphs => lines.map(
+    (String line) => LicenseParagraph(line, LicenseParagraph.centeredIndent),
+  );
 }
 
 Future<void> main() async {
@@ -173,7 +226,26 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.appTitle)),
+      appBar: AppBar(
+        title: Text(l.appTitle),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            key: const Key('home_menu'),
+            onSelected: (String value) {
+              if (value == 'licenses') {
+                showLicensePage(context: context, applicationName: l.appTitle);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                key: const Key('home_menu_licenses'),
+                value: 'licenses',
+                child: Text(l.licenseMenuOverflow),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -135,8 +135,6 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen>
             onSelected: (String value) {
               if (value == 'manage_presets') {
                 context.push('/presets');
-              } else if (value == 'licenses') {
-                showLicensePage(context: context, applicationName: l.appTitle);
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -144,11 +142,6 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen>
                 key: const Key('timer_list_menu_manage_presets'),
                 value: 'manage_presets',
                 child: Text(l.presetManageMenuOverflow),
-              ),
-              PopupMenuItem<String>(
-                key: const Key('timer_list_menu_licenses'),
-                value: 'licenses',
-                child: Text(l.licenseMenuOverflow),
               ),
             ],
           ),
