@@ -337,4 +337,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get licenseMenuOverflow => 'Licenses';
+
+  @override
+  String get licenseGroupBundledSounds => 'Bundled sounds';
+
+  @override
+  String get licenseGroupSoftware => 'Software licenses';
 }

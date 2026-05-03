@@ -151,5 +151,7 @@
   "timerCardSoundChange": "Change sound",
   "timerSoundSheetTitle": "Choose sound",
 
-  "licenseMenuOverflow": "Licenses"
+  "licenseMenuOverflow": "Licenses",
+  "licenseGroupBundledSounds": "Bundled sounds",
+  "licenseGroupSoftware": "Software licenses"
 }
