@@ -7,3 +7,4 @@ ignore_patterns:
   - "**/*.g.dart"
   - "**/*.freezed.dart"
   - "lib/l10n/app_localizations*.dart"
+  - "assets/sounds/LICENSES.md"
