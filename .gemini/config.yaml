@@ -1,0 +1,9 @@
+have_fun: false
+code_review:
+  comment_severity_threshold: MEDIUM
+  pull_request_opened:
+    help: false
+ignore_patterns:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "lib/l10n/app_localizations*.dart"

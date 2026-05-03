@@ -1,0 +1,6 @@
+* @Copilot
+
+# Generated / vendored — 人間が直接書かないため owner 不要
+*.g.dart
+*.freezed.dart
+lib/l10n/app_localizations*.dart
