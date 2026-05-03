@@ -143,7 +143,13 @@ Future<void> main() async {
       // race) and Stop only pops one layer at a time.
       final RouteMatch last = router.routerDelegate.currentConfiguration.last;
       if (last.matchedLocation == '/alarm-ringing') return;
-      router.go('/alarm-ringing');
+      // Use push (not go) so the previous screen stays on the stack.
+      // Combined with `_leaveAlarmScreen`'s pop-when-possible behavior,
+      // this lets the user back-navigate to home after dismissing the
+      // alarm. The skip-if-already-on-alarm guard above still prevents
+      // stacking duplicates when both this callback and the ringing
+      // listener fire.
+      router.push('/alarm-ringing');
     },
   );
 

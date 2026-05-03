@@ -78,68 +78,79 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     final collection = ref.read(timerCollectionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.alarmAppBarTitle)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                l.alarmTimesUp,
-                key: const Key('alarm_ringing_title'),
-                style: const TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
+    // Block hardware back / system back gesture / AppBar back button
+    // while the alarm is ringing — accidentally dismissing an alarm by
+    // brushing the back gesture (especially when half-asleep) silently
+    // loses the wake-up signal. Users must tap Stop or Snooze to leave.
+    // This matches Google Clock's alarm screen behaviour.
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Text(l.alarmAppBarTitle),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  l.alarmTimesUp,
+                  key: const Key('alarm_ringing_title'),
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 48),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  FilledButton(
-                    key: const Key('alarm_stop_button'),
-                    onPressed: () async {
-                      await ringingNotifier.stop();
-                      // Cancel the ringing timer (if any) so the list
-                      // moves it to `cancelled` and the OS notification
-                      // is taken down.
-                      final TimerEntity? ringing = collection.findRinging();
-                      if (ringing != null) {
-                        collection.cancel(ringing.id);
-                      }
-                      if (!context.mounted) return;
-                      _leaveAlarmScreen(context);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        l.alarmStop,
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ),
-                  OutlinedButton(
-                    key: const Key('alarm_snooze_button'),
-                    onPressed: () => _onSnoozeTap(context),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        l.alarmSnooze,
-                        style: const TextStyle(fontSize: 18),
+                const SizedBox(height: 48),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    FilledButton(
+                      key: const Key('alarm_stop_button'),
+                      onPressed: () async {
+                        await ringingNotifier.stop();
+                        // Cancel the ringing timer (if any) so the list
+                        // moves it to `cancelled` and the OS notification
+                        // is taken down.
+                        final TimerEntity? ringing = collection.findRinging();
+                        if (ringing != null) {
+                          collection.cancel(ringing.id);
+                        }
+                        if (!context.mounted) return;
+                        _leaveAlarmScreen(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          l.alarmStop,
+                          style: const TextStyle(fontSize: 18),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    OutlinedButton(
+                      key: const Key('alarm_snooze_button'),
+                      onPressed: () => _onSnoozeTap(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          l.alarmSnooze,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -205,17 +216,24 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     _leaveAlarmScreen(context);
   }
 
-  /// Leaves the alarm screen back to the timer list view.
+  /// Leaves the alarm screen back to wherever the user came from.
   ///
-  /// We always `go('/timer')` rather than `pop()`-ing for the same
-  /// reason as Phase 5: warm-launch from notification can stack two
-  /// frames (TimerListScreen ringing listener + main()'s tap callback),
-  /// and we want a single source of truth for "after Stop you land on
-  /// the list view".
+  /// Prefer `pop` so the back stack is preserved — when this screen was
+  /// pushed onto `[home, /timer]` (in-app ringing or warm-launch from
+  /// notification tap with the new push semantics), pop returns to
+  /// `[home, /timer]` and the user can back-navigate to home as
+  /// expected. Cold-launch from a dead-process notification tap starts
+  /// directly on `/alarm-ringing` as the initial location, so canPop
+  /// is false there — fall back to a top-level `go('/timer')` so the
+  /// user lands on the list view rather than being stuck.
   void _leaveAlarmScreen(BuildContext context) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});
-    context.go('/timer');
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/timer');
+    }
   }
 }
