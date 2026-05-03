@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'アプリのバックグラウンド中にタイマーが終了しました。'**
   String get notificationTimerCompletedBackgroundBody;
 
+  /// No description provided for @notificationAlarmRingingTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラーム'**
+  String get notificationAlarmRingingTitle;
+
+  /// No description provided for @notificationAlarmRingingBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームの時刻になりました。'**
+  String get notificationAlarmRingingBody;
+
   /// No description provided for @presetSheetTitle.
   ///
   /// In ja, this message translates to:
@@ -643,6 +655,180 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'ソフトウェアライセンス'**
   String get licenseGroupSoftware;
+
+  /// No description provided for @alarmEditTitleNew.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを追加'**
+  String get alarmEditTitleNew;
+
+  /// No description provided for @alarmEditTitleEdit.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを編集'**
+  String get alarmEditTitleEdit;
+
+  /// No description provided for @alarmEditEnabledLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'有効'**
+  String get alarmEditEnabledLabel;
+
+  /// No description provided for @alarmEditTimeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'時刻'**
+  String get alarmEditTimeLabel;
+
+  /// No description provided for @alarmEditRepeatLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'繰り返し'**
+  String get alarmEditRepeatLabel;
+
+  /// No description provided for @alarmEditRepeatOnce.
+  ///
+  /// In ja, this message translates to:
+  /// **'単発'**
+  String get alarmEditRepeatOnce;
+
+  /// No description provided for @alarmEditRepeatWeekly.
+  ///
+  /// In ja, this message translates to:
+  /// **'曜日指定'**
+  String get alarmEditRepeatWeekly;
+
+  /// No description provided for @alarmEditWeekdaysLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'鳴らす曜日'**
+  String get alarmEditWeekdaysLabel;
+
+  /// No description provided for @alarmEditLabelHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'ラベル（任意）'**
+  String get alarmEditLabelHint;
+
+  /// No description provided for @alarmEditSoundLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源'**
+  String get alarmEditSoundLabel;
+
+  /// No description provided for @alarmEditSnoozeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'スヌーズ'**
+  String get alarmEditSnoozeLabel;
+
+  /// No description provided for @alarmEditSnoozeMinutes.
+  ///
+  /// In ja, this message translates to:
+  /// **'{count}分'**
+  String alarmEditSnoozeMinutes(int count);
+
+  /// No description provided for @alarmEditCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get alarmEditCancel;
+
+  /// No description provided for @alarmEditSave.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存'**
+  String get alarmEditSave;
+
+  /// No description provided for @alarmEditDelete.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除'**
+  String get alarmEditDelete;
+
+  /// No description provided for @alarmEditValidationWeekdaysEmpty.
+  ///
+  /// In ja, this message translates to:
+  /// **'曜日を1つ以上選択してください'**
+  String get alarmEditValidationWeekdaysEmpty;
+
+  /// No description provided for @alarmEditLoading.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを読み込み中…'**
+  String get alarmEditLoading;
+
+  /// No description provided for @alarmEditNotFound.
+  ///
+  /// In ja, this message translates to:
+  /// **'対象のアラームが見つかりませんでした'**
+  String get alarmEditNotFound;
+
+  /// No description provided for @alarmDeleteConfirmTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'このアラームを削除しますか？'**
+  String get alarmDeleteConfirmTitle;
+
+  /// No description provided for @alarmDeleteConfirmDontAsk.
+  ///
+  /// In ja, this message translates to:
+  /// **'次から確認しない'**
+  String get alarmDeleteConfirmDontAsk;
+
+  /// No description provided for @alarmDeleteConfirmCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get alarmDeleteConfirmCancel;
+
+  /// No description provided for @alarmDeleteConfirmDelete.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除'**
+  String get alarmDeleteConfirmDelete;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In ja, this message translates to:
+  /// **'月'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In ja, this message translates to:
+  /// **'火'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In ja, this message translates to:
+  /// **'水'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In ja, this message translates to:
+  /// **'木'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In ja, this message translates to:
+  /// **'金'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In ja, this message translates to:
+  /// **'土'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In ja, this message translates to:
+  /// **'日'**
+  String get weekdaySun;
 }
 
 class _AppLocalizationsDelegate

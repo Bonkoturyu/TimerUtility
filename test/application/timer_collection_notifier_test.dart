@@ -212,7 +212,7 @@ void main() {
             title: 'Tea',
             body: any(named: 'body'),
             exact: true,
-            payload: created.id,
+            payload: 'timer:${created.id}',
           ),
         ).called(1);
         // Stop the ticker so the test can finish.
@@ -290,7 +290,7 @@ void main() {
             notificationId: 1,
             title: 'Stew',
             body: any(named: 'body'),
-            payload: 'overdue-1',
+            payload: 'timer:overdue-1',
           ),
         ).called(1);
         // Persisted as completed.

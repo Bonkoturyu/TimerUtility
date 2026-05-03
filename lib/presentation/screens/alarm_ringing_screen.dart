@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/alarm_collection_notifier.dart';
 import '../../application/alarm_ringing_notifier.dart';
 import '../../application/timer_collection_notifier.dart';
+import '../../domain/alarm/alarm_entity.dart';
+import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
@@ -33,7 +36,14 @@ const MethodChannel _permissionChannel = MethodChannel(
 /// audio with a synthetic 'unknown' id so the user is never met with
 /// silence on this screen.
 class AlarmRingingScreen extends ConsumerStatefulWidget {
-  const AlarmRingingScreen({super.key});
+  const AlarmRingingScreen({super.key, this.payload});
+
+  /// 通知タップ時の payload (ADR 0005 で定めた `timer:<id>` /
+  /// `alarm:<id>` 形式)。warm-launch / cold-launch 共に
+  /// `main.dart` 側で queryParameters['payload'] に詰めて渡される。
+  /// `null` の場合は app 内 ringing listener 経由 (既存の Timer
+  /// path) として扱う。
+  final String? payload;
 
   @override
   ConsumerState<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
@@ -100,10 +110,25 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     final ringing = ref.read(alarmRingingNotifierProvider);
     if (ringing.isPlaying) return;
 
+    final (AlarmSource source, String? sourceId) = _parsePayload(
+      widget.payload,
+    );
+
+    if (source == AlarmSource.alarm && sourceId != null) {
+      _bootstrapAlarm(sourceId);
+    } else {
+      _bootstrapTimer(payloadId: sourceId);
+    }
+  }
+
+  void _bootstrapTimer({String? payloadId}) {
     final TimerEntity? entity = ref
         .read(timerCollectionNotifierProvider.notifier)
         .findRinging();
-    final String timerId = entity?.id ?? 'unknown';
+    // 1) in-memory に ringing 中の timer があればその id
+    // 2) 無ければ payload の id (旧形式 payload / cold-start で state 未復元)
+    // 3) どちらも無ければ 'unknown' (audio だけは鳴らす、Phase 8 既存挙動)
+    final String timerId = entity?.id ?? payloadId ?? 'unknown';
     final AlarmSound sound =
         (entity?.soundId == null
             ? null
@@ -116,7 +141,57 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
 
     ref
         .read(alarmRingingNotifierProvider.notifier)
-        .start(timerId: timerId, sound: sound, notificationId: notificationId);
+        .start(
+          timerId: timerId,
+          sound: sound,
+          notificationId: notificationId,
+          source: AlarmSource.timer,
+        );
+  }
+
+  void _bootstrapAlarm(String alarmId) {
+    final List<AlarmEntity> alarms = ref.read(alarmCollectionNotifierProvider);
+    AlarmEntity? entity;
+    for (final AlarmEntity a in alarms) {
+      if (a.id == alarmId) {
+        entity = a;
+        break;
+      }
+    }
+    final AlarmSound sound =
+        (entity?.soundId == null
+            ? null
+            : AlarmSoundCatalog.findById(entity!.soundId!)) ??
+        AlarmSoundCatalog.defaultSound;
+    // payload で渡された id を sourceId として保持。
+    final int notificationId = entity?.notificationId ?? -1;
+    ref
+        .read(alarmRingingNotifierProvider.notifier)
+        .start(
+          timerId: alarmId,
+          sound: sound,
+          notificationId: notificationId,
+          source: AlarmSource.alarm,
+        );
+  }
+
+  /// payload を `(source, sourceId)` に分解。
+  /// - `'timer:abc'` → `(timer, 'abc')`
+  /// - `'alarm:def'` → `(alarm, 'def')`
+  /// - `null` → `(timer, null)` (in-app ringing listener 経由)
+  /// - その他 (プレフィックスなし) → `(timer, payload)`
+  ///   後方互換パス。Phase 9 までは payload に timer の id を裸で
+  ///   入れていたので、アプリ更新後に旧形式の永続化通知をタップしても
+  ///   id を失わず timer として扱う。
+  (AlarmSource, String?) _parsePayload(String? payload) {
+    if (payload == null) return (AlarmSource.timer, null);
+    if (payload.startsWith('alarm:')) {
+      return (AlarmSource.alarm, payload.substring('alarm:'.length));
+    }
+    if (payload.startsWith('timer:')) {
+      return (AlarmSource.timer, payload.substring('timer:'.length));
+    }
+    return (AlarmSource.timer, payload);
   }
 
   @override
@@ -124,6 +199,15 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
     final collection = ref.read(timerCollectionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
+    // Stop / Snooze 押下時の分岐は、現在 ringing 中の AlarmRingingState の
+    // currentSource を見る (build 直前に Notifier に source を保存済)。
+    // null の場合は Phase 8 までの「タイマーのみ」path にフォールバック。
+    final AlarmSource? activeSource = ref
+        .watch(alarmRingingNotifierProvider)
+        .currentSource;
+    final String? activeSourceId = ref
+        .watch(alarmRingingNotifierProvider)
+        .currentTimerId;
 
     // Block hardware back / system back gesture / AppBar back button
     // while the alarm is ringing — accidentally dismissing an alarm by
@@ -159,12 +243,32 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                       key: const Key('alarm_stop_button'),
                       onPressed: () async {
                         await ringingNotifier.stop();
-                        // Cancel the ringing timer (if any) so the list
-                        // moves it to `cancelled` and the OS notification
-                        // is taken down.
-                        final TimerEntity? ringing = collection.findRinging();
-                        if (ringing != null) {
-                          collection.cancel(ringing.id);
+                        if (activeSource == AlarmSource.alarm &&
+                            activeSourceId != null) {
+                          // Phase 9.5: alarm 由来 → AlarmCollectionNotifier に
+                          // 委譲。once は enabled=false 化、weekly は次回曜日に
+                          // 自動進行する。
+                          // cold-start で AlarmCollectionNotifier の load が
+                          // まだ完了していない / すでに削除済みの場合に
+                          // AlarmNotFoundException が飛ぶことがあるが、
+                          // 鳴動停止は既に完了しているので no-op で抜ける。
+                          try {
+                            await ref
+                                .read(alarmCollectionNotifierProvider.notifier)
+                                .onFiredStop(activeSourceId);
+                          } on AlarmNotFoundException {
+                            // 何もしない: 通知音は止まっているのでユーザは
+                            // 画面を抜けられる。weekly の次回 schedule が
+                            // 載らない可能性があるが、次回起動時の load 後に
+                            // 反映される。
+                          }
+                        } else {
+                          // Phase 8 までの既存 path: TimerCollection の
+                          // ringing を cancelled に落とす。
+                          final TimerEntity? ringing = collection.findRinging();
+                          if (ringing != null) {
+                            collection.cancel(ringing.id);
+                          }
                         }
                         if (!context.mounted) return;
                         _leaveAlarmScreen(context);
@@ -182,7 +286,14 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                     ),
                     OutlinedButton(
                       key: const Key('alarm_snooze_button'),
-                      onPressed: () => _onSnoozeTap(context),
+                      onPressed: () {
+                        if (activeSource == AlarmSource.alarm &&
+                            activeSourceId != null) {
+                          _onAlarmSnoozeTap(context, activeSourceId);
+                        } else {
+                          _onSnoozeTap(context);
+                        }
+                      },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -259,6 +370,29 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     if (ringing == null) return;
     await ref.read(alarmRingingNotifierProvider.notifier).stop();
     collection.snooze(ringing.id, minutes);
+    if (!context.mounted) return;
+    _leaveAlarmScreen(context);
+  }
+
+  /// Phase 9.5: alarm 由来のスヌーズハンドラ。
+  ///
+  /// Timer 側のように毎回シートで分単位を選択させる UX ではなく、
+  /// `AlarmEntity.snoozeMinutes` (5/10/15、edit 画面で設定済) を即時
+  /// 適用する。Google Clock 等の標準目覚ましアプリと同じ挙動。
+  /// 内部で `AlarmCollectionNotifier.onFiredSnooze` が
+  /// `AlarmService.snoozeUntil` を呼び、同 notificationId で再 schedule する。
+  Future<void> _onAlarmSnoozeTap(BuildContext context, String alarmId) async {
+    await ref.read(alarmRingingNotifierProvider.notifier).stop();
+    // Stop 同様、cold-start で load 未完了 / 削除済みの場合に
+    // AlarmNotFoundException が飛ぶ可能性があるので握りつぶす。
+    // スヌーズ再 schedule は失敗するが、ユーザは画面を抜けられる。
+    try {
+      await ref
+          .read(alarmCollectionNotifierProvider.notifier)
+          .onFiredSnooze(alarmId);
+    } on AlarmNotFoundException {
+      // no-op
+    }
     if (!context.mounted) return;
     _leaveAlarmScreen(context);
   }

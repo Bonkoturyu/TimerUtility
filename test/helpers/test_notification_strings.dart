@@ -9,6 +9,8 @@ const NotificationStrings testNotificationStrings = NotificationStrings(
   timerEndedBody: 'Time is up.',
   timerCompletedBackgroundBody:
       'Timer ended while the app was in the background.',
+  alarmRingingTitle: 'Alarm',
+  alarmRingingBody: 'Alarm ringing.',
 );
 
 /// Notifier override target — `notificationStringsNotifierProvider` was
