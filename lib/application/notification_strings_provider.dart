@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notification_strings_provider.g.dart';
@@ -9,15 +8,10 @@ part 'notification_strings_provider.g.dart';
 ///
 /// Why a separate value object: notifier code lives in the application
 /// layer and has no `BuildContext`, so it can't call
-/// `AppLocalizations.of(context)`. Resolving the strings once at startup
-/// (in `main.dart` against the device locale) and stashing them in this
-/// provider gives the notifier a clean read-side without coupling it to
+/// `AppLocalizations.of(context)`. Resolving the strings against
+/// `AppLocalizations` and stashing them in a Riverpod-managed notifier
+/// gives the application layer a clean read-side without coupling it to
 /// presentation-layer types.
-///
-/// Phase 11 (settings screen + runtime locale switch) will likely turn
-/// this into a streaming provider that re-resolves whenever the user's
-/// chosen locale changes. For now strings are locked to the locale
-/// active at app startup.
 class NotificationStrings {
   const NotificationStrings({
     required this.timerEndedTitle,
@@ -38,13 +32,26 @@ class NotificationStrings {
   final String timerCompletedBackgroundBody;
 }
 
+/// Holds the locale-resolved strings used by the OS-notification code
+/// paths. `TimerUtilityApp`'s `WidgetsBindingObserver.didChangeLocales`
+/// pushes a freshly resolved value via [set] whenever the device locale
+/// changes, so notifications scheduled after a language switch use the
+/// new translation instead of the one captured at startup.
+///
 /// Throw-on-default pattern: callers must override this provider in
 /// `main.dart` with a value resolved against `AppLocalizations`.
 /// Hitting this default in a test means the test harness forgot to
 /// supply an override, and the assertion message tells the next
 /// reader where to plug it in.
 @Riverpod(keepAlive: true)
-NotificationStrings notificationStrings(Ref ref) => throw UnimplementedError(
-  'notificationStringsProvider must be overridden in main.dart (and in '
-  'tests via ProviderScope.overrides) with locale-resolved strings.',
-);
+class NotificationStringsNotifier extends _$NotificationStringsNotifier {
+  @override
+  NotificationStrings build() => throw UnimplementedError(
+    'notificationStringsNotifierProvider must be overridden in main.dart '
+    '(and in tests via ProviderScope.overrides) with locale-resolved strings.',
+  );
+
+  /// Replace the held strings — typically called by the app-level
+  /// locale observer after `AppLocalizations.delegate.load(newLocale)`.
+  void set(NotificationStrings strings) => state = strings;
+}

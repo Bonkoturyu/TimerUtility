@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
-import 'package:timer_utility/application/notification_strings_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/preset_repository_provider.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
@@ -137,7 +136,7 @@ Widget _harness(_InMemoryRepo repo, {Iterable<Preset>? presetSeed}) {
         _InMemoryPresetRepo(presetSeed),
       ),
       notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
-      notificationStringsProvider.overrideWithValue(testNotificationStrings),
+      testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
         () => _GrantedPermissionNotifier(),
       ),
