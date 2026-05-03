@@ -151,5 +151,7 @@
   "timerCardSoundChange": "音源を変更",
   "timerSoundSheetTitle": "音源を選択",
 
-  "licenseMenuOverflow": "ライセンス"
+  "licenseMenuOverflow": "ライセンス",
+  "licenseGroupBundledSounds": "同梱音源",
+  "licenseGroupSoftware": "ソフトウェアライセンス"
 }
