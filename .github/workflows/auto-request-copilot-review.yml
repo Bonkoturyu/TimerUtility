@@ -1,0 +1,45 @@
+name: Auto-request Copilot review
+
+# Free private repo では Settings → Copilot → Code review の ruleset が
+# enforce されない (Rulesets API が 403) ため、PR open 時に Copilot を
+# 自動 reviewer として request する Action で代替する。
+#
+# 失敗してもユーザは手動で Copilot を reviewer に追加できるため、
+# このワークフローのジョブが落ちても続行可能 (continue-on-error 相当の
+# try/catch を script 内で実装)。
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+jobs:
+  request:
+    # Copilot 自身が PR を開く可能性がある (Coding agent 利用時) ため、
+    # その場合は再帰防止で skip。
+    if: github.event.pull_request.user.login != 'copilot-pull-request-reviewer[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Request Copilot reviewer
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers: ['Copilot'],
+              });
+              core.info('Copilot reviewer requested.');
+            } catch (e) {
+              // Copilot サブスクが無い / handle が変わった等で失敗する
+              // ことがあるが、その場合は手動 assign で fallback できる。
+              // ジョブを fail させるとユーザに不要な赤通知が飛ぶので、
+              // log だけ残して success 扱いにする。
+              core.warning(
+                `Failed to request Copilot review: ${e.message}. ` +
+                  'Add Copilot manually via the PR Reviewers panel if needed.',
+              );
+            }
