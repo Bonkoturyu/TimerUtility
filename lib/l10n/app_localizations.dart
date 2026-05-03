@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'アプリのバックグラウンド中にタイマーが終了しました。'**
   String get notificationTimerCompletedBackgroundBody;
 
+  /// No description provided for @notificationAlarmRingingTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラーム'**
+  String get notificationAlarmRingingTitle;
+
+  /// No description provided for @notificationAlarmRingingBody.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームの時刻になりました。'**
+  String get notificationAlarmRingingBody;
+
   /// No description provided for @presetSheetTitle.
   ///
   /// In ja, this message translates to:

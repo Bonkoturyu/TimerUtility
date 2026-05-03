@@ -92,6 +92,8 @@
   "notificationTimerEndedTitle": "Timer",
   "notificationTimerEndedBody": "Time is up.",
   "notificationTimerCompletedBackgroundBody": "Timer ended while the app was in the background.",
+  "notificationAlarmRingingTitle": "Alarm",
+  "notificationAlarmRingingBody": "It's time for your alarm.",
 
   "presetSheetTitle": "Choose preset",
   "presetSheetCustomButton": "Create with custom time",

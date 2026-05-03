@@ -92,6 +92,8 @@
   "notificationTimerEndedTitle": "タイマー",
   "notificationTimerEndedBody": "時間になりました。",
   "notificationTimerCompletedBackgroundBody": "アプリのバックグラウンド中にタイマーが終了しました。",
+  "notificationAlarmRingingTitle": "アラーム",
+  "notificationAlarmRingingBody": "アラームの時刻になりました。",
 
   "presetSheetTitle": "プリセットから選択",
   "presetSheetCustomButton": "カスタム時間で作成",

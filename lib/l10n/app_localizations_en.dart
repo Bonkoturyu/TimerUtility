@@ -208,6 +208,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Timer ended while the app was in the background.';
 
   @override
+  String get notificationAlarmRingingTitle => 'Alarm';
+
+  @override
+  String get notificationAlarmRingingBody => 'It\'s time for your alarm.';
+
+  @override
   String get presetSheetTitle => 'Choose preset';
 
   @override

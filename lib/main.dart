@@ -76,12 +76,8 @@ Future<NotificationStrings> _resolveNotificationStrings() async {
     timerEndedTitle: l.notificationTimerEndedTitle,
     timerEndedBody: l.notificationTimerEndedBody,
     timerCompletedBackgroundBody: l.notificationTimerCompletedBackgroundBody,
-    // Phase 9.5: Alarm 用文言 — Step 6 (l10n) で ARB 対応する暫定値。
-    // ja / en どちらの locale でもまずは日本語文言で動かしておき、
-    // ARB に `notificationAlarmRingingTitle` / `notificationAlarmRingingBody`
-    // を入れた段階で `l.notificationAlarmRingingTitle` 等に差し替える。
-    alarmRingingTitle: 'アラーム',
-    alarmRingingBody: 'アラームの時刻になりました。',
+    alarmRingingTitle: l.notificationAlarmRingingTitle,
+    alarmRingingBody: l.notificationAlarmRingingBody,
   );
 }
 

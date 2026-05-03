@@ -194,6 +194,12 @@ class AppLocalizationsJa extends AppLocalizations {
       'アプリのバックグラウンド中にタイマーが終了しました。';
 
   @override
+  String get notificationAlarmRingingTitle => 'アラーム';
+
+  @override
+  String get notificationAlarmRingingBody => 'アラームの時刻になりました。';
+
+  @override
   String get presetSheetTitle => 'プリセットから選択';
 
   @override

@@ -46,7 +46,7 @@ part 'alarm_collection_notifier.g.dart';
 class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
   static const int maxSize = 50;
 
-  static const _Uuid _uuid = _Uuid();
+  static const Uuid _uuid = Uuid();
 
   @override
   List<AlarmEntity> build() {
@@ -271,11 +271,4 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
       );
     }
   }
-}
-
-/// `Uuid` を `_uuid` の static const にしたいが、`Uuid()` が const ではない
-/// ため、薄い const ラッパで包んで `v4()` を使えるようにする。
-class _Uuid {
-  const _Uuid();
-  String v4() => const Uuid().v4();
 }
