@@ -365,7 +365,10 @@ audioplayers のループ再生が重なって聞こえる問題を修正。
 - [x] flutter analyze: No issues found
 - [x] flutter test: 180 / 180 passed
 - [x] dart format で整形済み
-- [ ] 通知 channel 名 / 通知本文の i18n 対応 (Phase 11)
+- [x] 通知本文の i18n 対応 (2026-05-03、PR #5): NotificationStringsNotifier +
+      WidgetsBindingObserver.didChangeLocales で locale 切替追従、
+      rescheduleAllRunning で in-flight banner も上書き
+- [ ] 通知 channel 名の i18n 対応 (Phase 11)
 - [ ] 設定画面での手動切替 UI (Phase 11)
 - [ ] 中韓 ARB の本格翻訳 (Phase 11)
 
@@ -682,4 +685,4 @@ audioplayers のループ再生が重なって聞こえる問題を修正。
 
 ---
 
-最終更新日: 2026-05-02（ローカライズ土台導入: 日英 ARB + 中韓 experimental flag、180 テストパス）
+最終更新日: 2026-05-03（PR #5 通知本文 i18n + locale 切替追従マージ、278 テストパス）
