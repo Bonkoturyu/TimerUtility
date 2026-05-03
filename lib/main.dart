@@ -185,8 +185,9 @@ Future<void> main() async {
   await adapter.initialize(
     onNotificationTap: (String? payload) {
       // Warm-launch path (app already running): navigate to the alarm
-      // screen. The payload (timer id) is not used yet — Phase 8 will
-      // need it once multiple timers can ring concurrently.
+      // screen. payload は ADR 0005 で定めた `timer:<id>` / `alarm:<id>`
+      // の形式で渡される。AlarmRingingScreen は queryParameters['payload']
+      // を読んで起動元を判別する。
       if (payload == null) return;
       // Skip if we're already on the alarm screen. TimerScreen's ringing
       // listener also pushes when the timer flips to `ringing`, so without
@@ -199,21 +200,27 @@ Future<void> main() async {
       // (notification tap + ticker tick on app resume). Defer to the
       // synchronous reservation flag so only one path actually pushes.
       if (!AlarmRingingScreen.tryReservePush()) return;
-      // Use push (not go) so the previous screen stays on the stack.
-      // Combined with `_leaveAlarmScreen`'s pop-when-possible behavior,
-      // this lets the user back-navigate to home after dismissing the
-      // alarm.
-      router.push('/alarm-ringing');
+      // payload を queryParameter に載せて screen に渡す。
+      // push (not go) で前の画面はスタックに残し、`_leaveAlarmScreen` の
+      // pop で home に戻れるようにする。
+      router.push(
+        Uri(
+          path: '/alarm-ringing',
+          queryParameters: <String, String>{'payload': payload},
+        ).toString(),
+      );
     },
   );
 
-  // Cold-launch path: if the user tapped the notification while the
-  // process was dead, the `onNotificationTap` callback above does not
-  // fire. We probe the plugin for that case and adjust the initial
-  // location so the user lands on the alarm screen instead of the home.
+  // Cold-launch path: プロセスが死んでいた状態で通知をタップされた場合は
+  // `onNotificationTap` が発火しないので、プラグインに直接問い合わせて
+  // 初期ロケーションを `/alarm-ringing?payload=...` に切り替える。
   final String? coldLaunchPayload = await adapter.coldLaunchPayload();
   final String initialLocation = coldLaunchPayload != null
-      ? '/alarm-ringing'
+      ? Uri(
+          path: '/alarm-ringing',
+          queryParameters: <String, String>{'payload': coldLaunchPayload},
+        ).toString()
       : '/';
 
   router = GoRouter(
@@ -237,7 +244,7 @@ Future<void> main() async {
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
-            const AlarmRingingScreen(),
+            AlarmRingingScreen(payload: state.uri.queryParameters['payload']),
       ),
       GoRoute(
         path: '/presets',

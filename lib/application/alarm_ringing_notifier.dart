@@ -10,8 +10,21 @@ import 'notification_scheduler_provider.dart';
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
 
+/// 鳴動の起動元 (Phase 9.5、ADR 0005 の payload prefix 方針に対応)。
+/// - `timer`: 既存のカウントダウンタイマーが満了して鳴った場合
+/// - `alarm`: 指定時刻アラームが鳴った場合
+///
+/// `AlarmRingingScreen` の Stop / Snooze ボタンはこの値で
+/// `TimerCollectionNotifier` / `AlarmCollectionNotifier` のどちらに
+/// 引き渡すかを分岐する。
+enum AlarmSource { timer, alarm }
+
 /// State for [AlarmRingingNotifier]. Phase 5 only models a single ringing
 /// timer at a time; multi-timer ringing is a Phase 8 concern.
+///
+/// Phase 9.5: `currentSource` を追加 ([AlarmSource])。`currentTimerId`
+/// はそのまま維持しつつ、source が alarm のときは alarm の id を保持する
+/// ように使い分ける (フィールド名は ADR 0005 で「リネームしない」方針)。
 @freezed
 class AlarmRingingState with _$AlarmRingingState {
   const factory AlarmRingingState({
@@ -19,6 +32,7 @@ class AlarmRingingState with _$AlarmRingingState {
     required bool snoozeRequested,
     String? currentTimerId,
     String? currentSoundId,
+    AlarmSource? currentSource,
   }) = _AlarmRingingState;
 
   factory AlarmRingingState.idle() =>
@@ -55,10 +69,15 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// Required because every entry path into the ringing state has a
   /// corresponding scheduled notification (foreground tick, FSI, cold
   /// launch).
+  ///
+  /// Phase 9.5: [source] で「タイマー由来」「アラーム由来」を区別する。
+  /// 省略時は `AlarmSource.timer` (Phase 8 までの既存挙動を維持し、
+  /// 既存呼び出し側 / テストとの後方互換を保つ)。
   Future<void> start({
     required String timerId,
     required AlarmSound sound,
     required int notificationId,
+    AlarmSource source = AlarmSource.timer,
   }) async {
     // Idempotent: AlarmRingingScreen self-bootstraps on mount, and
     // TimerNotifier._onTick also calls start when the foreground ticker
@@ -72,6 +91,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
       snoozeRequested: false,
       currentTimerId: timerId,
       currentSoundId: sound.id,
+      currentSource: source,
     );
     // Sequencing matters: cancel the OS notification first, wait briefly
     // so Pixel / Android 16 actually releases the alarm-stream tone (the
