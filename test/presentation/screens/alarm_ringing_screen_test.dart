@@ -8,6 +8,7 @@ import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/notification_strings_provider.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
@@ -19,6 +20,8 @@ import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
+
+import '../../helpers/test_notification_strings.dart';
 
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   bool _isPlaying = false;
@@ -131,6 +134,7 @@ Widget _harness(
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
       notificationSchedulerProvider.overrideWithValue(scheduler),
+      notificationStringsProvider.overrideWithValue(testNotificationStrings),
       timerRepositoryProvider.overrideWithValue(repo),
     ],
     // Force Japanese so existing assertions for "スヌーズ時間を選択"

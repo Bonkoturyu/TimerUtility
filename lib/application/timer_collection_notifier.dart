@@ -10,6 +10,7 @@ import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
 import 'clock_provider.dart';
 import 'notification_scheduler_provider.dart';
+import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
 import 'timer_repository_provider.dart';
 import 'timer_service_provider.dart';
@@ -217,7 +218,10 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     final bool useExact =
         exact == DomainPermissionStatus.granted ||
         exact == DomainPermissionStatus.notRequired;
-    final String title = entity.label.isEmpty ? 'Timer' : entity.label;
+    final NotificationStrings strings = ref.read(notificationStringsProvider);
+    final String title = entity.label.isEmpty
+        ? strings.timerEndedTitle
+        : entity.label;
     unawaited(
       ref
           .read(notificationSchedulerProvider)
@@ -225,7 +229,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
             notificationId: entity.notificationId,
             fireAt: entity.endAt!,
             title: title,
-            body: 'Time is up.',
+            body: strings.timerEndedBody,
             exact: useExact,
             payload: entity.id,
           ),
@@ -237,14 +241,17 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
   }
 
   void _showRestoredCompletionNotification(TimerEntity entity) {
-    final String title = entity.label.isEmpty ? 'Timer' : entity.label;
+    final NotificationStrings strings = ref.read(notificationStringsProvider);
+    final String title = entity.label.isEmpty
+        ? strings.timerEndedTitle
+        : entity.label;
     unawaited(
       ref
           .read(notificationSchedulerProvider)
           .show(
             notificationId: entity.notificationId,
             title: title,
-            body: 'Timer ended while the app was in the background.',
+            body: strings.timerCompletedBackgroundBody,
             payload: entity.id,
           ),
     );
