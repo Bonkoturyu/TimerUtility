@@ -1,0 +1,46 @@
+#!/bin/sh
+# Pre-commit hook: ensures staged Dart files are formatted to match
+# `dart format`. Mirrors the CI guard
+# `dart format --set-exit-if-changed .` so format-only failures are
+# caught locally instead of after CI.
+#
+# Install (one-time, per checkout):
+#   git config core.hooksPath tool/git-hooks
+#
+# Why per-checkout: `core.hooksPath` is stored in `.git/config` which
+# is not version-controlled. The hook script itself lives in the repo
+# (here), but each clone needs to opt into using `tool/git-hooks/` as
+# the hook directory.
+#
+# Bypass (rare): `git commit --no-verify`.
+
+# Collect staged Dart files (added / copied / modified / renamed).
+files=$(git diff --cached --name-only --diff-filter=ACMR -- '*.dart')
+
+if [ -z "$files" ]; then
+  exit 0
+fi
+
+# Run dart format on the staged files only — faster than a full-tree
+# scan, and the CI's full-tree check still catches anything we miss.
+#   --output=none           : check only, never modify files on disk.
+#                             Avoids surprises when a file has staged
+#                             AND unstaged changes simultaneously.
+#   --set-exit-if-changed   : return non-zero when reformatting would
+#                             change anything, so the commit is
+#                             rejected before unformatted code lands.
+# shellcheck disable=SC2086
+# (Word-splitting is intentional so `$files` becomes individual args.
+# Dart filenames with spaces are not common in this repo.)
+dart format --output=none --set-exit-if-changed $files
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo ""
+  echo "✖ pre-commit: dart format would change one or more staged files."
+  echo "  Run \`dart format .\` from the repo root, then re-stage and commit."
+  echo "  (Bypass with \`git commit --no-verify\` if you really must.)"
+  exit 1
+fi
+
+exit 0
