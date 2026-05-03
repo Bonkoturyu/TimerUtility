@@ -31,4 +31,10 @@ class UserPreferenceKeys {
   /// `true` when the user ticked "Don't ask again" in the preset delete
   /// confirmation dialog. Absent / `false` means "show the dialog".
   static const String skipPresetDeleteConfirm = 'skipPresetDeleteConfirm';
+
+  /// `true` when the user ticked "Don't ask again" in the alarm delete
+  /// confirmation dialog (Phase 9.5)。Absent / `false` means "show the
+  /// dialog". preset と同じ運用 (UI 側で読んでスキップ判定、ダイアログの
+  /// 結果を書き戻す)。
+  static const String skipAlarmDeleteConfirm = 'skipAlarmDeleteConfirm';
 }

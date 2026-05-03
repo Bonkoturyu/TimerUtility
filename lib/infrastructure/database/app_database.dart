@@ -52,16 +52,45 @@ class Presets extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+/// Drift テーブル定義: 指定時刻アラーム (Phase 9.5、ADR 0005)。
+///
+/// 永続化方針:
+///   - `targetTimeMinutes`: 0..1439 (00:00 を 0、23:59 を 1439 として
+///     格納)。`TimeOfDayValue.toMinutesFromMidnight` の出力をそのまま保存。
+///   - `repeatKind`: 'once' / 'weekly' の文字列。enum 名と同じく
+///     「将来追加されたら migration が必要」というのを契約として残す。
+///   - `repeatDaysBitmask`: 曜日のビットマスク
+///     (Mon=1<<0, Tue=1<<1, …, Sun=1<<6)。`once` のときは 0。
+///     0..127 の範囲で必ず収まる。
+///   - `enabled`: BoolColumn (Drift が SQLite INTEGER で 0/1 にマップ)。
+///   - その他の列規約 (epoch-ms UTC、null は null) は Timers/Presets と同一。
+@DataClassName('AlarmRow')
+class Alarms extends Table {
+  TextColumn get id => text()();
+  IntColumn get notificationId => integer()();
+  TextColumn get label => text()();
+  IntColumn get targetTimeMinutes => integer()();
+  TextColumn get repeatKind => text()();
+  IntColumn get repeatDaysBitmask => integer()();
+  IntColumn get snoozeMinutes => integer()();
+  BoolColumn get enabled => boolean()();
+  TextColumn get soundId => text().nullable()();
+  IntColumn get createdAtUtcMs => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
 /// Application database. Phase 8 shipped with the `timers` table only;
 /// Phase 9 introduces `presets` (schemaVersion bump 1 → 2) along with
-/// a default-profile seed in `onCreate` / `onUpgrade`. Alarm /
-/// ClockLocation tables land in Phase 9.5 / 10.5 respectively and will
-/// require further schema bumps.
+/// a default-profile seed in `onCreate` / `onUpgrade`. Phase 9.5 adds
+/// the `alarms` table (schemaVersion bump 2 → 3). ClockLocation テーブル
+/// は Phase 10.5 で追加予定。
 ///
 /// Use [AppDatabase.forTesting] to spin up an in-memory SQLite instance
 /// without touching disk. `clock` and `idGenerator` are injectable so
 /// migration / seed paths stay deterministic in unit tests.
-@DriftDatabase(tables: <Type>[Timers, Presets])
+@DriftDatabase(tables: <Type>[Timers, Presets, Alarms])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({Clock? clock, String Function()? idGenerator})
     : _clock = clock ?? const Clock(),
@@ -79,7 +108,7 @@ class AppDatabase extends _$AppDatabase {
   final String Function() _idGenerator;
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -96,6 +125,12 @@ class AppDatabase extends _$AppDatabase {
         // untouched so existing user data survives.
         await m.createTable(presets);
         await _seedDefaultPresets();
+      }
+      if (from < 3) {
+        // Phase 9 → Phase 9.5: alarms テーブルを追加。既存の
+        // timers / presets はそのまま残す。アラームは 0 件で開始
+        // (seed なし) — ユーザが UI から作成する設計。
+        await m.createTable(alarms);
       }
     },
   );

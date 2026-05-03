@@ -17,6 +17,8 @@ class NotificationStrings {
     required this.timerEndedTitle,
     required this.timerEndedBody,
     required this.timerCompletedBackgroundBody,
+    required this.alarmRingingTitle,
+    required this.alarmRingingBody,
   });
 
   /// Fallback title used when the timer has no user-provided label.
@@ -30,6 +32,15 @@ class NotificationStrings {
   /// Body of the silent "missed timer while in the background"
   /// notification fired by the restoration path on app start.
   final String timerCompletedBackgroundBody;
+
+  /// Phase 9.5 のスケジュール時刻アラーム発火通知のタイトル
+  /// (アラームに `label` が設定されていないときのフォールバック)。
+  /// 例: "アラーム" / "Alarm"。
+  final String alarmRingingTitle;
+
+  /// Phase 9.5 のスケジュール時刻アラーム発火通知の本文。
+  /// 例: "アラームの時刻になりました。" / "Time to wake up."。
+  final String alarmRingingBody;
 }
 
 /// Holds the locale-resolved strings used by the OS-notification code

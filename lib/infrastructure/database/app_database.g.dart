@@ -953,16 +953,653 @@ class PresetsCompanion extends UpdateCompanion<PresetRow> {
   }
 }
 
+class $AlarmsTable extends Alarms with TableInfo<$AlarmsTable, AlarmRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AlarmsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notificationIdMeta = const VerificationMeta(
+    'notificationId',
+  );
+  @override
+  late final GeneratedColumn<int> notificationId = GeneratedColumn<int>(
+    'notification_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetTimeMinutesMeta = const VerificationMeta(
+    'targetTimeMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> targetTimeMinutes = GeneratedColumn<int>(
+    'target_time_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repeatKindMeta = const VerificationMeta(
+    'repeatKind',
+  );
+  @override
+  late final GeneratedColumn<String> repeatKind = GeneratedColumn<String>(
+    'repeat_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repeatDaysBitmaskMeta = const VerificationMeta(
+    'repeatDaysBitmask',
+  );
+  @override
+  late final GeneratedColumn<int> repeatDaysBitmask = GeneratedColumn<int>(
+    'repeat_days_bitmask',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _snoozeMinutesMeta = const VerificationMeta(
+    'snoozeMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> snoozeMinutes = GeneratedColumn<int>(
+    'snooze_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _soundIdMeta = const VerificationMeta(
+    'soundId',
+  );
+  @override
+  late final GeneratedColumn<String> soundId = GeneratedColumn<String>(
+    'sound_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtUtcMsMeta = const VerificationMeta(
+    'createdAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUtcMs = GeneratedColumn<int>(
+    'created_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    notificationId,
+    label,
+    targetTimeMinutes,
+    repeatKind,
+    repeatDaysBitmask,
+    snoozeMinutes,
+    enabled,
+    soundId,
+    createdAtUtcMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'alarms';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AlarmRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('notification_id')) {
+      context.handle(
+        _notificationIdMeta,
+        notificationId.isAcceptableOrUnknown(
+          data['notification_id']!,
+          _notificationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_notificationIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('target_time_minutes')) {
+      context.handle(
+        _targetTimeMinutesMeta,
+        targetTimeMinutes.isAcceptableOrUnknown(
+          data['target_time_minutes']!,
+          _targetTimeMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_targetTimeMinutesMeta);
+    }
+    if (data.containsKey('repeat_kind')) {
+      context.handle(
+        _repeatKindMeta,
+        repeatKind.isAcceptableOrUnknown(data['repeat_kind']!, _repeatKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_repeatKindMeta);
+    }
+    if (data.containsKey('repeat_days_bitmask')) {
+      context.handle(
+        _repeatDaysBitmaskMeta,
+        repeatDaysBitmask.isAcceptableOrUnknown(
+          data['repeat_days_bitmask']!,
+          _repeatDaysBitmaskMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_repeatDaysBitmaskMeta);
+    }
+    if (data.containsKey('snooze_minutes')) {
+      context.handle(
+        _snoozeMinutesMeta,
+        snoozeMinutes.isAcceptableOrUnknown(
+          data['snooze_minutes']!,
+          _snoozeMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_snoozeMinutesMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('sound_id')) {
+      context.handle(
+        _soundIdMeta,
+        soundId.isAcceptableOrUnknown(data['sound_id']!, _soundIdMeta),
+      );
+    }
+    if (data.containsKey('created_at_utc_ms')) {
+      context.handle(
+        _createdAtUtcMsMeta,
+        createdAtUtcMs.isAcceptableOrUnknown(
+          data['created_at_utc_ms']!,
+          _createdAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUtcMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AlarmRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AlarmRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      notificationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}notification_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      targetTimeMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_time_minutes'],
+      )!,
+      repeatKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repeat_kind'],
+      )!,
+      repeatDaysBitmask: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repeat_days_bitmask'],
+      )!,
+      snoozeMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}snooze_minutes'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      soundId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sound_id'],
+      ),
+      createdAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_utc_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $AlarmsTable createAlias(String alias) {
+    return $AlarmsTable(attachedDatabase, alias);
+  }
+}
+
+class AlarmRow extends DataClass implements Insertable<AlarmRow> {
+  final String id;
+  final int notificationId;
+  final String label;
+  final int targetTimeMinutes;
+  final String repeatKind;
+  final int repeatDaysBitmask;
+  final int snoozeMinutes;
+  final bool enabled;
+  final String? soundId;
+  final int createdAtUtcMs;
+  const AlarmRow({
+    required this.id,
+    required this.notificationId,
+    required this.label,
+    required this.targetTimeMinutes,
+    required this.repeatKind,
+    required this.repeatDaysBitmask,
+    required this.snoozeMinutes,
+    required this.enabled,
+    this.soundId,
+    required this.createdAtUtcMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['notification_id'] = Variable<int>(notificationId);
+    map['label'] = Variable<String>(label);
+    map['target_time_minutes'] = Variable<int>(targetTimeMinutes);
+    map['repeat_kind'] = Variable<String>(repeatKind);
+    map['repeat_days_bitmask'] = Variable<int>(repeatDaysBitmask);
+    map['snooze_minutes'] = Variable<int>(snoozeMinutes);
+    map['enabled'] = Variable<bool>(enabled);
+    if (!nullToAbsent || soundId != null) {
+      map['sound_id'] = Variable<String>(soundId);
+    }
+    map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs);
+    return map;
+  }
+
+  AlarmsCompanion toCompanion(bool nullToAbsent) {
+    return AlarmsCompanion(
+      id: Value(id),
+      notificationId: Value(notificationId),
+      label: Value(label),
+      targetTimeMinutes: Value(targetTimeMinutes),
+      repeatKind: Value(repeatKind),
+      repeatDaysBitmask: Value(repeatDaysBitmask),
+      snoozeMinutes: Value(snoozeMinutes),
+      enabled: Value(enabled),
+      soundId: soundId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(soundId),
+      createdAtUtcMs: Value(createdAtUtcMs),
+    );
+  }
+
+  factory AlarmRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AlarmRow(
+      id: serializer.fromJson<String>(json['id']),
+      notificationId: serializer.fromJson<int>(json['notificationId']),
+      label: serializer.fromJson<String>(json['label']),
+      targetTimeMinutes: serializer.fromJson<int>(json['targetTimeMinutes']),
+      repeatKind: serializer.fromJson<String>(json['repeatKind']),
+      repeatDaysBitmask: serializer.fromJson<int>(json['repeatDaysBitmask']),
+      snoozeMinutes: serializer.fromJson<int>(json['snoozeMinutes']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      soundId: serializer.fromJson<String?>(json['soundId']),
+      createdAtUtcMs: serializer.fromJson<int>(json['createdAtUtcMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'notificationId': serializer.toJson<int>(notificationId),
+      'label': serializer.toJson<String>(label),
+      'targetTimeMinutes': serializer.toJson<int>(targetTimeMinutes),
+      'repeatKind': serializer.toJson<String>(repeatKind),
+      'repeatDaysBitmask': serializer.toJson<int>(repeatDaysBitmask),
+      'snoozeMinutes': serializer.toJson<int>(snoozeMinutes),
+      'enabled': serializer.toJson<bool>(enabled),
+      'soundId': serializer.toJson<String?>(soundId),
+      'createdAtUtcMs': serializer.toJson<int>(createdAtUtcMs),
+    };
+  }
+
+  AlarmRow copyWith({
+    String? id,
+    int? notificationId,
+    String? label,
+    int? targetTimeMinutes,
+    String? repeatKind,
+    int? repeatDaysBitmask,
+    int? snoozeMinutes,
+    bool? enabled,
+    Value<String?> soundId = const Value.absent(),
+    int? createdAtUtcMs,
+  }) => AlarmRow(
+    id: id ?? this.id,
+    notificationId: notificationId ?? this.notificationId,
+    label: label ?? this.label,
+    targetTimeMinutes: targetTimeMinutes ?? this.targetTimeMinutes,
+    repeatKind: repeatKind ?? this.repeatKind,
+    repeatDaysBitmask: repeatDaysBitmask ?? this.repeatDaysBitmask,
+    snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+    enabled: enabled ?? this.enabled,
+    soundId: soundId.present ? soundId.value : this.soundId,
+    createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+  );
+  AlarmRow copyWithCompanion(AlarmsCompanion data) {
+    return AlarmRow(
+      id: data.id.present ? data.id.value : this.id,
+      notificationId: data.notificationId.present
+          ? data.notificationId.value
+          : this.notificationId,
+      label: data.label.present ? data.label.value : this.label,
+      targetTimeMinutes: data.targetTimeMinutes.present
+          ? data.targetTimeMinutes.value
+          : this.targetTimeMinutes,
+      repeatKind: data.repeatKind.present
+          ? data.repeatKind.value
+          : this.repeatKind,
+      repeatDaysBitmask: data.repeatDaysBitmask.present
+          ? data.repeatDaysBitmask.value
+          : this.repeatDaysBitmask,
+      snoozeMinutes: data.snoozeMinutes.present
+          ? data.snoozeMinutes.value
+          : this.snoozeMinutes,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      soundId: data.soundId.present ? data.soundId.value : this.soundId,
+      createdAtUtcMs: data.createdAtUtcMs.present
+          ? data.createdAtUtcMs.value
+          : this.createdAtUtcMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AlarmRow(')
+          ..write('id: $id, ')
+          ..write('notificationId: $notificationId, ')
+          ..write('label: $label, ')
+          ..write('targetTimeMinutes: $targetTimeMinutes, ')
+          ..write('repeatKind: $repeatKind, ')
+          ..write('repeatDaysBitmask: $repeatDaysBitmask, ')
+          ..write('snoozeMinutes: $snoozeMinutes, ')
+          ..write('enabled: $enabled, ')
+          ..write('soundId: $soundId, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    notificationId,
+    label,
+    targetTimeMinutes,
+    repeatKind,
+    repeatDaysBitmask,
+    snoozeMinutes,
+    enabled,
+    soundId,
+    createdAtUtcMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AlarmRow &&
+          other.id == this.id &&
+          other.notificationId == this.notificationId &&
+          other.label == this.label &&
+          other.targetTimeMinutes == this.targetTimeMinutes &&
+          other.repeatKind == this.repeatKind &&
+          other.repeatDaysBitmask == this.repeatDaysBitmask &&
+          other.snoozeMinutes == this.snoozeMinutes &&
+          other.enabled == this.enabled &&
+          other.soundId == this.soundId &&
+          other.createdAtUtcMs == this.createdAtUtcMs);
+}
+
+class AlarmsCompanion extends UpdateCompanion<AlarmRow> {
+  final Value<String> id;
+  final Value<int> notificationId;
+  final Value<String> label;
+  final Value<int> targetTimeMinutes;
+  final Value<String> repeatKind;
+  final Value<int> repeatDaysBitmask;
+  final Value<int> snoozeMinutes;
+  final Value<bool> enabled;
+  final Value<String?> soundId;
+  final Value<int> createdAtUtcMs;
+  final Value<int> rowid;
+  const AlarmsCompanion({
+    this.id = const Value.absent(),
+    this.notificationId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.targetTimeMinutes = const Value.absent(),
+    this.repeatKind = const Value.absent(),
+    this.repeatDaysBitmask = const Value.absent(),
+    this.snoozeMinutes = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.soundId = const Value.absent(),
+    this.createdAtUtcMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AlarmsCompanion.insert({
+    required String id,
+    required int notificationId,
+    required String label,
+    required int targetTimeMinutes,
+    required String repeatKind,
+    required int repeatDaysBitmask,
+    required int snoozeMinutes,
+    required bool enabled,
+    this.soundId = const Value.absent(),
+    required int createdAtUtcMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       notificationId = Value(notificationId),
+       label = Value(label),
+       targetTimeMinutes = Value(targetTimeMinutes),
+       repeatKind = Value(repeatKind),
+       repeatDaysBitmask = Value(repeatDaysBitmask),
+       snoozeMinutes = Value(snoozeMinutes),
+       enabled = Value(enabled),
+       createdAtUtcMs = Value(createdAtUtcMs);
+  static Insertable<AlarmRow> custom({
+    Expression<String>? id,
+    Expression<int>? notificationId,
+    Expression<String>? label,
+    Expression<int>? targetTimeMinutes,
+    Expression<String>? repeatKind,
+    Expression<int>? repeatDaysBitmask,
+    Expression<int>? snoozeMinutes,
+    Expression<bool>? enabled,
+    Expression<String>? soundId,
+    Expression<int>? createdAtUtcMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (notificationId != null) 'notification_id': notificationId,
+      if (label != null) 'label': label,
+      if (targetTimeMinutes != null) 'target_time_minutes': targetTimeMinutes,
+      if (repeatKind != null) 'repeat_kind': repeatKind,
+      if (repeatDaysBitmask != null) 'repeat_days_bitmask': repeatDaysBitmask,
+      if (snoozeMinutes != null) 'snooze_minutes': snoozeMinutes,
+      if (enabled != null) 'enabled': enabled,
+      if (soundId != null) 'sound_id': soundId,
+      if (createdAtUtcMs != null) 'created_at_utc_ms': createdAtUtcMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AlarmsCompanion copyWith({
+    Value<String>? id,
+    Value<int>? notificationId,
+    Value<String>? label,
+    Value<int>? targetTimeMinutes,
+    Value<String>? repeatKind,
+    Value<int>? repeatDaysBitmask,
+    Value<int>? snoozeMinutes,
+    Value<bool>? enabled,
+    Value<String?>? soundId,
+    Value<int>? createdAtUtcMs,
+    Value<int>? rowid,
+  }) {
+    return AlarmsCompanion(
+      id: id ?? this.id,
+      notificationId: notificationId ?? this.notificationId,
+      label: label ?? this.label,
+      targetTimeMinutes: targetTimeMinutes ?? this.targetTimeMinutes,
+      repeatKind: repeatKind ?? this.repeatKind,
+      repeatDaysBitmask: repeatDaysBitmask ?? this.repeatDaysBitmask,
+      snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+      enabled: enabled ?? this.enabled,
+      soundId: soundId ?? this.soundId,
+      createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (notificationId.present) {
+      map['notification_id'] = Variable<int>(notificationId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (targetTimeMinutes.present) {
+      map['target_time_minutes'] = Variable<int>(targetTimeMinutes.value);
+    }
+    if (repeatKind.present) {
+      map['repeat_kind'] = Variable<String>(repeatKind.value);
+    }
+    if (repeatDaysBitmask.present) {
+      map['repeat_days_bitmask'] = Variable<int>(repeatDaysBitmask.value);
+    }
+    if (snoozeMinutes.present) {
+      map['snooze_minutes'] = Variable<int>(snoozeMinutes.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (soundId.present) {
+      map['sound_id'] = Variable<String>(soundId.value);
+    }
+    if (createdAtUtcMs.present) {
+      map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AlarmsCompanion(')
+          ..write('id: $id, ')
+          ..write('notificationId: $notificationId, ')
+          ..write('label: $label, ')
+          ..write('targetTimeMinutes: $targetTimeMinutes, ')
+          ..write('repeatKind: $repeatKind, ')
+          ..write('repeatDaysBitmask: $repeatDaysBitmask, ')
+          ..write('snoozeMinutes: $snoozeMinutes, ')
+          ..write('enabled: $enabled, ')
+          ..write('soundId: $soundId, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TimersTable timers = $TimersTable(this);
   late final $PresetsTable presets = $PresetsTable(this);
+  late final $AlarmsTable alarms = $AlarmsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [timers, presets];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [timers, presets, alarms];
 }
 
 typedef $$TimersTableCreateCompanionBuilder =
@@ -1443,6 +2080,307 @@ typedef $$PresetsTableProcessedTableManager =
       PresetRow,
       PrefetchHooks Function()
     >;
+typedef $$AlarmsTableCreateCompanionBuilder =
+    AlarmsCompanion Function({
+      required String id,
+      required int notificationId,
+      required String label,
+      required int targetTimeMinutes,
+      required String repeatKind,
+      required int repeatDaysBitmask,
+      required int snoozeMinutes,
+      required bool enabled,
+      Value<String?> soundId,
+      required int createdAtUtcMs,
+      Value<int> rowid,
+    });
+typedef $$AlarmsTableUpdateCompanionBuilder =
+    AlarmsCompanion Function({
+      Value<String> id,
+      Value<int> notificationId,
+      Value<String> label,
+      Value<int> targetTimeMinutes,
+      Value<String> repeatKind,
+      Value<int> repeatDaysBitmask,
+      Value<int> snoozeMinutes,
+      Value<bool> enabled,
+      Value<String?> soundId,
+      Value<int> createdAtUtcMs,
+      Value<int> rowid,
+    });
+
+class $$AlarmsTableFilterComposer
+    extends Composer<_$AppDatabase, $AlarmsTable> {
+  $$AlarmsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetTimeMinutes => $composableBuilder(
+    column: $table.targetTimeMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repeatKind => $composableBuilder(
+    column: $table.repeatKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repeatDaysBitmask => $composableBuilder(
+    column: $table.repeatDaysBitmask,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get snoozeMinutes => $composableBuilder(
+    column: $table.snoozeMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get soundId => $composableBuilder(
+    column: $table.soundId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AlarmsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AlarmsTable> {
+  $$AlarmsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetTimeMinutes => $composableBuilder(
+    column: $table.targetTimeMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repeatKind => $composableBuilder(
+    column: $table.repeatKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repeatDaysBitmask => $composableBuilder(
+    column: $table.repeatDaysBitmask,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get snoozeMinutes => $composableBuilder(
+    column: $table.snoozeMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get soundId => $composableBuilder(
+    column: $table.soundId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AlarmsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AlarmsTable> {
+  $$AlarmsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get notificationId => $composableBuilder(
+    column: $table.notificationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<int> get targetTimeMinutes => $composableBuilder(
+    column: $table.targetTimeMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get repeatKind => $composableBuilder(
+    column: $table.repeatKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get repeatDaysBitmask => $composableBuilder(
+    column: $table.repeatDaysBitmask,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get snoozeMinutes => $composableBuilder(
+    column: $table.snoozeMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get soundId =>
+      $composableBuilder(column: $table.soundId, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => column,
+  );
+}
+
+class $$AlarmsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AlarmsTable,
+          AlarmRow,
+          $$AlarmsTableFilterComposer,
+          $$AlarmsTableOrderingComposer,
+          $$AlarmsTableAnnotationComposer,
+          $$AlarmsTableCreateCompanionBuilder,
+          $$AlarmsTableUpdateCompanionBuilder,
+          (AlarmRow, BaseReferences<_$AppDatabase, $AlarmsTable, AlarmRow>),
+          AlarmRow,
+          PrefetchHooks Function()
+        > {
+  $$AlarmsTableTableManager(_$AppDatabase db, $AlarmsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AlarmsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AlarmsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AlarmsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> notificationId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<int> targetTimeMinutes = const Value.absent(),
+                Value<String> repeatKind = const Value.absent(),
+                Value<int> repeatDaysBitmask = const Value.absent(),
+                Value<int> snoozeMinutes = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String?> soundId = const Value.absent(),
+                Value<int> createdAtUtcMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AlarmsCompanion(
+                id: id,
+                notificationId: notificationId,
+                label: label,
+                targetTimeMinutes: targetTimeMinutes,
+                repeatKind: repeatKind,
+                repeatDaysBitmask: repeatDaysBitmask,
+                snoozeMinutes: snoozeMinutes,
+                enabled: enabled,
+                soundId: soundId,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required int notificationId,
+                required String label,
+                required int targetTimeMinutes,
+                required String repeatKind,
+                required int repeatDaysBitmask,
+                required int snoozeMinutes,
+                required bool enabled,
+                Value<String?> soundId = const Value.absent(),
+                required int createdAtUtcMs,
+                Value<int> rowid = const Value.absent(),
+              }) => AlarmsCompanion.insert(
+                id: id,
+                notificationId: notificationId,
+                label: label,
+                targetTimeMinutes: targetTimeMinutes,
+                repeatKind: repeatKind,
+                repeatDaysBitmask: repeatDaysBitmask,
+                snoozeMinutes: snoozeMinutes,
+                enabled: enabled,
+                soundId: soundId,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AlarmsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AlarmsTable,
+      AlarmRow,
+      $$AlarmsTableFilterComposer,
+      $$AlarmsTableOrderingComposer,
+      $$AlarmsTableAnnotationComposer,
+      $$AlarmsTableCreateCompanionBuilder,
+      $$AlarmsTableUpdateCompanionBuilder,
+      (AlarmRow, BaseReferences<_$AppDatabase, $AlarmsTable, AlarmRow>),
+      AlarmRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1451,4 +2389,6 @@ class $AppDatabaseManager {
       $$TimersTableTableManager(_db, _db.timers);
   $$PresetsTableTableManager get presets =>
       $$PresetsTableTableManager(_db, _db.presets);
+  $$AlarmsTableTableManager get alarms =>
+      $$AlarmsTableTableManager(_db, _db.alarms);
 }

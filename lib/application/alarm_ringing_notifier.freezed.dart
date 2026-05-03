@@ -21,6 +21,7 @@ mixin _$AlarmRingingState {
   bool get snoozeRequested => throw _privateConstructorUsedError;
   String? get currentTimerId => throw _privateConstructorUsedError;
   String? get currentSoundId => throw _privateConstructorUsedError;
+  AlarmSource? get currentSource => throw _privateConstructorUsedError;
 
   /// Create a copy of AlarmRingingState
   /// with the given fields replaced by the non-null parameter values.
@@ -41,6 +42,7 @@ abstract class $AlarmRingingStateCopyWith<$Res> {
     bool snoozeRequested,
     String? currentTimerId,
     String? currentSoundId,
+    AlarmSource? currentSource,
   });
 }
 
@@ -63,6 +65,7 @@ class _$AlarmRingingStateCopyWithImpl<$Res, $Val extends AlarmRingingState>
     Object? snoozeRequested = null,
     Object? currentTimerId = freezed,
     Object? currentSoundId = freezed,
+    Object? currentSource = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -82,6 +85,10 @@ class _$AlarmRingingStateCopyWithImpl<$Res, $Val extends AlarmRingingState>
                 ? _value.currentSoundId
                 : currentSoundId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            currentSource: freezed == currentSource
+                ? _value.currentSource
+                : currentSource // ignore: cast_nullable_to_non_nullable
+                      as AlarmSource?,
           )
           as $Val,
     );
@@ -102,6 +109,7 @@ abstract class _$$AlarmRingingStateImplCopyWith<$Res>
     bool snoozeRequested,
     String? currentTimerId,
     String? currentSoundId,
+    AlarmSource? currentSource,
   });
 }
 
@@ -123,6 +131,7 @@ class __$$AlarmRingingStateImplCopyWithImpl<$Res>
     Object? snoozeRequested = null,
     Object? currentTimerId = freezed,
     Object? currentSoundId = freezed,
+    Object? currentSource = freezed,
   }) {
     return _then(
       _$AlarmRingingStateImpl(
@@ -142,6 +151,10 @@ class __$$AlarmRingingStateImplCopyWithImpl<$Res>
             ? _value.currentSoundId
             : currentSoundId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        currentSource: freezed == currentSource
+            ? _value.currentSource
+            : currentSource // ignore: cast_nullable_to_non_nullable
+                  as AlarmSource?,
       ),
     );
   }
@@ -155,6 +168,7 @@ class _$AlarmRingingStateImpl implements _AlarmRingingState {
     required this.snoozeRequested,
     this.currentTimerId,
     this.currentSoundId,
+    this.currentSource,
   });
 
   @override
@@ -165,10 +179,12 @@ class _$AlarmRingingStateImpl implements _AlarmRingingState {
   final String? currentTimerId;
   @override
   final String? currentSoundId;
+  @override
+  final AlarmSource? currentSource;
 
   @override
   String toString() {
-    return 'AlarmRingingState(isPlaying: $isPlaying, snoozeRequested: $snoozeRequested, currentTimerId: $currentTimerId, currentSoundId: $currentSoundId)';
+    return 'AlarmRingingState(isPlaying: $isPlaying, snoozeRequested: $snoozeRequested, currentTimerId: $currentTimerId, currentSoundId: $currentSoundId, currentSource: $currentSource)';
   }
 
   @override
@@ -183,7 +199,9 @@ class _$AlarmRingingStateImpl implements _AlarmRingingState {
             (identical(other.currentTimerId, currentTimerId) ||
                 other.currentTimerId == currentTimerId) &&
             (identical(other.currentSoundId, currentSoundId) ||
-                other.currentSoundId == currentSoundId));
+                other.currentSoundId == currentSoundId) &&
+            (identical(other.currentSource, currentSource) ||
+                other.currentSource == currentSource));
   }
 
   @override
@@ -193,6 +211,7 @@ class _$AlarmRingingStateImpl implements _AlarmRingingState {
     snoozeRequested,
     currentTimerId,
     currentSoundId,
+    currentSource,
   );
 
   /// Create a copy of AlarmRingingState
@@ -213,6 +232,7 @@ abstract class _AlarmRingingState implements AlarmRingingState {
     required final bool snoozeRequested,
     final String? currentTimerId,
     final String? currentSoundId,
+    final AlarmSource? currentSource,
   }) = _$AlarmRingingStateImpl;
 
   @override
@@ -223,6 +243,8 @@ abstract class _AlarmRingingState implements AlarmRingingState {
   String? get currentTimerId;
   @override
   String? get currentSoundId;
+  @override
+  AlarmSource? get currentSource;
 
   /// Create a copy of AlarmRingingState
   /// with the given fields replaced by the non-null parameter values.

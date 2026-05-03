@@ -246,7 +246,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
             title: title,
             body: strings.timerEndedBody,
             exact: useExact,
-            payload: entity.id,
+            payload: 'timer:${entity.id}',
           ),
     );
   }
@@ -269,7 +269,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
             notificationId: entity.notificationId,
             title: title,
             body: strings.timerCompletedBackgroundBody,
-            payload: entity.id,
+            payload: 'timer:${entity.id}',
           ),
     );
   }
