@@ -147,7 +147,15 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
       // 既存: notificationId / createdAt は notifier 側で merge される。
       final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);
       final AlarmEntity? current = _findById(all, widget.alarmId!);
-      if (current == null) return;
+      if (current == null) {
+        // 通常は build の ref.listen 経由で _initialized = true になる
+        // ため到達しないが、対象 alarmId が削除されていた等の race で
+        // 対象が見つからない場合は保存を諦めて通知する。
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.alarmEditNotFound)));
+        return;
+      }
       await notifier.update(
         current.copyWith(
           label: _label,
@@ -251,101 +259,122 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
           IconButton(
             key: const Key('alarm_edit_save_button'),
             icon: const Icon(Icons.check),
-            onPressed: _onSave,
+            // 編集モードかつ初期化前は保存を無効化。新規モードは初期化を
+            // 待つ必要が無いので常に有効。
+            onPressed: (_isEditMode && !_initialized) ? null : _onSave,
             tooltip: l.alarmEditSave,
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          _Section(
-            label: l.alarmEditTimeLabel,
-            child: InkWell(
-              key: const Key('alarm_edit_time_field'),
-              onTap: _onTimeTap,
+      body: (_isEditMode && !_initialized)
+          ? Center(
+              key: const Key('alarm_edit_loading'),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 8,
-                ),
-                child: Text(
-                  _formatTime(_targetTime),
-                  style: theme.textTheme.headlineMedium,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(l.alarmEditLoading),
+                  ],
                 ),
               ),
-            ),
-          ),
-          _Section(
-            label: l.alarmEditRepeatLabel,
-            child: SegmentedButton<bool>(
-              key: const Key('alarm_edit_repeat_segmented'),
-              segments: <ButtonSegment<bool>>[
-                ButtonSegment<bool>(
-                  value: false,
-                  label: Text(l.alarmEditRepeatOnce),
-                ),
-                ButtonSegment<bool>(
-                  value: true,
-                  label: Text(l.alarmEditRepeatWeekly),
-                ),
-              ],
-              selected: <bool>{_isWeekly},
-              onSelectionChanged: (Set<bool> v) =>
-                  setState(() => _isWeekly = v.first),
-            ),
-          ),
-          if (_isWeekly)
-            _Section(
-              label: l.alarmEditWeekdaysLabel,
-              child: WeekdaySelector(
-                value: _weekdays,
-                labels: _weekdayLabels(l),
-                onChanged: (Set<DayOfWeek> v) => setState(() => _weekdays = v),
-              ),
-            ),
-          _Section(
-            label: l.alarmEditLabelHint,
-            child: TextField(
-              key: const Key('alarm_edit_label_field'),
-              controller: _labelController,
-              maxLength: 50,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              onChanged: (String v) => _label = v,
-            ),
-          ),
-          _Section(
-            label: l.alarmEditSoundLabel,
-            child: InkWell(
-              key: const Key('alarm_edit_sound_field'),
-              onTap: _onSoundTap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 8,
-                ),
-                child: Text(soundDisplayName(l, _resolvedSoundId)),
-              ),
-            ),
-          ),
-          _Section(
-            label: l.alarmEditSnoozeLabel,
-            child: SegmentedButton<int>(
-              key: const Key('alarm_edit_snooze_segmented'),
-              segments: <ButtonSegment<int>>[
-                for (final int m in <int>[5, 10, 15])
-                  ButtonSegment<int>(
-                    value: m,
-                    label: Text(l.alarmEditSnoozeMinutes(m)),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                _Section(
+                  label: l.alarmEditTimeLabel,
+                  child: InkWell(
+                    key: const Key('alarm_edit_time_field'),
+                    onTap: _onTimeTap,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      child: Text(
+                        _formatTime(_targetTime),
+                        style: theme.textTheme.headlineMedium,
+                      ),
+                    ),
                   ),
+                ),
+                _Section(
+                  label: l.alarmEditRepeatLabel,
+                  child: SegmentedButton<bool>(
+                    key: const Key('alarm_edit_repeat_segmented'),
+                    segments: <ButtonSegment<bool>>[
+                      ButtonSegment<bool>(
+                        value: false,
+                        label: Text(l.alarmEditRepeatOnce),
+                      ),
+                      ButtonSegment<bool>(
+                        value: true,
+                        label: Text(l.alarmEditRepeatWeekly),
+                      ),
+                    ],
+                    selected: <bool>{_isWeekly},
+                    onSelectionChanged: (Set<bool> v) =>
+                        setState(() => _isWeekly = v.first),
+                  ),
+                ),
+                if (_isWeekly)
+                  _Section(
+                    label: l.alarmEditWeekdaysLabel,
+                    child: WeekdaySelector(
+                      value: _weekdays,
+                      labels: _weekdayLabels(l),
+                      onChanged: (Set<DayOfWeek> v) =>
+                          setState(() => _weekdays = v),
+                    ),
+                  ),
+                _Section(
+                  label: l.alarmEditLabelHint,
+                  child: TextField(
+                    key: const Key('alarm_edit_label_field'),
+                    controller: _labelController,
+                    maxLength: 50,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (String v) => _label = v,
+                  ),
+                ),
+                _Section(
+                  label: l.alarmEditSoundLabel,
+                  child: InkWell(
+                    key: const Key('alarm_edit_sound_field'),
+                    onTap: _onSoundTap,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      child: Text(soundDisplayName(l, _resolvedSoundId)),
+                    ),
+                  ),
+                ),
+                _Section(
+                  label: l.alarmEditSnoozeLabel,
+                  child: SegmentedButton<int>(
+                    key: const Key('alarm_edit_snooze_segmented'),
+                    segments: <ButtonSegment<int>>[
+                      for (final int m in <int>[5, 10, 15])
+                        ButtonSegment<int>(
+                          value: m,
+                          label: Text(l.alarmEditSnoozeMinutes(m)),
+                        ),
+                    ],
+                    selected: <int>{_snoozeMinutes},
+                    onSelectionChanged: (Set<int> v) =>
+                        setState(() => _snoozeMinutes = v.first),
+                  ),
+                ),
               ],
-              selected: <int>{_snoozeMinutes},
-              onSelectionChanged: (Set<int> v) =>
-                  setState(() => _snoozeMinutes = v.first),
             ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -178,6 +178,8 @@
   "alarmEditSave": "保存",
   "alarmEditDelete": "削除",
   "alarmEditValidationWeekdaysEmpty": "曜日を1つ以上選択してください",
+  "alarmEditLoading": "アラームを読み込み中…",
+  "alarmEditNotFound": "対象のアラームが見つかりませんでした",
 
   "alarmDeleteConfirmTitle": "このアラームを削除しますか？",
   "alarmDeleteConfirmDontAsk": "次から確認しない",

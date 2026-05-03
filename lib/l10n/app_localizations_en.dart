@@ -407,6 +407,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alarmEditValidationWeekdaysEmpty => 'Select at least one day';
 
   @override
+  String get alarmEditLoading => 'Loading alarm…';
+
+  @override
+  String get alarmEditNotFound => 'The alarm could not be found';
+
+  @override
   String get alarmDeleteConfirmTitle => 'Delete this alarm?';
 
   @override

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'application/alarm_repository_provider.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
@@ -14,6 +15,7 @@ import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/user_preferences_provider.dart';
 import 'infrastructure/database/app_database.dart';
+import 'infrastructure/database/drift_alarm_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
@@ -172,6 +174,7 @@ Future<void> main() async {
   final AppDatabase database = AppDatabase();
   final DriftTimerRepository repository = DriftTimerRepository(database);
   final DriftPresetRepository presetRepo = DriftPresetRepository(database);
+  final DriftAlarmRepository alarmRepo = DriftAlarmRepository(database);
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
 
@@ -264,6 +267,7 @@ Future<void> main() async {
         ),
         timerRepositoryProvider.overrideWithValue(repository),
         presetRepositoryProvider.overrideWithValue(presetRepo),
+        alarmRepositoryProvider.overrideWithValue(alarmRepo),
         userPreferencesProvider.overrideWithValue(userPrefs),
       ],
       child: TimerUtilityApp(router: router),

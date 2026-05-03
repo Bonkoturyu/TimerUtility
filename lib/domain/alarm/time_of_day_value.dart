@@ -22,7 +22,14 @@ class TimeOfDayValue {
 
   /// Trusts the inputs without validation. Reserved for places where
   /// the values were already validated upstream (e.g. Drift mapper
-  /// reading from the database column where `_check` ran on insert).
+  /// reading a row that was originally produced from a validated
+  /// `TimeOfDayValue(...)`, or a `const` literal whose values are
+  /// known at compile time).
+  ///
+  /// 注意: `Alarms.targetTimeMinutes` 列自体には現状 0..1439 の DB
+  /// レベルのチェック制約は無い。データソースが信頼できるパス
+  /// (アプリ自身の upsert 経由で書き込まれた値、または compile-time の
+  /// const) であることを呼び出し側が保証する責務がある。
   const TimeOfDayValue.unsafe({required this.hour, required this.minute});
 
   /// Inverse of [toMinutesFromMidnight].

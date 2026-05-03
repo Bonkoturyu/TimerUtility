@@ -178,6 +178,8 @@
   "alarmEditSave": "Save",
   "alarmEditDelete": "Delete",
   "alarmEditValidationWeekdaysEmpty": "Select at least one day",
+  "alarmEditLoading": "Loading alarm…",
+  "alarmEditNotFound": "The alarm could not be found",
 
   "alarmDeleteConfirmTitle": "Delete this alarm?",
   "alarmDeleteConfirmDontAsk": "Don't ask again",

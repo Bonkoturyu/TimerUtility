@@ -367,6 +367,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmEditValidationWeekdaysEmpty => '曜日を1つ以上選択してください';
 
   @override
+  String get alarmEditLoading => 'アラームを読み込み中…';
+
+  @override
+  String get alarmEditNotFound => '対象のアラームが見つかりませんでした';
+
+  @override
   String get alarmDeleteConfirmTitle => 'このアラームを削除しますか？';
 
   @override

@@ -752,6 +752,18 @@ abstract class AppLocalizations {
   /// **'曜日を1つ以上選択してください'**
   String get alarmEditValidationWeekdaysEmpty;
 
+  /// No description provided for @alarmEditLoading.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを読み込み中…'**
+  String get alarmEditLoading;
+
+  /// No description provided for @alarmEditNotFound.
+  ///
+  /// In ja, this message translates to:
+  /// **'対象のアラームが見つかりませんでした'**
+  String get alarmEditNotFound;
+
   /// No description provided for @alarmDeleteConfirmTitle.
   ///
   /// In ja, this message translates to:

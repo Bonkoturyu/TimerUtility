@@ -7,6 +7,7 @@ import '../../application/alarm_collection_notifier.dart';
 import '../../application/alarm_ringing_notifier.dart';
 import '../../application/timer_collection_notifier.dart';
 import '../../domain/alarm/alarm_entity.dart';
+import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
@@ -116,15 +117,18 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     if (source == AlarmSource.alarm && sourceId != null) {
       _bootstrapAlarm(sourceId);
     } else {
-      _bootstrapTimer();
+      _bootstrapTimer(payloadId: sourceId);
     }
   }
 
-  void _bootstrapTimer() {
+  void _bootstrapTimer({String? payloadId}) {
     final TimerEntity? entity = ref
         .read(timerCollectionNotifierProvider.notifier)
         .findRinging();
-    final String timerId = entity?.id ?? 'unknown';
+    // 1) in-memory に ringing 中の timer があればその id
+    // 2) 無ければ payload の id (旧形式 payload / cold-start で state 未復元)
+    // 3) どちらも無ければ 'unknown' (audio だけは鳴らす、Phase 8 既存挙動)
+    final String timerId = entity?.id ?? payloadId ?? 'unknown';
     final AlarmSound sound =
         (entity?.soundId == null
             ? null
@@ -174,7 +178,11 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// payload を `(source, sourceId)` に分解。
   /// - `'timer:abc'` → `(timer, 'abc')`
   /// - `'alarm:def'` → `(alarm, 'def')`
-  /// - その他 / null → `(timer, null)` (Phase 8 までの fallback パス)
+  /// - `null` → `(timer, null)` (in-app ringing listener 経由)
+  /// - その他 (プレフィックスなし) → `(timer, payload)`
+  ///   後方互換パス。Phase 9 までは payload に timer の id を裸で
+  ///   入れていたので、アプリ更新後に旧形式の永続化通知をタップしても
+  ///   id を失わず timer として扱う。
   (AlarmSource, String?) _parsePayload(String? payload) {
     if (payload == null) return (AlarmSource.timer, null);
     if (payload.startsWith('alarm:')) {
@@ -183,7 +191,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     if (payload.startsWith('timer:')) {
       return (AlarmSource.timer, payload.substring('timer:'.length));
     }
-    return (AlarmSource.timer, null);
+    return (AlarmSource.timer, payload);
   }
 
   @override
@@ -240,9 +248,20 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                           // Phase 9.5: alarm 由来 → AlarmCollectionNotifier に
                           // 委譲。once は enabled=false 化、weekly は次回曜日に
                           // 自動進行する。
-                          await ref
-                              .read(alarmCollectionNotifierProvider.notifier)
-                              .onFiredStop(activeSourceId);
+                          // cold-start で AlarmCollectionNotifier の load が
+                          // まだ完了していない / すでに削除済みの場合に
+                          // AlarmNotFoundException が飛ぶことがあるが、
+                          // 鳴動停止は既に完了しているので no-op で抜ける。
+                          try {
+                            await ref
+                                .read(alarmCollectionNotifierProvider.notifier)
+                                .onFiredStop(activeSourceId);
+                          } on AlarmNotFoundException {
+                            // 何もしない: 通知音は止まっているのでユーザは
+                            // 画面を抜けられる。weekly の次回 schedule が
+                            // 載らない可能性があるが、次回起動時の load 後に
+                            // 反映される。
+                          }
                         } else {
                           // Phase 8 までの既存 path: TimerCollection の
                           // ringing を cancelled に落とす。
@@ -364,9 +383,16 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// `AlarmService.snoozeUntil` を呼び、同 notificationId で再 schedule する。
   Future<void> _onAlarmSnoozeTap(BuildContext context, String alarmId) async {
     await ref.read(alarmRingingNotifierProvider.notifier).stop();
-    await ref
-        .read(alarmCollectionNotifierProvider.notifier)
-        .onFiredSnooze(alarmId);
+    // Stop 同様、cold-start で load 未完了 / 削除済みの場合に
+    // AlarmNotFoundException が飛ぶ可能性があるので握りつぶす。
+    // スヌーズ再 schedule は失敗するが、ユーザは画面を抜けられる。
+    try {
+      await ref
+          .read(alarmCollectionNotifierProvider.notifier)
+          .onFiredSnooze(alarmId);
+    } on AlarmNotFoundException {
+      // no-op
+    }
     if (!context.mounted) return;
     _leaveAlarmScreen(context);
   }
