@@ -561,16 +561,21 @@ AndroidManifest 編集はユーザー確認必須。
 - [ ] アプリアイコン・スプラッシュ
 - [ ] 設定画面（音源選択、デフォルトスヌーズ時間など）
 - [x] ライセンス表示画面（2026-05-02、Phase 11 先行小タスクとして実装）
-      Flutter 標準 `showLicensePage` + `LicenseRegistry.addLicense` で
-      pub 依存 + 同梱音源（`assets/sounds/LICENSES.md`）を統合表示。
-      設定画面が未実装のため、暫定で TimerListScreen の AppBar overflow
-      メニューに「ライセンス」エントリを追加。設定画面実装時に移設する
+      `LicenseRegistry.addLicense` で `assets/sounds/LICENSES.md` を 1 行 1 段落
+      の `LicenseEntry` として登録、`LicensesScreen` (2 セクション ExpansionTile：
+      同梱音源 / ソフトウェアライセンス) で表示。導線は HomeScreen AppBar
+      overflow メニューの「ライセンス」エントリ。設定画面が出来たらメニューは
+      設定画面側に移設する想定
 - [ ] ダークモード対応
 - [~] ローカライズ（日本語 / 英語、内部対応で中国語簡体字 / 繁体字 / 韓国語）
   - Phase 8.5 で土台 (flutter_localizations + gen-l10n + ARB) を導入済 (2026-05-02):
     日英 ARB 完備、`--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で
-    zh / zh-Hant / ko を有効化可能。Phase 11 で実翻訳 + 中韓 ARB 追加 +
-    通知 channel 名/通知本文の i18n 対応 + 設定画面での手動切替 UI を整備
+    zh / zh-Hant / ko を有効化可能。
+  - 通知本文 i18n も対応済 (2026-05-03、PR #5): `NotificationStringsNotifier`
+    と `WidgetsBindingObserver.didChangeLocales` で OS の locale 切替に追従、
+    走行中タイマーは `rescheduleAllRunning()` で再 schedule。
+  - Phase 11 残: 実翻訳 + 中韓 ARB 追加 + 通知 channel 名 (現在は固定文字列)
+    の i18n + 設定画面での手動切替 UI
 - [ ] Play Store 提出準備（プライバシーポリシー、スクリーンショット）
 
 **DoD**: 公開可能な品質に到達

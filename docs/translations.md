@@ -125,6 +125,14 @@
 | `notificationTimerEndedBody` | 時間になりました。 | Time is up. | 通知本文 |
 | `notificationTimerCompletedBackgroundBody` | アプリのバックグラウンド中にタイマーが終了しました。 | Timer ended while the app was in the background. | バックグラウンド完了通知 |
 
+## ライセンス画面
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `licenseMenuOverflow` | ライセンス | Licenses | HomeScreen AppBar overflow メニュー項目 |
+| `licenseGroupBundledSounds` | 同梱音源 | Bundled sounds | LicensesScreen のセクション見出し |
+| `licenseGroupSoftware` | ソフトウェアライセンス | Software licenses | LicensesScreen のセクション見出し |
+
 ## プリセット選択シート（FAB → bottom sheet）
 
 | key | ja | en | 用途 |
