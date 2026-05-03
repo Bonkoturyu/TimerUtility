@@ -309,4 +309,87 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get licenseGroupSoftware => 'ソフトウェアライセンス';
+
+  @override
+  String get alarmEditTitleNew => 'アラームを追加';
+
+  @override
+  String get alarmEditTitleEdit => 'アラームを編集';
+
+  @override
+  String get alarmEditEnabledLabel => '有効';
+
+  @override
+  String get alarmEditTimeLabel => '時刻';
+
+  @override
+  String get alarmEditRepeatLabel => '繰り返し';
+
+  @override
+  String get alarmEditRepeatOnce => '単発';
+
+  @override
+  String get alarmEditRepeatWeekly => '曜日指定';
+
+  @override
+  String get alarmEditWeekdaysLabel => '鳴らす曜日';
+
+  @override
+  String get alarmEditLabelHint => 'ラベル（任意）';
+
+  @override
+  String get alarmEditSoundLabel => '音源';
+
+  @override
+  String get alarmEditSnoozeLabel => 'スヌーズ';
+
+  @override
+  String alarmEditSnoozeMinutes(int count) {
+    return '$count分';
+  }
+
+  @override
+  String get alarmEditCancel => 'キャンセル';
+
+  @override
+  String get alarmEditSave => '保存';
+
+  @override
+  String get alarmEditDelete => '削除';
+
+  @override
+  String get alarmEditValidationWeekdaysEmpty => '曜日を1つ以上選択してください';
+
+  @override
+  String get alarmDeleteConfirmTitle => 'このアラームを削除しますか？';
+
+  @override
+  String get alarmDeleteConfirmDontAsk => '次から確認しない';
+
+  @override
+  String get alarmDeleteConfirmCancel => 'キャンセル';
+
+  @override
+  String get alarmDeleteConfirmDelete => '削除';
+
+  @override
+  String get weekdayMon => '月';
+
+  @override
+  String get weekdayTue => '火';
+
+  @override
+  String get weekdayWed => '水';
+
+  @override
+  String get weekdayThu => '木';
+
+  @override
+  String get weekdayFri => '金';
+
+  @override
+  String get weekdaySat => '土';
+
+  @override
+  String get weekdaySun => '日';
 }

@@ -153,5 +153,40 @@
 
   "licenseMenuOverflow": "ライセンス",
   "licenseGroupBundledSounds": "同梱音源",
-  "licenseGroupSoftware": "ソフトウェアライセンス"
+  "licenseGroupSoftware": "ソフトウェアライセンス",
+
+  "alarmEditTitleNew": "アラームを追加",
+  "alarmEditTitleEdit": "アラームを編集",
+  "alarmEditEnabledLabel": "有効",
+  "alarmEditTimeLabel": "時刻",
+  "alarmEditRepeatLabel": "繰り返し",
+  "alarmEditRepeatOnce": "単発",
+  "alarmEditRepeatWeekly": "曜日指定",
+  "alarmEditWeekdaysLabel": "鳴らす曜日",
+  "alarmEditLabelHint": "ラベル（任意）",
+  "alarmEditSoundLabel": "音源",
+  "alarmEditSnoozeLabel": "スヌーズ",
+  "alarmEditSnoozeMinutes": "{count}分",
+  "@alarmEditSnoozeMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "alarmEditCancel": "キャンセル",
+  "alarmEditSave": "保存",
+  "alarmEditDelete": "削除",
+  "alarmEditValidationWeekdaysEmpty": "曜日を1つ以上選択してください",
+
+  "alarmDeleteConfirmTitle": "このアラームを削除しますか？",
+  "alarmDeleteConfirmDontAsk": "次から確認しない",
+  "alarmDeleteConfirmCancel": "キャンセル",
+  "alarmDeleteConfirmDelete": "削除",
+
+  "weekdayMon": "月",
+  "weekdayTue": "火",
+  "weekdayWed": "水",
+  "weekdayThu": "木",
+  "weekdayFri": "金",
+  "weekdaySat": "土",
+  "weekdaySun": "日"
 }

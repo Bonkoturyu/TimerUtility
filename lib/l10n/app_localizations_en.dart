@@ -343,4 +343,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get licenseGroupSoftware => 'Software licenses';
+
+  @override
+  String get alarmEditTitleNew => 'Add alarm';
+
+  @override
+  String get alarmEditTitleEdit => 'Edit alarm';
+
+  @override
+  String get alarmEditEnabledLabel => 'Enabled';
+
+  @override
+  String get alarmEditTimeLabel => 'Time';
+
+  @override
+  String get alarmEditRepeatLabel => 'Repeat';
+
+  @override
+  String get alarmEditRepeatOnce => 'Once';
+
+  @override
+  String get alarmEditRepeatWeekly => 'Weekly';
+
+  @override
+  String get alarmEditWeekdaysLabel => 'Days';
+
+  @override
+  String get alarmEditLabelHint => 'Label (optional)';
+
+  @override
+  String get alarmEditSoundLabel => 'Sound';
+
+  @override
+  String get alarmEditSnoozeLabel => 'Snooze';
+
+  @override
+  String alarmEditSnoozeMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get alarmEditCancel => 'Cancel';
+
+  @override
+  String get alarmEditSave => 'Save';
+
+  @override
+  String get alarmEditDelete => 'Delete';
+
+  @override
+  String get alarmEditValidationWeekdaysEmpty => 'Select at least one day';
+
+  @override
+  String get alarmDeleteConfirmTitle => 'Delete this alarm?';
+
+  @override
+  String get alarmDeleteConfirmDontAsk => 'Don\'t ask again';
+
+  @override
+  String get alarmDeleteConfirmCancel => 'Cancel';
+
+  @override
+  String get alarmDeleteConfirmDelete => 'Delete';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
 }

@@ -153,5 +153,40 @@
 
   "licenseMenuOverflow": "Licenses",
   "licenseGroupBundledSounds": "Bundled sounds",
-  "licenseGroupSoftware": "Software licenses"
+  "licenseGroupSoftware": "Software licenses",
+
+  "alarmEditTitleNew": "Add alarm",
+  "alarmEditTitleEdit": "Edit alarm",
+  "alarmEditEnabledLabel": "Enabled",
+  "alarmEditTimeLabel": "Time",
+  "alarmEditRepeatLabel": "Repeat",
+  "alarmEditRepeatOnce": "Once",
+  "alarmEditRepeatWeekly": "Weekly",
+  "alarmEditWeekdaysLabel": "Days",
+  "alarmEditLabelHint": "Label (optional)",
+  "alarmEditSoundLabel": "Sound",
+  "alarmEditSnoozeLabel": "Snooze",
+  "alarmEditSnoozeMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@alarmEditSnoozeMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "alarmEditCancel": "Cancel",
+  "alarmEditSave": "Save",
+  "alarmEditDelete": "Delete",
+  "alarmEditValidationWeekdaysEmpty": "Select at least one day",
+
+  "alarmDeleteConfirmTitle": "Delete this alarm?",
+  "alarmDeleteConfirmDontAsk": "Don't ask again",
+  "alarmDeleteConfirmCancel": "Cancel",
+  "alarmDeleteConfirmDelete": "Delete",
+
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun"
 }
