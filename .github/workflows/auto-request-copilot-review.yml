@@ -5,8 +5,7 @@ name: Auto-request Copilot review
 # 自動 reviewer として request する Action で代替する。
 #
 # 失敗してもユーザは手動で Copilot を reviewer に追加できるため、
-# このワークフローのジョブが落ちても続行可能 (continue-on-error 相当の
-# try/catch を script 内で実装)。
+# このワークフローのジョブが落ちても続行可能 (`|| true` で吸収)。
 
 on:
   pull_request:
@@ -22,24 +21,20 @@ jobs:
       pull-requests: write
     steps:
       - name: Request Copilot reviewer
-        uses: actions/github-script@v7
-        with:
-          script: |
-            try {
-              await github.rest.pulls.requestReviewers({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                reviewers: ['Copilot'],
-              });
-              core.info('Copilot reviewer requested.');
-            } catch (e) {
-              // Copilot サブスクが無い / handle が変わった等で失敗する
-              // ことがあるが、その場合は手動 assign で fallback できる。
-              // ジョブを fail させるとユーザに不要な赤通知が飛ぶので、
-              // log だけ残して success 扱いにする。
-              core.warning(
-                `Failed to request Copilot review: ${e.message}. ` +
-                  'Add Copilot manually via the PR Reviewers panel if needed.',
-              );
-            }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        # GitHub 公式: `gh pr edit N --add-reviewer @copilot` で Copilot
+        # を reviewer 化する公式手段。出典:
+        # https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review
+        #
+        # 検証履歴 (PR #9): REST API `/pulls/N/requested_reviewers` に
+        # `{"reviewers": ["Copilot"]}` を投げる方式は 200 で返るが silently
+        # 無視され `requested_reviewers` が空のままだったため不可。
+        # `copilot-pull-request-reviewer` (bot login) は 422
+        # "not a collaborator" エラー。`@copilot` (lowercase + @ prefix)
+        # のみ動作した。
+        run: |
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-reviewer @copilot \
+            || echo "Failed to add Copilot reviewer; add manually if needed."
