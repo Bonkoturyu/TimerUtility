@@ -164,6 +164,21 @@ void main() {
     });
 
     testWidgets(
+      'AppBar has no back button while the alarm is ringing — Stop / Snooze are the only exits',
+      (WidgetTester tester) async {
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
+
+        // automaticallyImplyLeading: false drops the BackButton, and
+        // PopScope(canPop: false) blocks both gesture-back and any
+        // explicit Navigator.pop attempts.
+        expect(find.byType(BackButton), findsNothing);
+      },
+    );
+
+    testWidgets(
       'self-bootstraps audio on cold-start (no ringing timer in collection)',
       (WidgetTester tester) async {
         // Cold launch: collection is empty. The screen still arms audio
