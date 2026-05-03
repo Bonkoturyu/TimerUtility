@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart'
     show LicenseEntry, LicenseParagraph, LicenseRegistry;
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
+import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/user_preferences_provider.dart';
 import 'infrastructure/database/app_database.dart';
@@ -51,16 +54,16 @@ List<Locale> get supportedLocales => <Locale>[
 ];
 
 /// Resolve the localized strings used for OS notifications against the
-/// device's preferred locale, fall back to English if no supported
-/// match. Notifier code can't call `AppLocalizations.of(context)` (no
-/// `BuildContext`), so we pre-resolve here at app start and stash the
-/// result in `notificationStringsProvider`.
+/// device's preferred locale, fall back to the first supported locale
+/// when no match exists. Notifier code can't call
+/// `AppLocalizations.of(context)` (no `BuildContext`), so we resolve
+/// against `AppLocalizations.delegate.load` and stash the result in
+/// `notificationStringsNotifierProvider`.
 ///
-/// Locale-switch caveat: this is locked to the locale active at startup.
-/// If the user changes the device language while the app is in the
-/// background, scheduled notifications keep the old language until the
-/// next cold start. Phase 11 (settings + runtime locale switch) will
-/// upgrade this to react to in-app locale changes.
+/// Called both at startup (initial value) and from
+/// `_TimerUtilityAppState.didChangeLocales` whenever the OS reports a
+/// locale change — so a JA→EN switch updates pending banners after a
+/// `rescheduleAllRunning()` follow-up.
 Future<NotificationStrings> _resolveNotificationStrings() async {
   final List<Locale> systemLocales =
       WidgetsBinding.instance.platformDispatcher.locales;
@@ -74,6 +77,19 @@ Future<NotificationStrings> _resolveNotificationStrings() async {
     timerEndedBody: l.notificationTimerEndedBody,
     timerCompletedBackgroundBody: l.notificationTimerCompletedBackgroundBody,
   );
+}
+
+/// Notifier subclass used as the override target — `build()` returns the
+/// pre-resolved value supplied at app startup instead of throwing the
+/// "must be overridden" assertion the base class uses to catch missing
+/// test wiring.
+class _BootstrappedNotificationStringsNotifier
+    extends NotificationStringsNotifier {
+  _BootstrappedNotificationStringsNotifier(this._initial);
+  final NotificationStrings _initial;
+
+  @override
+  NotificationStrings build() => _initial;
 }
 
 /// Register the bundled-sound license file (`assets/sounds/LICENSES.md`)
@@ -234,7 +250,9 @@ Future<void> main() async {
     ProviderScope(
       overrides: <Override>[
         notificationSchedulerProvider.overrideWithValue(adapter),
-        notificationStringsProvider.overrideWithValue(notificationStrings),
+        notificationStringsNotifierProvider.overrideWith(
+          () => _BootstrappedNotificationStringsNotifier(notificationStrings),
+        ),
         timerRepositoryProvider.overrideWithValue(repository),
         presetRepositoryProvider.overrideWithValue(presetRepo),
         userPreferencesProvider.overrideWithValue(userPrefs),
@@ -244,10 +262,50 @@ Future<void> main() async {
   );
 }
 
-class TimerUtilityApp extends StatelessWidget {
+/// Top-level app widget. Stateful so we can attach a
+/// [WidgetsBindingObserver] and react to OS-driven locale changes:
+/// when the user switches device language, we re-resolve the
+/// notification strings and replace any in-flight scheduled banner so
+/// running timers fire in the new language. Without this, the strings
+/// stay locked to the locale active at process start.
+class TimerUtilityApp extends ConsumerStatefulWidget {
   const TimerUtilityApp({super.key, required this.router});
 
   final GoRouter router;
+
+  @override
+  ConsumerState<TimerUtilityApp> createState() => _TimerUtilityAppState();
+}
+
+class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    super.didChangeLocales(locales);
+    // Fire-and-forget: re-resolve against the new device locale, push
+    // the fresh strings into the provider, and re-schedule running
+    // timers so their pending OS banners switch language too.
+    unawaited(_refreshNotificationLocale());
+  }
+
+  Future<void> _refreshNotificationLocale() async {
+    final NotificationStrings strings = await _resolveNotificationStrings();
+    if (!mounted) return;
+    ref.read(notificationStringsNotifierProvider.notifier).set(strings);
+    ref.read(timerCollectionNotifierProvider.notifier).rescheduleAllRunning();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +314,7 @@ class TimerUtilityApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      routerConfig: router,
+      routerConfig: widget.router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: supportedLocales,
       onGenerateTitle: (BuildContext context) =>
