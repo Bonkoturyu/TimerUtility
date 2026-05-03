@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/notification_scheduler_provider.dart';
+import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/user_preferences_provider.dart';
@@ -48,6 +49,32 @@ List<Locale> get supportedLocales => <Locale>[
   ..._publicSupportedLocales,
   if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,
 ];
+
+/// Resolve the localized strings used for OS notifications against the
+/// device's preferred locale, fall back to English if no supported
+/// match. Notifier code can't call `AppLocalizations.of(context)` (no
+/// `BuildContext`), so we pre-resolve here at app start and stash the
+/// result in `notificationStringsProvider`.
+///
+/// Locale-switch caveat: this is locked to the locale active at startup.
+/// If the user changes the device language while the app is in the
+/// background, scheduled notifications keep the old language until the
+/// next cold start. Phase 11 (settings + runtime locale switch) will
+/// upgrade this to react to in-app locale changes.
+Future<NotificationStrings> _resolveNotificationStrings() async {
+  final List<Locale> systemLocales =
+      WidgetsBinding.instance.platformDispatcher.locales;
+  final Locale resolved = basicLocaleListResolution(
+    systemLocales,
+    supportedLocales,
+  );
+  final AppLocalizations l = await AppLocalizations.delegate.load(resolved);
+  return NotificationStrings(
+    timerEndedTitle: l.notificationTimerEndedTitle,
+    timerEndedBody: l.notificationTimerEndedBody,
+    timerCompletedBackgroundBody: l.notificationTimerCompletedBackgroundBody,
+  );
+}
 
 /// Register the bundled-sound license file (`assets/sounds/LICENSES.md`)
 /// so Flutter's `showLicensePage` lists it alongside pub-package licenses.
@@ -121,6 +148,8 @@ class _BundledSoundLicenseEntry extends LicenseEntry {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _registerBundledSoundsLicense();
+  final NotificationStrings notificationStrings =
+      await _resolveNotificationStrings();
   final adapter = FlutterLocalNotificationAdapter();
   final AppDatabase database = AppDatabase();
   final DriftTimerRepository repository = DriftTimerRepository(database);
@@ -205,6 +234,7 @@ Future<void> main() async {
     ProviderScope(
       overrides: <Override>[
         notificationSchedulerProvider.overrideWithValue(adapter),
+        notificationStringsProvider.overrideWithValue(notificationStrings),
         timerRepositoryProvider.overrideWithValue(repository),
         presetRepositoryProvider.overrideWithValue(presetRepo),
         userPreferencesProvider.overrideWithValue(userPrefs),
