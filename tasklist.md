@@ -19,8 +19,72 @@
 
 ## 進行中
 
-<!-- 現在進行中のタスクをここに記載 -->
-（なし）
+### Phase 9.5: 指定時刻アラーム機能 (2026-05-03 着手)
+
+ブランチ: `feat/phase-9-5-scheduled-alarm`
+参照: BACKLOG.md L359-437 / docs/adr/0005-alarm-vs-timer-separation.md /
+docs/domain-model.md L355-436 / docs/state-management.md L84/198-215
+
+#### Plan (Phase 8/9 のレイヤー単位 commit パターン踏襲)
+
+各レイヤー完了で `flutter analyze` + `flutter test` 緑を確認 → commit。
+
+1. **Domain 層** (lib/domain/alarm/)
+   - `day_of_week.dart` (Pure Dart enum、`DateTime.weekday` と互換マッピング)
+   - `alarm_repeat.dart` (sealed: `AlarmRepeatOnce` / `AlarmRepeatWeekly(Set<DayOfWeek>)`) + Unit Test
+   - `alarm_entity.dart` (freezed、domain-model.md L362-373 の定義に従う)
+   - `alarm_service.dart` (`Clock` 注入、`nextFireAt` / `advanceAfterFire` / `snoozeUntil`) + Unit Test
+   - `exceptions.dart` (`AlarmNotFoundException` / `MaxAlarmCountExceededException`
+     / `InvalidAlarmRepeatException` / `InvalidSnoozeMinutesException`)
+   - `lib/domain/ports/alarm_repository.dart` (`add` / `update` / `delete` / `findById` / `findAll`)
+
+2. **Infrastructure 層**
+   - `app_database.dart` に `Alarms` テーブル追加 (schemaVersion 2 → 3 + onUpgrade)
+   - `alarm_mapper.dart` (`AlarmEntity ⇔ AlarmRow / AlarmsCompanion`、
+     `AlarmRepeat` は専用列 `repeatKind` (text) + `repeatDaysBitmask` (int) で永続化)
+   - `drift_alarm_repository.dart` + Unit Test (in-memory)
+
+3. **Application 層**
+   - `alarm_repository_provider.dart` (override-required、main.dart で wire)
+   - `alarm_service_provider.dart`
+   - `alarm_collection_notifier.dart` + Unit Test
+     - `load` / `create` / `update` / `toggle(id)` / `delete(id)` /
+       `onFiredStop(id)` / `onFiredSnooze(id)`
+     - enabled 化 / 編集時 → `nextFireAt` → `NotificationScheduler.schedule(payload: 'alarm:<id>')`
+     - disabled / 削除時 → `cancel`
+     - 鳴動 → 停止 → `advanceAfterFire` + 永続化 + 次回 schedule
+     - 鳴動 → スヌーズ → `snoozeUntil` + schedule
+
+4. **AlarmRingingNotifier 両用化 + main.dart payload 分岐**
+   - `AlarmRingingNotifier.start` の `timerId` パラメータを `sourceId` 概念で扱い、
+     payload prefix `timer:<id>` / `alarm:<id>` で起動元判別
+   - `main.dart` の `onNotificationTap` で payload prefix を解析、
+     alarm の場合は AlarmRingingScreen に alarm モードで遷移
+   - `AlarmRingingScreen` の Stop / Snooze ハンドラで Timer / Alarm 分岐
+   - 既存 Timer 由来のテストは全パス維持 (regression)
+
+5. **Presentation 層**
+   - `alarm_list_screen.dart` (一覧 + ON/OFF トグル + FAB) + Widget Test
+   - `alarm_edit_screen.dart` (TimePicker + 曜日チップ + ラベル + 音源 + スヌーズ分) + Widget Test
+   - `weekday_selector.dart` (multi-select 曜日チップ) + Widget Test
+   - go_router に `/alarms` / `/alarms/edit/:id?` 追加
+   - HomeScreen に Alarm 導線を追加 (Stopwatch / Timer / Alarm の 3 本柱)
+
+6. **l10n**
+   - `app_ja.arb` / `app_en.arb` に必要キー追加 (画面名、ラベル、空表示、曜日略称等)
+   - `docs/translations.md` に新規キーをミラー
+
+7. **docs 更新**
+   - `docs/architecture.md` のディレクトリ構造図に `lib/domain/alarm/` 追記
+   - 実装で乖離が出た部分があれば `docs/domain-model.md` に追記
+
+#### 自動停止ポイント
+
+- pubspec.yaml / AndroidManifest / Native の編集が必要と判断したとき
+- Drift schemaVersion bump で migration ロジックに不安が残るとき
+- 100 行超の新規生成タイミング (節目で設計レビュー)
+- 各レイヤー commit 完了時 (進捗報告)
+- 全 7 ステップ完了 → 実機検証 (BACKLOG L420-424、4 シナリオ) 直前で停止
 
 ---
 
