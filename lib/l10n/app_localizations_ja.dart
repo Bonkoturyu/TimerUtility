@@ -303,4 +303,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get licenseMenuOverflow => 'ライセンス';
+
+  @override
+  String get licenseGroupBundledSounds => '同梱音源';
+
+  @override
+  String get licenseGroupSoftware => 'ソフトウェアライセンス';
 }

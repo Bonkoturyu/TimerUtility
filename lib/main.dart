@@ -16,6 +16,7 @@ import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
+import 'presentation/screens/licenses_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
@@ -111,9 +112,10 @@ class _BundledSoundLicenseEntry extends LicenseEntry {
   Iterable<String> get packages => <String>[packageName];
 
   @override
-  Iterable<LicenseParagraph> get paragraphs => lines.map(
-    (String line) => LicenseParagraph(line, LicenseParagraph.centeredIndent),
-  );
+  // indent 0 = no left padding, left-aligned. Each source line is its
+  // own paragraph so bullet lists render with line breaks.
+  Iterable<LicenseParagraph> get paragraphs =>
+      lines.map((String line) => LicenseParagraph(line, 0));
 }
 
 Future<void> main() async {
@@ -182,6 +184,11 @@ Future<void> main() async {
         builder: (BuildContext context, GoRouterState state) =>
             const PresetManageScreen(),
       ),
+      GoRoute(
+        path: LicensesScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const LicensesScreen(),
+      ),
     ],
   );
 
@@ -233,7 +240,7 @@ class HomeScreen extends StatelessWidget {
             key: const Key('home_menu'),
             onSelected: (String value) {
               if (value == 'licenses') {
-                showLicensePage(context: context, applicationName: l.appTitle);
+                context.push(LicensesScreen.routeLocation);
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

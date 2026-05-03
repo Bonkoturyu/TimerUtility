@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timer_utility/main.dart';
+import 'package:timer_utility/presentation/screens/licenses_screen.dart';
 
 void main() {
   testWidgets('App boots and renders home screen with stopwatch entry', (
@@ -24,12 +25,13 @@ void main() {
     expect(find.byKey(const Key('home_open_stopwatch_button')), findsOneWidget);
   });
 
-  testWidgets('Home AppBar overflow opens the license page', (
+  testWidgets('Home AppBar overflow opens the licenses screen', (
     WidgetTester tester,
   ) async {
     final router = GoRouter(
       routes: <RouteBase>[
         GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+        GoRoute(path: '/licenses', builder: (_, _) => const LicensesScreen()),
       ],
     );
     await tester.pumpWidget(
@@ -40,12 +42,10 @@ void main() {
     await tester.tap(find.byKey(const Key('home_menu')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home_menu_licenses')));
-    // showLicensePage scans the asset bundle asynchronously; we don't
-    // need it to finish, just confirm the page pushed.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
-    // Two title nodes show the app name (Home AppBar + LicensePage AppBar).
-    expect(find.text('TimerUtility'), findsAtLeastNWidgets(2));
+    // Both ExpansionTile section headers should be present.
+    expect(find.byKey(const Key('licenses_group_bundled')), findsOneWidget);
+    expect(find.byKey(const Key('licenses_group_software')), findsOneWidget);
   });
 }
