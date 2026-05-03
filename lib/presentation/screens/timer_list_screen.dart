@@ -18,6 +18,7 @@ import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart';
 import '../widgets/preset_select_sheet.dart';
 import '../widgets/sound_select_sheet.dart';
+import 'alarm_ringing_screen.dart' show AlarmRingingScreen;
 
 /// Maps a [TimerStatus] enum value to the localized string used in the
 /// status badge / chip on each timer card.
@@ -120,6 +121,11 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen>
           if (!mounted) return;
           final String here = GoRouterState.of(context).matchedLocation;
           if (here == '/alarm-ringing') return;
+          // matchedLocation is best-effort and can race with the
+          // notification-tap push when both fire in the same frame.
+          // Defer to the synchronous reservation flag — only one path
+          // actually pushes.
+          if (!AlarmRingingScreen.tryReservePush()) return;
           context.push('/alarm-ringing');
         });
       }
