@@ -128,9 +128,12 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
 半自動対応する:
 
 1. **取得**:
-   - `gh pr view N` で PR メタ情報
-   - `gh api repos/:owner/:repo/pulls/N/comments` で行コメント
-   - `gh pr checks N` で CI 状態
+   - `gh pr view {pull_number}` で PR メタ情報
+   - `gh api repos/{owner}/{repo}/pulls/{pull_number}/comments` で行コメント
+   - `gh pr checks {pull_number}` で CI 状態
+
+   `gh` CLI は `{owner}` / `{repo}` プレースホルダを現在の repo
+   コンテキストから自動補完するため、コマンドはそのまま貼って使える。
 
 2. **分類**:
    - (a) **自明な fix**: typo / 矛盾 / lint / 命名 → そのまま適用
@@ -141,10 +144,15 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
    - (d) **誤指摘**: AI が誤った前提で書いている → 根拠提示して却下リプライ
 
 3. **対応**:
-   - (a)(b) で適用するもの: 同一 branch に commit + push
-   - 全コメントに必ずリプライ (`gh api ... -X POST .../replies`)
-   - リプライ本文の API 投稿は **必ず一時 JSON ファイル経由** で行う
-     (シェル展開バグ実績あり: バッククォートや `$` を含むと
+   - (a)(b) で適用するもの: **対象 PR の feature branch にのみ** commit + push。
+     上記「Auto 運用ポリシー」の「git push はユーザーが明示的に指示した時のみ」
+     ルールに対して、ユーザの「PR #N のレビュー対応して」指示が **feature branch
+     への push までを暗黙に許可する** 形と整合する。main への push / マージは
+     引き続き別途明示承認 (毎回ルール) が必要。
+   - 全コメントに必ずリプライ
+     (`gh api repos/{owner}/{repo}/pulls/comments/{comment_id}/replies -X POST --input tmp.json`)
+   - リプライ本文の API 投稿は **必ず一時 JSON ファイル経由** (`--input tmp.json`)
+     で行う (シェル展開バグ実績あり: バッククォートや `$` を含むと
      `-f body=...` 直渡しは内容が破損する)
    - 却下時は根拠 (URL or API 出力) を本文に明示
 

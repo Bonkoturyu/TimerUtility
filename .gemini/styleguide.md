@@ -4,6 +4,29 @@
 違反があれば該当行に指摘コメントを残してください。本ガイドは
 [CLAUDE.md](../CLAUDE.md) と [docs/architecture.md](../docs/architecture.md) の
 プロジェクト規約を Gemini 向けに集約したものです。
+Copilot Code Review 向けの並行ガイドが [.github/copilot-instructions.md](../.github/copilot-instructions.md)
+にあります。両者は同一の規約をミラーしているため、内容に差分が出たら同期してください。
+
+---
+
+## レビュー時のソース信用原則
+
+外部仕様 (GitHub / Flutter / Riverpod / Drift 等) に関する指摘を出すときは、
+以下の優先順位で必ず裏取りしてからコメントしてください:
+
+1. **実時間 API / validator の出力** (例: `gh api .../codeowners/errors`、
+   `flutter analyze`、各種 SDK CLI) — 最も信頼度高
+2. **公式ドキュメント (URL 提示可能)** — 信頼度高、コメント本文に URL を必ず添える
+3. **コード本体の grep / 実装の直接確認** — 信頼度高
+4. **訓練データ / 過去経験** — 根拠提示できないなら指摘しない
+
+PR #7 で「CODEOWNERS の owner 空行は無効構文」という誤指摘を Gemini 自身が
+出した実例があります。実際には GitHub validator API と公式 docs の両方が
+有効構文として裏付けていました。**「たぶんそうだろう」で指摘せず、
+1〜3 で裏取りした内容のみを根拠付きでコメントしてください。**
+
+裏取り手段が見当たらない場合は、断定を避けて「要確認」「公式 docs URL を
+添えて確認してください」のような提案形に留めてください。
 
 ---
 
