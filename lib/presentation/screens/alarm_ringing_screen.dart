@@ -37,6 +37,43 @@ class AlarmRingingScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
+
+  /// Synchronous reservation flag used by both push paths
+  /// (`main.dart#onNotificationTap` and `TimerListScreen`'s ringing
+  /// listener) to dedupe concurrent push attempts.
+  ///
+  /// Both paths can fire in the same frame when a timer rings while
+  /// the app is backgrounded:
+  ///   1. The OS notification tap delivers `onDidReceiveNotificationResponse`
+  ///   2. The TimerCollection ticker resumes and flips state to ringing,
+  ///      causing TimerListScreen's `ref.listen` to schedule a push.
+  /// Each path's "is alarm screen already on top?" check (matchedLocation)
+  /// can race past the other before the route stack settles, leaving
+  /// two `/alarm-ringing` frames stacked. With this flag both callers
+  /// commit synchronously to the push attempt and the loser bails
+  /// before adding a second frame.
+  ///
+  /// Reset in [_AlarmRingingScreenState.dispose] so a future ring can
+  /// push again after the screen is dismissed.
+  static bool _pushReserved = false;
+
+  /// Atomic check-and-set: returns false if a push has already been
+  /// reserved (and is either pending or currently mounted), true if
+  /// this caller now owns the slot. Caller must follow up with a
+  /// `push('/alarm-ringing')`. The reservation is released in
+  /// [_AlarmRingingScreenState.dispose].
+  static bool tryReservePush() {
+    if (_pushReserved) return false;
+    _pushReserved = true;
+    return true;
+  }
+
+  /// Test seam: tests can call this in `tearDown` to reset the flag
+  /// without going through the full widget mount/dispose cycle.
+  @visibleForTesting
+  static void debugResetPushReservation() {
+    _pushReserved = false;
+  }
 }
 
 class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
@@ -47,6 +84,16 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       if (!mounted) return;
       _bootstrapRingingIfNeeded();
     });
+  }
+
+  @override
+  void dispose() {
+    // Release the reservation regardless of how this screen was
+    // entered. Cold-launch via `initialLocation` skips the reserve
+    // step (the flag stays false there), so resetting to false here
+    // is always correct.
+    AlarmRingingScreen._pushReserved = false;
+    super.dispose();
   }
 
   void _bootstrapRingingIfNeeded() {
