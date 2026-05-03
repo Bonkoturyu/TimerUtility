@@ -310,6 +310,18 @@ void main() {
       },
     );
 
+    group('tryReservePush dedup', () {
+      tearDown(AlarmRingingScreen.debugResetPushReservation);
+
+      test('first caller acquires, subsequent callers blocked until reset', () {
+        expect(AlarmRingingScreen.tryReservePush(), isTrue);
+        expect(AlarmRingingScreen.tryReservePush(), isFalse);
+        expect(AlarmRingingScreen.tryReservePush(), isFalse);
+        AlarmRingingScreen.debugResetPushReservation();
+        expect(AlarmRingingScreen.tryReservePush(), isTrue);
+      });
+    });
+
     testWidgets(
       'cancelling the snooze chooser keeps the alarm screen and timer ringing',
       (WidgetTester tester) async {
