@@ -7,6 +7,7 @@ import '../../application/user_preferences_provider.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/alarm_repeat.dart';
 import '../../domain/alarm/day_of_week.dart';
+import '../../domain/alarm/exceptions.dart';
 import '../../domain/alarm/time_of_day_value.dart';
 import '../../domain/ports/user_preferences.dart';
 import '../../domain/timer/alarm_sound.dart';
@@ -143,38 +144,46 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
         : const AlarmRepeatOnce();
     final notifier = ref.read(alarmCollectionNotifierProvider.notifier);
 
-    if (_isEditMode) {
-      // 既存: notificationId / createdAt は notifier 側で merge される。
-      final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);
-      final AlarmEntity? current = _findById(all, widget.alarmId!);
-      if (current == null) {
-        // 通常は build の ref.listen 経由で _initialized = true になる
-        // ため到達しないが、対象 alarmId が削除されていた等の race で
-        // 対象が見つからない場合は保存を諦めて通知する。
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l.alarmEditNotFound)));
-        return;
-      }
-      await notifier.update(
-        current.copyWith(
+    try {
+      if (_isEditMode) {
+        // 既存: notificationId / createdAt は notifier 側で merge される。
+        final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);
+        final AlarmEntity? current = _findById(all, widget.alarmId!);
+        if (current == null) {
+          // 通常は build の ref.listen 経由で _initialized = true になる
+          // ため到達しないが、対象 alarmId が削除されていた等の race で
+          // 対象が見つからない場合は保存を諦めて通知する。
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.alarmEditNotFound)));
+          return;
+        }
+        await notifier.update(
+          current.copyWith(
+            label: _label,
+            targetTime: _targetTime,
+            repeat: repeat,
+            snoozeMinutes: _snoozeMinutes,
+            enabled: _enabled,
+            soundId: _soundId,
+          ),
+        );
+      } else {
+        await notifier.create(
           label: _label,
           targetTime: _targetTime,
           repeat: repeat,
           snoozeMinutes: _snoozeMinutes,
           enabled: _enabled,
           soundId: _soundId,
-        ),
+        );
+      }
+    } on MaxAlarmCountExceededException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.timerListLimitReached(e.maxSize))),
       );
-    } else {
-      await notifier.create(
-        label: _label,
-        targetTime: _targetTime,
-        repeat: repeat,
-        snoozeMinutes: _snoozeMinutes,
-        enabled: _enabled,
-        soundId: _soundId,
-      );
+      return;
     }
     if (!mounted) return;
     context.pop();

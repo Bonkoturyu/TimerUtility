@@ -45,7 +45,7 @@
 | `timerListAppBarTitle` | タイマー | Timers | AppBar |
 | `timerListAddFab` | タイマーを追加 | Add Timer | FloatingActionButton |
 | `timerListEmptyHint` | タイマーがありません。\n右下の「タイマーを追加」から追加できます。 | No timers yet.\nTap "Add Timer" at the bottom-right to create one. | 空表示ヒント |
-| `timerListLimitReached` | 上限 {count} 件に達しています | {count, plural, =1{Limit reached: 1 timer} other{Limit reached: {count} timers}} | SnackBar（ja は plural 不使用、en は ICU plural） |
+| `timerListLimitReached` | 上限 {count} 件に達しています | {count, plural, =1{Limit reached: 1 item} other{Limit reached: {count} items}} | SnackBar（ja は plural 不使用、en は ICU plural、preset/timer/alarm の 3 画面で共用するため `items` で汎用化） |
 
 ## タイマーカード
 

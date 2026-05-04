@@ -71,8 +71,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Limit reached: $count timers',
-      one: 'Limit reached: 1 timer',
+      other: 'Limit reached: $count items',
+      one: 'Limit reached: 1 item',
     );
     return '$_temp0';
   }
