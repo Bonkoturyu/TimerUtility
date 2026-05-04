@@ -59,6 +59,18 @@ class _GrantedPermissionNotifier extends PermissionNotifier {
   );
 }
 
+/// POST_NOTIFICATIONS が denied / SCHEDULE_EXACT_ALARM が denied で
+/// 起動するケース。Phase 9.5 follow-up で AlarmListScreen にも
+/// permission banner を出す挙動の確認用。
+class _PartialDeniedPermissionNotifier extends PermissionNotifier {
+  @override
+  PermissionState build() => const PermissionState(
+    postNotifications: DomainPermissionStatus.denied,
+    scheduleExactAlarm: DomainPermissionStatus.denied,
+    fullScreenIntent: DomainPermissionStatus.granted,
+  );
+}
+
 NotificationScheduler _stubScheduler() {
   final s = _MockScheduler();
   when(
@@ -102,7 +114,15 @@ AlarmEntity _seed({
 /// AlarmListScreen + 編集画面導線 (push 検証用 stub) を組んだハーネス。
 /// 編集画面遷移はテスト対象外なので、`/alarms/edit` 系は単純な
 /// Scaffold スタブにマップして「push が走ったか」だけ確認する。
-Widget _harness({Iterable<AlarmEntity>? alarms, _InMemoryAlarmRepo? repo}) {
+///
+/// [permissionNotifierBuilder] で permission state の挙動を切り替え可能。
+/// 省略時は全 granted (banner 非表示)。banner 表示テストでは
+/// `_PartialDeniedPermissionNotifier` を渡す。
+Widget _harness({
+  Iterable<AlarmEntity>? alarms,
+  _InMemoryAlarmRepo? repo,
+  PermissionNotifier Function()? permissionNotifierBuilder,
+}) {
   final _InMemoryAlarmRepo r = repo ?? _InMemoryAlarmRepo(alarms);
   // alarms が指定されているのに repo が指定されている場合は repo が
   // 空でも seed を入れる (両方指定するケースは現状テストにない)。
@@ -144,7 +164,7 @@ Widget _harness({Iterable<AlarmEntity>? alarms, _InMemoryAlarmRepo? repo}) {
       notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
       testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
-        () => _GrantedPermissionNotifier(),
+        permissionNotifierBuilder ?? _GrantedPermissionNotifier.new,
       ),
     ],
     child: MaterialApp.router(
@@ -263,6 +283,32 @@ void main() {
     await _settleRestore(tester);
 
     expect(find.text('毎日'), findsOneWidget);
+  });
+
+  testWidgets('権限が denied のときは PermissionBanners が表示される', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(permissionNotifierBuilder: _PartialDeniedPermissionNotifier.new),
+    );
+    await _settleRestore(tester);
+
+    // POST_NOTIFICATIONS denied → 赤バナー、SCHEDULE_EXACT_ALARM denied →
+    // オレンジバナーが両方出る。FSI は granted なのでアンバーバナーは出ない。
+    expect(find.byKey(const Key('banner_post_notifications')), findsOneWidget);
+    expect(find.byKey(const Key('banner_exact_alarm')), findsOneWidget);
+    expect(find.byKey(const Key('banner_full_screen_intent')), findsNothing);
+  });
+
+  testWidgets('全権限 granted のときは PermissionBanners は出ない', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_harness());
+    await _settleRestore(tester);
+
+    expect(find.byKey(const Key('banner_post_notifications')), findsNothing);
+    expect(find.byKey(const Key('banner_exact_alarm')), findsNothing);
+    expect(find.byKey(const Key('banner_full_screen_intent')), findsNothing);
   });
 
   testWidgets('weekly (部分集合) は曜日略称を空白区切りで表示する', (WidgetTester tester) async {
