@@ -93,33 +93,54 @@ Native 側 + Flutter 側の両面で対処:
 - alarm_list_screen_test.dart に banner 表示 / 非表示の Widget Test
   2 件追加 (denied 状態 + 全 granted 状態)
 
-### F-2. auto-request-copilot-review.yml の silent fail 検出強化
+### F-2. auto-request-copilot-review.yml の silent fail 対策 → workflow 廃止 ✅ 完了
 
 優先度: 低 (手動で `gh pr edit N --add-reviewer @copilot` 実行で復旧可能)
-所要: ~15 分
 
-#### F-2 現状
+#### F-2 背景
 
 PR #11 で Action (`auto-request-copilot-review.yml`) が exit 0 success
 で完了したものの、`gh api repos/.../pulls/11/requested_reviewers` 結果は
 `{users: [], teams: []}` で **silent fail** していた。手動で同じコマンドを
-実行すると正常に追加された。原因は `secrets.GITHUB_TOKEN` の権限不足の
-可能性 (Copilot reviewer 追加は特殊権限を要求するケースあり)。
+実行すると正常に追加された。
 
-PR #10 の時は最終的に Copilot レビューが完了していたが、それは Action
-経由で成功したのか、手動補完だったのかは不明。
+#### F-2 調査結果 (PR #15 で実施、2026-05-04)
 
-#### F-2 修正方針
+第 1 段で silent fail 検出ロジック (`set -euo pipefail` + API 読み返し
+による exit 1) を入れて PR #15 で再現確認した結果:
 
-`gh pr edit ... --add-reviewer @copilot` 実行後に `gh api
-repos/.../pulls/$PR_NUMBER/requested_reviewers --jq '.users | map(.login) |
-contains(["Copilot"])'` で結果検証し、false なら明示的に exit 1 で
-ワークフローを失敗させる (CI status バッジで気付ける)。または失敗時に
-Issue を自動作成する。
+- `gh pr edit --add-reviewer @copilot` は内部で REST `POST /pulls/N/requested_reviewers`
+  を叩く。このエンドポイントは **user / team のみ受け付け、bot (Copilot) は
+  silently 無視される** (GitHub maintainer 公式回答:
+  [community#157751](https://github.com/orgs/community/discussions/157751))
+- 手動 (個人 PAT) で動くのは `gh` CLI が PAT 認証時に Copilot 専用の
+  GraphQL `requestReviews(input: { botIds: [...] })` 経路を使うため
+  ([community#186152](https://github.com/orgs/community/discussions/186152))
+- `secrets.GITHUB_TOKEN` でこの GraphQL 経路を叩くには追加の特別スコープが
+  必要で、`pull-requests: write` だけでは不足。公式 docs にも
+  「`pull-requests: write` で reviewer 追加可」の明記なし
+- 公式の推奨自動化経路は **Settings → Copilot → Code review → 自動レビュー
+  有効化** ([Configure automatic review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/configure-automatic-review))
 
-長期的には PAT トークン (Copilot subscription 持ちユーザ) を
-`secrets.COPILOT_REVIEWER_PAT` に保存して使う方が確実だが、トークン管理
-コストとトレードオフ。
+#### F-2 最終対応 (2026-05-04)
+
+ユーザ確認の結果、Settings → Copilot → Code review は **PR #7 頃から
+既に有効化済** だったことが判明:
+
+- `Copilot review for default branch` ruleset (3 rules、main を target)
+- `Automated code reviews on push` enabled
+- Free private repo でも動作することを実機で確認
+
+つまり過去 PR (#7〜#14) で Copilot review が付いていたのは **すべて
+Settings ruleset 経由** であり、workflow は最初から silent fail し
+続けていた (一度も機能していなかった)。workflow
+`.github/workflows/auto-request-copilot-review.yml` は **冗長コード** で
+あり、削除しても機能的リグレッションは発生しない。
+
+最終対応:
+
+- `.github/workflows/auto-request-copilot-review.yml` を削除
+- 追加の Settings 操作は不要 (既に有効)
 
 ---
 
