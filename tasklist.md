@@ -93,12 +93,12 @@ Native 側 + Flutter 側の両面で対処:
 - alarm_list_screen_test.dart に banner 表示 / 非表示の Widget Test
   2 件追加 (denied 状態 + 全 granted 状態)
 
-### F-2. auto-request-copilot-review.yml の silent fail 検出強化
+### F-2. auto-request-copilot-review.yml の silent fail 検出強化 ✅ 完了
 
 優先度: 低 (手動で `gh pr edit N --add-reviewer @copilot` 実行で復旧可能)
 所要: ~15 分
 
-#### F-2 現状
+#### F-2 背景
 
 PR #11 で Action (`auto-request-copilot-review.yml`) が exit 0 success
 で完了したものの、`gh api repos/.../pulls/11/requested_reviewers` 結果は
@@ -106,20 +106,22 @@ PR #11 で Action (`auto-request-copilot-review.yml`) が exit 0 success
 実行すると正常に追加された。原因は `secrets.GITHUB_TOKEN` の権限不足の
 可能性 (Copilot reviewer 追加は特殊権限を要求するケースあり)。
 
-PR #10 の時は最終的に Copilot レビューが完了していたが、それは Action
-経由で成功したのか、手動補完だったのかは不明。
+#### F-2 修正内容 (2026-05-04)
 
-#### F-2 修正方針
+[auto-request-copilot-review.yml](.github/workflows/auto-request-copilot-review.yml)
+の Request Copilot reviewer step を以下に変更:
 
-`gh pr edit ... --add-reviewer @copilot` 実行後に `gh api
-repos/.../pulls/$PR_NUMBER/requested_reviewers --jq '.users | map(.login) |
-contains(["Copilot"])'` で結果検証し、false なら明示的に exit 1 で
-ワークフローを失敗させる (CI status バッジで気付ける)。または失敗時に
-Issue を自動作成する。
+- `set -euo pipefail` で fail-fast 化
+- `gh pr edit ... --add-reviewer @copilot` が exit 非 0 のときは即 exit 1
+- exit 0 でも `gh api repos/.../pulls/$PR_NUMBER/requested_reviewers` を
+  読み返し、`jq` で `users[].login` を case-insensitive `copilot` 部分一致
+  判定。マッチしなければ `::error::` ログ + 現状の reviewers を出力して
+  exit 1 (CI status バッジで silent fail を検出可能に)
+- `|| echo "..."` で吸収して exit 0 に丸める従来パターンを撤去
 
-長期的には PAT トークン (Copilot subscription 持ちユーザ) を
-`secrets.COPILOT_REVIEWER_PAT` に保存して使う方が確実だが、トークン管理
-コストとトレードオフ。
+長期的な改善 (`secrets.COPILOT_REVIEWER_PAT` の導入等) はトークン管理
+コストとトレードオフのため見送り。次に Action が落ちた PR で実状況を
+確認し、必要なら PAT 化を再検討する。
 
 ---
 
