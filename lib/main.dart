@@ -21,6 +21,8 @@ import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
+import 'presentation/screens/alarm_edit_screen.dart';
+import 'presentation/screens/alarm_list_screen.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
@@ -250,6 +252,25 @@ Future<void> main() async {
         builder: (BuildContext context, GoRouterState state) =>
             const PresetManageScreen(),
       ),
+      // Phase 9.5: 指定時刻アラーム機能。`/alarms` 一覧、
+      // `/alarms/edit` 新規作成、`/alarms/edit/:id` 編集。
+      // `:id` は optional なため別ルートとして登録 (go_router の path
+      // パラメータは optional 不可)。
+      GoRoute(
+        path: AlarmListScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AlarmListScreen(),
+      ),
+      GoRoute(
+        path: '/alarms/edit',
+        builder: (BuildContext context, GoRouterState state) =>
+            const AlarmEditScreen(),
+      ),
+      GoRoute(
+        path: '/alarms/edit/:id',
+        builder: (BuildContext context, GoRouterState state) =>
+            AlarmEditScreen(alarmId: state.pathParameters['id']),
+      ),
       GoRoute(
         path: LicensesScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
@@ -381,6 +402,12 @@ class HomeScreen extends StatelessWidget {
               key: const Key('home_open_timer_button'),
               onPressed: () => context.push('/timer'),
               child: Text(l.homeOpenTimer),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('home_open_alarm_button'),
+              onPressed: () => context.push(AlarmListScreen.routeLocation),
+              child: Text(l.homeOpenAlarm),
             ),
           ],
         ),

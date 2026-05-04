@@ -18,6 +18,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeOpenTimer => 'Open Timer';
 
   @override
+  String get homeOpenAlarm => 'Open Alarms';
+
+  @override
   String get stopwatchAppBarTitle => 'Stopwatch';
 
   @override
@@ -112,6 +115,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timerStatusCancelled => 'cancelled';
+
+  @override
+  String get alarmListAppBarTitle => 'Alarms';
+
+  @override
+  String get alarmListAddFab => 'Add Alarm';
+
+  @override
+  String get alarmListEmptyHint =>
+      'No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.';
+
+  @override
+  String get alarmListRepeatEveryday => 'Every day';
 
   @override
   String get alarmAppBarTitle => 'Alarm';

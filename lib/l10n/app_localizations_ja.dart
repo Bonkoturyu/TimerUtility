@@ -18,6 +18,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeOpenTimer => 'タイマーを開く';
 
   @override
+  String get homeOpenAlarm => 'アラームを開く';
+
+  @override
   String get stopwatchAppBarTitle => 'ストップウォッチ';
 
   @override
@@ -105,6 +108,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get timerStatusCancelled => '取消';
+
+  @override
+  String get alarmListAppBarTitle => 'アラーム';
+
+  @override
+  String get alarmListAddFab => 'アラームを追加';
+
+  @override
+  String get alarmListEmptyHint => 'アラームがありません。\n右下の「アラームを追加」から追加できます。';
+
+  @override
+  String get alarmListRepeatEveryday => '毎日';
 
   @override
   String get alarmAppBarTitle => 'アラーム';

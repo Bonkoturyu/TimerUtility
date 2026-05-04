@@ -86,6 +86,44 @@ docs/domain-model.md L355-436 / docs/state-management.md L84/198-215
 - 各レイヤー commit 完了時 (進捗報告)
 - 全 7 ステップ完了 → 実機検証 (BACKLOG L420-424、4 シナリオ) 直前で停止
 
+#### 着手前 status check (2026-05-04, PR #10 マージ後)
+
+PR #10 (b90c819) で Step 1〜5d までマージ済。実装ファイル直接確認の結果:
+
+- **Step 1 Domain**: ✅ alarm_entity / alarm_repeat / alarm_service / day_of_week /
+  time_of_day_value / exceptions すべて実装済 + Unit Test 完備
+- **Step 2 Infrastructure**: ✅ drift_alarm_repository.dart + Drift schema migration 済
+- **Step 3 Application**: ✅ alarm_collection_notifier.dart (create/update/toggle/delete/
+  onFiredStop/onFiredSnooze) + alarm_repository_provider + alarm_service_provider
+- **Step 4 AlarmRingingNotifier 両用化 + payload 分岐**: ✅ 完全実装済
+  - [alarm_ringing_notifier.dart](lib/application/alarm_ringing_notifier.dart) に
+    `AlarmSource` enum + `currentSource` フィールド追加済
+  - [alarm_ringing_screen.dart](lib/presentation/screens/alarm_ringing_screen.dart) で
+    `_parsePayload` (`timer:` / `alarm:` プレフィックス) + Stop / Snooze の
+    AlarmCollectionNotifier 委譲済 (`onFiredStop` / `onFiredSnooze`)
+  - [main.dart](lib/main.dart) の `onNotificationTap` / cold-launch 両 path で
+    payload を queryParameter に詰めて遷移する配線済
+- **Step 5 Presentation**: 一部済
+  - ✅ alarm_edit_screen.dart / weekday_selector.dart / alarm_delete_confirm_dialog.dart
+  - ❌ **alarm_list_screen.dart** 未実装
+  - ❌ **go_router の `/alarms` / `/alarms/edit/:id?` ルート未配線** (main.dart で
+    `/alarms` の grep 0 ヒット確認)
+  - ❌ **HomeScreen の Alarm 導線未追加** (現状 Stopwatch / Timer の 2 ボタンのみ)
+- **Step 6 l10n**: 編集画面用キー (alarmEdit*) は追加済、一覧画面用 (alarmList*) は未追加
+- **Step 7 docs 更新**: docs/architecture.md のディレクトリ構造図に
+  `lib/domain/alarm/` 未追記
+
+#### 残作業の commit 計画
+
+Step 4 が既に完了済なため、当初 3 commit 計画を 2 commit に圧縮:
+
+1. **Commit 1**: AlarmListScreen + go_router 配線 + HomeScreen 導線 + ARB
+   (alarmList*) + Widget Test
+2. **Commit 2**: docs 更新 (architecture.md ディレクトリ構造図) +
+   tasklist/BACKLOG の Phase 9.5 完了マーク (実機検証だけ未完で残す)
+
+Commit 2 完了後に停止し、実機検証 4 シナリオ (BACKLOG L420-424) はユーザに依頼。
+
 ---
 
 ## Phase 9 完了内容（2026-05-02）
