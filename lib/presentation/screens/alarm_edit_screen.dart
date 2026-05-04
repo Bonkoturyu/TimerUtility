@@ -227,6 +227,25 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
       final AlarmEntity? entity = _findById(next, widget.alarmId!);
       if (entity != null) {
         setState(() => _applyEntity(entity));
+        return;
+      }
+      // PR #11 review (Copilot) 反映: deep link / 古いブックマーク経由
+      // で stale id を踏んだ際にローディング表示が永続する問題への対処。
+      //
+      // `prev == null` は build 直後の初回発火 = まだ load 走ってない。
+      // `prev != null` かつ entity が見つからない = AlarmCollectionNotifier
+      // の load が完了した上で対象が居ない (= 削除済 / 不正な id) と
+      // 確定するため、SnackBar で通知して画面を閉じる。再発火防止のため
+      // `_initialized` を立てておく (フォーム値は使わずに pop するので OK)。
+      if (prev != null) {
+        _initialized = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.alarmEditNotFound)));
+          context.pop();
+        });
       }
     });
 

@@ -4,6 +4,7 @@
   "appTitle": "TimerUtility",
   "homeOpenStopwatch": "ストップウォッチを開く",
   "homeOpenTimer": "タイマーを開く",
+  "homeOpenAlarm": "アラームを開く",
 
   "stopwatchAppBarTitle": "ストップウォッチ",
   "stopwatchStart": "開始",
@@ -55,6 +56,11 @@
   "timerStatusRinging": "鳴動中",
   "timerStatusCompleted": "完了",
   "timerStatusCancelled": "取消",
+
+  "alarmListAppBarTitle": "アラーム",
+  "alarmListAddFab": "アラームを追加",
+  "alarmListEmptyHint": "アラームがありません。\n右下の「アラームを追加」から追加できます。",
+  "alarmListRepeatEveryday": "毎日",
 
   "alarmAppBarTitle": "アラーム",
   "alarmTimesUp": "時間です！",

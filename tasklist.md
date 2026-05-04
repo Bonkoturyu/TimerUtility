@@ -19,13 +19,153 @@
 
 ## 進行中
 
-### Phase 9.5: 指定時刻アラーム機能 (2026-05-03 着手)
+なし。Phase 9.5 は実装完了 (2026-05-04)、次は実機検証を経てから
+Phase 10 (端末再起動後の復元) に着手予定。
 
-ブランチ: `feat/phase-9-5-scheduled-alarm`
+---
+
+## Follow-up タスク (Phase 9.5 派生)
+
+### F-4. cold-start FSI 後の戻るキーでアプリ終了 + Recent 二重起動 (実機検証で発覚)
+
+優先度: 中 (UX 影響あり、ただし回避手段あり)
+所要: ~30〜60 分 (Native 層調査 + AndroidManifest 編集が必要、ユーザ承認必須)
+着手タイミング: Phase 10 着手前または Phase 11 着手時
+
+#### F-4 現状の問題
+
+実機検証 (Pixel 6a / Android 16、2026-05-04) シナリオ 4 で観測:
+
+1. cold-start FSI 経由でアプリ起動 → AlarmRingingScreen → 「停止」
+2. `_leaveAlarmScreen` の fallback で `/alarms` (or `/timer`) に遷移
+   (back-stack はリセット済)
+3. ここで Android 戻るキーを押すと **ホーム画面に戻らずアプリが終了**
+4. 再度ランチャーからアプリを起動すると **Recent 表示に 2 つの task が
+   並ぶ** (二重起動状態)
+
+原因の仮説:
+
+- `getNotificationAppLaunchDetails()` 経由の cold-start で、Android が
+  通知タップを別 task として扱っている可能性
+- [`android/app/src/main/AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml)
+  の MainActivity は `launchMode="singleTop"` / `taskAffinity=""` 設定済
+  だが、それでも task 分離が起きている
+- `_leaveAlarmScreen` で back-stack をリセットしても、Android task 上の
+  history が cold-start 経路では別系統になっている
+
+#### F-4 修正方針
+
+1. AndroidManifest の MainActivity を `launchMode="singleTask"` に変更
+   (現在の `singleTop` から強化) してみて recent 二重表示が解消するか
+   実機検証
+2. 解消しない場合は flutter_local_notifications プラグインの
+   AlarmReceiver / TaskStackBuilder の挙動を調査、必要なら Kotlin 層で
+   `Intent.FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK` を明示制御
+3. アプリ内 fallback として `_leaveAlarmScreen` を `context.go('/')` 起点
+   に変更し、back-stack を Home → /alarms (or /timer) → /alarm-ringing
+   の順で再構築する案も検討
+
+**Native 層 (AndroidManifest / Kotlin) の編集はユーザ確認必須** のため、
+本 PR スコープ外。別 PR でユーザと方針合意の上で対応。
+
+### F-3. permission UX バグ修正 (実機検証で発覚) ✅ 完了
+
+実機検証 (Pixel 6a / Android 16、2026-05-04) でシナリオ 1 が再現せず、
+原因調査の結果以下 2 段の問題が判明 → PR #11 に追加 commit で対応:
+
+- (a) AlarmListScreen が `permissionNotifierProvider.refresh()` を呼ばず
+  state が `unknown` のまま → `_scheduleAt` で `useExact = false` →
+  `inexactAllowWhileIdle` schedule で発火が大幅遅延 (1 分後の発火が
+  起きない実機事象の主因)
+- (b) AlarmListScreen に permission banner が無く、ユーザは権限不足を
+  画面上で気付けない (TimerListScreen にしか banner が無かった)
+
+#### F-3 修正内容
+
+- [PermissionBanners](lib/presentation/widgets/permission_banners.dart)
+  を共通 widget として切り出し (元は TimerListScreen の private クラス)
+- [AlarmListScreen](lib/presentation/screens/alarm_list_screen.dart) を
+  `ConsumerStatefulWidget` 化、`initState` の microtask + `didChangeAppLifecycleState(resumed)` で
+  `permissionNotifierProvider.refresh()` を呼ぶ TimerListScreen と
+  同じパターンを移植、`PermissionBanners` を body 上部に配置
+- [AlarmCollectionNotifier._scheduleAt](lib/application/alarm_collection_notifier.dart)
+  を内部で `_scheduleAtAsync` に分離し、`unknown` のとき先に `await
+  refresh()` してから exact/inexact 判定 (画面遷移が高速な場合の race 対策)
+- alarm_list_screen_test.dart に banner 表示 / 非表示の Widget Test
+  2 件追加 (denied 状態 + 全 granted 状態)
+
+### F-1. AlarmEditScreen に MaxAlarmCountExceededException ハンドリング追加
+
+優先度: 中 (実用影響は極小、保守性向上目的)
+所要: ~30 分 (実装 ~10 行 + Widget Test ~30 行)
+着手タイミング: 実機検証 4 シナリオ完了後、Phase 10 着手前
+
+#### F-1 現状の問題
+
+[`lib/presentation/screens/alarm_edit_screen.dart`](lib/presentation/screens/alarm_edit_screen.dart)
+L133-181 の `_onSave` メソッドで `await notifier.create(...)` (L170-177) /
+`await notifier.update(...)` (L159-168) どちらも try/catch なし。
+50 件のアラームが既存 + 新規追加で
+[`alarm_collection_notifier.dart`](lib/application/alarm_collection_notifier.dart)
+L94-96 が `MaxAlarmCountExceededException(50)` を throw → uncaught Future error
+で SnackBar / dialog 出ず、ユーザは「保存ボタンが効かない」状態に陥る。
+
+#### F-1 修正方針
+
+[`preset_manage_screen.dart`](lib/presentation/screens/preset_manage_screen.dart)
+L96-117 の analogue (try/catch + SnackBar、事前チェックなし) で揃える:
+
+1. `_onSave` の create / update を `try { ... } on MaxAlarmCountExceededException
+   catch (e) { ... }` で包む
+2. catch 内で `ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:
+   Text(l.timerListLimitReached(e.maxSize))))` (既存 ARB キー流用、
+   `timerListLimitReached` は plural 対応 + 件数指定可)
+3. エラー時は `context.pop()` しない (画面に留まって編集継続できるよう)
+4. Widget Test 1 件追加: in-memory repo で 50 件 seed → create 試行 →
+   SnackBar 表示確認
+
+事前チェック (TimerListScreen の `current.isFull` パターン) は不要:
+
+- 50 件溜めるユーザは事実上ゼロ
+- AlarmEditScreen は編集モードでも経由するため、フロー前段でのチェックが冗長
+
+### F-2. auto-request-copilot-review.yml の silent fail 検出強化
+
+優先度: 低 (手動で `gh pr edit N --add-reviewer @copilot` 実行で復旧可能)
+所要: ~15 分
+
+#### F-2 現状
+
+PR #11 で Action (`auto-request-copilot-review.yml`) が exit 0 success
+で完了したものの、`gh api repos/.../pulls/11/requested_reviewers` 結果は
+`{users: [], teams: []}` で **silent fail** していた。手動で同じコマンドを
+実行すると正常に追加された。原因は `secrets.GITHUB_TOKEN` の権限不足の
+可能性 (Copilot reviewer 追加は特殊権限を要求するケースあり)。
+
+PR #10 の時は最終的に Copilot レビューが完了していたが、それは Action
+経由で成功したのか、手動補完だったのかは不明。
+
+#### F-2 修正方針
+
+`gh pr edit ... --add-reviewer @copilot` 実行後に `gh api
+repos/.../pulls/$PR_NUMBER/requested_reviewers --jq '.users | map(.login) |
+contains(["Copilot"])'` で結果検証し、false なら明示的に exit 1 で
+ワークフローを失敗させる (CI status バッジで気付ける)。または失敗時に
+Issue を自動作成する。
+
+長期的には PAT トークン (Copilot subscription 持ちユーザ) を
+`secrets.COPILOT_REVIEWER_PAT` に保存して使う方が確実だが、トークン管理
+コストとトレードオフ。
+
+---
+
+## Phase 9.5 実装ログ (2026-05-03 着手 → 2026-05-04 実装完了)
+
+ブランチ: `feat/phase-9-5-scheduled-alarm` (PR #10) → 残作業を main に直接 commit
 参照: BACKLOG.md L359-437 / docs/adr/0005-alarm-vs-timer-separation.md /
 docs/domain-model.md L355-436 / docs/state-management.md L84/198-215
 
-#### Plan (Phase 8/9 のレイヤー単位 commit パターン踏襲)
+### Plan (Phase 8/9 のレイヤー単位 commit パターン踏襲)
 
 各レイヤー完了で `flutter analyze` + `flutter test` 緑を確認 → commit。
 
@@ -78,13 +218,51 @@ docs/domain-model.md L355-436 / docs/state-management.md L84/198-215
    - `docs/architecture.md` のディレクトリ構造図に `lib/domain/alarm/` 追記
    - 実装で乖離が出た部分があれば `docs/domain-model.md` に追記
 
-#### 自動停止ポイント
+### 自動停止ポイント
 
 - pubspec.yaml / AndroidManifest / Native の編集が必要と判断したとき
 - Drift schemaVersion bump で migration ロジックに不安が残るとき
 - 100 行超の新規生成タイミング (節目で設計レビュー)
 - 各レイヤー commit 完了時 (進捗報告)
 - 全 7 ステップ完了 → 実機検証 (BACKLOG L420-424、4 シナリオ) 直前で停止
+
+### 着手前 status check (2026-05-04, PR #10 マージ後)
+
+PR #10 (b90c819) で Step 1〜5d までマージ済。実装ファイル直接確認の結果:
+
+- **Step 1 Domain**: ✅ alarm_entity / alarm_repeat / alarm_service / day_of_week /
+  time_of_day_value / exceptions すべて実装済 + Unit Test 完備
+- **Step 2 Infrastructure**: ✅ drift_alarm_repository.dart + Drift schema migration 済
+- **Step 3 Application**: ✅ alarm_collection_notifier.dart (create/update/toggle/delete/
+  onFiredStop/onFiredSnooze) + alarm_repository_provider + alarm_service_provider
+- **Step 4 AlarmRingingNotifier 両用化 + payload 分岐**: ✅ 完全実装済
+  - [alarm_ringing_notifier.dart](lib/application/alarm_ringing_notifier.dart) に
+    `AlarmSource` enum + `currentSource` フィールド追加済
+  - [alarm_ringing_screen.dart](lib/presentation/screens/alarm_ringing_screen.dart) で
+    `_parsePayload` (`timer:` / `alarm:` プレフィックス) + Stop / Snooze の
+    AlarmCollectionNotifier 委譲済 (`onFiredStop` / `onFiredSnooze`)
+  - [main.dart](lib/main.dart) の `onNotificationTap` / cold-launch 両 path で
+    payload を queryParameter に詰めて遷移する配線済
+- **Step 5 Presentation**: 一部済
+  - ✅ alarm_edit_screen.dart / weekday_selector.dart / alarm_delete_confirm_dialog.dart
+  - ❌ **alarm_list_screen.dart** 未実装
+  - ❌ **go_router の `/alarms` / `/alarms/edit/:id?` ルート未配線** (main.dart で
+    `/alarms` の grep 0 ヒット確認)
+  - ❌ **HomeScreen の Alarm 導線未追加** (現状 Stopwatch / Timer の 2 ボタンのみ)
+- **Step 6 l10n**: 編集画面用キー (alarmEdit*) は追加済、一覧画面用 (alarmList*) は未追加
+- **Step 7 docs 更新**: docs/architecture.md のディレクトリ構造図に
+  `lib/domain/alarm/` 未追記
+
+### 残作業の commit 計画 (実施結果)
+
+Step 4 が既に完了済なため、当初 3 commit 計画を 2 commit に圧縮:
+
+1. **Commit 1** (86f8847): AlarmListScreen + go_router 配線 + HomeScreen 導線 +
+   ARB (alarmList* / homeOpenAlarm) + Widget Test 8 件追加 → 384 テストパス
+2. **Commit 2**: docs 更新 (architecture.md ディレクトリ構造図) +
+   tasklist/BACKLOG の Phase 9.5 完了マーク (実機検証だけ未完で残す)
+
+Commit 2 完了後に停止し、実機検証 4 シナリオ (BACKLOG L420-424) はユーザに依頼。
 
 ---
 
@@ -749,4 +927,4 @@ audioplayers のループ再生が重なって聞こえる問題を修正。
 
 ---
 
-最終更新日: 2026-05-03（PR #5 通知本文 i18n + locale 切替追従マージ、278 テストパス）
+最終更新日: 2026-05-04（Phase 9.5 実装完了、AlarmListScreen + 配線 + HomeScreen 3 本柱導線追加、384 テストパス）

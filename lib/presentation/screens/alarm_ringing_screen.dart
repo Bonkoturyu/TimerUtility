@@ -10,6 +10,7 @@ import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
+import '../../domain/timer/notification_id_generator.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../l10n/app_localizations.dart';
@@ -163,8 +164,20 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
             ? null
             : AlarmSoundCatalog.findById(entity!.soundId!)) ??
         AlarmSoundCatalog.defaultSound;
-    // payload で渡された id を sourceId として保持。
-    final int notificationId = entity?.notificationId ?? -1;
+    // cold-start + FSI 経路では `AlarmCollectionNotifier._loadFromRepository`
+    // の microtask が `addPostFrameCallback` より遅れることがあり、entity が
+    // 取れないケースがある。その場合に `-1` を渡すと `cancel(-1)` が no-op
+    // になって OS 通知音が止まらず audioplayers と重なる二重音が発生する
+    // (実機検証 2026-05-04 シナリオ 4 で観測)。
+    //
+    // `NotificationIdGenerator.idFor(alarmId)` は deterministic
+    // (`alarmId.hashCode & 0x7FFFFFFF`) なので、entity が無くても同じ id を
+    // 再計算できる。`AlarmCollectionNotifier.create` でも
+    // `NotificationIdGenerator().idFor(id)` で発番しているため、永続化済の
+    // notificationId と必ず一致する。
+    final int notificationId =
+        entity?.notificationId ??
+        const NotificationIdGenerator().idFor(alarmId);
     ref
         .read(alarmRingingNotifierProvider.notifier)
         .start(
@@ -271,7 +284,13 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                           }
                         }
                         if (!context.mounted) return;
-                        _leaveAlarmScreen(context);
+                        // 重要: ringingNotifier.stop() で state.currentSource
+                        // が null にリセットされた **後** に _leaveAlarmScreen
+                        // が走るため、内部で ref.read しても source 判別不能。
+                        // build 時にクロージャ済みの activeSource を引数で
+                        // 渡して fallback 行き先を決める (2026-05-04 シナリオ
+                        // 4 再検証で発覚)。
+                        _leaveAlarmScreen(context, source: activeSource);
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -371,7 +390,8 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     await ref.read(alarmRingingNotifierProvider.notifier).stop();
     collection.snooze(ringing.id, minutes);
     if (!context.mounted) return;
-    _leaveAlarmScreen(context);
+    // _onSnoozeTap は timer 由来固定 (alarm は _onAlarmSnoozeTap)。
+    _leaveAlarmScreen(context, source: AlarmSource.timer);
   }
 
   /// Phase 9.5: alarm 由来のスヌーズハンドラ。
@@ -394,7 +414,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       // no-op
     }
     if (!context.mounted) return;
-    _leaveAlarmScreen(context);
+    _leaveAlarmScreen(context, source: AlarmSource.alarm);
   }
 
   /// Leaves the alarm screen back to wherever the user came from.
@@ -403,16 +423,40 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// pushed onto `[home, /timer]` (in-app ringing or warm-launch from
   /// notification tap with the new push semantics), pop returns to
   /// `[home, /timer]` and the user can back-navigate to home as
-  /// expected. Cold-launch from a dead-process notification tap starts
-  /// directly on `/alarm-ringing` as the initial location, so canPop
-  /// is false there — fall back to a top-level `go('/timer')` so the
-  /// user lands on the list view rather than being stuck.
-  void _leaveAlarmScreen(BuildContext context) {
+  /// expected.
+  ///
+  /// Cold-launch from a dead-process notification tap starts directly
+  /// on `/alarm-ringing` as the initial location, so canPop is false
+  /// there. Phase 9.5 follow-up (2026-05-04): payload 種別で fallback
+  /// 行き先を切り替える。[source] = alarm なら `/alarms` (一覧)、
+  /// それ以外 (timer 由来 / source 不明) なら `/timer` に飛ばす。
+  /// fallback では `go` を使うため back-stack はリセットされる。
+  ///
+  /// 注意: `ringingNotifier.stop()` を呼んだ後だと
+  /// `alarmRingingNotifierProvider.currentSource` は null にリセット
+  /// 済なので、呼び出し側が build 時にクロージャした値を [source] で
+  /// 引き渡すこと。`ref.read` で取り直すと判別不能になる
+  /// (2026-05-04 シナリオ 4 再検証で発覚)。
+  ///
+  /// Android 戻るキーで Home に戻れない件は、Native 側の launchMode /
+  /// taskAffinity の調整が必要になるので別 follow-up (F-4) で対応。
+  void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});
+    // FullScreenIntent 経由で起動された Activity が `setShowWhenLocked(true)`
+    // を立てている間、Android が暗黙に system bar を hidden 扱いする
+    // ことがある。ホーム画面に戻った後も時計・バッテリー・電波表示が
+    // 消えたままになる事象が観測された (実機検証 2026-05-04
+    // シナリオ 4)。`edgeToEdge` で system overlay (status / nav bar) の
+    // 表示を明示的に復元する。
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     if (context.canPop()) {
       context.pop();
+      return;
+    }
+    if (source == AlarmSource.alarm) {
+      context.go('/alarms');
     } else {
       context.go('/timer');
     }
