@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../../application/permission_notifier.dart';
 import '../../application/timer_collection_notifier.dart';
 import '../../application/timer_service_provider.dart';
-import '../../domain/ports/permission_manager.dart';
 import '../../domain/shared/duration_formatter.dart';
 import '../../domain/timer/exceptions.dart';
 import '../../domain/timer/preset.dart';
@@ -16,6 +15,7 @@ import '../../domain/timer/timer_entity.dart';
 import '../../domain/timer/timer_status.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart';
+import '../widgets/permission_banners.dart';
 import '../widgets/preset_select_sheet.dart';
 import '../widgets/sound_select_sheet.dart';
 import 'alarm_ringing_screen.dart' show AlarmRingingScreen;
@@ -158,7 +158,7 @@ class _TimerListScreenState extends ConsumerState<TimerListScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            const _PermissionBanners(),
+            const PermissionBanners(),
             Expanded(
               child: collection.isEmpty
                   ? const _EmptyHint()
@@ -412,138 +412,3 @@ class _TimerCard extends ConsumerWidget {
 /// screen is being deleted as part of Phase 8 cleanup. Future home is
 /// a shared `presentation/widgets/permission_banners.dart` whenever a
 /// third caller appears.
-class _PermissionBanners extends ConsumerWidget {
-  const _PermissionBanners();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(permissionNotifierProvider);
-    final notifier = ref.read(permissionNotifierProvider.notifier);
-    final AppLocalizations l = AppLocalizations.of(context);
-
-    final List<Widget> banners = <Widget>[];
-
-    if (state.postNotifications == DomainPermissionStatus.denied ||
-        state.postNotifications == DomainPermissionStatus.permanentlyDenied) {
-      banners.add(
-        _PermissionBanner(
-          key: const Key('banner_post_notifications'),
-          icon: Icons.notifications_off_outlined,
-          color: Colors.red.shade100,
-          title: l.permissionBannerNotificationsTitle,
-          description: l.permissionBannerNotificationsDescription,
-          actionLabel:
-              state.postNotifications ==
-                  DomainPermissionStatus.permanentlyDenied
-              ? l.permissionBannerActionOpenSettings
-              : l.permissionBannerActionAllow,
-          onAction:
-              state.postNotifications ==
-                  DomainPermissionStatus.permanentlyDenied
-              ? () => notifier.openSettings()
-              : () => notifier.requestNotification(),
-        ),
-      );
-    }
-
-    if (state.scheduleExactAlarm == DomainPermissionStatus.denied ||
-        state.scheduleExactAlarm == DomainPermissionStatus.permanentlyDenied) {
-      banners.add(
-        _PermissionBanner(
-          key: const Key('banner_exact_alarm'),
-          icon: Icons.alarm_off_outlined,
-          color: Colors.orange.shade100,
-          title: l.permissionBannerExactAlarmTitle,
-          description: l.permissionBannerExactAlarmDescription,
-          actionLabel:
-              state.scheduleExactAlarm ==
-                  DomainPermissionStatus.permanentlyDenied
-              ? l.permissionBannerActionOpenSettings
-              : l.permissionBannerActionAllow,
-          onAction:
-              state.scheduleExactAlarm ==
-                  DomainPermissionStatus.permanentlyDenied
-              ? () => notifier.openSettings()
-              : () => notifier.requestScheduleExactAlarm(),
-        ),
-      );
-    }
-
-    if (state.fullScreenIntent == DomainPermissionStatus.denied ||
-        state.fullScreenIntent == DomainPermissionStatus.permanentlyDenied) {
-      banners.add(
-        _PermissionBanner(
-          key: const Key('banner_full_screen_intent'),
-          icon: Icons.lock_outline,
-          color: Colors.amber.shade100,
-          title: l.permissionBannerFullScreenIntentTitle,
-          description: l.permissionBannerFullScreenIntentDescription,
-          actionLabel: l.permissionBannerActionOpenSettings,
-          onAction: () => notifier.openFullScreenIntentSettings(),
-        ),
-      );
-    }
-
-    if (banners.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        for (final banner in banners) ...<Widget>[
-          banner,
-          const SizedBox(height: 8),
-        ],
-      ],
-    );
-  }
-}
-
-class _PermissionBanner extends StatelessWidget {
-  const _PermissionBanner({
-    required super.key,
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.description,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String description;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: <Widget>[
-            Icon(icon),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(description),
-                ],
-              ),
-            ),
-            TextButton(onPressed: onAction, child: Text(actionLabel)),
-          ],
-        ),
-      ),
-    );
-  }
-}

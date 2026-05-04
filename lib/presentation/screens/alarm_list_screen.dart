@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_collection_notifier.dart';
+import '../../application/permission_notifier.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/alarm_repeat.dart';
 import '../../domain/alarm/day_of_week.dart';
 import '../../domain/alarm/time_of_day_value.dart';
 import '../../l10n/app_localizations.dart';
+import '../widgets/permission_banners.dart';
 
 /// Phase 9.5 のアラーム一覧画面。`AlarmCollectionNotifier` から
 /// 全アラームを読み出してカード表示する。
@@ -24,13 +26,51 @@ import '../../l10n/app_localizations.dart';
 /// - 件数上限 (50 件) チェックは `AlarmCollectionNotifier.create` 側で
 ///   例外送出。一覧画面では FAB を常時有効にし、edit screen 側の
 ///   保存時にハンドリングする (本 commit 範囲外、別タスク)。
-class AlarmListScreen extends ConsumerWidget {
+///
+/// Phase 9.5 follow-up (2026-05-04): TimerListScreen 同様に
+/// `permissionNotifierProvider.refresh()` を initState の microtask と
+/// `didChangeAppLifecycleState(resumed)` で呼ぶ。これがないと state が
+/// `unknown` のままで `_scheduleAt` の `useExact` が false になり、
+/// `inexactAllowWhileIdle` schedule で発火が大幅遅延する (実機検証で
+/// 1 分後の発火が起きなかった件の主因)。同時に [PermissionBanners] を
+/// 表示し、権限不足の状態をユーザが画面上で気付けるようにする。
+class AlarmListScreen extends ConsumerStatefulWidget {
   const AlarmListScreen({super.key});
 
   static const String routeLocation = '/alarms';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlarmListScreen> createState() => _AlarmListScreenState();
+}
+
+class _AlarmListScreenState extends ConsumerState<AlarmListScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    Future<void>.microtask(
+      () => ref.read(permissionNotifierProvider.notifier).refresh(),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // ユーザが OS 設定から戻ってきた時 (resumed) に再評価して banner /
+    // exact alarm decision を最新に保つ。TimerListScreen と同じ流儀。
+    if (state == AppLifecycleState.resumed) {
+      ref.read(permissionNotifierProvider.notifier).refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final AppLocalizations l = AppLocalizations.of(context);
     final List<AlarmEntity> alarms = ref.watch(alarmCollectionNotifierProvider);
     // 表示順は時刻昇順 → 同時刻なら createdAt 昇順で安定化。
@@ -46,30 +86,40 @@ class AlarmListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.alarmListAppBarTitle)),
-      body: sorted.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(
-                  l.alarmListEmptyHint,
-                  key: const Key('alarm_list_empty_hint'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            )
-          : ListView.separated(
-              // Bottom padding keeps the last card clear of the FAB.
-              // PresetManageScreen と同じ理屈: 56+16 ≒ 72dp の FAB 領域に
-              // tap target が被らないよう余裕を取る。
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              itemCount: sorted.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (BuildContext context, int index) {
-                final AlarmEntity entity = sorted[index];
-                return _AlarmCard(entity: entity);
-              },
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const PermissionBanners(),
+            Expanded(
+              child: sorted.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          l.alarmListEmptyHint,
+                          key: const Key('alarm_list_empty_hint'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      // PresetManageScreen と同じ理屈: 56+16 ≒ 72dp の
+                      // FAB 領域に tap target が被らないよう余裕を取る。
+                      padding: const EdgeInsets.only(bottom: 96),
+                      itemCount: sorted.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (BuildContext context, int index) {
+                        final AlarmEntity entity = sorted[index];
+                        return _AlarmCard(entity: entity);
+                      },
+                    ),
             ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         key: const Key('alarm_list_add_fab'),
         tooltip: l.alarmListAddFab,
