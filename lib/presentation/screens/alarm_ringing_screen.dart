@@ -284,7 +284,13 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                           }
                         }
                         if (!context.mounted) return;
-                        _leaveAlarmScreen(context);
+                        // 重要: ringingNotifier.stop() で state.currentSource
+                        // が null にリセットされた **後** に _leaveAlarmScreen
+                        // が走るため、内部で ref.read しても source 判別不能。
+                        // build 時にクロージャ済みの activeSource を引数で
+                        // 渡して fallback 行き先を決める (2026-05-04 シナリオ
+                        // 4 再検証で発覚)。
+                        _leaveAlarmScreen(context, source: activeSource);
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -384,7 +390,8 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     await ref.read(alarmRingingNotifierProvider.notifier).stop();
     collection.snooze(ringing.id, minutes);
     if (!context.mounted) return;
-    _leaveAlarmScreen(context);
+    // _onSnoozeTap は timer 由来固定 (alarm は _onAlarmSnoozeTap)。
+    _leaveAlarmScreen(context, source: AlarmSource.timer);
   }
 
   /// Phase 9.5: alarm 由来のスヌーズハンドラ。
@@ -407,7 +414,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       // no-op
     }
     if (!context.mounted) return;
-    _leaveAlarmScreen(context);
+    _leaveAlarmScreen(context, source: AlarmSource.alarm);
   }
 
   /// Leaves the alarm screen back to wherever the user came from.
@@ -421,12 +428,19 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// Cold-launch from a dead-process notification tap starts directly
   /// on `/alarm-ringing` as the initial location, so canPop is false
   /// there. Phase 9.5 follow-up (2026-05-04): payload 種別で fallback
-  /// 行き先を切り替える。alarm 由来なら `/alarms` (一覧)、それ以外 (timer
-  /// 由来 / payload なし) なら `/timer` に飛ばす。fallback では `go` を
-  /// 使うため back-stack はリセットされる。Android 戻るキーで Home に
-  /// 戻れない件は、Native 側の launchMode / taskAffinity の調整が必要に
-  /// なるので別 follow-up で対応 (本 commit のスコープ外)。
-  void _leaveAlarmScreen(BuildContext context) {
+  /// 行き先を切り替える。[source] = alarm なら `/alarms` (一覧)、
+  /// それ以外 (timer 由来 / source 不明) なら `/timer` に飛ばす。
+  /// fallback では `go` を使うため back-stack はリセットされる。
+  ///
+  /// 注意: `ringingNotifier.stop()` を呼んだ後だと
+  /// `alarmRingingNotifierProvider.currentSource` は null にリセット
+  /// 済なので、呼び出し側が build 時にクロージャした値を [source] で
+  /// 引き渡すこと。`ref.read` で取り直すと判別不能になる
+  /// (2026-05-04 シナリオ 4 再検証で発覚)。
+  ///
+  /// Android 戻るキーで Home に戻れない件は、Native 側の launchMode /
+  /// taskAffinity の調整が必要になるので別 follow-up (F-4) で対応。
+  void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});
@@ -434,10 +448,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       context.pop();
       return;
     }
-    final AlarmSource? activeSource = ref
-        .read(alarmRingingNotifierProvider)
-        .currentSource;
-    if (activeSource == AlarmSource.alarm) {
+    if (source == AlarmSource.alarm) {
       context.go('/alarms');
     } else {
       context.go('/timer');
