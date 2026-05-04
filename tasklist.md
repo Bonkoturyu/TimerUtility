@@ -26,9 +26,9 @@ Phase 10 (端末再起動後の復元) に着手予定。
 
 ## Follow-up タスク (Phase 9.5 派生)
 
-### F-4. cold-start FSI 後の戻るキーでアプリ終了 + Recent 二重起動 (実機検証待ち)
+### F-4. cold-start FSI 後の戻るキーでアプリ終了 + Recent 二重起動 ✅ 完了
 
-#### F-4 修正内容 (B + C 案併用、2026-05-04 実装完了)
+#### F-4 修正内容 (B + C 案併用、2026-05-04)
 
 実機検証 (Pixel 6a / Android 16、2026-05-04) シナリオ 4 で観測した
 2 種類の症状 (戻るキー押下でアプリ終了 / Recent に task 2 つ並ぶ) に
@@ -47,13 +47,18 @@ Native 側 + Flutter 側の両面で対処:
   `context.go('/alarms' or '/timer')` 1 段スタックから、`router.go('/')` →
   `router.push(dest)` の Home → list の 2 段スタックに変更。これで
   list 画面で戻るキーを押すと Home → アプリ終了の順に正しく辿れる。
+- **回帰テスト**: [`alarm_ringing_screen_test.dart`](test/presentation/screens/alarm_ringing_screen_test.dart)
+  に「cold-start: Stop rebuilds Home → list 2-stack so back returns to home」
+  テスト 1 件追加。`initialLocation = '/alarm-ringing'` の cold-start 状態で
+  起動 → Stop → `GoRouter.pop()` で home-stub に戻れることを検証 (PR #13
+  Copilot review 反映)。
 
-#### F-4 実機検証 (要ユーザ実施、Pixel 6a / Android 16)
+#### F-4 実機検証 (Pixel 6a / Android 16、2026-05-04 完了)
 
-- [ ] シナリオ 4 再現確認: cold-start FSI → AlarmRingingScreen → 停止 →
-      list 表示 → 戻るキー → **Home に戻ること** (アプリ終了しない)
-- [ ] Recent (□) 表示が 1 task のみ (2 つ並ばない)
-- [ ] 副作用なし確認:
+- [x] シナリオ 4 再現確認: cold-start FSI → AlarmRingingScreen → 停止 →
+      list 表示 → 戻るキー → **Home に戻る** (アプリ終了しない)
+- [x] Recent (□) 表示が 1 task のみ (2 つ並ばない)
+- [x] 副作用なし確認:
   - 通常起動 (ランチャー) → 動作不変
   - warm-launch FSI (アプリ前面/背景) → 既存フロー通り
   - lock-screen FSI → keyguard override が引き続き効く
