@@ -438,8 +438,14 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// 引き渡すこと。`ref.read` で取り直すと判別不能になる
   /// (2026-05-04 シナリオ 4 再検証で発覚)。
   ///
-  /// Android 戻るキーで Home に戻れない件は、Native 側の launchMode /
-  /// taskAffinity の調整が必要になるので別 follow-up (F-4) で対応。
+  /// F-4 対応: cold-start FSI 経由で起動した場合の戻るキー UX を改善。
+  /// 旧実装は `context.go('/alarms')` などで list 画面に直行していたため、
+  /// 戻るキーを押すとアプリが終了してしまった (back-stack に Home が無い)。
+  /// 新実装は `context.go('/')` で Home に置換した後、同期で list を
+  /// `push` して Home → list の 2 段スタックを再構築する。これで戻るキー
+  /// 押下時は list → Home → アプリ終了の順に正しく辿れる。
+  /// Native 側の `launchMode="singleTask"` + `taskAffinity` 削除と組み合わせ、
+  /// Recent 二重 task 問題と戻るキー終了問題の両方をカバーする。
   void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
@@ -455,10 +461,9 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       context.pop();
       return;
     }
-    if (source == AlarmSource.alarm) {
-      context.go('/alarms');
-    } else {
-      context.go('/timer');
-    }
+    final String dest = source == AlarmSource.alarm ? '/alarms' : '/timer';
+    final GoRouter router = GoRouter.of(context);
+    router.go('/');
+    router.push(dest);
   }
 }
