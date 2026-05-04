@@ -10,6 +10,7 @@ import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
+import '../../domain/timer/notification_id_generator.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../l10n/app_localizations.dart';
@@ -163,8 +164,20 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
             ? null
             : AlarmSoundCatalog.findById(entity!.soundId!)) ??
         AlarmSoundCatalog.defaultSound;
-    // payload で渡された id を sourceId として保持。
-    final int notificationId = entity?.notificationId ?? -1;
+    // cold-start + FSI 経路では `AlarmCollectionNotifier._loadFromRepository`
+    // の microtask が `addPostFrameCallback` より遅れることがあり、entity が
+    // 取れないケースがある。その場合に `-1` を渡すと `cancel(-1)` が no-op
+    // になって OS 通知音が止まらず audioplayers と重なる二重音が発生する
+    // (実機検証 2026-05-04 シナリオ 4 で観測)。
+    //
+    // `NotificationIdGenerator.idFor(alarmId)` は deterministic
+    // (`alarmId.hashCode & 0x7FFFFFFF`) なので、entity が無くても同じ id を
+    // 再計算できる。`AlarmCollectionNotifier.create` でも
+    // `NotificationIdGenerator().idFor(id)` で発番しているため、永続化済の
+    // notificationId と必ず一致する。
+    final int notificationId =
+        entity?.notificationId ??
+        const NotificationIdGenerator().idFor(alarmId);
     ref
         .read(alarmRingingNotifierProvider.notifier)
         .start(
@@ -403,16 +416,29 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// pushed onto `[home, /timer]` (in-app ringing or warm-launch from
   /// notification tap with the new push semantics), pop returns to
   /// `[home, /timer]` and the user can back-navigate to home as
-  /// expected. Cold-launch from a dead-process notification tap starts
-  /// directly on `/alarm-ringing` as the initial location, so canPop
-  /// is false there — fall back to a top-level `go('/timer')` so the
-  /// user lands on the list view rather than being stuck.
+  /// expected.
+  ///
+  /// Cold-launch from a dead-process notification tap starts directly
+  /// on `/alarm-ringing` as the initial location, so canPop is false
+  /// there. Phase 9.5 follow-up (2026-05-04): payload 種別で fallback
+  /// 行き先を切り替える。alarm 由来なら `/alarms` (一覧)、それ以外 (timer
+  /// 由来 / payload なし) なら `/timer` に飛ばす。fallback では `go` を
+  /// 使うため back-stack はリセットされる。Android 戻るキーで Home に
+  /// 戻れない件は、Native 側の launchMode / taskAffinity の調整が必要に
+  /// なるので別 follow-up で対応 (本 commit のスコープ外)。
   void _leaveAlarmScreen(BuildContext context) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});
     if (context.canPop()) {
       context.pop();
+      return;
+    }
+    final AlarmSource? activeSource = ref
+        .read(alarmRingingNotifierProvider)
+        .currentSource;
+    if (activeSource == AlarmSource.alarm) {
+      context.go('/alarms');
     } else {
       context.go('/timer');
     }
