@@ -124,21 +124,23 @@ PR #11 で Action (`auto-request-copilot-review.yml`) が exit 0 success
 
 #### F-2 最終対応 (2026-05-04)
 
-PAT 管理コスト + GraphQL 経路の複雑さに対し、公式 Settings 自動レビュー
-機能の方が運用コストゼロなため後者に切替:
+ユーザ確認の結果、Settings → Copilot → Code review は **PR #7 頃から
+既に有効化済** だったことが判明:
 
-- `.github/workflows/auto-request-copilot-review.yml` を **削除**
-- ユーザ手動作業: GitHub Settings → Copilot → Code review で
-  「Automatic code review」を有効化 (PR open 時に Copilot が自動 reviewer
-  として付く公式機能)
-- 過去 PR #14 等で実際に Copilot review が走っていたのは、自動レビュー
-  機能が裏で部分的に効いていたため (workflow 経由ではなかった可能性高)
+- `Copilot review for default branch` ruleset (3 rules、main を target)
+- `Automated code reviews on push` enabled
+- Free private repo でも動作することを実機で確認
 
-#### F-2 リリース時 caveats
+つまり過去 PR (#7〜#14) で Copilot review が付いていたのは **すべて
+Settings ruleset 経由** であり、workflow は最初から silent fail し
+続けていた (一度も機能していなかった)。workflow
+`.github/workflows/auto-request-copilot-review.yml` は **冗長コード** で
+あり、削除しても機能的リグレッションは発生しない。
 
-- Free private repo の Settings 自動レビューがどこまで動くかは要実機確認。
-  もし無効化されていた場合は、F-2 を再オープンして PAT 化 or GraphQL
-  経路への書き換えを再検討
+最終対応:
+
+- `.github/workflows/auto-request-copilot-review.yml` を削除
+- 追加の Settings 操作は不要 (既に有効)
 
 ---
 
