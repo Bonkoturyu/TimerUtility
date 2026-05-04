@@ -444,6 +444,13 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
         .catchError((_) {});
+    // FullScreenIntent 経由で起動された Activity が `setShowWhenLocked(true)`
+    // を立てている間、Android が暗黙に system bar を hidden 扱いする
+    // ことがある。ホーム画面に戻った後も時計・バッテリー・電波表示が
+    // 消えたままになる事象が観測された (実機検証 2026-05-04
+    // シナリオ 4)。`edgeToEdge` で system overlay (status / nav bar) の
+    // 表示を明示的に復元する。
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     if (context.canPop()) {
       context.pop();
       return;
