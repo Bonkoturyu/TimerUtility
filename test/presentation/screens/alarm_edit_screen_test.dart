@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/application/alarm_collection_notifier.dart';
 import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
@@ -292,31 +293,36 @@ void main() {
       expect(repo.store.values.first.enabled, isFalse);
     });
 
-    testWidgets('50 件 seed 状態で新規保存すると上限 SnackBar が出て画面に留まる', (
+    testWidgets('上限到達状態で新規保存すると上限 SnackBar が出て画面に留まる', (
       WidgetTester tester,
     ) async {
       // F-1: MaxAlarmCountExceededException を AlarmEditScreen が
       // catch して SnackBar 通知 + 画面 pop しないことの回帰テスト。
-      // 50 件は AlarmCollectionNotifier.maxSize 固定値。
+      //
+      // PR #12 review 反映:
+      // - 上限件数は AlarmCollectionNotifier.maxSize を参照 (将来変更耐性)
+      // - seed alarm は enabled: false (テスト目的と無関係な
+      //   _loadFromRepository 内 schedule 副作用を回避)
+      const int limit = AlarmCollectionNotifier.maxSize;
       final repo = _InMemoryAlarmRepo();
-      for (int i = 0; i < 50; i++) {
-        final AlarmEntity a = _seed(id: 'seed-$i');
+      for (int i = 0; i < limit; i++) {
+        final AlarmEntity a = _seed(id: 'seed-$i', enabled: false);
         repo.store[a.id] = a;
       }
       await tester.pumpWidget(_harness(repo: repo));
       await _openEdit(tester);
-      // notifier の load microtask を消化 (50 件 state 反映)
+      // notifier の load microtask を消化 (limit 件 state 反映)
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('alarm_edit_save_button')));
       await tester.pumpAndSettle();
 
-      // ja ARB: "上限 {count} 件に達しています" → 50 で展開
-      expect(find.text('上限 50 件に達しています'), findsOneWidget);
+      // ja ARB: "上限 {count} 件に達しています" → maxSize で展開
+      expect(find.text('上限 $limit 件に達しています'), findsOneWidget);
       // 画面に留まっている (AppBar タイトルが新規モードのまま)
       expect(find.text('アラームを追加'), findsOneWidget);
-      // repo は 50 件のまま (新規追加されていない)
-      expect(repo.store.length, 50);
+      // repo は limit 件のまま (新規追加されていない)
+      expect(repo.store.length, limit);
     });
   });
 

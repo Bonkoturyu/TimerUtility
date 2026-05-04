@@ -35,7 +35,7 @@
   "timerListAppBarTitle": "Timers",
   "timerListAddFab": "Add Timer",
   "timerListEmptyHint": "No timers yet.\nTap “Add Timer” at the bottom-right to create one.",
-  "timerListLimitReached": "{count, plural, =1{Limit reached: 1 timer} other{Limit reached: {count} timers}}",
+  "timerListLimitReached": "{count, plural, =1{Limit reached: 1 item} other{Limit reached: {count} items}}",
   "@timerListLimitReached": {
     "placeholders": {
       "count": {"type": "int"}
