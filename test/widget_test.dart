@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +23,34 @@ void main() {
     // in both ja and en ARB as the same literal so any host locale works.
     expect(find.text('TimerUtility'), findsAtLeastNWidgets(1));
     expect(find.byKey(const Key('home_open_stopwatch_button')), findsOneWidget);
+  });
+
+  testWidgets('Home shows Alarm button which navigates to /alarms', (
+    WidgetTester tester,
+  ) async {
+    final router = GoRouter(
+      routes: <RouteBase>[
+        GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+        GoRoute(
+          path: '/alarms',
+          builder: (_, _) => const Scaffold(
+            key: Key('alarms_stub'),
+            body: Center(child: Text('alarms-stub')),
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(child: TimerUtilityApp(router: router)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('home_open_alarm_button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('home_open_alarm_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('alarms_stub')), findsOneWidget);
   });
 
   testWidgets('Home AppBar overflow opens the licenses screen', (

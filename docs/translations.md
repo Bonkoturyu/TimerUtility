@@ -10,7 +10,7 @@
 - ICU plural 構文（`{count, plural, ...}`）は `ja` / `en` で形式が異なるので注釈欄に明記する
 - 既存翻訳の文言調整は ARB 側を直し、本書を同じ commit で更新する
 
-最終更新日: 2026-05-02
+最終更新日: 2026-05-04（Phase 9.5: alarmList* / alarmEdit* / alarmDelete* / weekday* を追記）
 
 ---
 
@@ -21,6 +21,7 @@
 | `appTitle` | TimerUtility | TimerUtility | アプリ名（固有名詞） |
 | `homeOpenStopwatch` | ストップウォッチを開く | Open Stopwatch | ホームのナビゲーションボタン |
 | `homeOpenTimer` | タイマーを開く | Open Timer | ホームのナビゲーションボタン |
+| `homeOpenAlarm` | アラームを開く | Open Alarms | ホームのナビゲーションボタン |
 
 ## ストップウォッチ
 
@@ -70,7 +71,7 @@
 | `timerStatusCompleted` | 完了 | completed | カード右上 Chip |
 | `timerStatusCancelled` | 取消 | cancelled | カード右上 Chip |
 
-## アラーム画面
+## アラーム鳴動画面
 
 | key | ja | en | 用途 |
 | --- | --- | --- | --- |
@@ -81,6 +82,62 @@
 | `alarmSnoozePickerTitle` | スヌーズ時間を選択 | Choose snooze duration | bottom sheet タイトル |
 | `alarmSnoozeMinutes` | {minutes} 分 | {minutes, plural, =1{1 minute} other{{minutes} minutes}} | bottom sheet オプション（ja は固定形式） |
 | `alarmSnoozeCancel` | キャンセル | Cancel | bottom sheet ボタン |
+
+## アラーム一覧画面（Phase 9.5）
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `alarmListAppBarTitle` | アラーム | Alarms | AppBar |
+| `alarmListAddFab` | アラームを追加 | Add Alarm | FloatingActionButton |
+| `alarmListEmptyHint` | アラームがありません。\n右下の「アラームを追加」から追加できます。 | No alarms yet.\nTap "Add Alarm" at the bottom-right to create one. | 空表示ヒント |
+| `alarmListRepeatEveryday` | 毎日 | Every day | 全曜日選択時のサブタイトル省略表示 |
+
+## アラーム編集画面（Phase 9.5）
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `alarmEditTitleNew` | アラームを追加 | Add alarm | AppBar (新規モード) |
+| `alarmEditTitleEdit` | アラームを編集 | Edit alarm | AppBar (編集モード) |
+| `alarmEditEnabledLabel` | 有効 | Enabled | AppBar 右の Switch ラベル |
+| `alarmEditTimeLabel` | 時刻 | Time | セクション見出し |
+| `alarmEditRepeatLabel` | 繰り返し | Repeat | セクション見出し |
+| `alarmEditRepeatOnce` | 単発 | Once | SegmentedButton ラベル |
+| `alarmEditRepeatWeekly` | 曜日指定 | Weekly | SegmentedButton ラベル |
+| `alarmEditWeekdaysLabel` | 鳴らす曜日 | Days | セクション見出し |
+| `alarmEditLabelHint` | ラベル（任意） | Label (optional) | TextField placeholder |
+| `alarmEditSoundLabel` | 音源 | Sound | セクション見出し |
+| `alarmEditSnoozeLabel` | スヌーズ | Snooze | セクション見出し |
+| `alarmEditSnoozeMinutes` | {count}分 | {count, plural, =1{1 minute} other{{count} minutes}} | SegmentedButton (5/10/15) |
+| `alarmEditCancel` | キャンセル | Cancel | アクション |
+| `alarmEditSave` | 保存 | Save | AppBar 保存ボタン tooltip |
+| `alarmEditDelete` | 削除 | Delete | AppBar 削除ボタン tooltip |
+| `alarmEditValidationWeekdaysEmpty` | 曜日を1つ以上選択してください | Select at least one day | 保存時バリデーション SnackBar |
+| `alarmEditLoading` | アラームを読み込み中… | Loading alarm… | 編集モード初期化中の placeholder |
+| `alarmEditNotFound` | 対象のアラームが見つかりませんでした | The alarm could not be found | 編集対象未発見時の SnackBar |
+
+## アラーム削除確認ダイアログ（Phase 9.5）
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `alarmDeleteConfirmTitle` | このアラームを削除しますか？ | Delete this alarm? | dialog タイトル |
+| `alarmDeleteConfirmDontAsk` | 次から確認しない | Don't ask again | チェックボックスラベル |
+| `alarmDeleteConfirmCancel` | キャンセル | Cancel | dialog アクション |
+| `alarmDeleteConfirmDelete` | 削除 | Delete | dialog 削除アクション |
+
+## 曜日略称
+
+`WeekdaySelector` (Phase 9.5) で各 `FilterChip` のラベルとして使用。一覧画面の繰り返し
+サブタイトルでも結合表示で再利用する。
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `weekdayMon` | 月 | Mon | 月曜 |
+| `weekdayTue` | 火 | Tue | 火曜 |
+| `weekdayWed` | 水 | Wed | 水曜 |
+| `weekdayThu` | 木 | Thu | 木曜 |
+| `weekdayFri` | 金 | Fri | 金曜 |
+| `weekdaySat` | 土 | Sat | 土曜 |
+| `weekdaySun` | 日 | Sun | 日曜 |
 
 ## DurationPicker
 
