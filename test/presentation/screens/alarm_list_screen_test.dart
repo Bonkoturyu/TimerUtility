@@ -209,6 +209,8 @@ void main() {
   });
 
   testWidgets('永続化済アラームをカード表示する (時刻昇順)', (WidgetTester tester) async {
+    // 永続化順 (id 採番順) は a-1 → a-2 だが、表示は時刻昇順なので
+    // 07:00 (a-2) が上、09:30 (a-1) が下になる。
     final repo = _InMemoryAlarmRepo(<AlarmEntity>[
       _seed(
         id: 'a-1',
@@ -226,6 +228,17 @@ void main() {
     expect(find.byKey(const Key('alarm_card_a-2')), findsOneWidget);
     expect(find.text('07:00'), findsOneWidget);
     expect(find.text('09:30'), findsOneWidget);
+
+    // ソート結果の順序検証 (PR #11 review (Copilot) 反映)。Y 座標が
+    // 小さい (= 画面上方) カードが昇順で先に来ることを確認することで、
+    // 永続化順そのままだと壊れるソートロジックを回帰検出できる。
+    final double y07 = tester
+        .getTopLeft(find.byKey(const Key('alarm_card_a-2')))
+        .dy;
+    final double y0930 = tester
+        .getTopLeft(find.byKey(const Key('alarm_card_a-1')))
+        .dy;
+    expect(y07, lessThan(y0930), reason: '07:00 (a-2) が 09:30 (a-1) より上に来るべき');
   });
 
   testWidgets(

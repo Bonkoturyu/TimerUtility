@@ -89,7 +89,7 @@
 | --- | --- | --- | --- |
 | `alarmListAppBarTitle` | アラーム | Alarms | AppBar |
 | `alarmListAddFab` | アラームを追加 | Add Alarm | FloatingActionButton |
-| `alarmListEmptyHint` | アラームがありません。\n右下の「アラームを追加」から追加できます。 | No alarms yet.\nTap "Add Alarm" at the bottom-right to create one. | 空表示ヒント |
+| `alarmListEmptyHint` | アラームがありません。\n右下の「アラームを追加」から追加できます。 | No alarms yet.\nTap “Add Alarm” at the bottom-right to create one. | 空表示ヒント |
 | `alarmListRepeatEveryday` | 毎日 | Every day | 全曜日選択時のサブタイトル省略表示 |
 
 ## アラーム編集画面（Phase 9.5）

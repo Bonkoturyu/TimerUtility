@@ -169,6 +169,10 @@ class _AlarmCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       _formatSubtitle(l, entity),
+                      // 長いラベルでカードの高さが膨らむのを防ぐため
+                      // 1 行省略表示。PR #11 review (gemini) 反映。
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: subtitleColor,
                       ),
@@ -216,8 +220,11 @@ class _AlarmCard extends ConsumerWidget {
   }
 
   String _formatWeekdays(AppLocalizations l, Set<DayOfWeek> days) {
-    final List<DayOfWeek> sorted = days.toList()
-      ..sort((DayOfWeek a, DayOfWeek b) => a.weekday.compareTo(b.weekday));
+    // `DayOfWeek.values` は月→日の定義順。`where` で残せば即定義順の
+    // List になり、別途 sort が不要 (PR #11 review (gemini) 反映)。
+    final List<DayOfWeek> sorted = DayOfWeek.values
+        .where(days.contains)
+        .toList();
     final Map<DayOfWeek, String> labels = <DayOfWeek, String>{
       DayOfWeek.monday: l.weekdayMon,
       DayOfWeek.tuesday: l.weekdayTue,
