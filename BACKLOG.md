@@ -373,7 +373,7 @@ Timer Aggregate とは別 Aggregate として実装する。
   - `Clock` 注入、副作用なし
   - 曜日跨ぎ、日付跨ぎ、夏時間相当のエッジケースをカバー
 - [x] `domain/alarm/exceptions.dart`（`AlarmNotFoundException` / `MaxAlarmCountExceededException` / `InvalidAlarmRepeatException` / `InvalidSnoozeMinutesException`）
-- [x] `domain/ports/alarm_repository.dart`（`add` / `update` / `delete` / `findById` / `findAll`）
+- [x] `domain/ports/alarm_repository.dart`（`upsert` / `delete` / `findById` / `findAll`）
 
 ### Infrastructure 層
 

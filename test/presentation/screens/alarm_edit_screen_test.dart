@@ -354,5 +354,32 @@ void main() {
       expect(find.byKey(const Key('alarm_delete_confirm')), findsNothing);
       expect(repo.store.containsKey('skip-confirm'), isFalse);
     });
+
+    testWidgets('stale id (load 完了後も対象なし) で SnackBar を出して画面を閉じる', (
+      WidgetTester tester,
+    ) async {
+      // PR #11 review (Copilot) 反映: deep link 等で存在しない id を
+      // 踏んだ際にローディング表示が永続する問題の回帰テスト。
+      // repo は最初から空 → load microtask 完了で state は空のまま →
+      // listen の prev != null で stale id 確定 → SnackBar + pop。
+      //
+      // 注: AlarmCollectionNotifier._loadFromRepository は state が
+      // 空のまま return するため (persisted が空ならそもそも更新しない)、
+      // 純粋な空 repo では listen 第二発火が起きない。テストでは
+      // 「他の alarm を持つ repo + 異なる alarmId」を渡して、load 完了
+      // → state populated → 対象外 id で listen 発火する経路を取る。
+      final AlarmEntity other = _seed(id: 'a-other');
+      final repo = _InMemoryAlarmRepo()..store[other.id] = other;
+      await tester.pumpWidget(_harness(alarmId: 'missing', repo: repo));
+      await _openEdit(tester);
+      // load microtask + listen 発火 + postFrameCallback 消化を待つ
+      await tester.pumpAndSettle();
+
+      // SnackBar が出ている (alarmEditNotFound キー: 「対象のアラームが
+      // 見つかりませんでした」)
+      expect(find.text('対象のアラームが見つかりませんでした'), findsOneWidget);
+      // 画面が閉じた = list-stub の open ボタンに戻っている
+      expect(find.byKey(const Key('open_edit')), findsOneWidget);
+    });
   });
 }
