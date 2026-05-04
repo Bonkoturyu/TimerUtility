@@ -94,41 +94,6 @@ Phase 10 (端末再起動後の復元) に着手予定。
 - alarm_list_screen_test.dart に banner 表示 / 非表示の Widget Test
   2 件追加 (denied 状態 + 全 granted 状態)
 
-### F-1. AlarmEditScreen に MaxAlarmCountExceededException ハンドリング追加
-
-優先度: 中 (実用影響は極小、保守性向上目的)
-所要: ~30 分 (実装 ~10 行 + Widget Test ~30 行)
-着手タイミング: 実機検証 4 シナリオ完了後、Phase 10 着手前
-
-#### F-1 現状の問題
-
-[`lib/presentation/screens/alarm_edit_screen.dart`](lib/presentation/screens/alarm_edit_screen.dart)
-L133-181 の `_onSave` メソッドで `await notifier.create(...)` (L170-177) /
-`await notifier.update(...)` (L159-168) どちらも try/catch なし。
-50 件のアラームが既存 + 新規追加で
-[`alarm_collection_notifier.dart`](lib/application/alarm_collection_notifier.dart)
-L94-96 が `MaxAlarmCountExceededException(50)` を throw → uncaught Future error
-で SnackBar / dialog 出ず、ユーザは「保存ボタンが効かない」状態に陥る。
-
-#### F-1 修正方針
-
-[`preset_manage_screen.dart`](lib/presentation/screens/preset_manage_screen.dart)
-L96-117 の analogue (try/catch + SnackBar、事前チェックなし) で揃える:
-
-1. `_onSave` の create / update を `try { ... } on MaxAlarmCountExceededException
-   catch (e) { ... }` で包む
-2. catch 内で `ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:
-   Text(l.timerListLimitReached(e.maxSize))))` (既存 ARB キー流用、
-   `timerListLimitReached` は plural 対応 + 件数指定可)
-3. エラー時は `context.pop()` しない (画面に留まって編集継続できるよう)
-4. Widget Test 1 件追加: in-memory repo で 50 件 seed → create 試行 →
-   SnackBar 表示確認
-
-事前チェック (TimerListScreen の `current.isFull` パターン) は不要:
-
-- 50 件溜めるユーザは事実上ゼロ
-- AlarmEditScreen は編集モードでも経由するため、フロー前段でのチェックが冗長
-
 ### F-2. auto-request-copilot-review.yml の silent fail 検出強化
 
 優先度: 低 (手動で `gh pr edit N --add-reviewer @copilot` 実行で復旧可能)
