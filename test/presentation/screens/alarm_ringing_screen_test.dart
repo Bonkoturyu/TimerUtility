@@ -265,6 +265,41 @@ void main() {
       expect(find.byType(AlarmRingingScreen), findsNothing);
     });
 
+    testWidgets(
+      'cold-start: Stop rebuilds Home → list 2-stack so back returns to home (F-4)',
+      (WidgetTester tester) async {
+        // F-4 cold-start fallback の回帰テスト。
+        // initialLocation = '/alarm-ringing' (cold-start FSI 経路を再現、
+        // canPop は false) で起動 → Stop → _leaveAlarmScreen が
+        // router.go('/') → router.push('/timer') で 2 段スタックを再構築。
+        // その後 GoRouter.pop() を呼ぶと list ('/timer') が剥がれて Home
+        // ('/') が表に出ることを確認することで、戻るキー → Home →
+        // アプリ終了の正しい動線を検証する。
+        final player = _StubAlarmSoundPlayer();
+        final TimerEntity seeded = _seedRinging();
+        await tester.pumpWidget(_harness(player, seedRinging: seeded));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
+
+        await tester.tap(find.byKey(const Key('alarm_stop_button')));
+        await tester.pumpAndSettle();
+
+        // 1) Stop 直後の最前面は list (timer-stub)
+        expect(find.text('timer-stub'), findsOneWidget);
+        expect(find.text('home-stub'), findsNothing);
+
+        // 2) GoRouter.pop() で 1 段戻る (= Android 戻るキー相当)。
+        //    旧実装 (1 段スタック) なら pop しても何も起きないが、新実装は
+        //    Home → list の 2 段なので Home が出るはず。
+        final BuildContext ctx = tester.element(find.text('timer-stub'));
+        GoRouter.of(ctx).pop();
+        await tester.pumpAndSettle();
+
+        expect(find.text('home-stub'), findsOneWidget);
+        expect(find.text('timer-stub'), findsNothing);
+      },
+    );
+
     testWidgets('Snooze button opens 3/5/10-minute chooser sheet', (
       WidgetTester tester,
     ) async {
