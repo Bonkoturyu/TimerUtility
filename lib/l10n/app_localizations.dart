@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'タイマーを開く'**
   String get homeOpenTimer;
 
+  /// No description provided for @homeOpenAlarm.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを開く'**
+  String get homeOpenAlarm;
+
   /// No description provided for @stopwatchAppBarTitle.
   ///
   /// In ja, this message translates to:
@@ -277,6 +283,30 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'取消'**
   String get timerStatusCancelled;
+
+  /// No description provided for @alarmListAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラーム'**
+  String get alarmListAppBarTitle;
+
+  /// No description provided for @alarmListAddFab.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームを追加'**
+  String get alarmListAddFab;
+
+  /// No description provided for @alarmListEmptyHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラームがありません。\n右下の「アラームを追加」から追加できます。'**
+  String get alarmListEmptyHint;
+
+  /// No description provided for @alarmListRepeatEveryday.
+  ///
+  /// In ja, this message translates to:
+  /// **'毎日'**
+  String get alarmListRepeatEveryday;
 
   /// No description provided for @alarmAppBarTitle.
   ///

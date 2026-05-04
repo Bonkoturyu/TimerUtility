@@ -143,6 +143,13 @@ Widget _harness(
         builder: (BuildContext context, GoRouterState state) =>
             const Scaffold(body: Text('timer-stub')),
       ),
+      // Phase 9.5 follow-up: alarm 由来の Stop 後 fallback は `/alarms`
+      // に飛ぶようになったため、stub を追加。
+      GoRoute(
+        path: '/alarms',
+        builder: (BuildContext context, GoRouterState state) =>
+            const Scaffold(body: Text('alarms-stub')),
+      ),
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
@@ -226,8 +233,9 @@ void main() {
 
         expect(player.stopCalls, greaterThanOrEqualTo(1));
         // onFiredStop が走っているなら state の alarm は enabled=false に
-        // 落ちている。/timer-stub に戻ったコンテキストから provider を覗く。
-        final BuildContext context = tester.element(find.text('timer-stub'));
+        // 落ちている。alarm 由来の cold-start fallback は `/alarms` に
+        // 飛ぶようになったので、alarms-stub を起点にして provider を読む。
+        final BuildContext context = tester.element(find.text('alarms-stub'));
         final container = ProviderScope.containerOf(context);
         final List<AlarmEntity> alarms = container.read(
           alarmCollectionNotifierProvider,

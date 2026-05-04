@@ -228,9 +228,29 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
   }
 
   void _scheduleAt({required AlarmEntity alarm, required DateTime fireAt}) {
-    final DomainPermissionStatus exact = ref
+    // 同期 API を維持しつつ、permission state が `unknown` のときは
+    // microtask 内で先に refresh して exact/inexact 判定を確定させてから
+    // schedule する。AlarmListScreen 側の lifecycle hook で先に refresh
+    // が走っていれば即 granted/denied 判定だけで済むが、画面遷移を高速に
+    // やられた場合の race 対策として防御的に二重チェック。
+    //
+    // 経緯: 実機検証 (Pixel 6a / Android 16、2026-05-04) で 1 分後の
+    // alarm が発火しなかった件の根本対応。state が `unknown` のまま
+    // useExact=false → inexactAllowWhileIdle で大幅遅延発火していた。
+    unawaited(_scheduleAtAsync(alarm: alarm, fireAt: fireAt));
+  }
+
+  Future<void> _scheduleAtAsync({
+    required AlarmEntity alarm,
+    required DateTime fireAt,
+  }) async {
+    DomainPermissionStatus exact = ref
         .read(permissionNotifierProvider)
         .scheduleExactAlarm;
+    if (exact == DomainPermissionStatus.unknown) {
+      await ref.read(permissionNotifierProvider.notifier).refresh();
+      exact = ref.read(permissionNotifierProvider).scheduleExactAlarm;
+    }
     final bool useExact =
         exact == DomainPermissionStatus.granted ||
         exact == DomainPermissionStatus.notRequired;
@@ -240,18 +260,16 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     final String title = alarm.label.isEmpty
         ? strings.alarmRingingTitle
         : alarm.label;
-    unawaited(
-      ref
-          .read(notificationSchedulerProvider)
-          .schedule(
-            notificationId: alarm.notificationId,
-            fireAt: fireAt,
-            title: title,
-            body: strings.alarmRingingBody,
-            exact: useExact,
-            payload: 'alarm:${alarm.id}',
-          ),
-    );
+    await ref
+        .read(notificationSchedulerProvider)
+        .schedule(
+          notificationId: alarm.notificationId,
+          fireAt: fireAt,
+          title: title,
+          body: strings.alarmRingingBody,
+          exact: useExact,
+          payload: 'alarm:${alarm.id}',
+        );
   }
 
   void _cancel(int notificationId) {

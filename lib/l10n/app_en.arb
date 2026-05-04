@@ -4,6 +4,7 @@
   "appTitle": "TimerUtility",
   "homeOpenStopwatch": "Open Stopwatch",
   "homeOpenTimer": "Open Timer",
+  "homeOpenAlarm": "Open Alarms",
 
   "stopwatchAppBarTitle": "Stopwatch",
   "stopwatchStart": "Start",
@@ -55,6 +56,11 @@
   "timerStatusRinging": "ringing",
   "timerStatusCompleted": "completed",
   "timerStatusCancelled": "cancelled",
+
+  "alarmListAppBarTitle": "Alarms",
+  "alarmListAddFab": "Add Alarm",
+  "alarmListEmptyHint": "No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.",
+  "alarmListRepeatEveryday": "Every day",
 
   "alarmAppBarTitle": "Alarm",
   "alarmTimesUp": "Time's up!",

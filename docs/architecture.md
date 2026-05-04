@@ -65,7 +65,18 @@ lib/
 │   │   ├── snooze_calculator.dart          # Phase 7 で実装済み
 │   │   ├── timer_collection.dart           # Phase 8 で実装済み（最大 10 本、集約ルート）
 │   │   ├── exceptions.dart                 # Phase 8 で実装済み（MaxTimerCountExceededException 等）
-│   │   └── preset.dart                     # Phase 9 予定
+│   │   ├── preset.dart                     # Phase 9 で実装済み
+│   │   ├── preset_collection.dart          # Phase 9 で実装済み（集約ルート、最大 10 件）
+│   │   ├── preset_service.dart             # Phase 9 で実装済み
+│   │   ├── preset_templates.dart           # Phase 9 で実装済み（3 プロファイル定数）
+│   │   └── preset_exceptions.dart          # Phase 9 で実装済み
+│   ├── alarm/                              # Phase 9.5 で実装済み（指定時刻アラーム、ADR 0005 で Timer と分離）
+│   │   ├── day_of_week.dart                # Pure Dart enum（DateTime.weekday と互換）
+│   │   ├── time_of_day_value.dart          # Pure Dart 版 TimeOfDay（material 非依存）
+│   │   ├── alarm_repeat.dart               # sealed: Once / Weekly(Set<DayOfWeek>)
+│   │   ├── alarm_entity.dart               # freezed Entity
+│   │   ├── alarm_service.dart              # nextFireAt / advanceAfterFire / snoozeUntil
+│   │   └── exceptions.dart                 # AlarmNotFoundException 等
 │   ├── clock/                              # Phase 10.5 予定（世界時計）
 │   │   ├── clock_location.dart
 │   │   ├── clock_collection.dart
@@ -78,7 +89,9 @@ lib/
 │       ├── permission_manager.dart         # Phase 4 で実装済み
 │       ├── alarm_sound_player.dart         # Phase 5 で実装済み
 │       ├── timer_repository.dart           # Phase 8 で実装済み
-│       ├── preset_repository.dart          # Phase 9 予定
+│       ├── preset_repository.dart          # Phase 9 で実装済み
+│       ├── user_preferences.dart           # Phase 9 で実装済み（SharedPreferences 抽象）
+│       ├── alarm_repository.dart           # Phase 9.5 で実装済み
 │       ├── clock_location_repository.dart  # Phase 10.5 予定
 │       └── location_detector.dart          # Phase 10.5 予定（GPS → IANA TZ）
 │
@@ -95,13 +108,18 @@ lib/
 │   │   └── location_detector_adapter.dart           # geolocator + geocoding、失敗時 FlutterTimezone fallback
 │   ├── clock/                                       # Phase 10.5 予定
 │   │   └── timezone_catalog.dart                    # 主要都市プリセット + 国コード → 代表 TZ マップ
+│   ├── preferences/
+│   │   └── shared_preferences_user_preferences.dart # Phase 9 で実装済み
 │   └── database/
-│       ├── app_database.dart                        # Phase 8 で実装済み（@DriftDatabase + Timers テーブル）
+│       ├── app_database.dart                        # Phase 8 で実装済み（Phase 9 で Presets / Phase 9.5 で Alarms テーブル追加）
 │       ├── app_database.g.dart                      # 自動生成
 │       ├── drift_timer_repository.dart              # Phase 8 で実装済み
+│       ├── drift_preset_repository.dart             # Phase 9 で実装済み
+│       ├── drift_alarm_repository.dart              # Phase 9.5 で実装済み
 │       ├── mappers/
-│       │   └── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
-│       ├── drift_preset_repository.dart             # Phase 9 予定
+│       │   ├── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
+│       │   ├── preset_mapper.dart                   # Phase 9 で実装済み
+│       │   └── alarm_mapper.dart                    # Phase 9.5 で実装済み
 │       └── drift_clock_location_repository.dart     # Phase 10.5 予定
 │
 ├── application/                  # Riverpod Providers
@@ -113,8 +131,14 @@ lib/
 │   ├── notification_scheduler_provider.dart  # Phase 4 で実装済み
 │   ├── permission_notifier.dart              # Phase 4 で実装済み
 │   ├── alarm_sound_player_provider.dart      # Phase 5 で実装済み
-│   ├── alarm_ringing_notifier.dart           # Phase 5 で実装済み
-│   ├── preset_notifier.dart                  # Phase 9 予定
+│   ├── alarm_ringing_notifier.dart           # Phase 5 で実装済み（Phase 9.5 で AlarmSource 両用化）
+│   ├── preset_repository_provider.dart       # Phase 9 で実装済み
+│   ├── preset_collection_notifier.dart       # Phase 9 で実装済み
+│   ├── user_preferences_provider.dart        # Phase 9 で実装済み
+│   ├── notification_strings_provider.dart    # Phase 8.5 で実装済み（OS 通知本文の i18n）
+│   ├── alarm_repository_provider.dart        # Phase 9.5 で実装済み
+│   ├── alarm_service_provider.dart           # Phase 9.5 で実装済み
+│   ├── alarm_collection_notifier.dart        # Phase 9.5 で実装済み（最大 50 件、起動時 DB 復元）
 │   ├── clock_collection_notifier.dart        # Phase 10.5 予定
 │   ├── location_detector_provider.dart       # Phase 10.5 予定
 │   └── clock_tick/
@@ -124,13 +148,23 @@ lib/
 │   ├── screens/
 │   │   ├── stopwatch_screen.dart
 │   │   ├── timer_list_screen.dart           # Phase 8 で実装済み（Phase 3 の単一 timer_screen を置換）
-│   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み（Phase 8 で Collection 参照に書き換え）
-│   │   ├── preset_manage_screen.dart        # Phase 9 予定
+│   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み（Phase 8 Collection / Phase 9.5 alarm payload 両用化）
+│   │   ├── preset_manage_screen.dart        # Phase 9 で実装済み
+│   │   ├── alarm_list_screen.dart           # Phase 9.5 で実装済み（指定時刻アラーム一覧、ON/OFF Switch、FAB）
+│   │   ├── alarm_edit_screen.dart           # Phase 9.5 で実装済み（新規 / 編集両用、TimePicker + WeekdaySelector）
+│   │   ├── licenses_screen.dart             # Phase 11 ライセンス画面（先行実装）
 │   │   ├── clock_screen.dart                # Phase 10.5 予定（PageView でデザイン切替）
 │   │   └── clock_location_picker_screen.dart # Phase 10.5 予定
 │   ├── widgets/
 │   │   ├── lap_list.dart
-│   │   ├── duration_picker.dart             # Phase 7 で実装済み
+│   │   ├── duration_picker.dart             # Phase 7 で実装済み（Phase 9 で wheel 部分を再利用可能化）
+│   │   ├── preset_select_sheet.dart         # Phase 9 で実装済み
+│   │   ├── preset_edit_sheet.dart           # Phase 9 で実装済み
+│   │   ├── preset_delete_confirm_dialog.dart # Phase 9 で実装済み
+│   │   ├── preset_label_formatter.dart      # Phase 9 で実装済み
+│   │   ├── sound_select_sheet.dart          # Phase 9 で実装済み
+│   │   ├── alarm_delete_confirm_dialog.dart # Phase 9.5 で実装済み
+│   │   ├── weekday_selector.dart            # Phase 9.5 で実装済み（FilterChip 7 個の multi-select）
 │   │   ├── analog_clock_widget.dart         # Phase 10.5 予定（CustomPainter）
 │   │   ├── digital_clock_widget.dart        # Phase 10.5 予定
 │   │   ├── clock_design_a.dart              # Phase 10.5 予定（PageView 1 ページ目）
