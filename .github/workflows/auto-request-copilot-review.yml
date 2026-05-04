@@ -35,6 +35,37 @@ jobs:
         # `copilot-pull-request-reviewer` (bot login) は 422
         # "not a collaborator" エラー。`@copilot` (lowercase + @ prefix)
         # のみ動作した。
+        #
+        # silent fail 対策 (PR #11 で観測): `gh pr edit ... --add-reviewer @copilot`
+        # が exit 0 で完了しても requested_reviewers が空のまま、というケースが
+        # ある (secrets.GITHUB_TOKEN の権限不足等が疑い)。`gh api` で実際の
+        # requested_reviewers を読み返し、Copilot が含まれていなければ
+        # 明示的に exit 1 でジョブを失敗させ CI status バッジで検知できる
+        # ようにする。
         run: |
-          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-reviewer @copilot \
-            || echo "Failed to add Copilot reviewer; add manually if needed."
+          set -euo pipefail
+
+          if ! gh pr edit "$PR_NUMBER" --repo "$REPO" --add-reviewer @copilot; then
+            echo "::error::gh pr edit failed to add Copilot as reviewer."
+            echo "Manual recovery: gh pr edit $PR_NUMBER --repo $REPO --add-reviewer @copilot"
+            exit 1
+          fi
+
+          # API から実際の requested_reviewers を読み返して silent fail を検出。
+          # PR #9 検証で response 形式は `{users: [...], teams: [...]}` と確認済
+          # (bot reviewer も users 配列に入る)。Copilot のログイン名は環境により
+          # `Copilot` / `copilot-pull-request-reviewer` のいずれかになり得るため
+          # case-insensitive の `copilot` 部分一致で判定する。
+          reviewers_json=$(gh api "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers")
+          if echo "$reviewers_json" \
+              | jq -e '[.users[]?.login // empty] | map(ascii_downcase) | any(test("copilot"))' \
+              > /dev/null; then
+            echo "Copilot reviewer successfully requested."
+          else
+            echo "::error::gh pr edit returned success but Copilot is NOT in requested_reviewers (silent fail)."
+            echo "::error::Likely cause: secrets.GITHUB_TOKEN lacks permission to add Copilot as reviewer."
+            echo "Current requested_reviewers:"
+            echo "$reviewers_json" | jq '{users: [.users[]?.login], teams: [.teams[]?.slug]}'
+            echo "Manual recovery: gh pr edit $PR_NUMBER --repo $REPO --add-reviewer @copilot"
+            exit 1
+          fi
