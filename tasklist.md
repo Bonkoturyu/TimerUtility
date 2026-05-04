@@ -26,6 +26,48 @@ Phase 10 (端末再起動後の復元) に着手予定。
 
 ## Follow-up タスク (Phase 9.5 派生)
 
+### F-4. cold-start FSI 後の戻るキーでアプリ終了 + Recent 二重起動 (実機検証で発覚)
+
+優先度: 中 (UX 影響あり、ただし回避手段あり)
+所要: ~30〜60 分 (Native 層調査 + AndroidManifest 編集が必要、ユーザ承認必須)
+着手タイミング: Phase 10 着手前または Phase 11 着手時
+
+#### F-4 現状の問題
+
+実機検証 (Pixel 6a / Android 16、2026-05-04) シナリオ 4 で観測:
+
+1. cold-start FSI 経由でアプリ起動 → AlarmRingingScreen → 「停止」
+2. `_leaveAlarmScreen` の fallback で `/alarms` (or `/timer`) に遷移
+   (back-stack はリセット済)
+3. ここで Android 戻るキーを押すと **ホーム画面に戻らずアプリが終了**
+4. 再度ランチャーからアプリを起動すると **Recent 表示に 2 つの task が
+   並ぶ** (二重起動状態)
+
+原因の仮説:
+
+- `getNotificationAppLaunchDetails()` 経由の cold-start で、Android が
+  通知タップを別 task として扱っている可能性
+- [`android/app/src/main/AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml)
+  の MainActivity は `launchMode="singleTop"` / `taskAffinity=""` 設定済
+  だが、それでも task 分離が起きている
+- `_leaveAlarmScreen` で back-stack をリセットしても、Android task 上の
+  history が cold-start 経路では別系統になっている
+
+#### F-4 修正方針
+
+1. AndroidManifest の MainActivity を `launchMode="singleTask"` に変更
+   (現在の `singleTop` から強化) してみて recent 二重表示が解消するか
+   実機検証
+2. 解消しない場合は flutter_local_notifications プラグインの
+   AlarmReceiver / TaskStackBuilder の挙動を調査、必要なら Kotlin 層で
+   `Intent.FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK` を明示制御
+3. アプリ内 fallback として `_leaveAlarmScreen` を `context.go('/')` 起点
+   に変更し、back-stack を Home → /alarms (or /timer) → /alarm-ringing
+   の順で再構築する案も検討
+
+**Native 層 (AndroidManifest / Kotlin) の編集はユーザ確認必須** のため、
+本 PR スコープ外。別 PR でユーザと方針合意の上で対応。
+
 ### F-3. permission UX バグ修正 (実機検証で発覚) ✅ 完了
 
 実機検証 (Pixel 6a / Android 16、2026-05-04) でシナリオ 1 が再現せず、
