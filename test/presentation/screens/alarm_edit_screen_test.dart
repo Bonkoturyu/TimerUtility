@@ -291,6 +291,33 @@ void main() {
 
       expect(repo.store.values.first.enabled, isFalse);
     });
+
+    testWidgets('50 件 seed 状態で新規保存すると上限 SnackBar が出て画面に留まる', (
+      WidgetTester tester,
+    ) async {
+      // F-1: MaxAlarmCountExceededException を AlarmEditScreen が
+      // catch して SnackBar 通知 + 画面 pop しないことの回帰テスト。
+      // 50 件は AlarmCollectionNotifier.maxSize 固定値。
+      final repo = _InMemoryAlarmRepo();
+      for (int i = 0; i < 50; i++) {
+        final AlarmEntity a = _seed(id: 'seed-$i');
+        repo.store[a.id] = a;
+      }
+      await tester.pumpWidget(_harness(repo: repo));
+      await _openEdit(tester);
+      // notifier の load microtask を消化 (50 件 state 反映)
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('alarm_edit_save_button')));
+      await tester.pumpAndSettle();
+
+      // ja ARB: "上限 {count} 件に達しています" → 50 で展開
+      expect(find.text('上限 50 件に達しています'), findsOneWidget);
+      // 画面に留まっている (AppBar タイトルが新規モードのまま)
+      expect(find.text('アラームを追加'), findsOneWidget);
+      // repo は 50 件のまま (新規追加されていない)
+      expect(repo.store.length, 50);
+    });
   });
 
   group('AlarmEditScreen 既存編集モード', () {
