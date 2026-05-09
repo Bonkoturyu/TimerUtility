@@ -550,6 +550,9 @@ void main() {
           payload: any(named: 'payload'),
         ),
       );
+      // OS 側に保留中の予約が残っているケース (アプリ kill / Doze 遅延)
+      // で disable 後に遅延発火しないよう、show の前に cancel が呼ばれる。
+      verify(() => scheduler.cancel(99001)).called(1);
       verify(
         () => scheduler.show(
           notificationId: 99001,

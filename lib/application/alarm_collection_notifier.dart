@@ -101,6 +101,10 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     }
     for (final AlarmEntity a in pastDueOnce) {
       _persist(a);
+      // OS 側 AlarmManager に保留中の予約が残っているケース (アプリプロセス
+      // のみ kill / Doze 遅延等) で、disable 後に遅延発火して「無効化したのに
+      // 鳴る」二重通知になるのを防ぐため、show の前に明示的に cancel する。
+      _cancel(a.notificationId);
       _showMissedAlarmNotification(a);
     }
   }
