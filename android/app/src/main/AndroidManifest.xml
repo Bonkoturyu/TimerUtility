@@ -41,9 +41,18 @@
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
+        <!--
+            Android 12+ (API 31+) requires receivers with system-broadcast
+            intent-filters (BOOT_COMPLETED / MY_PACKAGE_REPLACED など) を
+            exported="true" にすること。false のままだと OS が receiver を
+            呼び出さず、端末再起動後に flutter_local_notifications が
+            AlarmManager に再登録できない (実機 Pixel 6a / Android 16 で
+            再現、2026-05-09 確認)。
+            参考: https://github.com/MaikuB/flutter_local_notifications/issues/2612
+        -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
