@@ -19,22 +19,12 @@
 
 ## 進行中
 
-Phase 10 (端末再起動後の復元) 実装完了 (Auto セッション、2026-05-04)。
-flutter analyze 緑、flutter test 392 件パス。
-
-1 巡目実機検証 (Pixel 6a / Android 16、2026-05-09) でシナリオ 1/4 は OK
-だが、シナリオ 2 で「再起動後に定刻発火せず、アプリ起動時の past-due 検知
-で初めて発火」を観測。原因は `AndroidManifest.xml` の
-`ScheduledNotificationBootReceiver` が `exported="false"` で、Android 12+
-のシステムブロードキャスト要件を満たしておらず receiver が呼ばれていなかった
-こと (GitHub MaikuB/flutter_local_notifications#2612 で既知)。
-`exported="true"` に修正済 (2026-05-09)。
-
-シナリオ 3 は端末日時操作で AlarmManager が natural fire し past-due 検知を
-経由しなかった。再検証時は force-stop → 端末日時を target 後ろまで進める →
-launcher 起動の手順で。
-
-実機再検証 (シナリオ 2 / 3) OK 後に Phase 10 完了マーク + Phase 10.5 着手。
+なし。Phase 10 (端末再起動後の復元) は完了 (2026-05-09、Pixel 6a /
+Android 16 で 4 シナリオ全 OK)。実装は AlarmCollectionNotifier の
+past-due 検知 + AndroidManifest の `exported="true"` 修正の二段。
+flutter analyze 緑、flutter test 392 件パス。次は Phase 10.5
+(世界時計) に着手予定 (BACKLOG.md L465-558)。pubspec / Manifest
+編集を伴う Domain〜Presentation 全レイヤー実装で、着手前に範囲確認推奨。
 
 ---
 
