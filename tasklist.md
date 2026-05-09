@@ -19,20 +19,33 @@
 
 ## 進行中
 
-### Phase 10.5 Domain 層 (世界時計の Pure Dart 部分のみ、2026-05-09 完了)
+### Phase 10.5 Infrastructure 層 DB スライス (2026-05-09 完了)
 
 実装完了 (2026-05-09):
 
-- 6 source files (`lib/domain/clock/` 4 件 + `lib/domain/ports/` 2 件)
-- 4 test files (`test/domain/clock/`、計 33 ケース全パス)
+- [x] `lib/infrastructure/database/app_database.dart`: schemaVersion 3 → 4、
+  `ClockLocations` テーブル追加、`onUpgrade` に v3 → v4 マイグレーション追加
+- [x] `lib/infrastructure/database/mappers/clock_location_mapper.dart`:
+  toRow / toCompanion / toEntity の 3 メソッド (preset 流儀)
+- [x] `lib/infrastructure/database/drift_clock_location_repository.dart`:
+  findAll は `displayOrder ASC` で order by、replaceAll は transaction
+  内で delete → batch insert
+- [x] `lib/infrastructure/clock/timezone_catalog.dart`: 主要都市 25 件
+  プリセット (Pure Dart 定数、Tokyo / Seoul / Shanghai / HK / Singapore /
+  Bangkok / Kolkata / Dubai / Moscow / Berlin / Paris / London /
+  Sao Paulo / NY / Toronto / Mexico City / Chicago / Denver / LA /
+  Vancouver / Anchorage / Honolulu / Sydney / Auckland)
+- [x] Unit Test 3 ファイル (mapper 8 ケース / repository 12 ケース /
+  catalog 5 ケース、計 25 ケース全パス)
 - `flutter analyze`: No issues found
-- `flutter test`: 425 件 pass (Phase 10 後 392 件 + 33 件)
-- docs/domain-model.md L621 に `ClockLocationNotFoundException` 追記
+- `flutter test`: 449 件 pass (Phase 10.5 Domain 完了時 425 件 + 24 件)
 
-次セッションへの持ち越し: Phase 10.5 Infrastructure 層 (Drift schema migration /
-drift_clock_location_repository / location_detector_adapter / timezone_catalog)。
-着手時に `pubspec.yaml` への geolocator / geocoding 追加と
-`AndroidManifest.xml` への `ACCESS_COARSE_LOCATION` 追加が必要 (要ユーザ確認)。
+次セッションへの持ち越し: Phase 10.5 Infrastructure 層の残り
+(`location_detector_adapter` + 国コード→TZ マップ) と Application 層
+(`clock_collection_notifier` / `current_time_stream_provider`)、
+Presentation 層。`location_detector_adapter` 着手時に `pubspec.yaml` への
+geolocator / geocoding 追加と `AndroidManifest.xml` への
+`ACCESS_COARSE_LOCATION` 追加が必要 (要ユーザ確認)。
 
 #### 着手前 Plan (2026-05-09)
 

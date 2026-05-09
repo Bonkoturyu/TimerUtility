@@ -1589,17 +1589,465 @@ class AlarmsCompanion extends UpdateCompanion<AlarmRow> {
   }
 }
 
+class $ClockLocationsTable extends ClockLocations
+    with TableInfo<$ClockLocationsTable, ClockLocationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClockLocationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timezoneIdMeta = const VerificationMeta(
+    'timezoneId',
+  );
+  @override
+  late final GeneratedColumn<String> timezoneId = GeneratedColumn<String>(
+    'timezone_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isCurrentLocationMeta = const VerificationMeta(
+    'isCurrentLocation',
+  );
+  @override
+  late final GeneratedColumn<bool> isCurrentLocation = GeneratedColumn<bool>(
+    'is_current_location',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_current_location" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _displayOrderMeta = const VerificationMeta(
+    'displayOrder',
+  );
+  @override
+  late final GeneratedColumn<int> displayOrder = GeneratedColumn<int>(
+    'display_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtUtcMsMeta = const VerificationMeta(
+    'createdAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUtcMs = GeneratedColumn<int>(
+    'created_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    timezoneId,
+    isCurrentLocation,
+    displayOrder,
+    createdAtUtcMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'clock_locations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ClockLocationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('timezone_id')) {
+      context.handle(
+        _timezoneIdMeta,
+        timezoneId.isAcceptableOrUnknown(data['timezone_id']!, _timezoneIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_timezoneIdMeta);
+    }
+    if (data.containsKey('is_current_location')) {
+      context.handle(
+        _isCurrentLocationMeta,
+        isCurrentLocation.isAcceptableOrUnknown(
+          data['is_current_location']!,
+          _isCurrentLocationMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_isCurrentLocationMeta);
+    }
+    if (data.containsKey('display_order')) {
+      context.handle(
+        _displayOrderMeta,
+        displayOrder.isAcceptableOrUnknown(
+          data['display_order']!,
+          _displayOrderMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayOrderMeta);
+    }
+    if (data.containsKey('created_at_utc_ms')) {
+      context.handle(
+        _createdAtUtcMsMeta,
+        createdAtUtcMs.isAcceptableOrUnknown(
+          data['created_at_utc_ms']!,
+          _createdAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUtcMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ClockLocationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClockLocationRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      timezoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}timezone_id'],
+      )!,
+      isCurrentLocation: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_current_location'],
+      )!,
+      displayOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}display_order'],
+      )!,
+      createdAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_utc_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $ClockLocationsTable createAlias(String alias) {
+    return $ClockLocationsTable(attachedDatabase, alias);
+  }
+}
+
+class ClockLocationRow extends DataClass
+    implements Insertable<ClockLocationRow> {
+  final String id;
+  final String displayName;
+  final String timezoneId;
+  final bool isCurrentLocation;
+  final int displayOrder;
+  final int createdAtUtcMs;
+  const ClockLocationRow({
+    required this.id,
+    required this.displayName,
+    required this.timezoneId,
+    required this.isCurrentLocation,
+    required this.displayOrder,
+    required this.createdAtUtcMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['display_name'] = Variable<String>(displayName);
+    map['timezone_id'] = Variable<String>(timezoneId);
+    map['is_current_location'] = Variable<bool>(isCurrentLocation);
+    map['display_order'] = Variable<int>(displayOrder);
+    map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs);
+    return map;
+  }
+
+  ClockLocationsCompanion toCompanion(bool nullToAbsent) {
+    return ClockLocationsCompanion(
+      id: Value(id),
+      displayName: Value(displayName),
+      timezoneId: Value(timezoneId),
+      isCurrentLocation: Value(isCurrentLocation),
+      displayOrder: Value(displayOrder),
+      createdAtUtcMs: Value(createdAtUtcMs),
+    );
+  }
+
+  factory ClockLocationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClockLocationRow(
+      id: serializer.fromJson<String>(json['id']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      timezoneId: serializer.fromJson<String>(json['timezoneId']),
+      isCurrentLocation: serializer.fromJson<bool>(json['isCurrentLocation']),
+      displayOrder: serializer.fromJson<int>(json['displayOrder']),
+      createdAtUtcMs: serializer.fromJson<int>(json['createdAtUtcMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'displayName': serializer.toJson<String>(displayName),
+      'timezoneId': serializer.toJson<String>(timezoneId),
+      'isCurrentLocation': serializer.toJson<bool>(isCurrentLocation),
+      'displayOrder': serializer.toJson<int>(displayOrder),
+      'createdAtUtcMs': serializer.toJson<int>(createdAtUtcMs),
+    };
+  }
+
+  ClockLocationRow copyWith({
+    String? id,
+    String? displayName,
+    String? timezoneId,
+    bool? isCurrentLocation,
+    int? displayOrder,
+    int? createdAtUtcMs,
+  }) => ClockLocationRow(
+    id: id ?? this.id,
+    displayName: displayName ?? this.displayName,
+    timezoneId: timezoneId ?? this.timezoneId,
+    isCurrentLocation: isCurrentLocation ?? this.isCurrentLocation,
+    displayOrder: displayOrder ?? this.displayOrder,
+    createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+  );
+  ClockLocationRow copyWithCompanion(ClockLocationsCompanion data) {
+    return ClockLocationRow(
+      id: data.id.present ? data.id.value : this.id,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      timezoneId: data.timezoneId.present
+          ? data.timezoneId.value
+          : this.timezoneId,
+      isCurrentLocation: data.isCurrentLocation.present
+          ? data.isCurrentLocation.value
+          : this.isCurrentLocation,
+      displayOrder: data.displayOrder.present
+          ? data.displayOrder.value
+          : this.displayOrder,
+      createdAtUtcMs: data.createdAtUtcMs.present
+          ? data.createdAtUtcMs.value
+          : this.createdAtUtcMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClockLocationRow(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('timezoneId: $timezoneId, ')
+          ..write('isCurrentLocation: $isCurrentLocation, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    timezoneId,
+    isCurrentLocation,
+    displayOrder,
+    createdAtUtcMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClockLocationRow &&
+          other.id == this.id &&
+          other.displayName == this.displayName &&
+          other.timezoneId == this.timezoneId &&
+          other.isCurrentLocation == this.isCurrentLocation &&
+          other.displayOrder == this.displayOrder &&
+          other.createdAtUtcMs == this.createdAtUtcMs);
+}
+
+class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
+  final Value<String> id;
+  final Value<String> displayName;
+  final Value<String> timezoneId;
+  final Value<bool> isCurrentLocation;
+  final Value<int> displayOrder;
+  final Value<int> createdAtUtcMs;
+  final Value<int> rowid;
+  const ClockLocationsCompanion({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.timezoneId = const Value.absent(),
+    this.isCurrentLocation = const Value.absent(),
+    this.displayOrder = const Value.absent(),
+    this.createdAtUtcMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ClockLocationsCompanion.insert({
+    required String id,
+    required String displayName,
+    required String timezoneId,
+    required bool isCurrentLocation,
+    required int displayOrder,
+    required int createdAtUtcMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       displayName = Value(displayName),
+       timezoneId = Value(timezoneId),
+       isCurrentLocation = Value(isCurrentLocation),
+       displayOrder = Value(displayOrder),
+       createdAtUtcMs = Value(createdAtUtcMs);
+  static Insertable<ClockLocationRow> custom({
+    Expression<String>? id,
+    Expression<String>? displayName,
+    Expression<String>? timezoneId,
+    Expression<bool>? isCurrentLocation,
+    Expression<int>? displayOrder,
+    Expression<int>? createdAtUtcMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (displayName != null) 'display_name': displayName,
+      if (timezoneId != null) 'timezone_id': timezoneId,
+      if (isCurrentLocation != null) 'is_current_location': isCurrentLocation,
+      if (displayOrder != null) 'display_order': displayOrder,
+      if (createdAtUtcMs != null) 'created_at_utc_ms': createdAtUtcMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ClockLocationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? displayName,
+    Value<String>? timezoneId,
+    Value<bool>? isCurrentLocation,
+    Value<int>? displayOrder,
+    Value<int>? createdAtUtcMs,
+    Value<int>? rowid,
+  }) {
+    return ClockLocationsCompanion(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      timezoneId: timezoneId ?? this.timezoneId,
+      isCurrentLocation: isCurrentLocation ?? this.isCurrentLocation,
+      displayOrder: displayOrder ?? this.displayOrder,
+      createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (timezoneId.present) {
+      map['timezone_id'] = Variable<String>(timezoneId.value);
+    }
+    if (isCurrentLocation.present) {
+      map['is_current_location'] = Variable<bool>(isCurrentLocation.value);
+    }
+    if (displayOrder.present) {
+      map['display_order'] = Variable<int>(displayOrder.value);
+    }
+    if (createdAtUtcMs.present) {
+      map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClockLocationsCompanion(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('timezoneId: $timezoneId, ')
+          ..write('isCurrentLocation: $isCurrentLocation, ')
+          ..write('displayOrder: $displayOrder, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TimersTable timers = $TimersTable(this);
   late final $PresetsTable presets = $PresetsTable(this);
   late final $AlarmsTable alarms = $AlarmsTable(this);
+  late final $ClockLocationsTable clockLocations = $ClockLocationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [timers, presets, alarms];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    timers,
+    presets,
+    alarms,
+    clockLocations,
+  ];
 }
 
 typedef $$TimersTableCreateCompanionBuilder =
@@ -2381,6 +2829,241 @@ typedef $$AlarmsTableProcessedTableManager =
       AlarmRow,
       PrefetchHooks Function()
     >;
+typedef $$ClockLocationsTableCreateCompanionBuilder =
+    ClockLocationsCompanion Function({
+      required String id,
+      required String displayName,
+      required String timezoneId,
+      required bool isCurrentLocation,
+      required int displayOrder,
+      required int createdAtUtcMs,
+      Value<int> rowid,
+    });
+typedef $$ClockLocationsTableUpdateCompanionBuilder =
+    ClockLocationsCompanion Function({
+      Value<String> id,
+      Value<String> displayName,
+      Value<String> timezoneId,
+      Value<bool> isCurrentLocation,
+      Value<int> displayOrder,
+      Value<int> createdAtUtcMs,
+      Value<int> rowid,
+    });
+
+class $$ClockLocationsTableFilterComposer
+    extends Composer<_$AppDatabase, $ClockLocationsTable> {
+  $$ClockLocationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get timezoneId => $composableBuilder(
+    column: $table.timezoneId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isCurrentLocation => $composableBuilder(
+    column: $table.isCurrentLocation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ClockLocationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClockLocationsTable> {
+  $$ClockLocationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get timezoneId => $composableBuilder(
+    column: $table.timezoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isCurrentLocation => $composableBuilder(
+    column: $table.isCurrentLocation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ClockLocationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClockLocationsTable> {
+  $$ClockLocationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get timezoneId => $composableBuilder(
+    column: $table.timezoneId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isCurrentLocation => $composableBuilder(
+    column: $table.isCurrentLocation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get displayOrder => $composableBuilder(
+    column: $table.displayOrder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => column,
+  );
+}
+
+class $$ClockLocationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ClockLocationsTable,
+          ClockLocationRow,
+          $$ClockLocationsTableFilterComposer,
+          $$ClockLocationsTableOrderingComposer,
+          $$ClockLocationsTableAnnotationComposer,
+          $$ClockLocationsTableCreateCompanionBuilder,
+          $$ClockLocationsTableUpdateCompanionBuilder,
+          (
+            ClockLocationRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ClockLocationsTable,
+              ClockLocationRow
+            >,
+          ),
+          ClockLocationRow,
+          PrefetchHooks Function()
+        > {
+  $$ClockLocationsTableTableManager(
+    _$AppDatabase db,
+    $ClockLocationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClockLocationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClockLocationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ClockLocationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> timezoneId = const Value.absent(),
+                Value<bool> isCurrentLocation = const Value.absent(),
+                Value<int> displayOrder = const Value.absent(),
+                Value<int> createdAtUtcMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ClockLocationsCompanion(
+                id: id,
+                displayName: displayName,
+                timezoneId: timezoneId,
+                isCurrentLocation: isCurrentLocation,
+                displayOrder: displayOrder,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String displayName,
+                required String timezoneId,
+                required bool isCurrentLocation,
+                required int displayOrder,
+                required int createdAtUtcMs,
+                Value<int> rowid = const Value.absent(),
+              }) => ClockLocationsCompanion.insert(
+                id: id,
+                displayName: displayName,
+                timezoneId: timezoneId,
+                isCurrentLocation: isCurrentLocation,
+                displayOrder: displayOrder,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ClockLocationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ClockLocationsTable,
+      ClockLocationRow,
+      $$ClockLocationsTableFilterComposer,
+      $$ClockLocationsTableOrderingComposer,
+      $$ClockLocationsTableAnnotationComposer,
+      $$ClockLocationsTableCreateCompanionBuilder,
+      $$ClockLocationsTableUpdateCompanionBuilder,
+      (
+        ClockLocationRow,
+        BaseReferences<_$AppDatabase, $ClockLocationsTable, ClockLocationRow>,
+      ),
+      ClockLocationRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2391,4 +3074,6 @@ class $AppDatabaseManager {
       $$PresetsTableTableManager(_db, _db.presets);
   $$AlarmsTableTableManager get alarms =>
       $$AlarmsTableTableManager(_db, _db.alarms);
+  $$ClockLocationsTableTableManager get clockLocations =>
+      $$ClockLocationsTableTableManager(_db, _db.clockLocations);
 }
