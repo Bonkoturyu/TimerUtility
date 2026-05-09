@@ -19,6 +19,55 @@
 
 ## 進行中
 
+### Phase 10.5 Application 層 + Infrastructure location adapter (2026-05-09 完了)
+
+実装完了 (2026-05-09):
+
+- [x] `lib/infrastructure/location/country_to_timezone.dart`: 約 40 ヶ国の
+  ISO 3166-1 alpha-2 → 代表 IANA TZ マップ (大文字小文字混在対応、未登録 null)。
+  `TimezoneCatalog` の単一 TZ 国 (US/CA の subdivision を除く) を全カバー。
+- [x] `lib/infrastructure/location/location_detector_adapter.dart`:
+  geolocator (coarse / 5s timeout) → geocoding (5s timeout) →
+  `CountryToTimezone.lookup` → `FlutterTimezone.getLocalTimezone()` →
+  最終 fallback `Asia/Tokyo` のチェーン。各段 try/catch で握りつぶし。
+  Unit Test なし (MethodChannel 依存で mock 困難、実機検証で担保)。
+- [x] `lib/application/clock_location_repository_provider.dart`:
+  preset 流儀の stub (`@Riverpod(keepAlive: true)`)。
+- [x] `lib/application/location_detector_provider.dart`: 同上の stub。
+- [x] `lib/application/clock_collection_notifier.dart`:
+  State = `ClockCollection` 集約直接 (preset 流儀)。
+  `build()` 内 microtask で DB 復元 + 空なら detector で「現在地」種付け。
+  `addPreset` / `remove` / `reorder` (replaceAll で atomic 永続化) /
+  `update(displayName)` / `debugSetIdGenerator` 公開。
+- [x] `lib/application/clock_tick/current_time_stream_provider.dart`:
+  関数形式 `@riverpod` (autoDispose)。`Stream.multi` で初回即時 emit +
+  `Timer.periodic(1s)` を `clockProvider` 経由で発火、`onCancel` で停止。
+- [x] `lib/main.dart`: `DriftClockLocationRepository` +
+  `LocationDetectorAdapter` を `ProviderScope.overrides` に追加。
+- [x] Unit Test 3 ファイル (country_to_timezone 3 ケース /
+  ClockCollectionNotifier 11 ケース / currentTimeStreamProvider 2 ケース、
+  計 16 ケース全パス)。
+- `flutter analyze`: No issues found
+- `flutter test`: 465 件 pass (Phase 10.5 Infrastructure DB 完了時 449 件 + 16 件)
+
+次セッションへの持ち越し: **Presentation 層のみ** —
+`presentation/widgets/analog_clock_widget.dart` /
+`digital_clock_widget.dart` / `clock_design_a/b/c.dart` /
+`presentation/screens/clock_screen.dart` /
+`clock_location_picker_screen.dart`、
+`lib/main.dart` の `go_router` への `/clock` / `/clock/locations` 追加、
+`HomeScreen` の Clock 導線追加。
+
+#### 内部判断 (本セッション中に発生、要確認)
+
+- プラン記載のテスト「`TimezoneCatalog.presets` の全 timezoneId が
+  CountryToTimezone の値域に含まれる」は、「1 国 1 TZ ルール」(US→NY,
+  CA→Toronto) と数学的に両立しないため、テストを「subdivision のみで
+  存在する 6 TZ (Chicago / Denver / LA / Vancouver / Anchorage / Honolulu)
+  を除いた catalog エントリが lookup で到達可能」に書き換えた。これら
+  6 TZ は picker 経由の手動選択でカバーする想定 (Phase 10.5 picker は
+  Presentation 層スコープ)。
+
 ### Phase 10.5 Infrastructure 層 DB スライス (2026-05-09 完了)
 
 実装完了 (2026-05-09):

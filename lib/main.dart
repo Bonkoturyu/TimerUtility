@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/alarm_repository_provider.dart';
+import 'application/clock_location_repository_provider.dart';
+import 'application/location_detector_provider.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
@@ -16,8 +18,10 @@ import 'application/timer_repository_provider.dart';
 import 'application/user_preferences_provider.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_alarm_repository.dart';
+import 'infrastructure/database/drift_clock_location_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
+import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
@@ -177,6 +181,10 @@ Future<void> main() async {
   final DriftTimerRepository repository = DriftTimerRepository(database);
   final DriftPresetRepository presetRepo = DriftPresetRepository(database);
   final DriftAlarmRepository alarmRepo = DriftAlarmRepository(database);
+  final DriftClockLocationRepository clockRepo = DriftClockLocationRepository(
+    database,
+  );
+  const LocationDetectorAdapter detector = LocationDetectorAdapter();
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
 
@@ -289,6 +297,8 @@ Future<void> main() async {
         timerRepositoryProvider.overrideWithValue(repository),
         presetRepositoryProvider.overrideWithValue(presetRepo),
         alarmRepositoryProvider.overrideWithValue(alarmRepo),
+        clockLocationRepositoryProvider.overrideWithValue(clockRepo),
+        locationDetectorProvider.overrideWithValue(detector),
         userPreferencesProvider.overrideWithValue(userPrefs),
       ],
       child: TimerUtilityApp(router: router),
