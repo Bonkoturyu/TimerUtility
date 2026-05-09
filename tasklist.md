@@ -28,6 +28,62 @@ flutter analyze 緑、flutter test 392 件パス。次は Phase 10.5
 
 ---
 
+## Follow-up タスク (Phase 10 派生 / PR #16 レビュー対応で抽出)
+
+### F-5. `TimerCollectionNotifier._restoreFromRepository` の cancel 漏れ
+
+**経緯**: PR #16 Copilot レビューで `AlarmCollectionNotifier._loadFromRepository`
+の past-due once-mode 検知時に OS 側保留予約 (AlarmManager) を cancel していない
+問題を修正済 ([fde2dbd](https://github.com/Bonkoturyu/TimerUtility/commit/fde2dbd))。
+同じ構造が [`TimerCollectionNotifier._restoreFromRepository`](lib/application/timer_collection_notifier.dart)
+の overdue 処理 (running → completed 書き換え) にもある。Timer 側でも
+アプリプロセスのみ kill + Doze 遅延発火経路で「completed 化したのに後から鳴る」
+二重通知のリスクがあるため、`_showRestoredCompletionNotification` の前に
+`_cancelNotification(t.notificationId)` を追加する。
+
+**対応**: 1 行追加 + テスト 1 件 (`scheduler.cancel(notificationId)` の
+`verify().called(1)`) 追加。スコープは小さい (alarm 側 PR #16 と同じパターン)。
+
+**優先度**: 中 (実害シナリオは Doze + 遅延発火の合わせ技で限定的だが、
+alarm 側と挙動を揃えるべき)。
+
+### F-6. テスト全件の `Future.delayed(Duration.zero)` → `fakeAsync` 一括リファクタ or styleguide 改定
+
+**経緯**: PR #16 gemini-code-assist レビューで [`.gemini/styleguide.md` line 63](https://github.com/Bonkoturyu/TimerUtility/blob/main/.gemini/styleguide.md#L63)
+「時間制御テストは fake_async を使用、実時間 sleep / Future.delayed で待機するのは禁止」
+への違反として `Future<void>.delayed(Duration.zero)` が指摘された。本 PR は
+スコープ外として却下したが、リポジトリ全 notifier 系テストで同パターンが
+慣用句化している実態がある:
+
+- `test/application/timer_collection_notifier_test.dart` (line 279, 324)
+- `test/application/preset_collection_notifier_test.dart` (line 66, helper `settleRestore()` で共通化済)
+- `test/application/alarm_ringing_notifier_test.dart` (line 91, 113, 128, 131, 151, 156)
+- `test/application/alarm_collection_notifier_test.dart` (line 488-491, 535-536, 587-588, 641-642)
+- `test/presentation/screens/alarm_list_screen_test.dart` (line 179)、`alarm_edit_screen_test.dart` (line 314, 346, 396, 408)、`alarm_ringing_screen_test.dart` (line 249)
+
+**用途**: `build()` 内の `Future.microtask(_loadFromRepository)` を pump する
+microtask flush。「実時間 sleep」ではない (styleguide line 63 が本来禁ずる
+`Duration(seconds: N)` で時間進行を待つパターンとは性質が異なる)。
+
+**対応案** (どれか 1 つ):
+
+1. **styleguide 改定**: line 63 の文言を `Future.delayed(Duration.zero)` (microtask flush
+   用途) を例外扱いと明文化する。実装変更なしで完了。
+2. **全件 `fakeAsync` リファクタ**: 上記全テストファイルを `fakeAsync` ベースに
+   書き換え、`Future.microtask` の pump は `async.flushMicrotasks()` で代替。
+   スコープ大、Riverpod の microtask scheduling との相性検証が必要。
+3. **共通 helper 化**: `preset_collection_notifier_test.dart` の `settleRestore()`
+   ヘルパを `test/helpers/` に格上げして全テストで共通利用。styleguide 違反は
+   残るが、慣用句化を明示できる。
+
+**推奨**: 案 1 (styleguide 改定) → 実害なし、現実とドキュメントを揃える。
+本格的に時間進行を伴うテストが増えてから案 2 を検討。
+
+**優先度**: 低 (テストは全件緑で動作上の問題なし、スタイルガイドと実装の
+ドリフト解消が目的)。
+
+---
+
 ## Follow-up タスク (Phase 9.5 派生)
 
 ### F-4. cold-start FSI 後の戻るキーでアプリ終了 + Recent 二重起動 ✅ 完了
