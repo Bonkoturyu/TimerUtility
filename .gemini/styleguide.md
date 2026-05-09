@@ -67,7 +67,7 @@ Presentation → Application(Riverpod) → Domain ← Infrastructure
     予約するパターンの microtask flush 用途として許容する（実時間進行は伴わず
     pending microtask を 1 tick だけ走らせる慣用句）。`fakeAsync` ベースに
     書き換えるとテスト側で `async.flushMicrotasks()` を毎回呼ぶ必要が出て
-    可読性が下がるため、本リポジトリではこの 1 行ヘルパを通用句として認める
+    可読性が下がるため、本リポジトリではこの 1 行ヘルパを慣用句として認める
 - Domain 層テストでも production code (`lib/domain/`) は Pure Dart 厳守
 - テストは `flutter test` から実行可能であること（Flutter SDK ピン留めにより
   `package:test` を直接依存として追加しない）

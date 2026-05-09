@@ -285,19 +285,21 @@ void main() {
             .findById('overdue-1');
         expect(restored, isNotNull);
         expect(restored!.status, TimerStatus.completed);
-        // Pending OS-side schedule is cancelled before the show notification
+        // Pending OS-side schedule is cancelled BEFORE the show notification
         // so a delayed AlarmManager fire (app-only kill / Doze) cannot
         // double-notify after the entity is rewritten to completed.
         // Mirrors the AlarmCollectionNotifier past-due once-mode contract.
-        verify(() => scheduler.cancel(1)).called(1);
-        verify(
+        // `verifyInOrder` makes the cancel→show contract explicit (Copilot
+        // PR #17 review feedback).
+        verifyInOrder(<dynamic Function()>[
+          () => scheduler.cancel(1),
           () => scheduler.show(
             notificationId: 1,
             title: 'Stew',
             body: any(named: 'body'),
             payload: 'timer:overdue-1',
           ),
-        ).called(1);
+        ]);
         // Persisted as completed.
         expect(repo.store['overdue-1']!.status, TimerStatus.completed);
       },
