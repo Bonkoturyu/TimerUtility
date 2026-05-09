@@ -19,10 +19,12 @@
 
 ## 進行中
 
-なし。Phase 9.5 は実機検証完了 (2026-05-04、Pixel 6a / Android 16 で
-4 シナリオ確認済、F-1 = PR #12 / F-3 = PR #11 / F-4 = PR #13 で fix
-反映済、F-1 セクションは PR #12 マージ時に削除済)。次は Phase 10
-(端末再起動後の復元) に着手予定。
+なし。Phase 10 (端末再起動後の復元) は完了 (2026-05-09、Pixel 6a /
+Android 16 で 4 シナリオ全 OK)。実装は AlarmCollectionNotifier の
+past-due 検知 + AndroidManifest の `exported="true"` 修正の二段。
+flutter analyze 緑、flutter test 392 件パス。次は Phase 10.5
+(世界時計) に着手予定 (BACKLOG.md L465-558)。pubspec / Manifest
+編集を伴う Domain〜Presentation 全レイヤー実装で、着手前に範囲確認推奨。
 
 ---
 
