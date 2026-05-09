@@ -184,7 +184,7 @@ Future<void> main() async {
   final DriftClockLocationRepository clockRepo = DriftClockLocationRepository(
     database,
   );
-  const LocationDetectorAdapter detector = LocationDetectorAdapter();
+  final LocationDetectorAdapter detector = LocationDetectorAdapter();
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
 

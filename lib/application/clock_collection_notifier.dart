@@ -44,6 +44,10 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
     final List<ClockLocation> persisted = await ref
         .read(clockLocationRepositoryProvider)
         .findAll();
+    // Re-check after the await: another mutation may have populated
+    // `state` while `findAll` was in flight. Overwriting it would clobber
+    // the user-visible change.
+    if (state.size > 0) return;
     if (persisted.isNotEmpty) {
       state = ClockCollection.fromList(persisted);
       return;
@@ -57,6 +61,11 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
     final String tzId = await ref
         .read(locationDetectorProvider)
         .detectTimezoneId();
+    // Re-check after the detection await: a mutation may have raced in
+    // and made the seed redundant (size > 0) or impossible (isFull, which
+    // would otherwise throw `MaxClockLocationCountExceededException` from
+    // an unawaited microtask).
+    if (state.size > 0) return;
     final Clock clock = ref.read(clockProvider);
     final ClockLocation seeded = ClockLocation(
       id: _newId(),
@@ -113,8 +122,11 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
 
   /// Lightweight rename (timezoneId edits go through "remove + add"
   /// so the Application layer doesn't need a separate validation seam).
+  /// No-op when the id is gone (mirrors `remove`) so a double-tap or
+  /// stale UI reference can't crash the notifier.
   void update(String id, {String? displayName}) {
-    final ClockLocation existing = state.findById(id)!;
+    final ClockLocation? existing = state.findById(id);
+    if (existing == null) return;
     final ClockLocation next = existing.copyWith(
       displayName: displayName ?? existing.displayName,
     );
