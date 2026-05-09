@@ -10,8 +10,12 @@
 ///     「最も使用人口の多い首都圏 / 経済圏」を代表に選ぶ。
 ///     ユーザは初回検出後に手動で都市を切り替えられるので、ここでの
 ///     代表選択はあくまで初期値の質を保つだけが目的。
-///   - `TimezoneCatalog.presets` に含まれる 25 TZ をすべて値域に
-///     含める (catalog にあるのに lookup で出てこないと UX が壊れる)。
+///   - 値は **その国の代表的な IANA TZ** に揃える (国と無関係な TZ を
+///     当てるのは初回 seed 時刻が誤るため不可)。`TimezoneCatalog.presets`
+///     に含まれる TZ は subdivision でしか到達できない 6 件
+///     (LA / Chicago / Denver / Anchorage / Honolulu / Vancouver) を
+///     除き lookup から到達可能であること
+///     (`country_to_timezone_test` で検証)。
 ///   - 値域 ⊂ IANA TZ DB なので、Adapter 側で wrapping せず素通しで
 ///     `ClockTime` に渡せる。
 ///
@@ -22,7 +26,9 @@ library;
 class CountryToTimezone {
   const CountryToTimezone._();
 
-  /// 約 40 ヶ国の代表 TZ。`TimezoneCatalog.presets` の全 25 TZ を
+  /// 約 40 ヶ国の代表 TZ。`TimezoneCatalog.presets` のうち
+  /// subdivision でしか存在しない 6 TZ (LA / Chicago / Denver /
+  /// Anchorage / Honolulu / Vancouver) を除いた catalog エントリは
   /// 必ず値域に含むこと (`country_to_timezone_test` で検証)。
   static const Map<String, String> _byIsoAlpha2 = <String, String>{
     // East / Southeast Asia
@@ -30,41 +36,41 @@ class CountryToTimezone {
     'KR': 'Asia/Seoul',
     'CN': 'Asia/Shanghai',
     'HK': 'Asia/Hong_Kong',
-    'TW': 'Asia/Hong_Kong',
+    'TW': 'Asia/Taipei',
     'SG': 'Asia/Singapore',
     'TH': 'Asia/Bangkok',
     'IN': 'Asia/Kolkata',
     // Middle East
     'AE': 'Asia/Dubai',
-    'SA': 'Asia/Dubai',
-    'IL': 'Asia/Dubai',
-    'TR': 'Europe/Moscow',
+    'SA': 'Asia/Riyadh',
+    'IL': 'Asia/Jerusalem',
+    'TR': 'Europe/Istanbul',
     // Europe
     'RU': 'Europe/Moscow',
     'DE': 'Europe/Berlin',
     'FR': 'Europe/Paris',
     'GB': 'Europe/London',
-    'IT': 'Europe/Berlin',
-    'ES': 'Europe/Paris',
-    'NL': 'Europe/Berlin',
-    'SE': 'Europe/Berlin',
-    'NO': 'Europe/Berlin',
-    'FI': 'Europe/Berlin',
-    'PL': 'Europe/Berlin',
-    'CH': 'Europe/Berlin',
-    'AT': 'Europe/Berlin',
-    'IE': 'Europe/London',
-    'PT': 'Europe/London',
-    'GR': 'Europe/Berlin',
+    'IT': 'Europe/Rome',
+    'ES': 'Europe/Madrid',
+    'NL': 'Europe/Amsterdam',
+    'SE': 'Europe/Stockholm',
+    'NO': 'Europe/Oslo',
+    'FI': 'Europe/Helsinki',
+    'PL': 'Europe/Warsaw',
+    'CH': 'Europe/Zurich',
+    'AT': 'Europe/Vienna',
+    'IE': 'Europe/Dublin',
+    'PT': 'Europe/Lisbon',
+    'GR': 'Europe/Athens',
     // Africa
-    'EG': 'Europe/Berlin',
-    'ZA': 'Europe/Berlin',
-    'KE': 'Asia/Dubai',
-    'NG': 'Europe/Berlin',
+    'EG': 'Africa/Cairo',
+    'ZA': 'Africa/Johannesburg',
+    'KE': 'Africa/Nairobi',
+    'NG': 'Africa/Lagos',
     // South America
     'BR': 'America/Sao_Paulo',
-    'AR': 'America/Sao_Paulo',
-    'CL': 'America/Sao_Paulo',
+    'AR': 'America/Argentina/Buenos_Aires',
+    'CL': 'America/Santiago',
     // North America (Central/South)
     'MX': 'America/Mexico_City',
     // North America (USA / Canada — 代表は東海岸の主要都市)

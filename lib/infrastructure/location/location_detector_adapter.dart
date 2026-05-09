@@ -29,26 +29,30 @@ import 'country_to_timezone.dart';
 /// 分岐ロジックは「失敗したら次段」の単純チェーンしかないため、
 /// Unit Test は書かず実機検証で担保 (BACKLOG にコメント済)。
 class LocationDetectorAdapter implements LocationDetector {
-  const LocationDetectorAdapter();
+  LocationDetectorAdapter();
 
   static const String _ultimateFallback = 'Asia/Tokyo';
   static const Duration _gpsTimeout = Duration(seconds: 5);
   static const Duration _geocodingTimeout = Duration(seconds: 5);
 
+  // Single Logger reused across detection attempts: it's stateful
+  // (output formatter / level filter) and constructing a fresh one per
+  // call is wasted work since the Adapter itself is a singleton in
+  // `ProviderScope.overrides`.
+  final Logger _logger = Logger();
+
   @override
   Future<String> detectTimezoneId() async {
-    final Logger logger = Logger();
-
-    final String? viaGps = await _detectViaGps(logger);
+    final String? viaGps = await _detectViaGps();
     if (viaGps != null) return viaGps;
 
-    final String? viaSystem = await _detectViaSystemTimezone(logger);
+    final String? viaSystem = await _detectViaSystemTimezone();
     if (viaSystem != null) return viaSystem;
 
     return _ultimateFallback;
   }
 
-  Future<String?> _detectViaGps(Logger logger) async {
+  Future<String?> _detectViaGps() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -79,7 +83,7 @@ class LocationDetectorAdapter implements LocationDetector {
       if (tz == null) return null;
       return tz;
     } catch (e, st) {
-      logger.w(
+      _logger.w(
         'LocationDetectorAdapter: GPS path failed',
         error: e,
         stackTrace: st,
@@ -88,14 +92,14 @@ class LocationDetectorAdapter implements LocationDetector {
     }
   }
 
-  Future<String?> _detectViaSystemTimezone(Logger logger) async {
+  Future<String?> _detectViaSystemTimezone() async {
     try {
       final TimezoneInfo info = await FlutterTimezone.getLocalTimezone();
       final String id = info.identifier;
       if (id.isEmpty) return null;
       return id;
     } catch (e, st) {
-      logger.w(
+      _logger.w(
         'LocationDetectorAdapter: FlutterTimezone fallback failed',
         error: e,
         stackTrace: st,
