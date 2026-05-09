@@ -60,7 +60,14 @@ Presentation → Application(Riverpod) → Domain ← Infrastructure
 
 - 新規ロジック追加時は **必ず Unit Test を同時作成**
 - 新規 Screen 追加時は **必ず Widget Test を同時作成**
-- 時間制御テストは `fake_async` を使用、実時間 `sleep` / `Future.delayed` で待機するのは禁止
+- 時間制御テストは `fake_async` を使用、実時間 `sleep` / `Future.delayed(Duration(seconds: N))`
+  等で **時間進行** を待つのは禁止
+  - 例外: `Future<void>.delayed(Duration.zero)` / `Future<void>.value()` は
+    Riverpod Notifier の `build()` 内で `Future.microtask(_loadFromRepository)` 等を
+    予約するパターンの microtask flush 用途として許容する（実時間進行は伴わず
+    pending microtask を 1 tick だけ走らせる慣用句）。`fakeAsync` ベースに
+    書き換えるとテスト側で `async.flushMicrotasks()` を毎回呼ぶ必要が出て
+    可読性が下がるため、本リポジトリではこの 1 行ヘルパを慣用句として認める
 - Domain 層テストでも production code (`lib/domain/`) は Pure Dart 厳守
 - テストは `flutter test` から実行可能であること（Flutter SDK ピン留めにより
   `package:test` を直接依存として追加しない）
