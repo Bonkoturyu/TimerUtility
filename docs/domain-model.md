@@ -622,6 +622,7 @@ extension type NotificationId(int value) {
 | `InvalidAlarmRepeatException` | weekly の `days` が空集合等の制約違反（Phase 9.5） |
 | `InvalidSnoozeMinutesException` | `snoozeMinutes` が許可値（5/10/15）外（Phase 9.5） |
 | `MaxClockLocationCountExceededException` | 世界時計の同時表示上限（6）を超過（Phase 10.5） |
+| `ClockLocationNotFoundException` | 指定 ID の世界時計エントリが存在しない（Phase 10.5） |
 | `InvalidTimezoneIdException` | `timezoneId` が IANA TZ DB に存在しない（Phase 10.5） |
 
 すべて `domain/<aggregate>/exceptions.dart` に集約。
