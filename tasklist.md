@@ -19,12 +19,84 @@
 
 ## 進行中
 
-なし。Phase 10 (端末再起動後の復元) は完了 (2026-05-09、Pixel 6a /
-Android 16 で 4 シナリオ全 OK)。実装は AlarmCollectionNotifier の
-past-due 検知 + AndroidManifest の `exported="true"` 修正の二段。
-flutter analyze 緑、flutter test 392 件パス。次は Phase 10.5
-(世界時計) に着手予定 (BACKLOG.md L465-558)。pubspec / Manifest
-編集を伴う Domain〜Presentation 全レイヤー実装で、着手前に範囲確認推奨。
+### Phase 10.5 Domain 層 (世界時計の Pure Dart 部分のみ、2026-05-09 完了)
+
+実装完了 (2026-05-09):
+
+- 6 source files (`lib/domain/clock/` 4 件 + `lib/domain/ports/` 2 件)
+- 4 test files (`test/domain/clock/`、計 33 ケース全パス)
+- `flutter analyze`: No issues found
+- `flutter test`: 425 件 pass (Phase 10 後 392 件 + 33 件)
+- docs/domain-model.md L621 に `ClockLocationNotFoundException` 追記
+
+次セッションへの持ち越し: Phase 10.5 Infrastructure 層 (Drift schema migration /
+drift_clock_location_repository / location_detector_adapter / timezone_catalog)。
+着手時に `pubspec.yaml` への geolocator / geocoding 追加と
+`AndroidManifest.xml` への `ACCESS_COARSE_LOCATION` 追加が必要 (要ユーザ確認)。
+
+#### 着手前 Plan (2026-05-09)
+
+範囲を **Domain 層 6 ファイル + Unit Test 4 ファイル** に限定。Infrastructure /
+Application / Presentation には踏み込まない。pubspec.yaml への
+geolocator / geocoding 追加と AndroidManifest.xml への
+`ACCESS_COARSE_LOCATION` 追加は別セッションで指示する想定。
+
+#### 確定方針 (2026-05-09 ユーザ判断)
+
+- 論点 1 → **案 A**: clock_time.dart に ClockTime ValueObject (freezed)
+  と abstract `TimezoneResolver` を同一ファイル同居。timezone パッケージは
+  Infrastructure 層 adapter 側で wire (Domain は import しない)
+- 論点 2 → **preset 流儀**: ClockLocationRepository は findAll / findById /
+  upsert / delete / replaceAll の 5 メソッド (BACKLOG L499 の add/update
+  分離案ではなく、既存 preset / alarm port と統一)
+- 論点 3 → **追記**: `ClockLocationNotFoundException` を docs/domain-model.md
+  L621 の例外一覧に追記
+
+#### 実装ファイル
+
+1. lib/domain/clock/clock_location.dart (freezed Entity、id / displayName /
+   timezoneId / isCurrentLocation / displayOrder / createdAt)
+2. lib/domain/clock/clock_collection.dart (集約ルート、maxSize=6、
+   reorder で displayOrder 0..N-1 再採番、currentLocation 一意性を集約で保証)
+3. lib/domain/clock/clock_time.dart (案 A: ClockTime VO + abstract TimezoneResolver)
+4. lib/domain/clock/exceptions.dart (3 例外: Max / NotFound / InvalidTimezoneId)
+5. lib/domain/ports/clock_location_repository.dart (preset 流儀)
+6. lib/domain/ports/location_detector.dart (`Future<String> detectTimezoneId()`)
+
+不変条件 (displayName.length / displayOrder 範囲 / timezoneId 妥当性) は
+alarm_entity 流儀で **Application 層 enforce**。freezed 上では throw しない。
+
+#### Unit Test (test/domain/clock/、4 ファイル)
+
+- clock_location_test.dart (equality / copyWith)
+- clock_collection_test.dart (empty / add / update / remove / reorder /
+  fromList / currentLocation 一意性 / immutability、PresetCollection_test 流儀)
+- clock_time_test.dart (ClockTime VO の equality / copyWith のみ。
+  TimezoneResolver は abstract のためテストなし)
+- clock_exceptions_test.dart (toString)
+
+#### docs 更新
+
+- docs/domain-model.md L621 の例外一覧に
+  `ClockLocationNotFoundException` を追記 (ユーザ承認済)
+
+#### 作業フロー
+
+1. ファイル群を Write
+2. `dart run build_runner build --delete-conflicting-outputs` で freezed 生成
+3. `flutter analyze` 緑、`flutter test` 全件パス確認 (現状 392 件 → +Domain 分)
+4. 1 commit (`feat(phase-10.5): clock domain layer`)
+5. tasklist.md / BACKLOG.md L495-500 に [x] マーク (Phase 10.5 全体は未完)
+6. ユーザに完了報告して停止 (Infrastructure 層は別セッション)
+
+#### 停止条件 / スコープ外 (本セッションで触らない)
+
+- Infrastructure 層 (Drift schema migration / drift_clock_location_repository /
+  location_detector_adapter / timezone_catalog)
+- Application 層 (clock_collection_notifier / current_time_stream_provider)
+- Presentation 層
+- pubspec.yaml への geolocator / geocoding 追加 (要ユーザ確認)
+- AndroidManifest.xml への ACCESS_COARSE_LOCATION 追加 (要ユーザ確認)
 
 ---
 
