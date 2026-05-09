@@ -30,22 +30,25 @@ flutter analyze 緑、flutter test 392 件パス。次は Phase 10.5
 
 ## Follow-up タスク (Phase 10 派生 / PR #16 レビュー対応で抽出)
 
-### F-5. `TimerCollectionNotifier._restoreFromRepository` の cancel 漏れ
+### F-5. `TimerCollectionNotifier._restoreFromRepository` の cancel 漏れ ✅ 完了
 
 **経緯**: PR #16 Copilot レビューで `AlarmCollectionNotifier._loadFromRepository`
 の past-due once-mode 検知時に OS 側保留予約 (AlarmManager) を cancel していない
 問題を修正済 ([fde2dbd](https://github.com/Bonkoturyu/TimerUtility/commit/fde2dbd))。
 同じ構造が [`TimerCollectionNotifier._restoreFromRepository`](lib/application/timer_collection_notifier.dart)
-の overdue 処理 (running → completed 書き換え) にもある。Timer 側でも
-アプリプロセスのみ kill + Doze 遅延発火経路で「completed 化したのに後から鳴る」
-二重通知のリスクがあるため、`_showRestoredCompletionNotification` の前に
-`_cancelNotification(t.notificationId)` を追加する。
+の overdue 処理 (running → completed 書き換え) にもあったため alarm 側と挙動を
+揃える形で修正した。
 
-**対応**: 1 行追加 + テスト 1 件 (`scheduler.cancel(notificationId)` の
-`verify().called(1)`) 追加。スコープは小さい (alarm 側 PR #16 と同じパターン)。
+**修正内容** (2026-05-09):
 
-**優先度**: 中 (実害シナリオは Doze + 遅延発火の合わせ技で限定的だが、
-alarm 側と挙動を揃えるべき)。
+- [`TimerCollectionNotifier._restoreFromRepository`](lib/application/timer_collection_notifier.dart)
+  の overdue ループに `_cancelNotification(t.notificationId)` を 1 行追加。
+  順序は `repo.upsert(t)` → `_cancelNotification` → `_showRestoredCompletionNotification`
+  (alarm 側 `_persist` → `_cancel` → `_showMissedAlarmNotification` と同じ)。
+- [`test/application/timer_collection_notifier_test.dart`](test/application/timer_collection_notifier_test.dart)
+  の「restoring a past-due running timer marks it completed and shows」に
+  `verify(() => scheduler.cancel(1)).called(1)` を追加。
+- 392 テストパス、`flutter analyze` 緑。
 
 ### F-6. テスト全件の `Future.delayed(Duration.zero)` → `fakeAsync` 一括リファクタ or styleguide 改定
 

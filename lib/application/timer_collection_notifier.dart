@@ -80,9 +80,15 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
 
     // Persist the rewritten overdue entries and surface a single notification
     // each so the user knows the timer fired while the app was away.
+    // Cancel any pending OS-side schedule first: if only the app process was
+    // killed (not the device), AlarmManager may still hold the scheduled
+    // entry and fire it after we've already rewritten the timer to
+    // completed — leading to a duplicate notification. Mirrors the
+    // AlarmCollectionNotifier past-due once-mode path.
     final TimerRepositoryFireAndForget repo = TimerRepositoryFireAndForget(ref);
     for (final TimerEntity t in overdue) {
       repo.upsert(t);
+      _cancelNotification(t.notificationId);
       _showRestoredCompletionNotification(t);
     }
     // If anything was running before restore (and didn't expire), the

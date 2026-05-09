@@ -285,6 +285,11 @@ void main() {
             .findById('overdue-1');
         expect(restored, isNotNull);
         expect(restored!.status, TimerStatus.completed);
+        // Pending OS-side schedule is cancelled before the show notification
+        // so a delayed AlarmManager fire (app-only kill / Doze) cannot
+        // double-notify after the entity is rewritten to completed.
+        // Mirrors the AlarmCollectionNotifier past-due once-mode contract.
+        verify(() => scheduler.cancel(1)).called(1);
         verify(
           () => scheduler.show(
             notificationId: 1,
