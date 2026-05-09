@@ -137,12 +137,18 @@ void main() {
     });
   });
 
-  test('migration: schemaVersion=4 で clock_locations テーブルが作成される', () async {
-    // onCreate (createAll) が走った後、テーブルへの insert/select が
-    // 例外なく成立すれば migration はスキーマを通せている。
-    // SchemaPerVersion test (drift verify ヘルパ) は導入見送り。
-    await repo.upsert(entity(id: 'smoke'));
-    final ClockLocation? row = await repo.findById('smoke');
-    expect(row, isNotNull);
-  });
+  test(
+    'onCreate (fresh install, schemaVersion=4) で clock_locations テーブルが作成される',
+    () async {
+      // 本テストは fresh install 経路 (Migrator.createAll) のスモーク。
+      // テーブルへの insert/select が例外なく成立すれば onCreate は
+      // スキーマを通せている。
+      // v3 → v4 の onUpgrade 経路は SchemaPerVersion test (drift verify
+      // ヘルパ) が必要となるため導入見送り (既存の v1→v2 / v2→v3
+      // upgrade テストも未導入で一貫)。
+      await repo.upsert(entity(id: 'smoke'));
+      final ClockLocation? row = await repo.findById('smoke');
+      expect(row, isNotNull);
+    },
+  );
 }
