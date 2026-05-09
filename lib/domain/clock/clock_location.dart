@@ -6,8 +6,7 @@ part 'clock_location.freezed.dart';
 /// (Phase 10.5).
 ///
 /// Field invariants (enforced at construction sites in the application
-/// layer — `ClockCollectionNotifier.addPreset` / `update`, not by this
-/// freezed VO):
+/// layer, not by this freezed VO):
 ///   - `displayName.length >= 1 && displayName.length <= 30`
 ///   - `timezoneId` resolves via the IANA Time Zone Database
 ///     (`InvalidTimezoneIdException` otherwise — checked by the

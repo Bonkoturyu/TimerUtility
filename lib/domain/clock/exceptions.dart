@@ -1,8 +1,8 @@
 /// Thrown when adding a new clock location would push
 /// [ClockCollection.size] past [ClockCollection.maxSize].
 ///
-/// Caller (`ClockCollectionNotifier.addPreset` etc.) is expected to
-/// surface this to the UI as a SnackBar.
+/// The application layer is expected to surface this to the UI as a
+/// SnackBar.
 class MaxClockLocationCountExceededException implements Exception {
   const MaxClockLocationCountExceededException(this.maxSize);
 
