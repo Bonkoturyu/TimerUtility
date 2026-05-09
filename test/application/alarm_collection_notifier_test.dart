@@ -52,6 +52,14 @@ _MockScheduler _stubScheduler() {
       payload: any(named: 'payload'),
     ),
   ).thenAnswer((_) async {});
+  when(
+    () => s.show(
+      notificationId: any(named: 'notificationId'),
+      title: any(named: 'title'),
+      body: any(named: 'body'),
+      payload: any(named: 'payload'),
+    ),
+  ).thenAnswer((_) async {});
   when(() => s.cancel(any())).thenAnswer((_) async {});
   when(() => s.cancelAll()).thenAnswer((_) async {});
   return s;
@@ -499,5 +507,166 @@ void main() {
         ),
       ).called(1);
     });
+
+    test('Phase 10: 過去到達 once-mode は enabled=false に落ちて show 1 回', () async {
+      final scheduler = _stubScheduler();
+      final repo = _InMemoryAlarmRepo();
+      final AlarmEntity persisted = AlarmEntity(
+        id: 'a-pastdue',
+        notificationId: 99001,
+        label: 'Wake up',
+        targetTime: const TimeOfDayValue.unsafe(hour: 7, minute: 30),
+        repeat: const AlarmRepeatOnce(),
+        snoozeMinutes: 5,
+        enabled: true,
+        soundId: null,
+        createdAt: DateTime(2026, 5, 4, 6, 0),
+      );
+      repo.store[persisted.id] = persisted;
+
+      final container = _makeContainer(
+        clock: Clock.fixed(DateTime(2026, 5, 4, 8, 0)),
+        repo: repo,
+        scheduler: scheduler,
+      );
+      addTearDown(container.dispose);
+
+      container.read(alarmCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.value();
+
+      final List<AlarmEntity> loaded = container.read(
+        alarmCollectionNotifierProvider,
+      );
+      expect(loaded.single.enabled, isFalse);
+      expect(repo.store['a-pastdue']!.enabled, isFalse);
+      verifyNever(
+        () => scheduler.schedule(
+          notificationId: any(named: 'notificationId'),
+          fireAt: any(named: 'fireAt'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          exact: any(named: 'exact'),
+          payload: any(named: 'payload'),
+        ),
+      );
+      // OS 側に保留中の予約が残っているケース (アプリ kill / Doze 遅延)
+      // で disable 後に遅延発火しないよう、show の前に cancel が呼ばれる。
+      verify(() => scheduler.cancel(99001)).called(1);
+      verify(
+        () => scheduler.show(
+          notificationId: 99001,
+          title: 'Wake up',
+          body: any(named: 'body'),
+          payload: 'alarm:a-pastdue',
+        ),
+      ).called(1);
+    });
+
+    test('Phase 10: 過去到達 weekly は enabled 維持で次回曜日に再 schedule', () async {
+      final scheduler = _stubScheduler();
+      final repo = _InMemoryAlarmRepo();
+      final AlarmEntity persisted = AlarmEntity(
+        id: 'a-weekly',
+        notificationId: 99002,
+        label: '',
+        targetTime: const TimeOfDayValue.unsafe(hour: 7, minute: 30),
+        repeat: AlarmRepeatWeekly.create(DayOfWeek.values.toSet()),
+        snoozeMinutes: 5,
+        enabled: true,
+        soundId: null,
+        createdAt: DateTime(2026, 5, 4, 6, 0),
+      );
+      repo.store[persisted.id] = persisted;
+
+      final container = _makeContainer(
+        clock: Clock.fixed(DateTime(2026, 5, 4, 8, 0)),
+        repo: repo,
+        scheduler: scheduler,
+      );
+      addTearDown(container.dispose);
+
+      container.read(alarmCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.value();
+
+      final List<AlarmEntity> loaded = container.read(
+        alarmCollectionNotifierProvider,
+      );
+      expect(loaded.single.enabled, isTrue);
+      verify(
+        () => scheduler.schedule(
+          notificationId: 99002,
+          fireAt: DateTime(2026, 5, 5, 7, 30),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          exact: any(named: 'exact'),
+          payload: 'alarm:a-weekly',
+        ),
+      ).called(1);
+      verifyNever(
+        () => scheduler.show(
+          notificationId: any(named: 'notificationId'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          payload: any(named: 'payload'),
+        ),
+      );
+    });
+
+    test(
+      'Phase 10: createdAt が今日の targetTime より後の once は past-due 扱いしない',
+      () async {
+        final scheduler = _stubScheduler();
+        final repo = _InMemoryAlarmRepo();
+        final AlarmEntity persisted = AlarmEntity(
+          id: 'a-tomorrow-intent',
+          notificationId: 99003,
+          label: '',
+          targetTime: const TimeOfDayValue.unsafe(hour: 7, minute: 30),
+          repeat: const AlarmRepeatOnce(),
+          snoozeMinutes: 5,
+          enabled: true,
+          soundId: null,
+          // 今日の 7:30 より後に作成 → ユーザは「明日の 7:30」を意図。
+          createdAt: DateTime(2026, 5, 4, 9, 0),
+        );
+        repo.store[persisted.id] = persisted;
+
+        final container = _makeContainer(
+          clock: Clock.fixed(DateTime(2026, 5, 4, 10, 0)),
+          repo: repo,
+          scheduler: scheduler,
+        );
+        addTearDown(container.dispose);
+
+        container.read(alarmCollectionNotifierProvider);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.value();
+
+        final List<AlarmEntity> loaded = container.read(
+          alarmCollectionNotifierProvider,
+        );
+        expect(loaded.single.enabled, isTrue);
+        verify(
+          () => scheduler.schedule(
+            notificationId: 99003,
+            fireAt: DateTime(2026, 5, 5, 7, 30),
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            exact: any(named: 'exact'),
+            payload: 'alarm:a-tomorrow-intent',
+          ),
+        ).called(1);
+        verifyNever(
+          () => scheduler.show(
+            notificationId: any(named: 'notificationId'),
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            payload: any(named: 'payload'),
+          ),
+        );
+      },
+    );
   });
 }

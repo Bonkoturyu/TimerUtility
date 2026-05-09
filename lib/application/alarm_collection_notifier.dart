@@ -68,14 +68,77 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     if (persisted.isEmpty) return;
     // 二重チェック: findAll 中に state が populate された場合も捨てる。
     if (state.isNotEmpty) return;
-    state = List<AlarmEntity>.unmodifiable(persisted);
+
+    // Phase 10: 過去到達 once-mode alarm の検知 + disable。
+    // 端末再起動 / プロセス kill 経由でアプリが落ちている間に once-mode
+    // alarm の targetTime を跨いだ場合、AlarmService.nextFireAt はその場で
+    // 「翌日の同時刻」を返すため、放置すると意図しない 24h 後の再鳴動が
+    // 起きる (Timer Phase 8 の completed 化と同じ問題)。createdAt が今日の
+    // targetTime より前なら「今日鳴るはずだった」と判定し、enabled=false で
+    // 永続化 + show() で 1 回通知して取り下げる (Timer の
+    // _showRestoredCompletionNotification と同じ流儀)。weekly は nextFireAt
+    // が次回曜日に自動で進むので通常の reschedule のみ。
+    final DateTime now = ref.read(clockProvider).now();
+    final List<AlarmEntity> reconciled = <AlarmEntity>[];
+    final List<AlarmEntity> pastDueOnce = <AlarmEntity>[];
+    for (final AlarmEntity a in persisted) {
+      if (a.enabled && _isPastDueOnce(a, now)) {
+        final AlarmEntity disabled = a.copyWith(enabled: false);
+        reconciled.add(disabled);
+        pastDueOnce.add(disabled);
+      } else {
+        reconciled.add(a);
+      }
+    }
+    state = List<AlarmEntity>.unmodifiable(reconciled);
+
     // enabled なアラームは永続化された予約とアプリ内 state を同期させる
     // ため、起動時に一度 reschedule する。Phase 10 BootReceiver は
     // app プロセスが死んでいる間の再起動経由の再予約を担うが、
     // app 起動中の resume / 状態同期はここでカバーする。
-    for (final AlarmEntity a in persisted) {
+    for (final AlarmEntity a in reconciled) {
       if (a.enabled) _scheduleAlarm(a);
     }
+    for (final AlarmEntity a in pastDueOnce) {
+      _persist(a);
+      // OS 側 AlarmManager に保留中の予約が残っているケース (アプリプロセス
+      // のみ kill / Doze 遅延等) で、disable 後に遅延発火して「無効化したのに
+      // 鳴る」二重通知になるのを防ぐため、show の前に明示的に cancel する。
+      _cancel(a.notificationId);
+      _showMissedAlarmNotification(a);
+    }
+  }
+
+  bool _isPastDueOnce(AlarmEntity alarm, DateTime now) {
+    if (alarm.repeat is! AlarmRepeatOnce) return false;
+    final DateTime todayTarget = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      alarm.targetTime.hour,
+      alarm.targetTime.minute,
+    );
+    if (!todayTarget.isBefore(now)) return false;
+    return alarm.createdAt.isBefore(todayTarget);
+  }
+
+  void _showMissedAlarmNotification(AlarmEntity alarm) {
+    final NotificationStrings strings = ref.read(
+      notificationStringsNotifierProvider,
+    );
+    final String title = alarm.label.isEmpty
+        ? strings.alarmRingingTitle
+        : alarm.label;
+    unawaited(
+      ref
+          .read(notificationSchedulerProvider)
+          .show(
+            notificationId: alarm.notificationId,
+            title: title,
+            body: strings.alarmRingingBody,
+            payload: 'alarm:${alarm.id}',
+          ),
+    );
   }
 
   /// 新規アラームを作成して永続化、`enabled = true` なら schedule する。
