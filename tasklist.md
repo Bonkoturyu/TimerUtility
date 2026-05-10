@@ -58,6 +58,30 @@
 `lib/main.dart` の `go_router` への `/clock` / `/clock/locations` 追加、
 `HomeScreen` の Clock 導線追加。
 
+#### Session 1 完了 (2026-05-10): TZ resolver adapter + 低レベル時計 widget 2 種
+
+- [x] `lib/infrastructure/clock/tz_database_timezone_resolver.dart`:
+  `tz.initializeTimeZones()` を static flag で 1 度だけ実行、
+  `tz.LocationNotFoundException` を `InvalidTimezoneIdException` に
+  再 throw。
+- [x] `lib/application/timezone_resolver_provider.dart`:
+  `@Riverpod(keepAlive: true)` stub (preset / detector 流儀)。
+- [x] `lib/main.dart`: `TzDatabaseTimezoneResolver` を生成、
+  `ProviderScope.overrides` に 1 行追加 (HomeScreen / router 等は触らず)。
+- [x] `lib/presentation/widgets/analog_clock_widget.dart`:
+  `ConsumerWidget` + `CustomPaint`、文字盤 + 12 目盛 + 時/分/秒針、
+  秒針赤、時/分は `colorScheme.onSurface`。
+- [x] `lib/presentation/widgets/digital_clock_widget.dart`:
+  `padLeft(2, '0')` の手書きフォーマット (preset_label_formatter 流儀、
+  `intl` 直接 import を回避)、`tabularFigures()` で digit jitter 抑止。
+- [x] Test 3 ファイル (resolver 3 ケース / analog 2 active + 1 skip /
+  digital 3 ケース、計 8 active + 1 skip 全パス)。
+- `flutter analyze`: No issues found
+- `flutter test`: 473 active + 1 skipped = 474 件 (既存 465 + 新規 8 + skip 1)
+
+次セッション (Session 2) へ: clock_design_a/b/c のいずれか + 親 screen の
+1st スライス (本セッションでは導線追加・router 編集はスコープ外)。
+
 #### 内部判断 (本セッション中に発生、要確認)
 
 - プラン記載のテスト「`TimezoneCatalog.presets` の全 timezoneId が

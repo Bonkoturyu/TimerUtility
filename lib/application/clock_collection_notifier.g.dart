@@ -7,7 +7,7 @@ part of 'clock_collection_notifier.dart';
 // **************************************************************************
 
 String _$clockCollectionNotifierHash() =>
-    r'efdb0554d2925a57e8b7f23940f641476632e726';
+    r'd027575cd6a094e60ff525fef169cf3c2d4b7088';
 
 /// Phase 10.5 single source of truth for pinned world-clock locations.
 ///
