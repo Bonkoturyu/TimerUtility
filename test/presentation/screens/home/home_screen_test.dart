@@ -579,5 +579,33 @@ void main() {
         );
       },
     );
+
+    testWidgets('(l) Pixel 6a 412dp 幅で FAB と HomeDotIndicator が縦方向に重ならない', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(412, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
+      await _settleRestore(tester);
+
+      // initial = Timer (index 1)。Timer タブの FAB と DotIndicator が
+      // 同居する状態で Y 方向 overlap がないことを確認。
+      final Rect fabRect = tester.getRect(
+        find.byKey(const Key('timer_list_add_fab')),
+      );
+      final Rect dotRect = tester.getRect(find.byType(HomeDotIndicator));
+
+      // bottomNavigationBar slot に置いたので、DotIndicator は FAB より
+      // 下、または body 領域外に配置されているはず。FAB の bottom が
+      // DotIndicator の top 以下であれば overlap なし。
+      expect(
+        fabRect.bottom,
+        lessThanOrEqualTo(dotRect.top),
+        reason:
+            'FAB と DotIndicator が Y 軸で重なっている '
+            '(FAB.bottom=${fabRect.bottom}, dot.top=${dotRect.top})',
+      );
+    });
   });
 }

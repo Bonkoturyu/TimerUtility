@@ -25,6 +25,13 @@ import 'timer_list_page.dart';
 /// here and in the wrappers — they delegate to static helpers on the
 /// Page class.
 ///
+/// The 4-page progress indicator (`HomeDotIndicator`) lives in the
+/// Scaffold's `bottomNavigationBar` slot — not as a `Positioned`
+/// overlay inside a `Stack`, which collided with the FAB on a
+/// Pixel 6a. The indicator is tap-disabled, so this is purely a
+/// position cue and does not turn into a tab bar (design decision #1
+/// keeps tab-switch UI off the bottom).
+///
 /// Page restore: the user's last tab is persisted via `UserPreferences`
 /// (`UserPreferenceKeys.lastHomePageIndex`). On cold start we read it in
 /// the post-frame microtask and `jumpToPage` to the stored index;
@@ -105,32 +112,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
       appBar: _buildAppBar(context, l),
-      body: Stack(
-        children: <Widget>[
-          PageView(
-            key: const Key('home_page_view'),
-            controller: _controller,
-            onPageChanged: _onPageChanged,
-            children: const <Widget>[
-              StopwatchPage(),
-              TimerListPage(),
-              AlarmListPage(),
-              ClockPage(),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 16,
-            child: SafeArea(
-              top: false,
-              child: HomeDotIndicator(
-                count: HomeScreen.pageCount,
-                current: _currentPage,
-              ),
-            ),
-          ),
+      body: PageView(
+        key: const Key('home_page_view'),
+        controller: _controller,
+        onPageChanged: _onPageChanged,
+        children: const <Widget>[
+          StopwatchPage(),
+          TimerListPage(),
+          AlarmListPage(),
+          ClockPage(),
         ],
+      ),
+      // Pin the dot indicator to the Scaffold's bottomNavigationBar
+      // slot rather than overlaying it inside the PageView via a
+      // `Positioned`. The previous overlay collided with the FAB on
+      // Pixel 6a (Y axis ~14dp overlap) and made the dot pill hard to
+      // read. The widget itself is tap-disabled so this does not
+      // promote to a real BottomNavigationBar — design decision #1
+      // (no bottom-tab UI) is preserved.
+      //
+      // The fixed 38dp wraps `HomeDotIndicator`'s inner `Center` so the
+      // bottomNavigationBar slot does not let the indicator expand
+      // vertically (which would steal the body / PageView's height
+      // and break swipe hit-testing in tests).
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 38,
+          child: HomeDotIndicator(
+            count: HomeScreen.pageCount,
+            current: _currentPage,
+          ),
+        ),
       ),
       floatingActionButton: _buildFab(context),
     );
