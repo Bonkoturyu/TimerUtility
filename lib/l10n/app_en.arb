@@ -201,5 +201,10 @@
   "weekdaySun": "Sun",
 
   "clockAppBarTitle": "World Clock",
-  "clockMenuEditLocations": "Edit cities"
+  "clockMenuEditLocations": "Edit cities",
+  "clockLocationPickerAppBarTitle": "Edit cities",
+  "clockLocationPickerSectionPinned": "Pinned",
+  "clockLocationPickerSectionAvailable": "Available cities",
+  "clockLocationPickerLimitReached": "Maximum of 6 cities reached. Remove one to add another.",
+  "clockLocationPickerCatalogEmpty": "All available cities are already pinned"
 }

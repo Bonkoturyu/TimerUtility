@@ -425,4 +425,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clockMenuEditLocations => '都市を編集';
+
+  @override
+  String get clockLocationPickerAppBarTitle => '都市を編集';
+
+  @override
+  String get clockLocationPickerSectionPinned => '登録済み';
+
+  @override
+  String get clockLocationPickerSectionAvailable => '追加できる都市';
+
+  @override
+  String get clockLocationPickerLimitReached => '上限 6 件に達しています。削除してから追加してください';
+
+  @override
+  String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
 }

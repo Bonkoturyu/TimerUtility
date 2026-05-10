@@ -871,6 +871,36 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'都市を編集'**
   String get clockMenuEditLocations;
+
+  /// No description provided for @clockLocationPickerAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'都市を編集'**
+  String get clockLocationPickerAppBarTitle;
+
+  /// No description provided for @clockLocationPickerSectionPinned.
+  ///
+  /// In ja, this message translates to:
+  /// **'登録済み'**
+  String get clockLocationPickerSectionPinned;
+
+  /// No description provided for @clockLocationPickerSectionAvailable.
+  ///
+  /// In ja, this message translates to:
+  /// **'追加できる都市'**
+  String get clockLocationPickerSectionAvailable;
+
+  /// No description provided for @clockLocationPickerLimitReached.
+  ///
+  /// In ja, this message translates to:
+  /// **'上限 6 件に達しています。削除してから追加してください'**
+  String get clockLocationPickerLimitReached;
+
+  /// No description provided for @clockLocationPickerCatalogEmpty.
+  ///
+  /// In ja, this message translates to:
+  /// **'すべての都市が登録済みです'**
+  String get clockLocationPickerCatalogEmpty;
 }
 
 class _AppLocalizationsDelegate
