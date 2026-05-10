@@ -12,6 +12,8 @@ import '../widgets/lap_list.dart';
 class StopwatchScreen extends ConsumerStatefulWidget {
   const StopwatchScreen({super.key});
 
+  static const String routeLocation = '/stopwatch';
+
   @override
   ConsumerState<StopwatchScreen> createState() => _StopwatchScreenState();
 }

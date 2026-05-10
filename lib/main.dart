@@ -247,12 +247,12 @@ Future<void> main() async {
             const HomeScreen(),
       ),
       GoRoute(
-        path: '/stopwatch',
+        path: StopwatchScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
             const StopwatchScreen(),
       ),
       GoRoute(
-        path: '/timer',
+        path: TimerListScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
             const TimerListScreen(),
       ),
@@ -421,13 +421,13 @@ class HomeScreen extends StatelessWidget {
               key: const Key('home_open_stopwatch_button'),
               // push (not go) so back from the inner screen returns to
               // home rather than exiting the app.
-              onPressed: () => context.push('/stopwatch'),
+              onPressed: () => context.push(StopwatchScreen.routeLocation),
               child: Text(l.homeOpenStopwatch),
             ),
             const SizedBox(height: 12),
             FilledButton(
               key: const Key('home_open_timer_button'),
-              onPressed: () => context.push('/timer'),
+              onPressed: () => context.push(TimerListScreen.routeLocation),
               child: Text(l.homeOpenTimer),
             ),
             const SizedBox(height: 12),
