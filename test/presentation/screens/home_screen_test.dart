@@ -7,6 +7,8 @@ import 'package:timer_utility/main.dart';
 import 'package:timer_utility/presentation/screens/alarm_list_screen.dart';
 import 'package:timer_utility/presentation/screens/clock_location_picker_screen.dart';
 import 'package:timer_utility/presentation/screens/clock_screen.dart';
+import 'package:timer_utility/presentation/screens/stopwatch_screen.dart';
+import 'package:timer_utility/presentation/screens/timer_list_screen.dart';
 
 /// HomeScreen の 4 ボタン → 各画面への遷移を検証する smoke test。
 ///
@@ -23,13 +25,13 @@ Widget _harness() {
             const HomeScreen(),
       ),
       GoRoute(
-        path: '/stopwatch',
+        path: StopwatchScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) => const Scaffold(
           body: Center(child: Text('stopwatch route reached')),
         ),
       ),
       GoRoute(
-        path: '/timer',
+        path: TimerListScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
             const Scaffold(body: Center(child: Text('timer route reached'))),
       ),

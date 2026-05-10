@@ -45,6 +45,8 @@ String _localizedStatus(AppLocalizations l, TimerStatus status) {
 class TimerListScreen extends ConsumerStatefulWidget {
   const TimerListScreen({super.key});
 
+  static const String routeLocation = '/timer';
+
   @override
   ConsumerState<TimerListScreen> createState() => _TimerListScreenState();
 }
