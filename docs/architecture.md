@@ -77,10 +77,11 @@ lib/
 │   │   ├── alarm_entity.dart               # freezed Entity
 │   │   ├── alarm_service.dart              # nextFireAt / advanceAfterFire / snoozeUntil
 │   │   └── exceptions.dart                 # AlarmNotFoundException 等
-│   ├── clock/                              # Phase 10.5 予定（世界時計）
-│   │   ├── clock_location.dart
-│   │   ├── clock_collection.dart
-│   │   ├── clock_time.dart
+│   ├── clock/                              # Phase 10.5 で実装済み（世界時計）
+│   │   ├── clock_location.dart             # ClockLocation Entity
+│   │   ├── clock_collection.dart           # 集約ルート（最大 6 件）
+│   │   ├── clock_time.dart                 # ClockTime ValueObject + TimezoneResolver port
+│   │   ├── timezone_catalog.dart           # 25 都市プリセット（pure Dart、IANA TZ ID マップ）
 │   │   └── exceptions.dart
 │   ├── shared/
 │   │   └── duration_formatter.dart
@@ -92,8 +93,8 @@ lib/
 │       ├── preset_repository.dart          # Phase 9 で実装済み
 │       ├── user_preferences.dart           # Phase 9 で実装済み（SharedPreferences 抽象）
 │       ├── alarm_repository.dart           # Phase 9.5 で実装済み
-│       ├── clock_location_repository.dart  # Phase 10.5 予定
-│       └── location_detector.dart          # Phase 10.5 予定（GPS → IANA TZ）
+│       ├── clock_location_repository.dart  # Phase 10.5 で実装済み
+│       └── location_detector.dart          # Phase 10.5 で実装済み（GPS → IANA TZ）
 │
 ├── infrastructure/
 │   ├── notification/
@@ -104,10 +105,10 @@ lib/
 │   │   └── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
-│   ├── location/                                    # Phase 10.5 予定
+│   ├── location/                                    # Phase 10.5 で実装済み
 │   │   └── location_detector_adapter.dart           # geolocator + geocoding、失敗時 FlutterTimezone fallback
-│   ├── clock/                                       # Phase 10.5 予定
-│   │   └── timezone_catalog.dart                    # 主要都市プリセット + 国コード → 代表 TZ マップ
+│   ├── clock/                                       # Phase 10.5 で実装済み
+│   │   └── tz_database_timezone_resolver.dart       # IANA TZ → wall clock 変換 (timezone パッケージ)
 │   ├── preferences/
 │   │   └── shared_preferences_user_preferences.dart # Phase 9 で実装済み
 │   └── database/
@@ -120,7 +121,7 @@ lib/
 │       │   ├── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
 │       │   ├── preset_mapper.dart                   # Phase 9 で実装済み
 │       │   └── alarm_mapper.dart                    # Phase 9.5 で実装済み
-│       └── drift_clock_location_repository.dart     # Phase 10.5 予定
+│       └── drift_clock_location_repository.dart     # Phase 10.5 で実装済み
 │
 ├── application/                  # Riverpod Providers
 │   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
@@ -139,10 +140,12 @@ lib/
 │   ├── alarm_repository_provider.dart        # Phase 9.5 で実装済み
 │   ├── alarm_service_provider.dart           # Phase 9.5 で実装済み
 │   ├── alarm_collection_notifier.dart        # Phase 9.5 で実装済み（最大 50 件、起動時 DB 復元）
-│   ├── clock_collection_notifier.dart        # Phase 10.5 予定
-│   ├── location_detector_provider.dart       # Phase 10.5 予定
+│   ├── clock_collection_notifier.dart        # Phase 10.5 で実装済み
+│   ├── clock_location_repository_provider.dart # Phase 10.5 で実装済み
+│   ├── location_detector_provider.dart       # Phase 10.5 で実装済み
+│   ├── timezone_resolver_provider.dart       # Phase 10.5 で実装済み（keepAlive、TZ DB を 1 度だけ load）
 │   └── clock_tick/
-│       └── current_time_stream_provider.dart # Phase 10.5 で実装予定（1 秒周期）
+│       └── current_time_stream_provider.dart # Phase 10.5 で実装済み（1 秒周期、autoDispose）
 │
 ├── presentation/
 │   ├── screens/
@@ -153,8 +156,8 @@ lib/
 │   │   ├── alarm_list_screen.dart           # Phase 9.5 で実装済み（指定時刻アラーム一覧、ON/OFF Switch、FAB）
 │   │   ├── alarm_edit_screen.dart           # Phase 9.5 で実装済み（新規 / 編集両用、TimePicker + WeekdaySelector）
 │   │   ├── licenses_screen.dart             # Phase 11 ライセンス画面（先行実装）
-│   │   ├── clock_screen.dart                # Phase 10.5 予定（PageView でデザイン切替）
-│   │   └── clock_location_picker_screen.dart # Phase 10.5 予定
+│   │   ├── clock_screen.dart                # Phase 10.5 で実装済み（PageView 3 デザイン切替）
+│   │   └── clock_location_picker_screen.dart # Phase 10.5 で実装済み（都市追加 / 並替 / 削除）
 │   ├── widgets/
 │   │   ├── lap_list.dart
 │   │   ├── duration_picker.dart             # Phase 7 で実装済み（Phase 9 で wheel 部分を再利用可能化）
@@ -165,11 +168,13 @@ lib/
 │   │   ├── sound_select_sheet.dart          # Phase 9 で実装済み
 │   │   ├── alarm_delete_confirm_dialog.dart # Phase 9.5 で実装済み
 │   │   ├── weekday_selector.dart            # Phase 9.5 で実装済み（FilterChip 7 個の multi-select）
-│   │   ├── analog_clock_widget.dart         # Phase 10.5 予定（CustomPainter）
-│   │   ├── digital_clock_widget.dart        # Phase 10.5 予定
-│   │   ├── clock_design_a.dart              # Phase 10.5 予定（PageView 1 ページ目）
-│   │   ├── clock_design_b.dart              # Phase 10.5 予定
-│   │   └── clock_design_c.dart              # Phase 10.5 予定
+│   │   ├── analog_clock_widget.dart         # Phase 10.5 で実装済み（CustomPainter）
+│   │   ├── digital_clock_widget.dart        # Phase 10.5 で実装済み
+│   │   ├── clock_design_a.dart              # Phase 10.5 で実装済み（2x3 アナログ大型 grid）
+│   │   ├── clock_design_b.dart              # Phase 10.5 で実装済み（縦 list + 日付）
+│   │   ├── clock_design_c.dart              # Phase 10.5 で実装済み（3x2 コンパクト grid）
+│   │   ├── utc_offset_formatter.dart        # Phase 10.5 で実装済み（"UTC+09:00" 形式）
+│   │   └── page_navigation_hint.dart        # Phase 10.5 で実装済み（PageView インジケータ）
 │   └── routing/
 │       └── app_router.dart
 │

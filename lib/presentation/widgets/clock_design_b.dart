@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/timezone_resolver_provider.dart';
 import '../../domain/clock/clock_location.dart';
 import '../../domain/clock/clock_time.dart';
+import '../../l10n/app_localizations.dart';
 import 'digital_clock_widget.dart';
 import 'utc_offset_formatter.dart';
 
@@ -22,11 +23,9 @@ class ClockDesignB extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (locations.isEmpty) {
-      return const Center(
-        child: Text(
-          'No cities yet — tap menu to add',
-          key: Key('clock_design_b_empty'),
-        ),
+      final AppLocalizations l = AppLocalizations.of(context);
+      return Center(
+        child: Text(l.clockEmptyHint, key: const Key('clock_design_b_empty')),
       );
     }
     final TimezoneResolver resolver = ref.watch(timezoneResolverProvider);

@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeOpenAlarm => 'Open Alarms';
 
   @override
+  String get homeOpenClock => 'Open World Clock';
+
+  @override
   String get stopwatchAppBarTitle => 'Stopwatch';
 
   @override
@@ -492,4 +495,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clockLocationPickerCatalogEmpty =>
       'All available cities are already pinned';
+
+  @override
+  String get clockEmptyHint => 'No cities yet — tap menu to add';
 }
