@@ -466,4 +466,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clockMenuEditLocations => 'Edit cities';
+
+  @override
+  String get clockLocationPickerAppBarTitle => 'Edit cities';
+
+  @override
+  String clockLocationPickerSectionPinned(int count, int max) {
+    return 'Pinned ($count/$max)';
+  }
+
+  @override
+  String get clockLocationPickerSectionAvailable => 'Available cities';
+
+  @override
+  String clockLocationPickerLimitReached(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Maximum of $count cities reached. Remove one to add another.',
+      one: 'Maximum of 1 city reached. Remove it to add another.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get clockLocationPickerCatalogEmpty =>
+      'All available cities are already pinned';
 }

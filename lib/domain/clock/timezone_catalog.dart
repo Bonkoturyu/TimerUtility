@@ -3,13 +3,19 @@
 ///
 /// Pure Dart 定数のみ。`freezed` 等のコード生成は意図的に避け、
 /// 静的にコンパイル時定数として埋め込むことで起動コストをゼロに
-/// する (`location_detector_adapter` と一緒に Infrastructure 層に
-/// 配置する点だけが domain との分離理由)。
+/// する。
+///
+/// 配置レイヤ: Domain。当初は Infrastructure 層に置いていたが、
+/// PR #24 レビューで Presentation → Infrastructure 直接 import が
+/// CLAUDE.md の依存方向 (`Presentation → Application → Domain ←
+/// Infrastructure`) に違反すると指摘されたため、Pure Dart 定数で
+/// データレイヤ依存もないことから Domain へ移動した。Application /
+/// Infrastructure / Presentation のいずれの層からも import 可能。
 ///
 /// IANA timezone identifiers は <https://www.iana.org/time-zones> に
 /// 準拠。表示名は英語の都市名 (UI 側で多言語化する場合は別途リソース化)。
 ///
-/// 国コード → 代表 TZ マップは別セッション (`location_detector_adapter`)
+/// 国コード → 代表 TZ マップは `infrastructure/location/country_to_timezone.dart`
 /// で実装する。本カタログは「ユーザが手動で都市を選ぶ際の選択肢」のみを
 /// 担う。
 library;
