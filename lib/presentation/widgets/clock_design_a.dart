@@ -6,6 +6,7 @@ import '../../domain/clock/clock_location.dart';
 import '../../domain/clock/clock_time.dart';
 import 'analog_clock_widget.dart';
 import 'digital_clock_widget.dart';
+import 'utc_offset_formatter.dart';
 
 /// Design A: 2 x 3 grid of analog-prominent clock cards.
 ///
@@ -67,7 +68,7 @@ class ClockDesignA extends ConsumerWidget {
                     fontSize: 14,
                   ),
                   Text(
-                    _formatUtcOffset(
+                    formatUtcOffset(
                       resolver.computeAt(now, loc.timezoneId).timeZoneOffset,
                     ),
                     style: TextStyle(fontSize: 11, color: subColor),
@@ -79,16 +80,4 @@ class ClockDesignA extends ConsumerWidget {
       ],
     );
   }
-}
-
-/// Format a [Duration] as `UTC±H` (or `UTC±H:MM` for sub-hour zones
-/// like `Asia/Kolkata` / `Australia/Adelaide`). DST境界での符号反転は
-/// `Duration.isNegative` が一意に決めるので、UTC+0 / UTC-12 のような
-/// 不自然値は出ない (offset == 0 → 'UTC+0' は仕様通り)。
-String _formatUtcOffset(Duration offset) {
-  final bool negative = offset.isNegative;
-  final int h = offset.inHours.abs();
-  final int m = offset.inMinutes.abs() % 60;
-  final String sign = negative ? '-' : '+';
-  return m == 0 ? 'UTC$sign$h' : 'UTC$sign$h:${m.toString().padLeft(2, '0')}';
 }
