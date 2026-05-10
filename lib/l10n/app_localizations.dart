@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'アラームを開く'**
   String get homeOpenAlarm;
 
+  /// No description provided for @homeOpenClock.
+  ///
+  /// In ja, this message translates to:
+  /// **'世界時計を開く'**
+  String get homeOpenClock;
+
   /// No description provided for @stopwatchAppBarTitle.
   ///
   /// In ja, this message translates to:
@@ -901,6 +907,12 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'すべての都市が登録済みです'**
   String get clockLocationPickerCatalogEmpty;
+
+  /// No description provided for @clockEmptyHint.
+  ///
+  /// In ja, this message translates to:
+  /// **'都市が登録されていません — メニューから追加してください'**
+  String get clockEmptyHint;
 }
 
 class _AppLocalizationsDelegate

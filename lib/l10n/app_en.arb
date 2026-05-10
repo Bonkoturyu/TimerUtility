@@ -5,6 +5,7 @@
   "homeOpenStopwatch": "Open Stopwatch",
   "homeOpenTimer": "Open Timer",
   "homeOpenAlarm": "Open Alarms",
+  "homeOpenClock": "Open World Clock",
 
   "stopwatchAppBarTitle": "Stopwatch",
   "stopwatchStart": "Start",
@@ -217,5 +218,6 @@
       "count": {"type": "int"}
     }
   },
-  "clockLocationPickerCatalogEmpty": "All available cities are already pinned"
+  "clockLocationPickerCatalogEmpty": "All available cities are already pinned",
+  "clockEmptyHint": "No cities yet — tap menu to add"
 }

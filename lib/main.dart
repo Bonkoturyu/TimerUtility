@@ -30,6 +30,8 @@ import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_edit_screen.dart';
 import 'presentation/screens/alarm_list_screen.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
+import 'presentation/screens/clock_location_picker_screen.dart';
+import 'presentation/screens/clock_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
@@ -284,6 +286,16 @@ Future<void> main() async {
             AlarmEditScreen(alarmId: state.pathParameters['id']),
       ),
       GoRoute(
+        path: ClockScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClockScreen(),
+      ),
+      GoRoute(
+        path: ClockLocationPickerScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClockLocationPickerScreen(),
+      ),
+      GoRoute(
         path: LicensesScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
             const LicensesScreen(),
@@ -423,6 +435,12 @@ class HomeScreen extends StatelessWidget {
               key: const Key('home_open_alarm_button'),
               onPressed: () => context.push(AlarmListScreen.routeLocation),
               child: Text(l.homeOpenAlarm),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('home_open_clock_button'),
+              onPressed: () => context.push(ClockScreen.routeLocation),
+              child: Text(l.homeOpenClock),
             ),
           ],
         ),
