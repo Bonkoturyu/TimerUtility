@@ -98,7 +98,8 @@ void main() {
   });
 
   group('ClockLocationPickerScreen', () {
-    // 全シナリオでサーフェスを縦長に取る理由: catalog 側 (最大 25 件) が
+    // 全シナリオでサーフェスを縦長に取る理由: catalog 側
+    // (`TimezoneCatalog.presets.length` 件、現状 24) が
     // ListView.builder で遅延構築されるため、デフォルトサイズでは下方
     // のエントリが viewport 外で `find.byKey` が見つからない。
     // catalog A-Z 並び替え後 (2026-05-10 実機検証フィードバック対応) は
