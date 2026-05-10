@@ -125,13 +125,32 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
             itemBuilder: (BuildContext context, int index) =>
                 pages[index % pages.length],
           ),
+          // Push the indicator above the system navigation bar
+          // (Android 3-button ◀●■ or gesture handle). Real-device
+          // verification on a Pixel 6a (3-button nav) showed the dots
+          // colliding with the system buttons because the previous
+          // `Positioned(bottom: 16)` ignored `MediaQuery.padding.bottom`.
+          // `minimum` keeps a 16dp gap even on devices where the OS
+          // reports zero bottom inset (rare, but cheap insurance).
+          //
+          // Only `bottom` is honoured: left / right defaults would
+          // pad against landscape side-notches and shift the centred
+          // indicator off-axis, and `top: true` would expand the
+          // SafeArea region up to the AppBar — turning the bottom
+          // edge of the PageView into dead space for swipes.
           Positioned(
-            bottom: 16,
             left: 0,
             right: 0,
-            child: _DotIndicator(
-              count: pages.length,
-              current: _rawPage % pages.length,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              left: false,
+              right: false,
+              minimum: const EdgeInsets.only(bottom: 16),
+              child: _DotIndicator(
+                count: pages.length,
+                current: _rawPage % pages.length,
+              ),
             ),
           ),
         ],
