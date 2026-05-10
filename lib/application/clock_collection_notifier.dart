@@ -6,9 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../domain/clock/clock_collection.dart';
 import '../domain/clock/clock_location.dart';
+import '../domain/clock/timezone_catalog.dart';
 import '../domain/ports/clock_location_repository.dart';
 import '../domain/ports/location_detector.dart';
-import '../infrastructure/clock/timezone_catalog.dart';
 import 'clock_location_repository_provider.dart';
 import 'clock_provider.dart';
 import 'location_detector_provider.dart';

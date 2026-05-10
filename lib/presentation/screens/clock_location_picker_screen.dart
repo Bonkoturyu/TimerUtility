@@ -5,7 +5,7 @@ import '../../application/clock_collection_notifier.dart';
 import '../../domain/clock/clock_collection.dart';
 import '../../domain/clock/clock_location.dart';
 import '../../domain/clock/exceptions.dart';
-import '../../infrastructure/clock/timezone_catalog.dart';
+import '../../domain/clock/timezone_catalog.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Phase 10.5 picker screen for the world clock. Reached from
@@ -35,8 +35,9 @@ class ClockLocationPickerScreen extends ConsumerWidget {
     final List<ClockLocation> pinned = collection.all;
     final bool isFull = collection.isFull;
     // Set lookup keeps the per-frame filter O(catalog) rather than
-    // O(catalog * pinned). Catalog (~25) and pinned (≤6) are tiny, but
-    // the conversion also makes the intent ("dedupe by id") obvious.
+    // O(catalog * pinned). Catalog (~24) and pinned (≤6) are tiny, but
+    // the conversion also makes the intent ("dedupe by timezoneId")
+    // obvious.
     final Set<String> registeredTz = pinned
         .map((ClockLocation e) => e.timezoneId)
         .toSet();
@@ -51,9 +52,10 @@ class ClockLocationPickerScreen extends ConsumerWidget {
         children: <Widget>[
           _SectionHeader(
             key: const Key('clock_picker_pinned_header'),
-            text:
-                '${l.clockLocationPickerSectionPinned} '
-                '(${pinned.length}/${ClockCollection.maxSize})',
+            text: l.clockLocationPickerSectionPinned(
+              pinned.length,
+              ClockCollection.maxSize,
+            ),
           ),
           Expanded(
             child: ReorderableListView.builder(
@@ -99,7 +101,7 @@ class ClockLocationPickerScreen extends ConsumerWidget {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                l.clockLocationPickerLimitReached,
+                l.clockLocationPickerLimitReached(ClockCollection.maxSize),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -145,10 +147,10 @@ class ClockLocationPickerScreen extends ConsumerWidget {
             timezoneId: entry.timezoneId,
             displayName: entry.displayName,
           );
-    } on MaxClockLocationCountExceededException {
+    } on MaxClockLocationCountExceededException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.clockLocationPickerLimitReached)),
+        SnackBar(content: Text(l.clockLocationPickerLimitReached(e.maxSize))),
       );
     }
   }

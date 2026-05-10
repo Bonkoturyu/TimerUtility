@@ -98,10 +98,10 @@ void main() {
   });
 
   group('ClockLocationPickerScreen', () {
-    // 全シナリオでサーフェスを縦長に取る理由: catalog 側 (最大 25 件) が
+    // 全シナリオでサーフェスを縦長に取る理由: catalog 側 (最大 24 件) が
     // ListView.builder で遅延構築されるため、デフォルトサイズでは下方
     // のエントリ (Europe/* / America/*) が viewport 外で `find.byKey`
-    // が見つからない。3000dp 確保すれば pinned 6 + catalog 19 件まで
+    // が見つからない。3000dp 確保すれば pinned 6 + catalog 18 件まで
     // 全件 layout される。
     Future<void> setLargeSurface(WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 3000));

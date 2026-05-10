@@ -203,8 +203,19 @@
   "clockAppBarTitle": "世界時計",
   "clockMenuEditLocations": "都市を編集",
   "clockLocationPickerAppBarTitle": "都市を編集",
-  "clockLocationPickerSectionPinned": "登録済み",
+  "clockLocationPickerSectionPinned": "登録済み ({count}/{max})",
+  "@clockLocationPickerSectionPinned": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "max": {"type": "int"}
+    }
+  },
   "clockLocationPickerSectionAvailable": "追加できる都市",
-  "clockLocationPickerLimitReached": "上限 6 件に達しています。削除してから追加してください",
+  "clockLocationPickerLimitReached": "上限 {count} 件に達しています。削除してから追加してください",
+  "@clockLocationPickerLimitReached": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです"
 }
