@@ -460,4 +460,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weekdaySun => 'Sun';
+
+  @override
+  String get clockAppBarTitle => 'World Clock';
+
+  @override
+  String get clockMenuEditLocations => 'Edit cities';
 }

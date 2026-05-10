@@ -6,27 +6,28 @@ import '../../application/clock_collection_notifier.dart';
 import '../../application/clock_provider.dart';
 import '../../application/clock_tick/current_time_stream_provider.dart';
 import '../../domain/clock/clock_location.dart';
+import '../../l10n/app_localizations.dart';
 import '../widgets/clock_design_a.dart';
 import '../widgets/clock_design_b.dart';
 import '../widgets/clock_design_c.dart';
 
 /// Phase 10.5 world-clock hub screen. Hosts the three design variants
 /// (`ClockDesignA/B/C`) inside a `PageView` so the user can horizontally
-/// swipe between them; the active page is signalled by a 3-dot
-/// indicator pinned to the bottom of the body.
+/// swipe between them; the active page is signalled by a dot indicator
+/// pinned to the bottom of the body.
 ///
 /// Tick ownership: this screen `watch`es `currentTimeProvider` exactly
-/// once and props the resulting `DateTime` down to whichever design is
-/// currently visible. That lets the 1 Hz rebuild stop at this subtree
-/// rather than fanning out to every `ClockDesign*`-internal widget.
+/// once and passes the resulting `DateTime` down to all three design
+/// children as a prop. The benefit isn't avoiding the construction of
+/// off-page children — it's keeping the stream subscription centralised
+/// here so each `ClockDesign*` stays stateless instead of independently
+/// subscribing to the same 1 Hz source.
 ///
 /// Editing locations is intentionally pulled out to a separate route
 /// (`/clock/locations`, wired in Session 5) and surfaced via the AppBar
 /// overflow only — there is no FAB on this screen because all three
 /// designs are dense viewing layouts and a FAB would compete with the
-/// dot indicator visually. l10n keys (`clockAppBarTitle`,
-/// `clockMenuEditLocations`) are added in Session 5; until then we use
-/// Japanese literals so the screen is usable in the existing build.
+/// dot indicator visually.
 class ClockScreen extends ConsumerStatefulWidget {
   const ClockScreen({super.key});
 
@@ -48,6 +49,7 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
     final AsyncValue<DateTime> nowAsync = ref.watch(currentTimeProvider);
     final List<ClockLocation> locations = ref
         .watch(clockCollectionNotifierProvider)
@@ -64,9 +66,19 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
       error: (_, _) => ref.read(clockProvider).now(),
     );
 
+    // Single source of truth for "how many design pages exist". The
+    // `_DotIndicator` reads its count off this list rather than holding
+    // a duplicate literal `3`, so adding/removing a design touches one
+    // place.
+    final List<Widget> pages = <Widget>[
+      ClockDesignA(locations: locations, now: now),
+      ClockDesignB(locations: locations, now: now),
+      ClockDesignC(locations: locations, now: now),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('世界時計'),
+        title: Text(l.clockAppBarTitle),
         actions: <Widget>[
           PopupMenuButton<String>(
             key: const Key('clock_menu'),
@@ -76,9 +88,9 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'edit_locations',
-                child: Text('都市を編集'),
+                child: Text(l.clockMenuEditLocations),
               ),
             ],
           ),
@@ -89,17 +101,13 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           PageView(
             controller: _controller,
             onPageChanged: (int i) => setState(() => _page = i),
-            children: <Widget>[
-              ClockDesignA(locations: locations, now: now),
-              ClockDesignB(locations: locations, now: now),
-              ClockDesignC(locations: locations, now: now),
-            ],
+            children: pages,
           ),
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
-            child: _DotIndicator(count: 3, current: _page),
+            child: _DotIndicator(count: pages.length, current: _page),
           ),
         ],
       ),

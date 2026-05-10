@@ -198,5 +198,8 @@
   "weekdayThu": "木",
   "weekdayFri": "金",
   "weekdaySat": "土",
-  "weekdaySun": "日"
+  "weekdaySun": "日",
+
+  "clockAppBarTitle": "世界時計",
+  "clockMenuEditLocations": "都市を編集"
 }
