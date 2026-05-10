@@ -139,8 +139,58 @@ PageView/TabBar での 3 デザイン切替。
 - `flutter analyze`: No issues found
 - `flutter test`: 498 件 pass (Session 3 の 493 + 新規 5)
 
-次セッション (Session 5) へ: router 配線 + HomeScreen ボタン追加 +
-残り l10n (homeOpenClock / clockEmptyHint) + docs 更新 + BACKLOG クローズ。
+#### Session 5 完了 (2026-05-10): router 配線 + HomeScreen ボタン + l10n 完成 + docs 更新 (Phase 10.5 クローズ)
+
+- [x] `lib/main.dart`: `presentation/screens/clock_screen.dart` /
+  `presentation/screens/clock_location_picker_screen.dart` の import
+  を alphabetical 順で追加、`routes` 配列に `ClockScreen.routeLocation`
+  / `ClockLocationPickerScreen.routeLocation` の 2 GoRoute を挿入、
+  HomeScreen に「世界時計を開く」ボタン (`home_open_clock_button`,
+  `context.push(ClockScreen.routeLocation)`) を追加。
+- [x] `lib/l10n/app_ja.arb` / `lib/l10n/app_en.arb`: `homeOpenClock`
+  と `clockEmptyHint` の 2 キーを追加 (description 不要、既存 7 キーは
+  Session 1〜4 で追加済)。`flutter gen-l10n` warning 0。
+- [x] `lib/presentation/widgets/clock_design_a.dart` /
+  `clock_design_b.dart` / `clock_design_c.dart`: empty branch の英語
+  固定文 `'No cities yet — tap menu to add'` を `l.clockEmptyHint`
+  経由に置換 (Session 2 で deferred)。Key は `const Key(...)` に格上げ。
+- [x] `test/presentation/screens/home_screen_test.dart` 新規:
+  4 シナリオ (Stopwatch / Timer / Alarm / Clock の各ボタンタップで
+  対応 route の placeholder text に到達する smoke test)。実画面では
+  なく軽量 Scaffold placeholder を route builder にマウントし、
+  HomeScreen 自身は provider 直 watch しないため override は空。
+- [x] `test/presentation/widgets/clock_design_a_test.dart` /
+  `clock_design_b_test.dart` / `clock_design_c_test.dart`:
+  `MaterialApp` に `localizationsDelegates` /
+  `supportedLocales` / `locale: Locale('ja')` を追加
+  (l10n 化に伴い `AppLocalizations.of(context)` 解決のため)。
+  アサート内容 (Key による empty 検証) は変更なし。
+- [x] `docs/architecture.md`: `lib/` ツリーの Phase 10.5 注釈を
+  「予定」→「で実装済み」に一括更新、`infrastructure/clock/` を
+  実ファイル名 `tz_database_timezone_resolver.dart` に修正、
+  `application/timezone_resolver_provider.dart` /
+  `clock_location_repository_provider.dart` を追記、
+  `presentation/widgets/` に `utc_offset_formatter.dart` /
+  `page_navigation_hint.dart` を追記、`domain/clock/` に
+  `timezone_catalog.dart` を追記。
+- [x] `docs/state-management.md`: `currentTimeStreamProvider` /
+  `clockCollectionNotifierProvider` /
+  `clockLocationRepositoryProvider` /
+  `locationDetectorProvider` の表記を「実装済み」へ、
+  `timezoneResolverProvider` 行を Provider 表に追加、
+  ClockCollectionNotifier 節タイトルと依存関係図 / lifecycle 表 /
+  ディレクトリ構造図 (L408-) を「実装済み」表記に統一。
+- [x] `docs/domain-model.md`: Clock Aggregate 節と例外表 / DB 表の
+  「予定」を「実装済み」に書き換え、ClockTime 節末尾に新規サブ
+  セクション「Presentation 層からの参照（Phase 10.5）」を追加
+  (ClockScreen / ClockLocationPickerScreen の watch 対象 Provider
+  と mutation 経路を 5 行で記述)。
+- `flutter analyze`: No issues found
+- `flutter test`: 502 件 pass (Session 4 の 498 + 新規 4 = HomeScreen
+  4 シナリオ)
+
+Phase 10.5 全体の DoD 達成。残るは BACKLOG.md L561-568 の実機検証
+6 シナリオ (Pixel 6a, Android 16) のみ — ユーザ手動でクローズ予定。
 
 #### 内部判断 (本セッション中に発生、要確認)
 

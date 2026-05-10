@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/clock/clock_location.dart';
+import '../../l10n/app_localizations.dart';
 import 'analog_clock_widget.dart';
 import 'digital_clock_widget.dart';
 
@@ -18,11 +19,9 @@ class ClockDesignC extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (locations.isEmpty) {
-      return const Center(
-        child: Text(
-          'No cities yet — tap menu to add',
-          key: Key('clock_design_c_empty'),
-        ),
+      final AppLocalizations l = AppLocalizations.of(context);
+      return Center(
+        child: Text(l.clockEmptyHint, key: const Key('clock_design_c_empty')),
       );
     }
     return GridView.count(

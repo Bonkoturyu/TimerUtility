@@ -5,6 +5,7 @@
   "homeOpenStopwatch": "ストップウォッチを開く",
   "homeOpenTimer": "タイマーを開く",
   "homeOpenAlarm": "アラームを開く",
+  "homeOpenClock": "世界時計を開く",
 
   "stopwatchAppBarTitle": "ストップウォッチ",
   "stopwatchStart": "開始",
@@ -217,5 +218,6 @@
       "count": {"type": "int"}
     }
   },
-  "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです"
+  "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです",
+  "clockEmptyHint": "都市が登録されていません — メニューから追加してください"
 }

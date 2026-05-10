@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/timezone_resolver_provider.dart';
 import '../../domain/clock/clock_location.dart';
 import '../../domain/clock/clock_time.dart';
+import '../../l10n/app_localizations.dart';
 import 'analog_clock_widget.dart';
 import 'digital_clock_widget.dart';
 import 'utc_offset_formatter.dart';
@@ -11,8 +12,7 @@ import 'utc_offset_formatter.dart';
 /// Design A: 2 x 3 grid of analog-prominent clock cards.
 ///
 /// `ClockCollection.maxSize == 6` keeps the grid within 3 rows even at
-/// max population. Empty state returns a single hint Text — l10n is
-/// deferred to Session 5 (English literal here, key is stable).
+/// max population.
 ///
 /// Stateless: `now` is owned by the parent screen which `watch`es
 /// `currentTimeStreamProvider` exactly once and props it down, so a
@@ -26,11 +26,9 @@ class ClockDesignA extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (locations.isEmpty) {
-      return const Center(
-        child: Text(
-          'No cities yet — tap menu to add',
-          key: Key('clock_design_a_empty'),
-        ),
+      final AppLocalizations l = AppLocalizations.of(context);
+      return Center(
+        child: Text(l.clockEmptyHint, key: const Key('clock_design_a_empty')),
       );
     }
     final TimezoneResolver resolver = ref.watch(timezoneResolverProvider);
