@@ -29,7 +29,7 @@ class DigitalClockWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final DateTime wall = ref
-        .read(timezoneResolverProvider)
+        .watch(timezoneResolverProvider)
         .computeAt(time, timezoneId);
     final String hh = wall.hour.toString().padLeft(2, '0');
     final String mm = wall.minute.toString().padLeft(2, '0');

@@ -32,7 +32,7 @@ class AnalogClockWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final DateTime wall = ref
-        .read(timezoneResolverProvider)
+        .watch(timezoneResolverProvider)
         .computeAt(time, timezoneId);
     final ColorScheme scheme = Theme.of(context).colorScheme;
     return CustomPaint(
