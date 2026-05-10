@@ -15,9 +15,11 @@ import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
 import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
+import 'application/timezone_resolver_provider.dart';
 import 'application/user_preferences_provider.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_alarm_repository.dart';
+import 'infrastructure/clock/tz_database_timezone_resolver.dart';
 import 'infrastructure/database/drift_clock_location_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
@@ -185,6 +187,8 @@ Future<void> main() async {
     database,
   );
   final LocationDetectorAdapter detector = LocationDetectorAdapter();
+  final TzDatabaseTimezoneResolver timezoneResolver =
+      TzDatabaseTimezoneResolver();
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
 
@@ -299,6 +303,7 @@ Future<void> main() async {
         alarmRepositoryProvider.overrideWithValue(alarmRepo),
         clockLocationRepositoryProvider.overrideWithValue(clockRepo),
         locationDetectorProvider.overrideWithValue(detector),
+        timezoneResolverProvider.overrideWithValue(timezoneResolver),
         userPreferencesProvider.overrideWithValue(userPrefs),
       ],
       child: TimerUtilityApp(router: router),
