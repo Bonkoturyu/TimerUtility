@@ -38,8 +38,19 @@ class ClockScreen extends ConsumerStatefulWidget {
 }
 
 class _ClockScreenState extends ConsumerState<ClockScreen> {
-  final PageController _controller = PageController();
-  int _page = 0;
+  // Pseudo-infinite PageView so swiping past Design C loops back to A
+  // (and vice versa). PageView itself can't wrap, so we offer a very
+  // large itemCount and start from the centre — the user would have
+  // to swipe 1000+ times to hit either edge. `index % pages.length`
+  // maps the raw page back to the actual design index.
+  // The initial value must be a multiple of `pages.length` (3) so the
+  // first frame shows Design A, not B/C.
+  static const int _initialRawPage = 3000;
+
+  final PageController _controller = PageController(
+    initialPage: _initialRawPage,
+  );
+  int _rawPage = _initialRawPage;
 
   @override
   void dispose() {
@@ -98,16 +109,21 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
       ),
       body: Stack(
         children: <Widget>[
-          PageView(
+          PageView.builder(
             controller: _controller,
-            onPageChanged: (int i) => setState(() => _page = i),
-            children: pages,
+            onPageChanged: (int i) => setState(() => _rawPage = i),
+            // null itemCount = unbounded scrolling in both directions.
+            itemBuilder: (BuildContext context, int index) =>
+                pages[index % pages.length],
           ),
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
-            child: _DotIndicator(count: pages.length, current: _page),
+            child: _DotIndicator(
+              count: pages.length,
+              current: _rawPage % pages.length,
+            ),
           ),
         ],
       ),
@@ -115,9 +131,15 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
   }
 }
 
-/// 3-dot page indicator pinned to the bottom of [ClockScreen]. Kept as
-/// a private class because it has no reuse target outside this file —
+/// Page indicator pinned to the bottom of [ClockScreen]. Kept as a
+/// private class because it has no reuse target outside this file —
 /// pulling it out to its own widget file would just add an indirection.
+///
+/// Visual: active dot is a 24×10 pill (Material 3 "expressive" page
+/// indicator pattern), inactive dots are 10×10 circles. The whole row
+/// sits on a translucent `surfaceContainerHigh` capsule so it stays
+/// legible over Design B/C content. The earlier 8 px dots without a
+/// background were missed entirely in real-device review.
 class _DotIndicator extends StatelessWidget {
   const _DotIndicator({required this.count, required this.current});
 
@@ -127,25 +149,38 @@ class _DotIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        for (int i = 0; i < count; i++)
-          Padding(
-            padding: EdgeInsets.only(left: i == 0 ? 0 : 8),
-            child: Container(
-              key: Key('clock_dot_$i'),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i == current
-                    ? scheme.primary
-                    : scheme.onSurface.withValues(alpha: 0.3),
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHigh.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (int i = 0; i < count; i++)
+              Padding(
+                padding: EdgeInsets.only(left: i == 0 ? 0 : 8),
+                // Container (not AnimatedContainer) to keep the existing
+                // widget-test harness — it reads `Container.decoration`
+                // synchronously and an animated swap would race with
+                // `pumpAndSettle`.
+                child: Container(
+                  key: Key('clock_dot_$i'),
+                  width: i == current ? 24 : 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: i == current
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
+                ),
               ),
-            ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
