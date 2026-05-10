@@ -2,27 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/timezone_resolver_provider.dart';
-import 'package:timer_utility/infrastructure/clock/tz_database_timezone_resolver.dart';
+import 'package:timer_utility/domain/clock/clock_time.dart';
 import 'package:timer_utility/presentation/widgets/digital_clock_widget.dart';
+
+/// Fake resolver that ignores its inputs and returns a pre-baked wall
+/// clock. Keeps this widget test hermetic — TZ database / IANA
+/// resolution semantics are exercised separately in
+/// `tz_database_timezone_resolver_test.dart`.
+class _FixedResolver implements TimezoneResolver {
+  _FixedResolver(this._returns);
+  final DateTime _returns;
+  @override
+  DateTime computeAt(DateTime now, String timezoneId) => _returns;
+}
 
 Future<void> _pump(
   WidgetTester tester, {
-  required DateTime time,
-  required String timezoneId,
+  required DateTime fakeWall,
   bool showSeconds = true,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: <Override>[
-        timezoneResolverProvider.overrideWithValue(
-          TzDatabaseTimezoneResolver(),
-        ),
+        timezoneResolverProvider.overrideWithValue(_FixedResolver(fakeWall)),
       ],
       child: MaterialApp(
         home: Scaffold(
           body: DigitalClockWidget(
-            time: time,
-            timezoneId: timezoneId,
+            time: DateTime.utc(2026, 1, 15, 12),
+            timezoneId: 'Asia/Tokyo',
             showSeconds: showSeconds,
           ),
         ),
@@ -33,14 +41,10 @@ Future<void> _pump(
 
 void main() {
   group('DigitalClockWidget', () {
-    testWidgets('UTC 12:00 + Asia/Tokyo で 21:00:00 が表示される', (
+    testWidgets('Fake が 21:00:00 を返したとき HH:mm:ss が表示される', (
       WidgetTester tester,
     ) async {
-      await _pump(
-        tester,
-        time: DateTime.utc(2026, 1, 15, 12),
-        timezoneId: 'Asia/Tokyo',
-      );
+      await _pump(tester, fakeWall: DateTime(2026, 1, 15, 21));
       expect(find.text('21:00:00'), findsOneWidget);
     });
 
@@ -49,23 +53,17 @@ void main() {
     ) async {
       await _pump(
         tester,
-        time: DateTime.utc(2026, 1, 15, 12),
-        timezoneId: 'Asia/Tokyo',
+        fakeWall: DateTime(2026, 1, 15, 21),
         showSeconds: false,
       );
       expect(find.text('21:00'), findsOneWidget);
       expect(find.text('21:00:00'), findsNothing);
     });
 
-    testWidgets('Asia/Seoul (Tokyo と同オフセット) でも 21:00:00 が表示される', (
-      WidgetTester tester,
-    ) async {
-      await _pump(
-        tester,
-        time: DateTime.utc(2026, 1, 15, 12),
-        timezoneId: 'Asia/Seoul',
-      );
-      expect(find.text('21:00:00'), findsOneWidget);
+    testWidgets('00:00:00 (深夜) でも 2 桁ゼロ埋めが維持される', (WidgetTester tester) async {
+      // padLeft 実装の境界ケース。1 桁になりがちな時刻でも HH:mm:ss を維持。
+      await _pump(tester, fakeWall: DateTime(2026, 1, 15));
+      expect(find.text('00:00:00'), findsOneWidget);
     });
   });
 }

@@ -32,8 +32,11 @@ class TzDatabaseTimezoneResolver implements TimezoneResolver {
     try {
       final tz.Location location = tz.getLocation(timezoneId);
       return tz.TZDateTime.from(now, location);
-    } on tz.LocationNotFoundException {
-      throw InvalidTimezoneIdException(timezoneId);
+    } on tz.LocationNotFoundException catch (_, st) {
+      // Preserve the original stack trace so logs / crash reports point
+      // back at the failing `tz.getLocation` call site rather than
+      // bottoming out at this rethrow.
+      Error.throwWithStackTrace(InvalidTimezoneIdException(timezoneId), st);
     }
   }
 }
