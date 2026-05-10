@@ -125,13 +125,23 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
             itemBuilder: (BuildContext context, int index) =>
                 pages[index % pages.length],
           ),
+          // SafeArea pushes the indicator above the system navigation
+          // bar (Android 3-button ◀●■ or gesture handle). Real-device
+          // verification on a Pixel 6a (3-button nav) showed the dots
+          // colliding with the system buttons; `MediaQuery.padding`
+          // wasn't being honoured because `Positioned` is absolute.
+          // `minimum` keeps a 16dp gap even on devices where the OS
+          // reports zero bottom inset (rare, but cheap insurance).
           Positioned(
-            bottom: 16,
             left: 0,
             right: 0,
-            child: _DotIndicator(
-              count: pages.length,
-              current: _rawPage % pages.length,
+            bottom: 0,
+            child: SafeArea(
+              minimum: const EdgeInsets.only(bottom: 16),
+              child: _DotIndicator(
+                count: pages.length,
+                current: _rawPage % pages.length,
+              ),
             ),
           ),
         ],
