@@ -419,4 +419,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get weekdaySun => '日';
+
+  @override
+  String get clockAppBarTitle => '世界時計';
+
+  @override
+  String get clockMenuEditLocations => '都市を編集';
 }
