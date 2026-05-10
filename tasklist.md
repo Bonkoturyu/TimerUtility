@@ -120,6 +120,28 @@ PageView/TabBar での 3 デザイン切替。
 次セッション (Session 4) へ: ClockLocationPickerScreen の実装
 (`/clock/locations` の中身)。
 
+#### Session 4 完了 (2026-05-10): ClockLocationPickerScreen + 上限ガード
+
+- [x] `lib/presentation/screens/clock_location_picker_screen.dart`:
+  `ConsumerWidget` 1 ファイル。Column ベースで上半分に
+  `ReorderableListView.builder` (pinned + delete IconButton + drag 並替)、
+  下半分に `ListView.builder` (TimezoneCatalog 重複除外)。
+  `isFull` 時は catalog 全行 `enabled: false` + limit banner、
+  `MaxClockLocationCountExceededException` を try/catch して
+  SnackBar フォールバック。l10n キーは ja/en 両方追加 (gen-l10n 済)。
+- [x] `test/presentation/screens/clock_location_picker_screen_test.dart`:
+  5 シナリオ (初期表示 / catalog tap で addPreset / 上限到達で disable +
+  banner / `ReorderableListView.onReorder` 直接呼び出しで reorder /
+  delete IconButton で remove)。Notifier mock ではなく
+  `_SeededClockCollectionNotifier` で初期 state を植え、実 mutation
+  メソッドを ProviderContainer.read で観察 (clock_screen_test 流儀)。
+  Surface 800x3000 で catalog 25 件 lazy build を全件 layout。
+- `flutter analyze`: No issues found
+- `flutter test`: 498 件 pass (Session 3 の 493 + 新規 5)
+
+次セッション (Session 5) へ: router 配線 + HomeScreen ボタン追加 +
+残り l10n (homeOpenClock / clockEmptyHint) + docs 更新 + BACKLOG クローズ。
+
 #### 内部判断 (本セッション中に発生、要確認)
 
 - プラン記載のテスト「`TimezoneCatalog.presets` の全 timezoneId が

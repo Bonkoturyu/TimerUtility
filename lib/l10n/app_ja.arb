@@ -201,5 +201,10 @@
   "weekdaySun": "日",
 
   "clockAppBarTitle": "世界時計",
-  "clockMenuEditLocations": "都市を編集"
+  "clockMenuEditLocations": "都市を編集",
+  "clockLocationPickerAppBarTitle": "都市を編集",
+  "clockLocationPickerSectionPinned": "登録済み",
+  "clockLocationPickerSectionAvailable": "追加できる都市",
+  "clockLocationPickerLimitReached": "上限 6 件に達しています。削除してから追加してください",
+  "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです"
 }
