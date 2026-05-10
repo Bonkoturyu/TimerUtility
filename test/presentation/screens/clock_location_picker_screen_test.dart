@@ -98,13 +98,14 @@ void main() {
   });
 
   group('ClockLocationPickerScreen', () {
-    // 全シナリオでサーフェスを縦長に取る理由: catalog 側 (最大 24 件) が
+    // 全シナリオでサーフェスを縦長に取る理由: catalog 側
+    // (`TimezoneCatalog.presets.length` 件、現状 24) が
     // ListView.builder で遅延構築されるため、デフォルトサイズでは下方
-    // のエントリ (Europe/* / America/*) が viewport 外で `find.byKey`
-    // が見つからない。3000dp 確保すれば pinned 6 + catalog 18 件まで
-    // 全件 layout される。
+    // のエントリが viewport 外で `find.byKey` が見つからない。
+    // catalog A-Z 並び替え後 (2026-05-10 実機検証フィードバック対応) は
+    // Tokyo / Toronto / Vancouver が末尾近くに来たため、6000dp 必要。
     Future<void> setLargeSurface(WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(800, 3000));
+      await tester.binding.setSurfaceSize(const Size(800, 6000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
     }
 

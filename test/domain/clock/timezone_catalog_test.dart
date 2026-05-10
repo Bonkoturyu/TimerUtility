@@ -39,5 +39,19 @@ void main() {
       );
       expect(found, isTrue);
     });
+
+    test('displayName が case-insensitive A-Z 順に並んでいる', () {
+      final List<String> names = TimezoneCatalog.presets
+          .map((TimezoneCatalogEntry e) => e.displayName.toLowerCase())
+          .toList();
+      final List<String> sorted = List<String>.from(names)..sort();
+      expect(
+        names,
+        equals(sorted),
+        reason:
+            '実機検証フィードバックで「目的の都市が探しにくい」と指摘されたため、'
+            'TimezoneCatalog.presets は displayName 昇順を維持する',
+      );
+    });
   });
 }

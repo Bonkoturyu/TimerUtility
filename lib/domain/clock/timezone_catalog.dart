@@ -35,76 +35,67 @@ class TimezoneCatalogEntry {
 /// 主要都市プリセット (約 25 件)。地理的に偏らないよう、各大陸の
 /// 主要 TZ を最低 1 件以上カバーする方針で選定。
 ///
-/// 並び順は「日本に近い順 (アジア → 中東 → 欧州 → 大西洋 → 北米東 →
-/// 北米中央 → 北米西 → 太平洋)」。リスト UI でそのまま表示しても
-/// ユーザがスクロールしやすい順番。
+/// 並び順は `displayName` の昇順 (case-insensitive A-Z)。実機検証
+/// フィードバックで「目的の都市が探しにくい」と指摘されたため、
+/// 大陸 grouping (旧: アジア → 中東 → 欧州 → 北米 → 太平洋) から
+/// 単純なアルファベット順に変更した。
 class TimezoneCatalog {
   const TimezoneCatalog._();
 
   static const List<TimezoneCatalogEntry> presets = <TimezoneCatalogEntry>[
-    // Asia
-    TimezoneCatalogEntry(displayName: 'Tokyo', timezoneId: 'Asia/Tokyo'),
-    TimezoneCatalogEntry(displayName: 'Seoul', timezoneId: 'Asia/Seoul'),
-    TimezoneCatalogEntry(displayName: 'Shanghai', timezoneId: 'Asia/Shanghai'),
-    TimezoneCatalogEntry(
-      displayName: 'Hong Kong',
-      timezoneId: 'Asia/Hong_Kong',
-    ),
-    TimezoneCatalogEntry(
-      displayName: 'Singapore',
-      timezoneId: 'Asia/Singapore',
-    ),
-    TimezoneCatalogEntry(displayName: 'Bangkok', timezoneId: 'Asia/Bangkok'),
-    TimezoneCatalogEntry(displayName: 'Kolkata', timezoneId: 'Asia/Kolkata'),
-    // Middle East
-    TimezoneCatalogEntry(displayName: 'Dubai', timezoneId: 'Asia/Dubai'),
-    // Europe / Russia
-    TimezoneCatalogEntry(displayName: 'Moscow', timezoneId: 'Europe/Moscow'),
-    TimezoneCatalogEntry(displayName: 'Berlin', timezoneId: 'Europe/Berlin'),
-    TimezoneCatalogEntry(displayName: 'Paris', timezoneId: 'Europe/Paris'),
-    TimezoneCatalogEntry(displayName: 'London', timezoneId: 'Europe/London'),
-    // South America
-    TimezoneCatalogEntry(
-      displayName: 'Sao Paulo',
-      timezoneId: 'America/Sao_Paulo',
-    ),
-    // North America East
-    TimezoneCatalogEntry(
-      displayName: 'New York',
-      timezoneId: 'America/New_York',
-    ),
-    TimezoneCatalogEntry(displayName: 'Toronto', timezoneId: 'America/Toronto'),
-    // North America Central
-    TimezoneCatalogEntry(
-      displayName: 'Mexico City',
-      timezoneId: 'America/Mexico_City',
-    ),
-    TimezoneCatalogEntry(displayName: 'Chicago', timezoneId: 'America/Chicago'),
-    // North America Mountain
-    TimezoneCatalogEntry(displayName: 'Denver', timezoneId: 'America/Denver'),
-    // North America West
-    TimezoneCatalogEntry(
-      displayName: 'Los Angeles',
-      timezoneId: 'America/Los_Angeles',
-    ),
-    TimezoneCatalogEntry(
-      displayName: 'Vancouver',
-      timezoneId: 'America/Vancouver',
-    ),
-    // Pacific
     TimezoneCatalogEntry(
       displayName: 'Anchorage',
       timezoneId: 'America/Anchorage',
     ),
     TimezoneCatalogEntry(
+      displayName: 'Auckland',
+      timezoneId: 'Pacific/Auckland',
+    ),
+    TimezoneCatalogEntry(displayName: 'Bangkok', timezoneId: 'Asia/Bangkok'),
+    TimezoneCatalogEntry(displayName: 'Berlin', timezoneId: 'Europe/Berlin'),
+    TimezoneCatalogEntry(displayName: 'Chicago', timezoneId: 'America/Chicago'),
+    TimezoneCatalogEntry(displayName: 'Denver', timezoneId: 'America/Denver'),
+    TimezoneCatalogEntry(displayName: 'Dubai', timezoneId: 'Asia/Dubai'),
+    TimezoneCatalogEntry(
+      displayName: 'Hong Kong',
+      timezoneId: 'Asia/Hong_Kong',
+    ),
+    TimezoneCatalogEntry(
       displayName: 'Honolulu',
       timezoneId: 'Pacific/Honolulu',
     ),
-    // Oceania
-    TimezoneCatalogEntry(displayName: 'Sydney', timezoneId: 'Australia/Sydney'),
+    TimezoneCatalogEntry(displayName: 'Kolkata', timezoneId: 'Asia/Kolkata'),
+    TimezoneCatalogEntry(displayName: 'London', timezoneId: 'Europe/London'),
     TimezoneCatalogEntry(
-      displayName: 'Auckland',
-      timezoneId: 'Pacific/Auckland',
+      displayName: 'Los Angeles',
+      timezoneId: 'America/Los_Angeles',
+    ),
+    TimezoneCatalogEntry(
+      displayName: 'Mexico City',
+      timezoneId: 'America/Mexico_City',
+    ),
+    TimezoneCatalogEntry(displayName: 'Moscow', timezoneId: 'Europe/Moscow'),
+    TimezoneCatalogEntry(
+      displayName: 'New York',
+      timezoneId: 'America/New_York',
+    ),
+    TimezoneCatalogEntry(displayName: 'Paris', timezoneId: 'Europe/Paris'),
+    TimezoneCatalogEntry(
+      displayName: 'Sao Paulo',
+      timezoneId: 'America/Sao_Paulo',
+    ),
+    TimezoneCatalogEntry(displayName: 'Seoul', timezoneId: 'Asia/Seoul'),
+    TimezoneCatalogEntry(displayName: 'Shanghai', timezoneId: 'Asia/Shanghai'),
+    TimezoneCatalogEntry(
+      displayName: 'Singapore',
+      timezoneId: 'Asia/Singapore',
+    ),
+    TimezoneCatalogEntry(displayName: 'Sydney', timezoneId: 'Australia/Sydney'),
+    TimezoneCatalogEntry(displayName: 'Tokyo', timezoneId: 'Asia/Tokyo'),
+    TimezoneCatalogEntry(displayName: 'Toronto', timezoneId: 'America/Toronto'),
+    TimezoneCatalogEntry(
+      displayName: 'Vancouver',
+      timezoneId: 'America/Vancouver',
     ),
   ];
 }
