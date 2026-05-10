@@ -39,6 +39,14 @@ import 'timer_list_page.dart';
 /// frequent landing page (Phase 11 settings session). Ranges are
 /// clamped to [0..3] so a stale persisted value from a future tab
 /// reordering doesn't crash the controller.
+///
+/// PageView is wrap-around: swiping past Clock loops back to Stopwatch
+/// (and Stopwatch swiped right loops to Clock). Implemented via
+/// `PageView.builder` with `itemCount: null` and a large
+/// `_initialRawPage` (2520, LCM of 1..7 — divisible by any future tab
+/// count up to 7). The persisted index is always the **logical** value
+/// (`raw % pageCount` ∈ [0..3]); raw values are session-local so a kill
+/// → restart cycle never carries a thousand-page offset.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -52,18 +60,32 @@ class HomeScreen extends ConsumerStatefulWidget {
   /// arrive in a later phase.
   static const int pageCount = 4;
 
+  /// Anchor raw page index for the wrap-around `PageView.builder`.
+  /// 2520 = LCM(1..7) so it is divisible by any plausible `pageCount`
+  /// in [1..7]. `_initialRawPage % pageCount == 0`, so adding the
+  /// logical default index gives a clean starting position with
+  /// thousands of swipes of headroom in either direction (effectively
+  /// infinite for human use).
+  static const int _initialRawPage = 2520;
+
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late final PageController _controller;
-  int _currentPage = HomeScreen.defaultPageIndex;
+
+  /// Raw page index (potentially many thousands). The on-screen
+  /// indicator and persistence layer translate this through
+  /// `% HomeScreen.pageCount` to get the logical 0..3 page.
+  int _rawPage = HomeScreen._initialRawPage + HomeScreen.defaultPageIndex;
+
+  int get _currentPage => _rawPage % HomeScreen.pageCount;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(initialPage: _currentPage);
+    _controller = PageController(initialPage: _rawPage);
     // Defer to a microtask so we can `await` the prefs read; the first
     // frame still paints with `defaultPageIndex` if the user happens to
     // glance at the screen during the first ~1ms.
@@ -77,25 +99,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     if (!mounted) return;
     if (stored == null) return;
+    // Persisted values are always logical (0..3). A stale value from a
+    // future tab reordering still has to clamp here.
     final int clamped = stored.clamp(0, HomeScreen.pageCount - 1);
     if (clamped == _currentPage) return;
-    setState(() => _currentPage = clamped);
-    _controller.jumpToPage(clamped);
+    final int targetRaw = HomeScreen._initialRawPage + clamped;
+    setState(() => _rawPage = targetRaw);
+    _controller.jumpToPage(targetRaw);
   }
 
-  void _onPageChanged(int index) {
-    setState(() => _currentPage = index);
-    // Fire-and-forget persistence. A single write per swipe is fine —
-    // `shared_preferences` debounces internally and a missed write is
-    // self-correcting on the next swipe / app exit.
+  void _onPageChanged(int rawIndex) {
+    setState(() => _rawPage = rawIndex);
+    // Fire-and-forget persistence. Save the **logical** index so we
+    // don't carry the raw offset across launches. shared_preferences
+    // debounces internally and a missed write is self-correcting on
+    // the next swipe / app exit.
     ref
         .read(userPreferencesProvider)
-        .setInt(UserPreferenceKeys.lastHomePageIndex, index);
+        .setInt(
+          UserPreferenceKeys.lastHomePageIndex,
+          rawIndex % HomeScreen.pageCount,
+        );
   }
 
-  void _animateTo(int index) {
+  /// Animate by ±1 raw page. Wrap-around is automatic because the
+  /// builder accepts arbitrarily large indices.
+  void _animateBy(int delta) {
     _controller.animateToPage(
-      index,
+      _rawPage + delta,
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOut,
     );
@@ -112,16 +143,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final AppLocalizations l = AppLocalizations.of(context);
     return Scaffold(
       appBar: _buildAppBar(context, l),
-      body: PageView(
+      body: PageView.builder(
         key: const Key('home_page_view'),
         controller: _controller,
         onPageChanged: _onPageChanged,
-        children: const <Widget>[
-          StopwatchPage(),
-          TimerListPage(),
-          AlarmListPage(),
-          ClockPage(),
-        ],
+        // No itemCount — `PageView.builder` then accepts arbitrarily
+        // large indices, which is what gives us the wrap-around. The
+        // `_initialRawPage = 2520` anchor leaves thousands of pages of
+        // headroom in either direction (LCM(1..7) so any future
+        // pageCount up to 7 stays divisible).
+        itemBuilder: (BuildContext context, int rawIndex) {
+          switch (rawIndex % HomeScreen.pageCount) {
+            case 0:
+              return const StopwatchPage();
+            case 1:
+              return const TimerListPage();
+            case 2:
+              return const AlarmListPage();
+            case 3:
+              return const ClockPage();
+            default:
+              // Unreachable — `% pageCount` is always in [0, pageCount).
+              return const SizedBox.shrink();
+          }
+        },
       ),
       // Pin the dot indicator to the Scaffold's bottomNavigationBar
       // slot rather than overlaying it inside the PageView via a
@@ -150,8 +195,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, AppLocalizations l) {
-    final bool hasPrev = _currentPage > 0;
-    final bool hasNext = _currentPage < HomeScreen.pageCount - 1;
+    // PageView is wrap-around (Step 3 of the Phase 11 follow-up), so
+    // both prev / next hints are always rendered.
+    final int prevLogical =
+        (_currentPage - 1 + HomeScreen.pageCount) % HomeScreen.pageCount;
+    final int nextLogical = (_currentPage + 1) % HomeScreen.pageCount;
 
     return AppBar(
       // 80dp = chevron (20) + icon (18) + 2× inter-spacing (8) + outer
@@ -162,28 +210,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // current-tab name lives in `title`, the adjacent tabs are
       // signalled by chevron + tab icon — the DotIndicator tells
       // absolute position.
-      leadingWidth: hasPrev ? 80 : null,
+      leadingWidth: 80,
       // Force left-aligned title so the Material 3 platform default
       // (Android centers titles) doesn't carve additional padding out
       // of the already-tight title slot when a leading is present.
       centerTitle: false,
-      leading: hasPrev
-          ? PageNavigationHint(
-              icon: _iconForPage(_currentPage - 1),
-              label: '',
-              direction: PageHintDirection.left,
-              onTap: () => _animateTo(_currentPage - 1),
-            )
-          : null,
+      leading: PageNavigationHint(
+        icon: _iconForPage(prevLogical),
+        label: '',
+        direction: PageHintDirection.left,
+        onTap: () => _animateBy(-1),
+      ),
       title: Text(_titleForPage(l, _currentPage)),
       actions: <Widget>[
-        if (hasNext)
-          PageNavigationHint(
-            icon: _iconForPage(_currentPage + 1),
-            label: '',
-            direction: PageHintDirection.right,
-            onTap: () => _animateTo(_currentPage + 1),
-          ),
+        PageNavigationHint(
+          icon: _iconForPage(nextLogical),
+          label: '',
+          direction: PageHintDirection.right,
+          onTap: () => _animateBy(1),
+        ),
         _buildOverflow(context, l),
       ],
     );

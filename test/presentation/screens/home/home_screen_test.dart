@@ -332,12 +332,32 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(TimerListPage), findsOneWidget);
+
+      // 末端の循環確認: Alarm → Clock → さらに左 fling で Stopwatch に
+      // 戻れることを確認 (Phase 11 follow-up Step 3 の wrap-around)。
+      for (int i = 0; i < 2; i++) {
+        await tester.fling(
+          find.byKey(const Key('home_page_view')),
+          const Offset(-400, 0),
+          1000,
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(find.byType(ClockPage), findsOneWidget);
+
+      await tester.fling(
+        find.byKey(const Key('home_page_view')),
+        const Offset(-400, 0),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(StopwatchPage), findsOneWidget);
     });
 
     testWidgets(
-      '(d) 末端タブ (Clock) からの左 fling / 先頭タブ (Stopwatch) からの右 fling は何もしない',
+      '(d) PageView は wrap-around (Clock 左 fling → Stopwatch / Stopwatch 右 fling → Clock)',
       (WidgetTester tester) async {
-        // 末端から: lastHomePageIndex = 3 で Clock 起動 → 左 fling は no-op
+        // Clock (index 3) 起動 → 左 fling で Stopwatch (index 0) に循環。
         await tester.pumpWidget(
           _harness(
             prefs: _RecordingPrefs(
@@ -354,30 +374,16 @@ void main() {
           1000,
         );
         await tester.pumpAndSettle();
-        // Clock のまま (PageView の末端ガード)。
-        expect(find.byType(ClockPage), findsOneWidget);
-
-        // 続けて先頭 (Stopwatch) に飛んで右 fling が no-op であることを確認。
-        // 直接 jumpToPage は外部から呼べないので、3 回右 fling して
-        // index 0 まで戻す。
-        for (int i = 0; i < 3; i++) {
-          await tester.fling(
-            find.byKey(const Key('home_page_view')),
-            const Offset(400, 0),
-            1000,
-          );
-          await tester.pumpAndSettle();
-        }
         expect(find.byType(StopwatchPage), findsOneWidget);
 
+        // 逆方向も確認: Stopwatch から右 fling で Clock に戻る。
         await tester.fling(
           find.byKey(const Key('home_page_view')),
           const Offset(400, 0),
           1000,
         );
         await tester.pumpAndSettle();
-        // Stopwatch のまま (先頭ガード)。
-        expect(find.byType(StopwatchPage), findsOneWidget);
+        expect(find.byType(ClockPage), findsOneWidget);
       },
     );
 
