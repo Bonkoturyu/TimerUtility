@@ -39,13 +39,19 @@ class ClockScreen extends ConsumerStatefulWidget {
 
 class _ClockScreenState extends ConsumerState<ClockScreen> {
   // Pseudo-infinite PageView so swiping past Design C loops back to A
-  // (and vice versa). PageView itself can't wrap, so we offer a very
-  // large itemCount and start from the centre — the user would have
-  // to swipe 1000+ times to hit either edge. `index % pages.length`
-  // maps the raw page back to the actual design index.
-  // The initial value must be a multiple of `pages.length` (3) so the
-  // first frame shows Design A, not B/C.
-  static const int _initialRawPage = 3000;
+  // (and vice versa). PageView can't wrap natively, so we drop
+  // `itemCount` (positive direction is unbounded) and start from a
+  // large `initialPage` to give plenty of room for backwards swipes
+  // before hitting index 0 — the user would have to swipe 2520+ times
+  // left to hit the floor. `index % pages.length` maps the raw page
+  // back to the actual design index.
+  //
+  // Why 2520 specifically: it's the LCM of 1..10, so the first frame
+  // is guaranteed to show the *first* design regardless of how many
+  // designs exist (`_initialRawPage % pages.length == 0` for any
+  // pages.length in [1, 10]). Cheap insurance against future design
+  // additions.
+  static const int _initialRawPage = 2520;
 
   final PageController _controller = PageController(
     initialPage: _initialRawPage,
@@ -112,7 +118,10 @@ class _ClockScreenState extends ConsumerState<ClockScreen> {
           PageView.builder(
             controller: _controller,
             onPageChanged: (int i) => setState(() => _rawPage = i),
-            // null itemCount = unbounded scrolling in both directions.
+            // No itemCount: forward direction has no upper bound. The
+            // backward direction *does* clamp at index 0, but
+            // `_initialRawPage` (2520) puts the user 2520 swipes away
+            // from that floor — effectively a loop in both directions.
             itemBuilder: (BuildContext context, int index) =>
                 pages[index % pages.length],
           ),
