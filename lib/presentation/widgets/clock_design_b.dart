@@ -5,6 +5,7 @@ import '../../application/timezone_resolver_provider.dart';
 import '../../domain/clock/clock_location.dart';
 import '../../domain/clock/clock_time.dart';
 import 'digital_clock_widget.dart';
+import 'utc_offset_formatter.dart';
 
 /// Design B: list of digital-prominent rows with secondary metadata
 /// (date `M/d` + UTC offset) on the trailing edge.
@@ -68,7 +69,7 @@ class ClockDesignB extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _formatUtcOffset(wall.timeZoneOffset),
+                    formatUtcOffset(wall.timeZoneOffset),
                     style: TextStyle(fontSize: 14, color: subColor),
                   ),
                 ],
@@ -79,12 +80,4 @@ class ClockDesignB extends ConsumerWidget {
       },
     );
   }
-}
-
-String _formatUtcOffset(Duration offset) {
-  final bool negative = offset.isNegative;
-  final int h = offset.inHours.abs();
-  final int m = offset.inMinutes.abs() % 60;
-  final String sign = negative ? '-' : '+';
-  return m == 0 ? 'UTC$sign$h' : 'UTC$sign$h:${m.toString().padLeft(2, '0')}';
 }
