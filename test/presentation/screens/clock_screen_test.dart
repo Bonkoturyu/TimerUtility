@@ -15,6 +15,7 @@ import 'package:timer_utility/domain/clock/clock_location.dart';
 import 'package:timer_utility/domain/clock/clock_time.dart';
 import 'package:timer_utility/domain/ports/clock_location_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/clock_screen.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_a.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_b.dart';
@@ -80,13 +81,16 @@ Widget _harness({
   // Repository / detector are not exercised when the notifier is
   // overridden via `_SeededClockCollectionNotifier`, but we still wire
   // benign stubs in case a future test path triggers a mutation.
+  // mocktail tear-off form (`when(repo.findAll)`) works at runtime but
+  // we stick to `when(() => repo.foo())` for visual consistency with
+  // the rest of the test suite.
   final repo = _MockClockLocationRepository();
   final detector = _MockLocationDetector();
-  when(repo.findAll).thenAnswer((_) async => seeded);
+  when(() => repo.findAll()).thenAnswer((_) async => seeded);
   when(() => repo.upsert(any())).thenAnswer((_) async {});
   when(() => repo.delete(any())).thenAnswer((_) async {});
   when(() => repo.replaceAll(any())).thenAnswer((_) async {});
-  when(detector.detectTimezoneId).thenAnswer((_) async => 'Etc/UTC');
+  when(() => detector.detectTimezoneId()).thenAnswer((_) async => 'Etc/UTC');
 
   final GoRouter router = GoRouter(
     initialLocation: ClockScreen.routeLocation,
@@ -117,7 +121,15 @@ Widget _harness({
       clockLocationRepositoryProvider.overrideWithValue(repo),
       locationDetectorProvider.overrideWithValue(detector),
     ],
-    child: MaterialApp.router(routerConfig: router),
+    child: MaterialApp.router(
+      routerConfig: router,
+      // ClockScreen now reads its strings via `AppLocalizations.of(context)`
+      // (PR #23 review: presentation 層は l10n キー必須)。テストでは
+      // 日本語ロケール固定で AppBar / メニューのラベルを assert する。
+      locale: const Locale('ja'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+    ),
   );
 }
 

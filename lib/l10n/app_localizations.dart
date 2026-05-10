@@ -859,6 +859,18 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'日'**
   String get weekdaySun;
+
+  /// No description provided for @clockAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'世界時計'**
+  String get clockAppBarTitle;
+
+  /// No description provided for @clockMenuEditLocations.
+  ///
+  /// In ja, this message translates to:
+  /// **'都市を編集'**
+  String get clockMenuEditLocations;
 }
 
 class _AppLocalizationsDelegate
