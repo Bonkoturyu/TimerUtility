@@ -143,8 +143,11 @@ Widget _harness(
         builder: (BuildContext context, GoRouterState state) =>
             const Scaffold(body: Text('timer-stub')),
       ),
-      // Phase 9.5 follow-up: alarm 由来の Stop 後 fallback は `/alarms`
-      // に飛ぶようになったため、stub を追加。
+      // Phase 9.5 で alarm 由来の Stop 後 fallback として `/alarms` stub
+      // を追加していた。Phase 11 follow-up で fallback を `/` 単独に
+      // 統一したため、本 stub は現状のテスト群では参照されないが、
+      // ルート登録自体は将来 alarm-list 直接遷移を再有効化したくなった
+      // ときの回帰検出用に残してある。
       GoRoute(
         path: '/alarms',
         builder: (BuildContext context, GoRouterState state) =>
@@ -232,10 +235,11 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(player.stopCalls, greaterThanOrEqualTo(1));
-        // onFiredStop が走っているなら state の alarm は enabled=false に
-        // 落ちている。alarm 由来の cold-start fallback は `/alarms` に
-        // 飛ぶようになったので、alarms-stub を起点にして provider を読む。
-        final BuildContext context = tester.element(find.text('alarms-stub'));
+        // Phase 11 follow-up: cold-start fallback は alarm / timer 共に
+        // `/` 単独に統一。tab 復元は HomeScreen の lastHomePageIndex に
+        // 委譲する。ここでは home-stub を起点にして provider を読み、
+        // onFiredStop が enabled を false に落としていることを確認する。
+        final BuildContext context = tester.element(find.text('home-stub'));
         final container = ProviderScope.containerOf(context);
         final List<AlarmEntity> alarms = container.read(
           alarmCollectionNotifierProvider,
