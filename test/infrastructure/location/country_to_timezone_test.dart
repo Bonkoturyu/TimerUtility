@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:timer_utility/infrastructure/clock/timezone_catalog.dart';
+import 'package:timer_utility/domain/clock/timezone_catalog.dart';
 import 'package:timer_utility/infrastructure/location/country_to_timezone.dart';
 
 void main() {

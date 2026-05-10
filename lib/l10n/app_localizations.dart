@@ -881,8 +881,8 @@ abstract class AppLocalizations {
   /// No description provided for @clockLocationPickerSectionPinned.
   ///
   /// In ja, this message translates to:
-  /// **'登録済み'**
-  String get clockLocationPickerSectionPinned;
+  /// **'登録済み ({count}/{max})'**
+  String clockLocationPickerSectionPinned(int count, int max);
 
   /// No description provided for @clockLocationPickerSectionAvailable.
   ///
@@ -893,8 +893,8 @@ abstract class AppLocalizations {
   /// No description provided for @clockLocationPickerLimitReached.
   ///
   /// In ja, this message translates to:
-  /// **'上限 6 件に達しています。削除してから追加してください'**
-  String get clockLocationPickerLimitReached;
+  /// **'上限 {count} 件に達しています。削除してから追加してください'**
+  String clockLocationPickerLimitReached(int count);
 
   /// No description provided for @clockLocationPickerCatalogEmpty.
   ///

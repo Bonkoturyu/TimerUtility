@@ -430,13 +430,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockLocationPickerAppBarTitle => '都市を編集';
 
   @override
-  String get clockLocationPickerSectionPinned => '登録済み';
+  String clockLocationPickerSectionPinned(int count, int max) {
+    return '登録済み ($count/$max)';
+  }
 
   @override
   String get clockLocationPickerSectionAvailable => '追加できる都市';
 
   @override
-  String get clockLocationPickerLimitReached => '上限 6 件に達しています。削除してから追加してください';
+  String clockLocationPickerLimitReached(int count) {
+    return '上限 $count 件に達しています。削除してから追加してください';
+  }
 
   @override
   String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
