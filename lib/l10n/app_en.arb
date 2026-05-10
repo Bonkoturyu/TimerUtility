@@ -198,5 +198,8 @@
   "weekdayThu": "Thu",
   "weekdayFri": "Fri",
   "weekdaySat": "Sat",
-  "weekdaySun": "Sun"
+  "weekdaySun": "Sun",
+
+  "clockAppBarTitle": "World Clock",
+  "clockMenuEditLocations": "Edit cities"
 }

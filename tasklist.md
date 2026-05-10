@@ -100,6 +100,26 @@
 次セッション (Session 3) へ: ClockScreen + currentTimeStreamProvider 配線 +
 PageView/TabBar での 3 デザイン切替。
 
+#### Session 3 完了 (2026-05-10): ClockScreen + PageView デザイン切替
+
+- [x] `lib/presentation/screens/clock_screen.dart`: `ConsumerStatefulWidget`、
+  `currentTimeProvider` を 1 度 watch して 3 design widget に props 注入。
+  AppBar overflow に「都市を編集」1 件、`context.push('/clock/locations')`
+  (router 配線は Session 5)。Stack で PageView + 底辺 `_DotIndicator(3)` を
+  重ね、`onPageChanged` で active dot 更新。FAB なし (閲覧画面)。
+- [x] `test/presentation/screens/clock_screen_test.dart`: 4 シナリオ
+  (初期表示 / 横スワイプ / overflow → push / 時刻 stream 伝搬 smoke)。
+  `_SeededClockCollectionNotifier` で `build()` を直接 override し
+  microtask 経由の repo/detector 呼び出しを回避。`currentTimeProvider`
+  は `Stream.value(...)` か `Stream.fromIterable([t1,t2])` の finite
+  stream で override (周期 stream で `pumpAndSettle` が hang する
+  既知問題の回避)。
+- `flutter analyze`: No issues found
+- `flutter test`: 493 件 pass (Session 2 の 480 + 既存 +9 + 新規 4)
+
+次セッション (Session 4) へ: ClockLocationPickerScreen の実装
+(`/clock/locations` の中身)。
+
 #### 内部判断 (本セッション中に発生、要確認)
 
 - プラン記載のテスト「`TimezoneCatalog.presets` の全 timezoneId が
