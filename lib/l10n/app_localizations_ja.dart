@@ -21,6 +21,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeOpenAlarm => 'アラームを開く';
 
   @override
+  String get homeOpenClock => '世界時計を開く';
+
+  @override
   String get stopwatchAppBarTitle => 'ストップウォッチ';
 
   @override
@@ -444,4 +447,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
+
+  @override
+  String get clockEmptyHint => '都市が登録されていません — メニューから追加してください';
 }

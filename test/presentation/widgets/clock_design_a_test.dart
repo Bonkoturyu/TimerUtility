@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/timezone_resolver_provider.dart';
 import 'package:timer_utility/domain/clock/clock_location.dart';
 import 'package:timer_utility/domain/clock/clock_time.dart';
+import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_a.dart';
 
 class _FixedResolver implements TimezoneResolver {
@@ -39,6 +40,9 @@ Future<void> _pump(
         ),
       ],
       child: MaterialApp(
+        locale: const Locale('ja'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
         home: Scaffold(
           body: ClockDesignA(
             locations: locations,
