@@ -1,5 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -533,5 +534,50 @@ void main() {
       expect(prefs.setIntCalls.first.key, 'lastHomePageIndex');
       expect(prefs.setIntCalls.first.value, 2);
     });
+
+    testWidgets(
+      '(k) Pixel 6a 412dp 幅で Timer / Alarm の AppBar title が省略表示されない',
+      (WidgetTester tester) async {
+        // Pixel 6a の論理幅 412 × 800 (高さは AppBar/FAB が描ければ何でも可)。
+        // dpr = 1 で physicalSize = logicalSize としておけば
+        // tester.getSize / find.text の挙動と一致する。
+        await tester.binding.setSurfaceSize(const Size(412, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
+        await _settleRestore(tester);
+
+        // Timer (index 1) — initial。AppBar title は AppBar 内側の Text で
+        // 描画されているので、AppBar 内に限定して find する。
+        Finder titleInAppBar(String s) =>
+            find.descendant(of: find.byType(AppBar), matching: find.text(s));
+
+        final RenderParagraph timerTitle = tester.renderObject<RenderParagraph>(
+          titleInAppBar('タイマー'),
+        );
+        expect(
+          timerTitle.didExceedMaxLines,
+          isFalse,
+          reason: 'Timer の AppBar title が省略表示されている',
+        );
+
+        // Alarm (index 2) に進めて再確認。
+        await tester.fling(
+          find.byKey(const Key('home_page_view')),
+          const Offset(-400, 0),
+          1000,
+        );
+        await tester.pumpAndSettle();
+
+        final RenderParagraph alarmTitle = tester.renderObject<RenderParagraph>(
+          titleInAppBar('アラーム'),
+        );
+        expect(
+          alarmTitle.didExceedMaxLines,
+          isFalse,
+          reason: 'Alarm の AppBar title が省略表示されている',
+        );
+      },
+    );
   });
 }

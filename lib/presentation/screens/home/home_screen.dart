@@ -141,13 +141,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final bool hasNext = _currentPage < HomeScreen.pageCount - 1;
 
     return AppBar(
-      // 200dp because PageNavigationHint's "icon + short label" overflows
-      // the default 56dp leading slot (see widget docstring at L13-17).
-      leadingWidth: hasPrev ? 200 : null,
+      // 80dp = chevron (20) + icon (18) + 2× inter-spacing (8) + outer
+      // padding (16) ≈ 62dp + a slack for ripple bounds. Both leading
+      // and trailing hints are label-less; the ja short labels
+      // (e.g. "ストップウォッチ" ≈ 7 chars) do not fit any AppBar slot
+      // on a 412dp-class device without crowding out the title. The
+      // current-tab name lives in `title`, the adjacent tabs are
+      // signalled by chevron + tab icon — the DotIndicator tells
+      // absolute position.
+      leadingWidth: hasPrev ? 80 : null,
+      // Force left-aligned title so the Material 3 platform default
+      // (Android centers titles) doesn't carve additional padding out
+      // of the already-tight title slot when a leading is present.
+      centerTitle: false,
       leading: hasPrev
           ? PageNavigationHint(
               icon: _iconForPage(_currentPage - 1),
-              label: _labelForPage(l, _currentPage - 1),
+              label: '',
               direction: PageHintDirection.left,
               onTap: () => _animateTo(_currentPage - 1),
             )
@@ -155,14 +165,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       title: Text(_titleForPage(l, _currentPage)),
       actions: <Widget>[
         if (hasNext)
-          // The trailing hint is intentionally label-less. AppBar's
-          // `actions` region does not reserve `leadingWidth`-style space
-          // for non-IconButton children, so the natural width of an
-          // "icon + ja-label + chevron" PageNavigationHint exceeds the
-          // available row width on a 412dp-class device and triggers a
-          // RenderFlex overflow. The leading variant carries the label;
-          // the trailing one settles for the chevron + tab icon as a
-          // visual cue that the swipe has somewhere to go.
           PageNavigationHint(
             icon: _iconForPage(_currentPage + 1),
             label: '',
@@ -235,14 +237,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     1 => l.timerListAppBarTitle,
     2 => l.alarmListAppBarTitle,
     3 => l.clockAppBarTitle,
-    _ => '',
-  };
-
-  String _labelForPage(AppLocalizations l, int index) => switch (index) {
-    0 => l.homeOpenStopwatch,
-    1 => l.homeOpenTimer,
-    2 => l.homeOpenAlarm,
-    3 => l.homeOpenClock,
     _ => '',
   };
 
