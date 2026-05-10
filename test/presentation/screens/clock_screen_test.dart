@@ -208,6 +208,44 @@ void main() {
       expect(color0, isNot(equals(scheme.primary)));
     });
 
+    testWidgets('Design A から右に swipe すると Design C へ循環する (C→A の逆方向)', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        _harness(
+          seeded: <ClockLocation>[_loc(0, 'Tokyo'), _loc(1, 'New York')],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 起動直後は Design A。右方向スワイプ (+500) で前ページ = 循環で
+      // Design C に到達する (PageView.builder + itemCount: null)。
+      await tester.drag(find.byType(PageView), const Offset(500, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ClockDesignC), findsOneWidget);
+      // 3 個目の dot がアクティブ。
+      final BuildContext ctx = tester.element(find.byType(ClockScreen));
+      final ColorScheme scheme = Theme.of(ctx).colorScheme;
+      final Container dot2 = tester.widget<Container>(
+        find.byKey(const Key('clock_dot_2')),
+      );
+      final Container dot0 = tester.widget<Container>(
+        find.byKey(const Key('clock_dot_0')),
+      );
+      expect(
+        (dot2.decoration as BoxDecoration?)?.color,
+        equals(scheme.primary),
+      );
+      expect(
+        (dot0.decoration as BoxDecoration?)?.color,
+        isNot(equals(scheme.primary)),
+      );
+    });
+
     testWidgets('AppBar overflow → 都市を編集 で /clock/locations へ push される', (
       WidgetTester tester,
     ) async {
