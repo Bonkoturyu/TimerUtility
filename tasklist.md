@@ -82,6 +82,24 @@
 次セッション (Session 2) へ: clock_design_a/b/c のいずれか + 親 screen の
 1st スライス (本セッションでは導線追加・router 編集はスコープ外)。
 
+#### Session 2 完了 (2026-05-10): 3 種デザインバリアント widget
+
+- [x] `lib/presentation/widgets/clock_design_a.dart` (94 行): GridView.count
+  2x3、Card 内 AnalogClockWidget(96) + 名 + DigitalClock(HH:mm) +
+  UTC offset。`_formatUtcOffset(Duration)` は分単位対応 (Kolkata/Adelaide)。
+- [x] `lib/presentation/widgets/clock_design_b.dart` (90 行): ListView.separated、
+  Row(Expanded(name + DigitalClock 36px), trailing(M/d + UTC offset))。
+- [x] `lib/presentation/widgets/clock_design_c.dart` (67 行): GridView.count
+  3x2、AnalogClock(64) + 名 ellipsis + DigitalClock(18, no seconds)。
+  仕様通り UTC offset は省略 (cell budget 不足)。
+- [x] Test 3 ファイル × 2 ケース = 6 件: 6 件 displayName 全表示 + 空 hint key。
+  test surface を 800x1600 に拡大して GridView 全行 layout を保証。
+- `flutter analyze`: No issues found
+- `flutter test`: 480 件 pass (Session 1 の 474 + 新規 6)
+
+次セッション (Session 3) へ: ClockScreen + currentTimeStreamProvider 配線 +
+PageView/TabBar での 3 デザイン切替。
+
 #### 内部判断 (本セッション中に発生、要確認)
 
 - プラン記載のテスト「`TimezoneCatalog.presets` の全 timezoneId が
