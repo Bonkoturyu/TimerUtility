@@ -878,6 +878,24 @@ abstract class AppLocalizations {
   /// **'都市を編集'**
   String get clockMenuEditLocations;
 
+  /// No description provided for @clockDesignSegmentAnalog.
+  ///
+  /// In ja, this message translates to:
+  /// **'アナログ'**
+  String get clockDesignSegmentAnalog;
+
+  /// No description provided for @clockDesignSegmentDigital.
+  ///
+  /// In ja, this message translates to:
+  /// **'デジタル'**
+  String get clockDesignSegmentDigital;
+
+  /// No description provided for @clockDesignSegmentCompact.
+  ///
+  /// In ja, this message translates to:
+  /// **'コンパクト'**
+  String get clockDesignSegmentCompact;
+
   /// No description provided for @clockLocationPickerAppBarTitle.
   ///
   /// In ja, this message translates to:

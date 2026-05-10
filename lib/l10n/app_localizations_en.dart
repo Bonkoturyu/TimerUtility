@@ -471,6 +471,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockMenuEditLocations => 'Edit cities';
 
   @override
+  String get clockDesignSegmentAnalog => 'Analog';
+
+  @override
+  String get clockDesignSegmentDigital => 'Digital';
+
+  @override
+  String get clockDesignSegmentCompact => 'Compact';
+
+  @override
   String get clockLocationPickerAppBarTitle => 'Edit cities';
 
   @override

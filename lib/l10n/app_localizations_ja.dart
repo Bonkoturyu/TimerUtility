@@ -430,6 +430,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockMenuEditLocations => '都市を編集';
 
   @override
+  String get clockDesignSegmentAnalog => 'アナログ';
+
+  @override
+  String get clockDesignSegmentDigital => 'デジタル';
+
+  @override
+  String get clockDesignSegmentCompact => 'コンパクト';
+
+  @override
   String get clockLocationPickerAppBarTitle => '都市を編集';
 
   @override

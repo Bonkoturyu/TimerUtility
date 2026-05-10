@@ -203,6 +203,9 @@
 
   "clockAppBarTitle": "World Clock",
   "clockMenuEditLocations": "Edit cities",
+  "clockDesignSegmentAnalog": "Analog",
+  "clockDesignSegmentDigital": "Digital",
+  "clockDesignSegmentCompact": "Compact",
   "clockLocationPickerAppBarTitle": "Edit cities",
   "clockLocationPickerSectionPinned": "Pinned ({count}/{max})",
   "@clockLocationPickerSectionPinned": {
