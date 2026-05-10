@@ -2,10 +2,10 @@
   "@@locale": "ja",
 
   "appTitle": "TimerUtility",
-  "homeOpenStopwatch": "ストップウォッチを開く",
-  "homeOpenTimer": "タイマーを開く",
-  "homeOpenAlarm": "アラームを開く",
-  "homeOpenClock": "世界時計を開く",
+  "homeOpenStopwatch": "ストップウォッチ",
+  "homeOpenTimer": "タイマー",
+  "homeOpenAlarm": "アラーム",
+  "homeOpenClock": "世界時計",
 
   "stopwatchAppBarTitle": "ストップウォッチ",
   "stopwatchStart": "開始",

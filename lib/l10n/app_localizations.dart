@@ -107,25 +107,25 @@ abstract class AppLocalizations {
   /// No description provided for @homeOpenStopwatch.
   ///
   /// In ja, this message translates to:
-  /// **'ストップウォッチを開く'**
+  /// **'ストップウォッチ'**
   String get homeOpenStopwatch;
 
   /// No description provided for @homeOpenTimer.
   ///
   /// In ja, this message translates to:
-  /// **'タイマーを開く'**
+  /// **'タイマー'**
   String get homeOpenTimer;
 
   /// No description provided for @homeOpenAlarm.
   ///
   /// In ja, this message translates to:
-  /// **'アラームを開く'**
+  /// **'アラーム'**
   String get homeOpenAlarm;
 
   /// No description provided for @homeOpenClock.
   ///
   /// In ja, this message translates to:
-  /// **'世界時計を開く'**
+  /// **'世界時計'**
   String get homeOpenClock;
 
   /// No description provided for @stopwatchAppBarTitle.

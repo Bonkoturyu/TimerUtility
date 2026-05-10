@@ -32,6 +32,7 @@ import 'presentation/screens/alarm_list_screen.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
 import 'presentation/screens/clock_location_picker_screen.dart';
 import 'presentation/screens/clock_screen.dart';
+import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
@@ -380,71 +381,6 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
       supportedLocales: supportedLocales,
       onGenerateTitle: (BuildContext context) =>
           AppLocalizations.of(context).appTitle,
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final AppLocalizations l = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.appTitle),
-        actions: <Widget>[
-          PopupMenuButton<String>(
-            key: const Key('home_menu'),
-            onSelected: (String value) {
-              if (value == 'licenses') {
-                context.push(LicensesScreen.routeLocation);
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                key: const Key('home_menu_licenses'),
-                value: 'licenses',
-                child: Text(l.licenseMenuOverflow),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(l.appTitle),
-            const SizedBox(height: 24),
-            FilledButton(
-              key: const Key('home_open_stopwatch_button'),
-              // push (not go) so back from the inner screen returns to
-              // home rather than exiting the app.
-              onPressed: () => context.push(StopwatchScreen.routeLocation),
-              child: Text(l.homeOpenStopwatch),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('home_open_timer_button'),
-              onPressed: () => context.push(TimerListScreen.routeLocation),
-              child: Text(l.homeOpenTimer),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('home_open_alarm_button'),
-              onPressed: () => context.push(AlarmListScreen.routeLocation),
-              child: Text(l.homeOpenAlarm),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('home_open_clock_button'),
-              onPressed: () => context.push(ClockScreen.routeLocation),
-              child: Text(l.homeOpenClock),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

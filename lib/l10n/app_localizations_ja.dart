@@ -12,16 +12,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'TimerUtility';
 
   @override
-  String get homeOpenStopwatch => 'ストップウォッチを開く';
+  String get homeOpenStopwatch => 'ストップウォッチ';
 
   @override
-  String get homeOpenTimer => 'タイマーを開く';
+  String get homeOpenTimer => 'タイマー';
 
   @override
-  String get homeOpenAlarm => 'アラームを開く';
+  String get homeOpenAlarm => 'アラーム';
 
   @override
-  String get homeOpenClock => '世界時計を開く';
+  String get homeOpenClock => '世界時計';
 
   @override
   String get stopwatchAppBarTitle => 'ストップウォッチ';

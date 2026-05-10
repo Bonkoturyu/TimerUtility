@@ -2,10 +2,22 @@
   "@@locale": "en",
 
   "appTitle": "TimerUtility",
-  "homeOpenStopwatch": "Open Stopwatch",
-  "homeOpenTimer": "Open Timer",
-  "homeOpenAlarm": "Open Alarms",
-  "homeOpenClock": "Open World Clock",
+  "homeOpenStopwatch": "Stopwatch",
+  "@homeOpenStopwatch": {
+    "description": "Phase 11: short tab label used by PageNavigationHint as the 'previous tab' hint in the HomeScreen AppBar. Originally a verbose 'Open Stopwatch' label for the Phase 10 vertical-button Home, which Phase 11 deleted."
+  },
+  "homeOpenTimer": "Timer",
+  "@homeOpenTimer": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
+  "homeOpenAlarm": "Alarm",
+  "@homeOpenAlarm": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
+  "homeOpenClock": "World Clock",
+  "@homeOpenClock": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
 
   "stopwatchAppBarTitle": "Stopwatch",
   "stopwatchStart": "Start",
