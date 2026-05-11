@@ -8,24 +8,22 @@ import '../../domain/clock/exceptions.dart';
 import '../../domain/clock/timezone_catalog.dart';
 import '../../l10n/app_localizations.dart';
 
-/// Phase 10.5 picker screen for the world clock. Reached from the
-/// Clock tab's right-bottom FAB (`ClockPage.buildFab`, PR #29 follow-up
-/// #2). One screen completes the full lifecycle: list pinned cities,
-/// drag to reorder, delete, and add from the curated [TimezoneCatalog].
-/// There is intentionally no in-screen FAB — taps on a catalog row are
-/// the single add path so the user never has to choose between two
+/// World clock entry edit screen. Reached from the Clock tab's
+/// right-bottom FAB ([ClockEntryEditScreen.routeLocation]). One screen
+/// completes the full lifecycle: list pinned cities, drag to reorder,
+/// delete, and add from the curated [TimezoneCatalog]. There is
+/// intentionally no in-screen FAB — taps on a catalog row are the
+/// single add path so the user never has to choose between two
 /// equivalent affordances.
 ///
 /// Naming note: the displayed AppBar title is "時計を追加・編集"
 /// (Japanese) / "Add or edit clocks" (English) — this app's world clock
 /// is a *time-difference* UI, so user-facing copy talks about "clocks"
-/// rather than "cities". The class name [ClockLocationPickerScreen],
-/// route `/clock/locations`, and ARB keys
-/// (`clockLocationPickerAppBarTitle`, `clockMenuEditLocations`, etc.)
-/// still carry their original `Location` heritage from Phase 10.5 —
-/// renaming them is tracked as a future task in BACKLOG.md (Phase 11)
-/// because the blast radius (tests, docs, comments) is large compared
-/// to a UX-only patch.
+/// rather than "cities". The original Phase 10.5 implementation used
+/// `Location` based identifiers (`ClockLocationPickerScreen`,
+/// `/clock/locations`, `clockLocationPicker*` ARB keys); Phase 11
+/// renamed them to the current `ClockEntryEdit*` form to keep internal
+/// identifiers aligned with the displayed copy.
 ///
 /// 6-entry cap is enforced both by the aggregate
 /// ([MaxClockLocationCountExceededException]) and by visually disabling
@@ -33,10 +31,10 @@ import '../../l10n/app_localizations.dart';
 /// catches the exception in the rare case a stale UI state slips
 /// through (multi-tap race), keeping the cap a user-visible event
 /// rather than an unhandled throw.
-class ClockLocationPickerScreen extends ConsumerWidget {
-  const ClockLocationPickerScreen({super.key});
+class ClockEntryEditScreen extends ConsumerWidget {
+  const ClockEntryEditScreen({super.key});
 
-  static const String routeLocation = '/clock/locations';
+  static const String routeLocation = '/clock/entries';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,13 +56,13 @@ class ClockLocationPickerScreen extends ConsumerWidget {
         .toList(growable: false);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.clockLocationPickerAppBarTitle)),
+      appBar: AppBar(title: Text(l.clockEntryEditAppBarTitle)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _SectionHeader(
-            key: const Key('clock_picker_pinned_header'),
-            text: l.clockLocationPickerSectionPinned(
+            key: const Key('clock_entry_edit_pinned_header'),
+            text: l.clockEntryEditSectionPinned(
               pinned.length,
               ClockCollection.maxSize,
             ),
@@ -85,11 +83,11 @@ class ClockLocationPickerScreen extends ConsumerWidget {
               itemBuilder: (BuildContext context, int index) {
                 final ClockLocation loc = pinned[index];
                 return ListTile(
-                  key: Key('clock_picker_pinned_${loc.id}'),
+                  key: Key('clock_entry_edit_pinned_${loc.id}'),
                   title: Text(loc.displayName),
                   subtitle: Text(loc.timezoneId),
                   trailing: IconButton(
-                    key: Key('clock_picker_remove_${loc.id}'),
+                    key: Key('clock_entry_edit_remove_${loc.id}'),
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
                       ref
@@ -103,17 +101,17 @@ class ClockLocationPickerScreen extends ConsumerWidget {
           ),
           const Divider(height: 1),
           _SectionHeader(
-            key: const Key('clock_picker_available_header'),
-            text: l.clockLocationPickerSectionAvailable,
+            key: const Key('clock_entry_edit_available_header'),
+            text: l.clockEntryEditSectionAvailable,
           ),
           if (isFull)
             Container(
-              key: const Key('clock_picker_limit_banner'),
+              key: const Key('clock_entry_edit_limit_banner'),
               width: double.infinity,
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                l.clockLocationPickerLimitReached(ClockCollection.maxSize),
+                l.clockEntryEditLimitReached(ClockCollection.maxSize),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -125,8 +123,8 @@ class ClockLocationPickerScreen extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        l.clockLocationPickerCatalogEmpty,
-                        key: const Key('clock_picker_catalog_empty'),
+                        l.clockEntryEditCatalogEmpty,
+                        key: const Key('clock_entry_edit_catalog_empty'),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -136,7 +134,7 @@ class ClockLocationPickerScreen extends ConsumerWidget {
                     itemBuilder: (BuildContext context, int index) {
                       final TimezoneCatalogEntry e = available[index];
                       return ListTile(
-                        key: Key('clock_picker_catalog_${e.timezoneId}'),
+                        key: Key('clock_entry_edit_catalog_${e.timezoneId}'),
                         title: Text(e.displayName),
                         subtitle: Text(e.timezoneId),
                         enabled: !isFull,
@@ -162,7 +160,7 @@ class ClockLocationPickerScreen extends ConsumerWidget {
     } on MaxClockLocationCountExceededException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.clockLocationPickerLimitReached(e.maxSize))),
+        SnackBar(content: Text(l.clockEntryEditLimitReached(e.maxSize))),
       );
     }
   }

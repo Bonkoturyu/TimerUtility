@@ -32,6 +32,7 @@ import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
+import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 import 'package:timer_utility/presentation/screens/home/alarm_list_page.dart';
 import 'package:timer_utility/presentation/screens/home/clock_page.dart';
 import 'package:timer_utility/presentation/screens/home/home_screen.dart';
@@ -195,7 +196,7 @@ LocationDetector _stubDetector() {
 
 /// Mounts [HomeScreen] under a real [GoRouter] with stubbed destination
 /// routes for the AppBar overflow flows (`/licenses`, `/presets`,
-/// `/clock/locations`). Caller-supplied [prefs] is the recording
+/// `/clock/entries`). Caller-supplied [prefs] is the recording
 /// preferences fake used by the persistence-verify scenario.
 /// [timerRepo] lets the (m) ringing-listener test seed an already-
 /// ringing TimerEntity so the HomeScreen-level `ref.listen` fires.
@@ -230,10 +231,10 @@ Widget _harness({
         ),
       ),
       GoRoute(
-        path: '/clock/locations',
+        path: ClockEntryEditScreen.routeLocation,
         builder: (_, _) => const Scaffold(
-          key: Key('clock_locations_stub'),
-          body: Center(child: Text('locations-stub')),
+          key: Key('clock_entries_stub'),
+          body: Center(child: Text('entries-stub')),
         ),
       ),
       GoRoute(
@@ -744,11 +745,11 @@ void main() {
       expect(container.read(homeActivePageIndexProvider), 0);
     });
 
-    testWidgets('(o) Clock タブの FAB タップで /clock/locations に push される', (
+    testWidgets('(o) Clock タブの FAB タップで /clock/entries に push される', (
       WidgetTester tester,
     ) async {
       // PR #29 follow-up #2: Clock タブの「都市を編集」を overflow から
-      // 右下 FAB に移設。FAB が遷移先 `/clock/locations` を正しく開く
+      // 右下 FAB に移設。FAB が遷移先 `/clock/entries` を正しく開く
       // ことを stub の存在で確認する。
       await tester.pumpWidget(
         _harness(prefs: _RecordingPrefs(), initialPageIndex: 3),
@@ -759,8 +760,8 @@ void main() {
       await tester.tap(find.byKey(const Key('clock_list_add_fab')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);
-      expect(find.text('locations-stub'), findsOneWidget);
+      expect(find.byKey(const Key('clock_entries_stub')), findsOneWidget);
+      expect(find.text('entries-stub'), findsOneWidget);
     });
   });
 }

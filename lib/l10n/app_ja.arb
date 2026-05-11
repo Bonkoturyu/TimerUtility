@@ -202,26 +202,25 @@
   "weekdaySun": "日",
 
   "clockAppBarTitle": "世界時計",
-  "clockMenuEditLocations": "都市を編集",
   "clockListAddFab": "時計を追加",
   "clockDesignSegmentAnalog": "アナログ",
   "clockDesignSegmentDigital": "デジタル",
   "clockDesignSegmentCompact": "コンパクト",
-  "clockLocationPickerAppBarTitle": "時計を追加・編集",
-  "clockLocationPickerSectionPinned": "登録済み ({count}/{max})",
-  "@clockLocationPickerSectionPinned": {
+  "clockEntryEditAppBarTitle": "時計を追加・編集",
+  "clockEntryEditSectionPinned": "登録済み ({count}/{max})",
+  "@clockEntryEditSectionPinned": {
     "placeholders": {
       "count": {"type": "int"},
       "max": {"type": "int"}
     }
   },
-  "clockLocationPickerSectionAvailable": "追加できる都市",
-  "clockLocationPickerLimitReached": "上限 {count} 件に達しています。削除してから追加してください",
-  "@clockLocationPickerLimitReached": {
+  "clockEntryEditSectionAvailable": "追加できる都市",
+  "clockEntryEditLimitReached": "上限 {count} 件に達しています。削除してから追加してください",
+  "@clockEntryEditLimitReached": {
     "placeholders": {
       "count": {"type": "int"}
     }
   },
-  "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです",
+  "clockEntryEditCatalogEmpty": "すべての都市が登録済みです",
   "clockEmptyHint": "時計が登録されていません。\n右下の「＋」ボタンから追加できます。"
 }
