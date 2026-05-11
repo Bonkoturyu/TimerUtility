@@ -19,6 +19,80 @@
 
 ## 進行中
 
+### Phase 11 (HomeScreen PageView) 着手 → 実装完了 → 実機検証待ち (2026-05-10)
+
+Phase 10.5 実機検証 (2026-05-10) のフィードバックで起票された UX 改善
+「HomeScreen を 4 機能 (Stopwatch / Timer / Alarm / Clock) の左右 swipe
+切替に変える」を、Auto セッションで実装した。設計判断は事前に確定済み
+(BACKLOG.md L592-593 + 本タスク Auto 開始時の指示書)。
+
+**実装サマリ (commits, branch `feature/phase-11-home-pageview`)**:
+
+- `a19c179` Step 1: ClockScreen 内部 PageView を SegmentedButton 化
+  (Analog / Digital / Compact)。外側タブ swipe との gesture 競合を根本除去
+- `44fdd14` Step 2: 各タブの body を Page widget として
+  `lib/presentation/screens/home/<feature>_page.dart` に切り出し。deep link
+  Screen は薄ラッパに縮退 (FAB / overflow ロジックは Page の static helper
+  で共有)
+- `d97026f` Step 3: `UserPreferences` port を `getInt` / `setInt` で拡張、
+  `UserPreferenceKeys.lastHomePageIndex` を追加。テスト + adapter + 既存
+  test mocks を更新
+- `a76e6c8` Step 4: 新 HomeScreen 実装。`ConsumerStatefulWidget` +
+  `PageController` + 動的 AppBar (`PageNavigationHint` leading + label-less
+  trailing) + 動的 FAB + Stack mount の `HomeDotIndicator` (旧 ClockScreen
+  の private `_DotIndicator` を public 化)。`lib/main.dart` の旧 4 ボタン
+  HomeScreen を削除し import 切替。`homeOpen*` ARB 4 キーは短ラベルとして
+  値変更で再利用 (旧用途は削除済み)
+- `afb0ab5` Step 5: `home_screen_test.dart` を 10 シナリオで全面書き換え
+  (デフォルト復元 / 復元 / 双方向 swipe / 末端 no-op / hint タップ /
+  DotIndicator active / FAB 切替 / overflow → /licenses / overflow context
+  別出し分け / setInt 永続化 verify)。`find.byType(<Page>)` ベースで
+  AppBar title と隣接ヒントラベルの衝突を回避
+
+**現状**: 6 commit 済、518 テストパス、`flutter analyze` 緑。
+docs (`architecture.md` Presentation 節 + ディレクトリ図 /
+`state-management.md` UserPreferences API 拡張) と `BACKLOG.md` 更新済。
+
+**残作業 (Step 7 = 実機検証、ユーザ確認後)**:
+
+1. 初回起動で Timer タブ表示
+2. 横 swipe で 4 タブ切替が滑らか、DotIndicator 追従
+3. 各タブの FAB / overflow が context に応じて出現
+4. Clock タブで SegmentedButton による 3 デザイン切替 (横 swipe しても
+   外側 PageView がそのまま動作)
+5. アプリ強制終了 → 再起動で最後のタブが復元
+6. 通知タップ deep link で `/alarm-ringing` 直接遷移、Stop で正しいパスに
+   戻る (既存挙動)
+
+DoD: 6 シナリオすべて OK。フィードバックは別 follow-up にする。
+
+### Phase 11 follow-up #2 (2026-05-11): Clock タブの UX 一貫性改善
+
+実機検証 (2026-05-11、Pixel 6a / Android 16) で Phase 11 基本動作 / PR #29
+レビュー対応 (G1-C1) / 既存機能リグレッションは全て OK。あわせてユーザから
+1 件の UX 改善要望:「Clock タブだけ overflow menu に『都市を編集』が置かれて
+おり、Timer / Alarm の『右下 FAB で追加・編集画面に遷移』UX と一貫していない」。
+世界時計は「複数都市の時差確認」が機能本質で、ユーザ視点では「時計を増やす」
+操作なので、文言も「時計を追加・編集」に揃える方針で対応。
+
+**実装内容 (PR #29 に積み増し、`feature/phase-11-home-pageview` の追加 commit)**:
+
+- `c17dad8` feat(phase-11): Clock タブの overflow menu「都市を編集」を廃止して
+  右下 FAB (`clock_list_add_fab`) に置換。HomeScreen / ClockScreen 薄ラッパー
+  両方を同じ UX に揃え、ARB `clockListAddFab` 新規 + `clockLocationPickerAppBarTitle`
+  を「時計を追加・編集」/「Add or edit clocks」に更新。テスト (g)/(i) 書き換え +
+  新規 (o)、clock_screen_test の overflow テストを FAB 経由に書き換え
+
+**内部識別子のリネームについて**: クラス名 `ClockLocationPickerScreen` / ルート
+`/clock/locations` / ARB キー名 (`clockLocationPickerAppBarTitle` 等) は
+`Location` (都市) 由来のまま残置。表示文言だけを「時計」観点に更新し、内部識別子
+リネームは BACKLOG.md Phase 11 に future task として記録 (影響範囲が広いため別 PR)。
+
+**現状**: 523 件全件緑 (旧 522 + 新規 (o) 1)、`flutter analyze` 緑、
+`dart format` 通過済。push 承認待ち。
+
+---
+
 ### Phase 10.5 Application 層 + Infrastructure location adapter (2026-05-09 完了)
 
 実装完了 (2026-05-09):

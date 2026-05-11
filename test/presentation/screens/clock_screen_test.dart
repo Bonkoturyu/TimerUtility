@@ -63,10 +63,12 @@ ClockLocation _loc(int order, String name, {String tz = 'Etc/UTC'}) =>
       createdAt: DateTime.utc(2026, 1, 1),
     );
 
-/// Builds the widget under test wrapped in a `GoRouter` so the AppBar
-/// overflow can `context.push('/clock/locations')` against a real
-/// router (we stub the destination route to a Scaffold and look for
-/// its key to verify navigation occurred).
+/// Builds the widget under test wrapped in a `GoRouter` so the
+/// right-bottom FAB (`ClockPage.buildFab`) can
+/// `context.push('/clock/locations')` against a real router (we stub
+/// the destination route to a Scaffold and look for its key to verify
+/// navigation occurred). PR #29 follow-up #2 replaced the AppBar
+/// overflow entry with this FAB to align with the Timer / Alarm tabs.
 Widget _harness({
   required List<ClockLocation> seeded,
   Stream<DateTime>? timeStream,
@@ -78,12 +80,6 @@ Widget _harness({
       : ClockCollection.fromList(seeded);
   final Stream<DateTime> stream = timeStream ?? Stream<DateTime>.value(now);
 
-  // Repository / detector are not exercised when the notifier is
-  // overridden via `_SeededClockCollectionNotifier`, but we still wire
-  // benign stubs in case a future test path triggers a mutation.
-  // mocktail tear-off form (`when(repo.findAll)`) works at runtime but
-  // we stick to `when(() => repo.foo())` for visual consistency with
-  // the rest of the test suite.
   final repo = _MockClockLocationRepository();
   final detector = _MockLocationDetector();
   when(() => repo.findAll()).thenAnswer((_) async => seeded);
@@ -123,9 +119,6 @@ Widget _harness({
     ],
     child: MaterialApp.router(
       routerConfig: router,
-      // ClockScreen now reads its strings via `AppLocalizations.of(context)`
-      // (PR #23 review: presentation 層は l10n キー必須)。テストでは
-      // 日本語ロケール固定で AppBar / メニューのラベルを assert する。
       locale: const Locale('ja'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
@@ -140,7 +133,9 @@ void main() {
   });
 
   group('ClockScreen', () {
-    testWidgets('初期表示は Design A のみがビルドされる', (WidgetTester tester) async {
+    testWidgets('初期表示は SegmentedButton + Design A のみがビルドされる', (
+      WidgetTester tester,
+    ) async {
       // GridView.count (Design A) を 1 画面で安定 layout させるため
       // 縦長 surface を確保 (clock_design_a_test と同じ理由)。
       await tester.binding.setSurfaceSize(const Size(800, 1600));
@@ -160,17 +155,15 @@ void main() {
       expect(find.byType(ClockDesignA), findsOneWidget);
       expect(find.byType(ClockDesignB), findsNothing);
       expect(find.byType(ClockDesignC), findsNothing);
-      // PageView 自体は body 直下に存在し、AppBar の title もリテラル
-      // で出ている (l10n 化は Session 5)。
-      expect(find.byType(PageView), findsOneWidget);
+      expect(find.byKey(const Key('clock_design_segmented')), findsOneWidget);
       expect(find.text('世界時計'), findsOneWidget);
-      // Dot indicator: 3 個並ぶ。
-      for (int i = 0; i < 3; i++) {
-        expect(find.byKey(Key('clock_dot_$i')), findsOneWidget);
-      }
+      // SegmentedButton の 3 ラベルがレンダされている。
+      expect(find.text('アナログ'), findsOneWidget);
+      expect(find.text('デジタル'), findsOneWidget);
+      expect(find.text('コンパクト'), findsOneWidget);
     });
 
-    testWidgets('横スワイプで Design B に切替わり 2 個目の dot がアクティブ色になる', (
+    testWidgets('「デジタル」セグメント tap で Design B に切替わる', (
       WidgetTester tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1600));
@@ -183,32 +176,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 画面幅 800 の半分超を確実に超えるよう -500。default
-      // PageScrollPhysics は drag 終端の offset で次ページ判定するため
-      // 50% 境界 (-400) を跨ぐ必要がある。
-      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.tap(find.text('デジタル'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ClockDesignB), findsOneWidget);
-      // 既知の theme は Material 3 default (light)。アクティブ dot は
-      // primary 色、非アクティブは onSurface に alpha 0.3。直接の
-      // 色定数を assert するのは脆いので「2 番目の dot の色 ≠ 1 番目」
-      // で active/inactive の差分だけを確認する。
-      final BuildContext ctx = tester.element(find.byType(ClockScreen));
-      final ColorScheme scheme = Theme.of(ctx).colorScheme;
-      final Container dot1 = tester.widget<Container>(
-        find.byKey(const Key('clock_dot_1')),
-      );
-      final Container dot0 = tester.widget<Container>(
-        find.byKey(const Key('clock_dot_0')),
-      );
-      final Color? color1 = (dot1.decoration as BoxDecoration?)?.color;
-      final Color? color0 = (dot0.decoration as BoxDecoration?)?.color;
-      expect(color1, equals(scheme.primary));
-      expect(color0, isNot(equals(scheme.primary)));
+      expect(find.byType(ClockDesignA), findsNothing);
+      expect(find.byType(ClockDesignC), findsNothing);
     });
 
-    testWidgets('Design A から右に swipe すると Design C へ循環する (C→A の逆方向)', (
+    testWidgets('「コンパクト」セグメント tap で Design C に切替わる', (
       WidgetTester tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1600));
@@ -221,34 +197,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 起動直後は Design A。右方向スワイプ (+500) で前ページ = 循環で
-      // Design C に到達する (PageView.builder + itemCount: null)。
-      await tester.drag(find.byType(PageView), const Offset(500, 0));
+      await tester.tap(find.text('コンパクト'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ClockDesignC), findsOneWidget);
-      // 3 個目の dot がアクティブ。
-      final BuildContext ctx = tester.element(find.byType(ClockScreen));
-      final ColorScheme scheme = Theme.of(ctx).colorScheme;
-      final Container dot2 = tester.widget<Container>(
-        find.byKey(const Key('clock_dot_2')),
-      );
-      final Container dot0 = tester.widget<Container>(
-        find.byKey(const Key('clock_dot_0')),
-      );
-      expect(
-        (dot2.decoration as BoxDecoration?)?.color,
-        equals(scheme.primary),
-      );
-      expect(
-        (dot0.decoration as BoxDecoration?)?.color,
-        isNot(equals(scheme.primary)),
-      );
+      expect(find.byType(ClockDesignA), findsNothing);
+      expect(find.byType(ClockDesignB), findsNothing);
     });
 
-    testWidgets('AppBar overflow → 都市を編集 で /clock/locations へ push される', (
+    testWidgets('右下 FAB タップで /clock/locations へ push される', (
       WidgetTester tester,
     ) async {
+      // PR #29 follow-up #2: AppBar overflow の「都市を編集」を廃止して
+      // 右下 FAB (`clock_list_add_fab`) に統一。Timer / Alarm タブと
+      // 同じ UX を deep link `/clock` 経由でも提供する。
       await tester.binding.setSurfaceSize(const Size(800, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -257,20 +219,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('clock_menu')));
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('clock_list_add_fab')), findsOneWidget);
 
-      // Overflow メニューに表示された PopupMenuItem の child Text。
-      expect(find.text('都市を編集'), findsOneWidget);
-
-      await tester.tap(find.text('都市を編集'));
+      await tester.tap(find.byKey(const Key('clock_list_add_fab')));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);
       expect(find.text('locations-stub'), findsOneWidget);
     });
 
-    testWidgets('時刻 stream の値が PageView 配下のデジタル時計に伝搬する (smoke)', (
+    testWidgets('時刻 stream の値が選択中の Design 配下のデジタル時計に伝搬する (smoke)', (
       WidgetTester tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(800, 1600));

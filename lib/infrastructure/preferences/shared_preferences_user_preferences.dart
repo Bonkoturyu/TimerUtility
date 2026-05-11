@@ -42,6 +42,17 @@ class SharedPreferencesUserPreferences implements UserPreferences {
   }
 
   @override
+  Future<int?> getInt(String key) async {
+    if (!_prefs.containsKey(key)) return null;
+    return _prefs.getInt(key);
+  }
+
+  @override
+  Future<void> setInt(String key, int value) async {
+    await _prefs.setInt(key, value);
+  }
+
+  @override
   Future<void> remove(String key) async {
     await _prefs.remove(key);
   }

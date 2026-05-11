@@ -310,9 +310,9 @@ void main() {
       await tester.pumpWidget(_harness(repo));
       await tester.pumpAndSettle();
 
-      // FAB stays tappable on purpose (FloatingActionButton.extended's
-      // disabled state is too subtle to read as "limit reached"); tap
-      // should produce a SnackBar and not open the duration picker.
+      // FAB stays tappable on purpose (a disabled FAB's state is too
+      // subtle to read as "limit reached"); tap should produce a
+      // SnackBar and not open the duration picker.
       await tester.tap(find.byKey(const Key('timer_list_add_fab')));
       await tester.pump();
 

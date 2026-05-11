@@ -107,25 +107,25 @@ abstract class AppLocalizations {
   /// No description provided for @homeOpenStopwatch.
   ///
   /// In ja, this message translates to:
-  /// **'ストップウォッチを開く'**
+  /// **'ストップウォッチ'**
   String get homeOpenStopwatch;
 
   /// No description provided for @homeOpenTimer.
   ///
   /// In ja, this message translates to:
-  /// **'タイマーを開く'**
+  /// **'タイマー'**
   String get homeOpenTimer;
 
   /// No description provided for @homeOpenAlarm.
   ///
   /// In ja, this message translates to:
-  /// **'アラームを開く'**
+  /// **'アラーム'**
   String get homeOpenAlarm;
 
   /// No description provided for @homeOpenClock.
   ///
   /// In ja, this message translates to:
-  /// **'世界時計を開く'**
+  /// **'世界時計'**
   String get homeOpenClock;
 
   /// No description provided for @stopwatchAppBarTitle.
@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @timerListEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'タイマーがありません。\n右下の「タイマーを追加」から追加できます。'**
+  /// **'タイマーがありません。\n右下の「＋」ボタンから追加できます。'**
   String get timerListEmptyHint;
 
   /// No description provided for @timerListLimitReached.
@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @alarmListEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'アラームがありません。\n右下の「アラームを追加」から追加できます。'**
+  /// **'アラームがありません。\n右下の「＋」ボタンから追加できます。'**
   String get alarmListEmptyHint;
 
   /// No description provided for @alarmListRepeatEveryday.
@@ -878,10 +878,34 @@ abstract class AppLocalizations {
   /// **'都市を編集'**
   String get clockMenuEditLocations;
 
+  /// No description provided for @clockListAddFab.
+  ///
+  /// In ja, this message translates to:
+  /// **'時計を追加'**
+  String get clockListAddFab;
+
+  /// No description provided for @clockDesignSegmentAnalog.
+  ///
+  /// In ja, this message translates to:
+  /// **'アナログ'**
+  String get clockDesignSegmentAnalog;
+
+  /// No description provided for @clockDesignSegmentDigital.
+  ///
+  /// In ja, this message translates to:
+  /// **'デジタル'**
+  String get clockDesignSegmentDigital;
+
+  /// No description provided for @clockDesignSegmentCompact.
+  ///
+  /// In ja, this message translates to:
+  /// **'コンパクト'**
+  String get clockDesignSegmentCompact;
+
   /// No description provided for @clockLocationPickerAppBarTitle.
   ///
   /// In ja, this message translates to:
-  /// **'都市を編集'**
+  /// **'時計を追加・編集'**
   String get clockLocationPickerAppBarTitle;
 
   /// No description provided for @clockLocationPickerSectionPinned.
@@ -911,7 +935,7 @@ abstract class AppLocalizations {
   /// No description provided for @clockEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'都市が登録されていません — メニューから追加してください'**
+  /// **'時計が登録されていません。\n右下の「＋」ボタンから追加できます。'**
   String get clockEmptyHint;
 }
 

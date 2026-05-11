@@ -19,6 +19,14 @@ abstract class UserPreferences {
   /// Writes a boolean. Persists immediately on the underlying store.
   Future<void> setBool(String key, bool value);
 
+  /// Reads a stored int. Returns `null` when the key has never been
+  /// written, mirroring the [getBool] contract so callers can tell
+  /// "first launch" apart from a deliberately stored `0`.
+  Future<int?> getInt(String key);
+
+  /// Writes an int. Persists immediately on the underlying store.
+  Future<void> setInt(String key, int value);
+
   /// Removes a key. No-op if absent.
   Future<void> remove(String key);
 }
@@ -37,4 +45,11 @@ class UserPreferenceKeys {
   /// dialog". preset と同じ運用 (UI 側で読んでスキップ判定、ダイアログの
   /// 結果を書き戻す)。
   static const String skipAlarmDeleteConfirm = 'skipAlarmDeleteConfirm';
+
+  /// Index (0..3) of the last HomeScreen tab the user was viewing when
+  /// the app was last suspended. Phase 11 restores this on cold start
+  /// so the user doesn't always land on Timer (the default) after a
+  /// kill/restart cycle. Absent / `null` means "first launch — fall
+  /// back to the default landing tab".
+  static const String lastHomePageIndex = 'lastHomePageIndex';
 }
