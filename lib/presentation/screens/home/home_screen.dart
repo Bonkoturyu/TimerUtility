@@ -245,19 +245,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // (Android centers titles) doesn't carve additional padding out
       // of the already-tight title slot when a leading is present.
       centerTitle: false,
-      leading: PageNavigationHint(
-        icon: _iconForPage(prevLogical),
-        label: '',
-        direction: PageHintDirection.left,
-        onTap: () => _animateBy(-1),
+      // PR #29 C1: the hints are visually label-less to keep the
+      // AppBar layout compact, but screen readers still need to know
+      // where the tap leads. Wrap in `Semantics(label:)` with the ja
+      // short label of the adjacent tab; `excludeSemantics: true` on
+      // the inner widget stops TalkBack from also reading the
+      // chevron / icon as separate nodes.
+      leading: Semantics(
+        button: true,
+        label: _labelForPage(l, prevLogical),
+        excludeSemantics: true,
+        child: PageNavigationHint(
+          icon: _iconForPage(prevLogical),
+          label: '',
+          direction: PageHintDirection.left,
+          onTap: () => _animateBy(-1),
+        ),
       ),
       title: Text(_titleForPage(l, _currentPage)),
       actions: <Widget>[
-        PageNavigationHint(
-          icon: _iconForPage(nextLogical),
-          label: '',
-          direction: PageHintDirection.right,
-          onTap: () => _animateBy(1),
+        Semantics(
+          button: true,
+          label: _labelForPage(l, nextLogical),
+          excludeSemantics: true,
+          child: PageNavigationHint(
+            icon: _iconForPage(nextLogical),
+            label: '',
+            direction: PageHintDirection.right,
+            onTap: () => _animateBy(1),
+          ),
         ),
         _buildOverflow(context, l),
       ],
@@ -325,6 +341,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     1 => l.timerListAppBarTitle,
     2 => l.alarmListAppBarTitle,
     3 => l.clockAppBarTitle,
+    _ => '',
+  };
+
+  /// Short tab name used only as a `Semantics.label` for the
+  /// label-less PageNavigationHint chips — keeps the AppBar visually
+  /// compact while still announcing "前のタブ: ストップウォッチ" etc.
+  /// in TalkBack / VoiceOver (PR #29 C1).
+  String _labelForPage(AppLocalizations l, int index) => switch (index) {
+    0 => l.homeOpenStopwatch,
+    1 => l.homeOpenTimer,
+    2 => l.homeOpenAlarm,
+    3 => l.homeOpenClock,
     _ => '',
   };
 

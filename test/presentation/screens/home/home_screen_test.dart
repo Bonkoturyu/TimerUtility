@@ -669,5 +669,33 @@ void main() {
         expect(find.byKey(const Key('alarm_ringing_stub')), findsOneWidget);
       },
     );
+
+    testWidgets('(n) PageNavigationHint は隣接タブ名を Semantics ラベルとして公開する', (
+      WidgetTester tester,
+    ) async {
+      // PR #29 C1: leading / trailing hint は視覚上ラベル無しだが、
+      // スクリーンリーダーは隣タブ名で読み上げられる必要がある。
+      final SemanticsHandle handle = tester.ensureSemantics();
+      try {
+        await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
+        await _settleRestore(tester);
+
+        // initial = Timer (index 1)。
+        //   prev = Stopwatch → leading semantics label = "ストップウォッチ"
+        //   next = Alarm     → trailing semantics label = "アラーム"
+        expect(
+          find.bySemanticsLabel('ストップウォッチ'),
+          findsOneWidget,
+          reason: 'leading hint の Semantics label が前タブ名を出していない',
+        );
+        expect(
+          find.bySemanticsLabel('アラーム'),
+          findsOneWidget,
+          reason: 'trailing hint の Semantics label が次タブ名を出していない',
+        );
+      } finally {
+        handle.dispose();
+      }
+    });
   });
 }
