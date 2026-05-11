@@ -30,9 +30,15 @@ String _localizedStatus(AppLocalizations l, TimerStatus status) {
 }
 
 /// Phase 11 Page widget. Body-only counterpart of the legacy
-/// `TimerListScreen`. Owns the 200ms ticker, the `WidgetsBindingObserver`
-/// for permission refresh on resume, and the `ref.listen` that pushes
-/// `/alarm-ringing` when a timer flips to ringing.
+/// `TimerListScreen`. Owns the 200ms ticker that rebuilds running rows
+/// and the `WidgetsBindingObserver` that re-checks permissions when
+/// the app resumes from system Settings.
+///
+/// Ringing → `/alarm-ringing` push **does not live here**: PR #29 G1
+/// moved it up to [HomeScreen] because this Page can be dispose()d by
+/// the parent PageView when the user swipes two tabs away, which would
+/// have lost the listener. See `HomeScreen.build` for the current
+/// `ref.listen<TimerCollection>` site.
 ///
 /// FAB construction is exposed via [TimerListPage.buildFab] and the add
 /// flow via [TimerListPage.handleAddTap] so that both the deep-link

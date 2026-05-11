@@ -272,10 +272,15 @@ Widget _harness({
   );
 }
 
-/// Pumps + drains the post-frame microtask that restores
-/// `lastHomePageIndex`. The HomeScreen issues a `Future.microtask` from
-/// `initState` (so we can `await` the prefs read), so a single
-/// `pumpAndSettle` may finish before that future flushes the page jump.
+/// Pumps + drains any post-frame microtasks dispatched during the
+/// HomeScreen mount. PR #29 G3 moved `lastHomePageIndex` restoration
+/// out of `initState` — it now flows through `main()` (which awaits the
+/// prefs read up front) into `HomeScreen(initialPageIndex:)` and lands
+/// synchronously on the `PageController`, so this helper is no longer
+/// strictly required for tab restore. We keep the extra `pump`s anyway
+/// because the harness still has incidental microtasks (provider
+/// overrides, GoRouter mount, the home-level `ref.listen` registration)
+/// that benefit from a deterministic drain before assertions.
 Future<void> _settleRestore(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(Duration.zero);

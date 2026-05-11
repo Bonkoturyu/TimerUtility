@@ -38,12 +38,15 @@ import 'timer_list_page.dart';
 /// keeps tab-switch UI off the bottom).
 ///
 /// Page restore: the user's last tab is persisted via `UserPreferences`
-/// (`UserPreferenceKeys.lastHomePageIndex`). On cold start we read it in
-/// the post-frame microtask and `jumpToPage` to the stored index;
-/// missing key falls back to Timer (index 1) which we judged the most
-/// frequent landing page (Phase 11 settings session). Ranges are
-/// clamped to [0..3] so a stale persisted value from a future tab
-/// reordering doesn't crash the controller.
+/// (`UserPreferenceKeys.lastHomePageIndex`). On cold start `main()`
+/// awaits the prefs read **before** building the widget tree and passes
+/// the resolved index down through `HomeScreen(initialPageIndex:)`,
+/// which `initState` then hands to the `PageController` synchronously —
+/// so the very first frame paints at the right tab (PR #29 G3 removed
+/// the previous `initState` microtask that caused a Timer→stored-tab
+/// flash on Pixel 6a). A missing key falls back to Timer (index 1) and
+/// stale values are clamped to [0..3] so a future tab reordering can't
+/// crash the controller.
 ///
 /// PageView is wrap-around: swiping past Clock loops back to Stopwatch
 /// (and Stopwatch swiped right loops to Clock). Implemented via
