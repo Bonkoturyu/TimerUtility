@@ -24,6 +24,7 @@ class PermissionBanners extends ConsumerWidget {
     final state = ref.watch(permissionNotifierProvider);
     final notifier = ref.read(permissionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
+    final ColorScheme scheme = Theme.of(context).colorScheme;
 
     final List<Widget> banners = <Widget>[];
 
@@ -33,7 +34,8 @@ class PermissionBanners extends ConsumerWidget {
         _PermissionBanner(
           key: const Key('banner_post_notifications'),
           icon: Icons.notifications_off_outlined,
-          color: Colors.red.shade100,
+          color: scheme.errorContainer,
+          onColor: scheme.onErrorContainer,
           title: l.permissionBannerNotificationsTitle,
           description: l.permissionBannerNotificationsDescription,
           actionLabel:
@@ -56,7 +58,8 @@ class PermissionBanners extends ConsumerWidget {
         _PermissionBanner(
           key: const Key('banner_exact_alarm'),
           icon: Icons.alarm_off_outlined,
-          color: Colors.orange.shade100,
+          color: scheme.tertiaryContainer,
+          onColor: scheme.onTertiaryContainer,
           title: l.permissionBannerExactAlarmTitle,
           description: l.permissionBannerExactAlarmDescription,
           actionLabel:
@@ -79,7 +82,8 @@ class PermissionBanners extends ConsumerWidget {
         _PermissionBanner(
           key: const Key('banner_full_screen_intent'),
           icon: Icons.lock_outline,
-          color: Colors.amber.shade100,
+          color: scheme.secondaryContainer,
+          onColor: scheme.onSecondaryContainer,
           title: l.permissionBannerFullScreenIntentTitle,
           description: l.permissionBannerFullScreenIntentDescription,
           actionLabel: l.permissionBannerActionOpenSettings,
@@ -108,6 +112,7 @@ class _PermissionBanner extends StatelessWidget {
     required super.key,
     required this.icon,
     required this.color,
+    required this.onColor,
     required this.title,
     required this.description,
     required this.actionLabel,
@@ -116,6 +121,7 @@ class _PermissionBanner extends StatelessWidget {
 
   final IconData icon;
   final Color color;
+  final Color onColor;
   final String title;
   final String description;
   final String actionLabel;
@@ -128,24 +134,34 @@ class _PermissionBanner extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          children: <Widget>[
-            Icon(icon),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: onColor),
+          child: IconTheme.merge(
+            data: IconThemeData(color: onColor),
+            child: Row(
+              children: <Widget>[
+                Icon(icon),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(description),
+                    ],
                   ),
-                  Text(description),
-                ],
-              ),
+                ),
+                TextButton(
+                  onPressed: onAction,
+                  style: TextButton.styleFrom(foregroundColor: onColor),
+                  child: Text(actionLabel),
+                ),
+              ],
             ),
-            TextButton(onPressed: onAction, child: Text(actionLabel)),
-          ],
+          ),
         ),
       ),
     );
