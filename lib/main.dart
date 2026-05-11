@@ -31,7 +31,7 @@ import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_edit_screen.dart';
 import 'presentation/screens/alarm_list_screen.dart';
 import 'presentation/screens/alarm_ringing_screen.dart';
-import 'presentation/screens/clock_location_picker_screen.dart';
+import 'presentation/screens/clock_entry_edit_screen.dart';
 import 'presentation/screens/clock_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
@@ -307,9 +307,9 @@ Future<void> main() async {
             const ClockScreen(),
       ),
       GoRoute(
-        path: ClockLocationPickerScreen.routeLocation,
+        path: ClockEntryEditScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) =>
-            const ClockLocationPickerScreen(),
+            const ClockEntryEditScreen(),
       ),
       GoRoute(
         path: LicensesScreen.routeLocation,

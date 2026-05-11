@@ -10,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../widgets/clock_design_a.dart';
 import '../../widgets/clock_design_b.dart';
 import '../../widgets/clock_design_c.dart';
+import '../clock_entry_edit_screen.dart';
 
 /// Phase 11 Page widget. Body-only counterpart of the Phase 10.5
 /// `ClockScreen`. Hosts the three design variants (`ClockDesignA/B/C`)
@@ -27,14 +28,14 @@ class ClockPage extends ConsumerStatefulWidget {
   /// HomeScreen's dynamic FAB slot. Mirrors the Timer / Alarm tabs'
   /// "right-bottom + → edit screen" pattern so the Clock tab no longer
   /// hides the entry-point inside the AppBar overflow (PR #29 follow-up
-  /// #2). The destination `/clock/locations` is the existing add /
+  /// #2). The destination `/clock/entries` is the existing add /
   /// edit / reorder screen — only the entry-point UX changes.
   static FloatingActionButton buildFab(BuildContext context) {
     final AppLocalizations l = AppLocalizations.of(context);
     return FloatingActionButton(
       key: const Key('clock_list_add_fab'),
       tooltip: l.clockListAddFab,
-      onPressed: () => context.push('/clock/locations'),
+      onPressed: () => context.push(ClockEntryEditScreen.routeLocation),
       child: const Icon(Icons.add),
     );
   }

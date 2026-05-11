@@ -195,7 +195,7 @@ LocationDetector _stubDetector() {
 
 /// Mounts [HomeScreen] under a real [GoRouter] with stubbed destination
 /// routes for the AppBar overflow flows (`/licenses`, `/presets`,
-/// `/clock/locations`). Caller-supplied [prefs] is the recording
+/// `/clock/entries`). Caller-supplied [prefs] is the recording
 /// preferences fake used by the persistence-verify scenario.
 /// [timerRepo] lets the (m) ringing-listener test seed an already-
 /// ringing TimerEntity so the HomeScreen-level `ref.listen` fires.
@@ -230,7 +230,7 @@ Widget _harness({
         ),
       ),
       GoRoute(
-        path: '/clock/locations',
+        path: '/clock/entries',
         builder: (_, _) => const Scaffold(
           key: Key('clock_locations_stub'),
           body: Center(child: Text('locations-stub')),
@@ -744,11 +744,11 @@ void main() {
       expect(container.read(homeActivePageIndexProvider), 0);
     });
 
-    testWidgets('(o) Clock タブの FAB タップで /clock/locations に push される', (
+    testWidgets('(o) Clock タブの FAB タップで /clock/entries に push される', (
       WidgetTester tester,
     ) async {
       // PR #29 follow-up #2: Clock タブの「都市を編集」を overflow から
-      // 右下 FAB に移設。FAB が遷移先 `/clock/locations` を正しく開く
+      // 右下 FAB に移設。FAB が遷移先 `/clock/entries` を正しく開く
       // ことを stub の存在で確認する。
       await tester.pumpWidget(
         _harness(prefs: _RecordingPrefs(), initialPageIndex: 3),

@@ -12,7 +12,7 @@ import 'package:timer_utility/domain/clock/clock_location.dart';
 import 'package:timer_utility/domain/ports/clock_location_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
-import 'package:timer_utility/presentation/screens/clock_location_picker_screen.dart';
+import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 
 class _MockClockLocationRepository extends Mock
     implements ClockLocationRepository {}
@@ -76,7 +76,7 @@ Widget _harness({required List<ClockLocation> seeded}) {
       locationDetectorProvider.overrideWithValue(detector),
     ],
     child: const MaterialApp(
-      home: ClockLocationPickerScreen(),
+      home: ClockEntryEditScreen(),
       locale: Locale('ja'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: <Locale>[Locale('ja'), Locale('en')],
@@ -85,9 +85,7 @@ Widget _harness({required List<ClockLocation> seeded}) {
 }
 
 ProviderContainer _containerOf(WidgetTester tester) {
-  final BuildContext ctx = tester.element(
-    find.byType(ClockLocationPickerScreen),
-  );
+  final BuildContext ctx = tester.element(find.byType(ClockEntryEditScreen));
   return ProviderScope.containerOf(ctx);
 }
 
@@ -97,7 +95,7 @@ void main() {
     registerFallbackValue(<ClockLocation>[]);
   });
 
-  group('ClockLocationPickerScreen', () {
+  group('ClockEntryEditScreen', () {
     // 全シナリオでサーフェスを縦長に取る理由: catalog 側
     // (`TimezoneCatalog.presets.length` 件、現状 24) が
     // ListView.builder で遅延構築されるため、デフォルトサイズでは下方
@@ -123,10 +121,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // pinned section
-      expect(find.byKey(const Key('clock_picker_pinned_id-0')), findsOneWidget);
+      expect(
+        find.byKey(const Key('clock_entry_edit_pinned_id-0')),
+        findsOneWidget,
+      );
       expect(
         find.descendant(
-          of: find.byKey(const Key('clock_picker_pinned_id-0')),
+          of: find.byKey(const Key('clock_entry_edit_pinned_id-0')),
           matching: find.text('Tokyo'),
         ),
         findsOneWidget,
@@ -136,17 +137,20 @@ void main() {
 
       // catalog 側に Tokyo はもう出ない (重複除外)
       expect(
-        find.byKey(const Key('clock_picker_catalog_Asia/Tokyo')),
+        find.byKey(const Key('clock_entry_edit_catalog_Asia/Tokyo')),
         findsNothing,
       );
       // 別 catalog 都市 (Seoul) は出る
       expect(
-        find.byKey(const Key('clock_picker_catalog_Asia/Seoul')),
+        find.byKey(const Key('clock_entry_edit_catalog_Asia/Seoul')),
         findsOneWidget,
       );
 
       // 上限未達なので banner は出ない
-      expect(find.byKey(const Key('clock_picker_limit_banner')), findsNothing);
+      expect(
+        find.byKey(const Key('clock_entry_edit_limit_banner')),
+        findsNothing,
+      );
     });
 
     testWidgets(
@@ -166,7 +170,7 @@ void main() {
         expect(container.read(clockCollectionNotifierProvider).size, 1);
 
         await tester.tap(
-          find.byKey(const Key('clock_picker_catalog_Asia/Seoul')),
+          find.byKey(const Key('clock_entry_edit_catalog_Asia/Seoul')),
         );
         await tester.pumpAndSettle();
 
@@ -201,7 +205,7 @@ void main() {
 
       // banner 表示
       expect(
-        find.byKey(const Key('clock_picker_limit_banner')),
+        find.byKey(const Key('clock_entry_edit_limit_banner')),
         findsOneWidget,
       );
       // pinned section header は (6/6)
@@ -209,7 +213,7 @@ void main() {
 
       // catalog 側の任意の都市 (Paris) が disabled になっていること
       final ListTile parisTile = tester.widget<ListTile>(
-        find.byKey(const Key('clock_picker_catalog_Europe/Paris')),
+        find.byKey(const Key('clock_entry_edit_catalog_Europe/Paris')),
       );
       expect(parisTile.enabled, isFalse);
       expect(parisTile.onTap, isNull);
@@ -268,13 +272,13 @@ void main() {
         final container = _containerOf(tester);
         expect(container.read(clockCollectionNotifierProvider).size, 1);
 
-        await tester.tap(find.byKey(const Key('clock_picker_remove_id-0')));
+        await tester.tap(find.byKey(const Key('clock_entry_edit_remove_id-0')));
         await tester.pumpAndSettle();
 
         expect(container.read(clockCollectionNotifierProvider).size, 0);
         // 削除後は catalog 側に Tokyo が再度現れる
         expect(
-          find.byKey(const Key('clock_picker_catalog_Asia/Tokyo')),
+          find.byKey(const Key('clock_entry_edit_catalog_Asia/Tokyo')),
           findsOneWidget,
         );
       },
