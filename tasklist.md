@@ -1391,6 +1391,12 @@ PR #30 gemini-code-assist レビュー G1 follow-up。presentation 層は
 `LocationDetector` ポート、`InvalidTimezoneIdException`、
 `infrastructure/location/` 配下。
 
+実機検証 (2026-05-11): 実機で v4 (commit 2842221) → v5 (commit cff04d8)
+上書きインストール、登録エントリの件数・順序・displayName 保持を UI 上で
+確認済み。`isCurrentLocation` フラグは UI 上に現在地マーカーが無く間接
+確認のみだが、`migration_v4_to_v5_test.dart` の Case 3 でユニットテスト
+カバー済み。fresh install / v3 → v5 二段飛ばしのケースはスコープ外。
+
 ---
 
-最終更新日: 2026-05-11（Phase 11 Clock ドメイン層リネーム完了）
+最終更新日: 2026-05-11（Phase 11 Clock ドメイン層リネーム + 実機検証完了）
