@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/timer_collection_notifier.dart';
 import '../../../application/user_preferences_provider.dart';
 import '../../../domain/ports/user_preferences.dart';
+import '../../../domain/timer/timer_collection.dart';
+import '../../../domain/timer/timer_entity.dart';
+import '../../../domain/timer/timer_status.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/home_dot_indicator.dart';
 import '../../widgets/page_navigation_hint.dart';
+import '../alarm_ringing_screen.dart' show AlarmRingingScreen;
 import '../licenses_screen.dart';
 import 'alarm_list_page.dart';
 import 'clock_page.dart';
@@ -141,6 +146,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l = AppLocalizations.of(context);
+
+    // Phase 11 follow-up (PR #29 G1): pushing `/alarm-ringing` when a
+    // timer flips to `ringing` lives at the HomeScreen level so it
+    // keeps firing regardless of which PageView tab is on screen.
+    // PageView dispose()s non-adjacent pages — when `TimerListPage`
+    // owned this listener it stopped working as soon as the user
+    // swiped two tabs away.
+    ref.listen<TimerCollection>(timerCollectionNotifierProvider, (
+      TimerCollection? prev,
+      TimerCollection next,
+    ) {
+      final int prevRinging =
+          prev?.all
+              .where((TimerEntity t) => t.status == TimerStatus.ringing)
+              .length ??
+          0;
+      final int nextRinging = next.all
+          .where((TimerEntity t) => t.status == TimerStatus.ringing)
+          .length;
+      if (nextRinging > prevRinging) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final String here = GoRouterState.of(context).matchedLocation;
+          if (here == '/alarm-ringing') return;
+          if (!AlarmRingingScreen.tryReservePush()) return;
+          context.push('/alarm-ringing');
+        });
+      }
+    });
+
     return Scaffold(
       appBar: _buildAppBar(context, l),
       body: PageView.builder(

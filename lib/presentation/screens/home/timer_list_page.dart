@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../application/permission_notifier.dart';
 import '../../../application/timer_collection_notifier.dart';
@@ -18,7 +17,6 @@ import '../../widgets/duration_picker.dart';
 import '../../widgets/permission_banners.dart';
 import '../../widgets/preset_select_sheet.dart';
 import '../../widgets/sound_select_sheet.dart';
-import '../alarm_ringing_screen.dart' show AlarmRingingScreen;
 
 String _localizedStatus(AppLocalizations l, TimerStatus status) {
   return switch (status) {
@@ -180,28 +178,12 @@ class _TimerListPageState extends ConsumerState<TimerListPage>
     );
     _ensureTickerForState(collection);
 
-    ref.listen<TimerCollection>(timerCollectionNotifierProvider, (
-      TimerCollection? prev,
-      TimerCollection next,
-    ) {
-      final int prevRinging =
-          prev?.all
-              .where((TimerEntity t) => t.status == TimerStatus.ringing)
-              .length ??
-          0;
-      final int nextRinging = next.all
-          .where((TimerEntity t) => t.status == TimerStatus.ringing)
-          .length;
-      if (nextRinging > prevRinging) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final String here = GoRouterState.of(context).matchedLocation;
-          if (here == '/alarm-ringing') return;
-          if (!AlarmRingingScreen.tryReservePush()) return;
-          context.push('/alarm-ringing');
-        });
-      }
-    });
+    // Phase 11 follow-up (PR #29 G1): the ringing→/alarm-ringing push
+    // used to live here, but `TimerListPage` is dispose()d whenever the
+    // user swipes to a non-adjacent tab in HomeScreen's PageView, which
+    // would silently break the auto-push when a timer fires while
+    // Stopwatch or Clock is on screen. The listener moved up to
+    // `HomeScreen`, which is mounted for the whole HomeScreen lifetime.
 
     return Padding(
       padding: const EdgeInsets.all(16),

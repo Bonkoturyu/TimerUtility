@@ -28,7 +28,9 @@ import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
+import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
+import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
 import 'package:timer_utility/presentation/screens/home/alarm_list_page.dart';
 import 'package:timer_utility/presentation/screens/home/clock_page.dart';
 import 'package:timer_utility/presentation/screens/home/home_screen.dart';
@@ -194,7 +196,12 @@ LocationDetector _stubDetector() {
 /// routes for the AppBar overflow flows (`/licenses`, `/presets`,
 /// `/clock/locations`). Caller-supplied [prefs] is the recording
 /// preferences fake used by the persistence-verify scenario.
-Widget _harness({required _RecordingPrefs prefs}) {
+/// [timerRepo] lets the (m) ringing-listener test seed an already-
+/// ringing TimerEntity so the HomeScreen-level `ref.listen` fires.
+Widget _harness({
+  required _RecordingPrefs prefs,
+  _InMemoryTimerRepo? timerRepo,
+}) {
   final router = GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
@@ -220,6 +227,13 @@ Widget _harness({required _RecordingPrefs prefs}) {
           body: Center(child: Text('locations-stub')),
         ),
       ),
+      GoRoute(
+        path: '/alarm-ringing',
+        builder: (_, _) => const Scaffold(
+          key: Key('alarm_ringing_stub'),
+          body: Center(child: Text('alarm-ringing-stub')),
+        ),
+      ),
     ],
   );
 
@@ -227,7 +241,9 @@ Widget _harness({required _RecordingPrefs prefs}) {
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock.fixed(DateTime(2026, 5, 10, 9))),
       userPreferencesProvider.overrideWithValue(prefs),
-      timerRepositoryProvider.overrideWithValue(_InMemoryTimerRepo()),
+      timerRepositoryProvider.overrideWithValue(
+        timerRepo ?? _InMemoryTimerRepo(),
+      ),
       presetRepositoryProvider.overrideWithValue(_InMemoryPresetRepo()),
       alarmRepositoryProvider.overrideWithValue(_InMemoryAlarmRepo()),
       notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
@@ -613,5 +629,44 @@ void main() {
             '(FAB.bottom=${fabRect.bottom}, dot.top=${dotRect.top})',
       );
     });
+
+    testWidgets(
+      '(m) ringing 検知は HomeScreen レベルなので Stopwatch タブ表示中でも /alarm-ringing へ push される',
+      (WidgetTester tester) async {
+        // PR #29 G1 のリグレッションガード。旧実装では ringing → push
+        // ロジックが `TimerListPage` の build にあり、Stopwatch タブを
+        // 表示している間は `TimerListPage` が dispose されて listener
+        // が失われていた。新実装は `HomeScreen` の build に listener が
+        // あるので、どのタブが表示されていても発火する。
+        final timerRepo = _InMemoryTimerRepo();
+        timerRepo.store['ring-1'] = TimerEntity(
+          id: 'ring-1',
+          notificationId: 1,
+          label: '',
+          duration: const Duration(seconds: 5),
+          endAt: null,
+          pausedRemaining: null,
+          status: TimerStatus.ringing,
+          createdAt: DateTime(2026, 5, 10),
+        );
+        addTearDown(AlarmRingingScreen.debugResetPushReservation);
+
+        // Stopwatch (index 0) で起動して、Timer タブが visible でない
+        // 状況を作る。
+        await tester.pumpWidget(
+          _harness(
+            prefs: _RecordingPrefs(
+              seedInts: <String, int>{'lastHomePageIndex': 0},
+            ),
+            timerRepo: timerRepo,
+          ),
+        );
+        await _settleRestore(tester);
+
+        // ref.listen が走り、HomeScreen から /alarm-ringing へ push
+        // されていることを stub の存在で確認する。
+        expect(find.byKey(const Key('alarm_ringing_stub')), findsOneWidget);
+      },
+    );
   });
 }
