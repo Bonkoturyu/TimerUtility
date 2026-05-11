@@ -616,6 +616,14 @@ AndroidManifest 編集はユーザー確認必須。
       例外名 / Port / Provider 名もリネーム。`isCurrentLocation`
       フィールドと `LocationDetector` ポートは GPS 由来の概念として
       valid なため据置）。
+- [x] Phase 11 Clock ドメインリネーム 実機検証完了 (2026-05-11、PR #31)
+      - ケース A: 実機で v4 (commit 2842221) → v5 (commit cff04d8) 上書き
+        インストール、登録エントリの件数・順序・displayName 保持を UI 上で確認
+      - `isCurrentLocation` フラグの保持は
+        `migration_v4_to_v5_test.dart` の Case 3 (`is_current_location=1`
+        の行は `isCurrentLocation == true` で読める) でユニットテスト済み
+        のため SQL 直接確認は省略 (UI 上に現在地マーカーがないため間接確認のみ)
+      - ケース B (fresh install) / ケース C (v3 → v5 二段飛ばし) はスコープ外
 - [x] ライセンス表示画面（2026-05-02、Phase 11 先行小タスクとして実装）
       `LicenseRegistry.addLicense` で `assets/sounds/LICENSES.md` を 1 行 1 段落
       の `LicenseEntry` として登録、`LicensesScreen` (2 セクション ExpansionTile：
