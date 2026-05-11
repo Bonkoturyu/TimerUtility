@@ -89,7 +89,7 @@ class _AnalogClockPainter extends CustomPainter {
     _drawHand(canvas, center, minuteDeg, radius * 0.7, minuteHand);
 
     final Paint secondHand = Paint()
-      ..color = Colors.red
+      ..color = scheme.error
       ..strokeWidth = 1
       ..strokeCap = StrokeCap.round;
     _drawHand(canvas, center, secondDeg, radius * 0.8, secondHand);

@@ -19,6 +19,47 @@
 
 ## 進行中
 
+### Phase 11 (ダークモード対応) 実装完了 → 実機検証待ち (2026-05-11)
+
+BACKLOG.md L633「ダークモード対応」を Auto セッションで実装。設計判断は
+事前に確定済み (`ThemeMode.system` 固定 / 手動切替 UI と `UserPreferences`
+拡張は設定画面タスクに先送り / `ColorScheme.fromSeed` を素直に使う)。
+
+**実装サマリ (commits, branch `feature/phase-11-dark-mode`)**:
+
+- `527bbeb` Step 1: ハードコード色を MD3 semantic role に置換。
+  `permission_banners.dart` の 3 種背景 (`Colors.<red|orange|amber>.shade100`)
+  を `errorContainer` / `tertiaryContainer` / `secondaryContainer` に、
+  `_PermissionBanner` を `DefaultTextStyle.merge` + `IconTheme.merge` で
+  包んで `onXxxContainer` を Text/Icon 子孫に伝播、TextButton も
+  `foregroundColor: onColor` で揃える。`analog_clock_widget.dart` の秒針
+  `Colors.red` を `colorScheme.error` に置換 (両モードで適切な赤を MD3 が返す)
+- `ddea3a7` Step 2: `MaterialApp.router` に `darkTheme:` を追加
+  (deepPurple seed + `Brightness.dark`)。`themeMode:` は省略 → デフォルトの
+  `ThemeMode.system` で OS 設定に追従
+
+**現状**: 2 commit + docs commit (Step 3) で計 3 commit、527 件全件緑
+(1 skipped)、`flutter analyze` 緑。
+
+**残作業 (Step 4 = 実機検証、ユーザ push 承認後)**:
+
+1. OS = ダーク設定で HomeScreen 4 タブ (Stopwatch / Timer / Alarm / Clock)
+   すべて表示崩れなし
+2. 各 modal/sheet がダーク対応:
+   - `preset_select_sheet` / `sound_select_sheet` / `preset_edit_sheet`
+   - `alarm_edit_screen` / `preset_delete_confirm_dialog` /
+     `alarm_delete_confirm_dialog`
+3. 権限拒否時の 3 種バナーがダークで視認可能
+   (`onErrorContainer` / `onTertiaryContainer` / `onSecondaryContainer`)
+4. `AnalogClockWidget` の秒針 (`scheme.error`) がダークで視認可能
+5. `LicensesScreen` / `DurationPicker` / `AlarmRingingScreen` のダーク表示
+6. OS = ライトに戻して上記すべてリグレッションなし
+7. OS テーマ切替を runtime で実施 → アプリ再起動なしで追従する
+
+DoD: 7 シナリオすべて OK。フィードバックは別 follow-up にする。
+
+---
+
 ### Phase 11 (HomeScreen PageView) 着手 → 実装完了 → 実機検証待ち (2026-05-10)
 
 Phase 10.5 実機検証 (2026-05-10) のフィードバックで起票された UX 改善
