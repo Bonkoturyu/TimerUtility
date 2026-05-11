@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../application/clock_collection_notifier.dart';
 import '../../../application/clock_provider.dart';
@@ -21,6 +22,22 @@ import '../../widgets/clock_design_c.dart';
 /// same 1 Hz source.
 class ClockPage extends ConsumerStatefulWidget {
   const ClockPage({super.key});
+
+  /// FAB shared between the deep-link `ClockScreen` wrapper and the
+  /// HomeScreen's dynamic FAB slot. Mirrors the Timer / Alarm tabs'
+  /// "right-bottom + → edit screen" pattern so the Clock tab no longer
+  /// hides the entry-point inside the AppBar overflow (PR #29 follow-up
+  /// #2). The destination `/clock/locations` is the existing add /
+  /// edit / reorder screen — only the entry-point UX changes.
+  static FloatingActionButton buildFab(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    return FloatingActionButton(
+      key: const Key('clock_list_add_fab'),
+      tooltip: l.clockListAddFab,
+      onPressed: () => context.push('/clock/locations'),
+      child: const Icon(Icons.add),
+    );
+  }
 
   @override
   ConsumerState<ClockPage> createState() => _ClockPageState();

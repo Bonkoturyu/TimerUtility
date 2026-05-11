@@ -878,6 +878,12 @@ abstract class AppLocalizations {
   /// **'都市を編集'**
   String get clockMenuEditLocations;
 
+  /// No description provided for @clockListAddFab.
+  ///
+  /// In ja, this message translates to:
+  /// **'時計を追加'**
+  String get clockListAddFab;
+
   /// No description provided for @clockDesignSegmentAnalog.
   ///
   /// In ja, this message translates to:
@@ -899,7 +905,7 @@ abstract class AppLocalizations {
   /// No description provided for @clockLocationPickerAppBarTitle.
   ///
   /// In ja, this message translates to:
-  /// **'都市を編集'**
+  /// **'時計を追加・編集'**
   String get clockLocationPickerAppBarTitle;
 
   /// No description provided for @clockLocationPickerSectionPinned.

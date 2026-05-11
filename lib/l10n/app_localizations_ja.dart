@@ -430,6 +430,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockMenuEditLocations => '都市を編集';
 
   @override
+  String get clockListAddFab => '時計を追加';
+
+  @override
   String get clockDesignSegmentAnalog => 'アナログ';
 
   @override
@@ -439,7 +442,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockDesignSegmentCompact => 'コンパクト';
 
   @override
-  String get clockLocationPickerAppBarTitle => '都市を編集';
+  String get clockLocationPickerAppBarTitle => '時計を追加・編集';
 
   @override
   String clockLocationPickerSectionPinned(int count, int max) {

@@ -438,14 +438,17 @@ void main() {
     });
 
     testWidgets(
-      '(g) FAB は Timer / Alarm ページのみ visible、Stopwatch / Clock では消える',
+      '(g) FAB は Timer / Alarm / Clock ページで visible、Stopwatch では消える',
       (WidgetTester tester) async {
+        // PR #29 follow-up #2: Clock タブも右下 FAB (`clock_list_add_fab`)
+        // を持つようになり、Stopwatch だけが FAB なしのタブになる。
         await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
         await _settleRestore(tester);
 
-        // Timer (index 1) で timer FAB が出る。
+        // Timer (index 1) で timer FAB のみ。
         expect(find.byKey(const Key('timer_list_add_fab')), findsOneWidget);
         expect(find.byKey(const Key('alarm_list_add_fab')), findsNothing);
+        expect(find.byKey(const Key('clock_list_add_fab')), findsNothing);
 
         // Alarm へ swipe → alarm FAB のみ。
         await tester.fling(
@@ -456,8 +459,9 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('timer_list_add_fab')), findsNothing);
         expect(find.byKey(const Key('alarm_list_add_fab')), findsOneWidget);
+        expect(find.byKey(const Key('clock_list_add_fab')), findsNothing);
 
-        // Clock へ swipe → どちらも消える。
+        // Clock へ swipe → clock FAB のみ。
         await tester.fling(
           find.byKey(const Key('home_page_view')),
           const Offset(-400, 0),
@@ -466,6 +470,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('timer_list_add_fab')), findsNothing);
         expect(find.byKey(const Key('alarm_list_add_fab')), findsNothing);
+        expect(find.byKey(const Key('clock_list_add_fab')), findsOneWidget);
 
         // Stopwatch (index 0) まで戻して FAB なしを確認。
         for (int i = 0; i < 3; i++) {
@@ -478,6 +483,7 @@ void main() {
         }
         expect(find.byKey(const Key('timer_list_add_fab')), findsNothing);
         expect(find.byKey(const Key('alarm_list_add_fab')), findsNothing);
+        expect(find.byKey(const Key('clock_list_add_fab')), findsNothing);
       },
     );
 
@@ -495,44 +501,38 @@ void main() {
       expect(find.byKey(const Key('licenses_stub')), findsOneWidget);
     });
 
-    testWidgets(
-      '(i) overflow メニューはページに応じて manage_presets / edit_locations が出し分けされる',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
-        await _settleRestore(tester);
+    testWidgets('(i) overflow メニューは Timer タブでのみ manage_presets が出る', (
+      WidgetTester tester,
+    ) async {
+      // PR #29 follow-up #2: Clock タブの `edit_locations` 項目は
+      // 廃止され、右下 FAB に一本化された。overflow に残る context-
+      // specific 項目は Timer タブの manage_presets のみ。
+      await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
+      await _settleRestore(tester);
 
-        // Timer (index 1) では manage_presets が出る、edit_locations は無い。
-        await tester.tap(find.byKey(const Key('home_menu')));
-        await tester.pumpAndSettle();
-        expect(
-          find.byKey(const Key('home_menu_manage_presets')),
-          findsOneWidget,
+      // Timer (index 1) では manage_presets が出る。
+      await tester.tap(find.byKey(const Key('home_menu')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('home_menu_manage_presets')), findsOneWidget);
+      // メニューを閉じる。
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      // Clock (index 3) まで進める。
+      for (int i = 0; i < 2; i++) {
+        await tester.fling(
+          find.byKey(const Key('home_page_view')),
+          const Offset(-400, 0),
+          1000,
         );
-        expect(find.byKey(const Key('home_menu_edit_locations')), findsNothing);
-        // メニューを閉じる。
-        await tester.tapAt(const Offset(10, 10));
         await tester.pumpAndSettle();
+      }
+      expect(find.byType(ClockPage), findsOneWidget);
 
-        // Clock (index 3) まで進める。
-        for (int i = 0; i < 2; i++) {
-          await tester.fling(
-            find.byKey(const Key('home_page_view')),
-            const Offset(-400, 0),
-            1000,
-          );
-          await tester.pumpAndSettle();
-        }
-        expect(find.byType(ClockPage), findsOneWidget);
-
-        await tester.tap(find.byKey(const Key('home_menu')));
-        await tester.pumpAndSettle();
-        expect(find.byKey(const Key('home_menu_manage_presets')), findsNothing);
-        expect(
-          find.byKey(const Key('home_menu_edit_locations')),
-          findsOneWidget,
-        );
-      },
-    );
+      await tester.tap(find.byKey(const Key('home_menu')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('home_menu_manage_presets')), findsNothing);
+    });
 
     testWidgets('(j) ページ切替時に lastHomePageIndex が UserPreferences に保存される', (
       WidgetTester tester,
@@ -696,6 +696,25 @@ void main() {
       } finally {
         handle.dispose();
       }
+    });
+
+    testWidgets('(o) Clock タブの FAB タップで /clock/locations に push される', (
+      WidgetTester tester,
+    ) async {
+      // PR #29 follow-up #2: Clock タブの「都市を編集」を overflow から
+      // 右下 FAB に移設。FAB が遷移先 `/clock/locations` を正しく開く
+      // ことを stub の存在で確認する。
+      await tester.pumpWidget(
+        _harness(prefs: _RecordingPrefs(), initialPageIndex: 3),
+      );
+      await _settleRestore(tester);
+      expect(find.byType(ClockPage), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('clock_list_add_fab')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);
+      expect(find.text('locations-stub'), findsOneWidget);
     });
   });
 }

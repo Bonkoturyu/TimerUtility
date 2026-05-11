@@ -471,6 +471,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockMenuEditLocations => 'Edit cities';
 
   @override
+  String get clockListAddFab => 'Add clock';
+
+  @override
   String get clockDesignSegmentAnalog => 'Analog';
 
   @override
@@ -480,7 +483,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockDesignSegmentCompact => 'Compact';
 
   @override
-  String get clockLocationPickerAppBarTitle => 'Edit cities';
+  String get clockLocationPickerAppBarTitle => 'Add or edit clocks';
 
   @override
   String clockLocationPickerSectionPinned(int count, int max) {

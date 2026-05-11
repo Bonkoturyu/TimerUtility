@@ -63,10 +63,12 @@ ClockLocation _loc(int order, String name, {String tz = 'Etc/UTC'}) =>
       createdAt: DateTime.utc(2026, 1, 1),
     );
 
-/// Builds the widget under test wrapped in a `GoRouter` so the AppBar
-/// overflow can `context.push('/clock/locations')` against a real
-/// router (we stub the destination route to a Scaffold and look for
-/// its key to verify navigation occurred).
+/// Builds the widget under test wrapped in a `GoRouter` so the
+/// right-bottom FAB (`ClockPage.buildFab`) can
+/// `context.push('/clock/locations')` against a real router (we stub
+/// the destination route to a Scaffold and look for its key to verify
+/// navigation occurred). PR #29 follow-up #2 replaced the AppBar
+/// overflow entry with this FAB to align with the Timer / Alarm tabs.
 Widget _harness({
   required List<ClockLocation> seeded,
   Stream<DateTime>? timeStream,
@@ -203,9 +205,12 @@ void main() {
       expect(find.byType(ClockDesignB), findsNothing);
     });
 
-    testWidgets('AppBar overflow → 都市を編集 で /clock/locations へ push される', (
+    testWidgets('右下 FAB タップで /clock/locations へ push される', (
       WidgetTester tester,
     ) async {
+      // PR #29 follow-up #2: AppBar overflow の「都市を編集」を廃止して
+      // 右下 FAB (`clock_list_add_fab`) に統一。Timer / Alarm タブと
+      // 同じ UX を deep link `/clock` 経由でも提供する。
       await tester.binding.setSurfaceSize(const Size(800, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -214,12 +219,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('clock_menu')));
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('clock_list_add_fab')), findsOneWidget);
 
-      expect(find.text('都市を編集'), findsOneWidget);
-
-      await tester.tap(find.text('都市を編集'));
+      await tester.tap(find.byKey(const Key('clock_list_add_fab')));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);

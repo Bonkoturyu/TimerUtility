@@ -215,10 +215,11 @@
 
   "clockAppBarTitle": "World Clock",
   "clockMenuEditLocations": "Edit cities",
+  "clockListAddFab": "Add clock",
   "clockDesignSegmentAnalog": "Analog",
   "clockDesignSegmentDigital": "Digital",
   "clockDesignSegmentCompact": "Compact",
-  "clockLocationPickerAppBarTitle": "Edit cities",
+  "clockLocationPickerAppBarTitle": "Add or edit clocks",
   "clockLocationPickerSectionPinned": "Pinned ({count}/{max})",
   "@clockLocationPickerSectionPinned": {
     "placeholders": {

@@ -203,10 +203,11 @@
 
   "clockAppBarTitle": "世界時計",
   "clockMenuEditLocations": "都市を編集",
+  "clockListAddFab": "時計を追加",
   "clockDesignSegmentAnalog": "アナログ",
   "clockDesignSegmentDigital": "デジタル",
   "clockDesignSegmentCompact": "コンパクト",
-  "clockLocationPickerAppBarTitle": "都市を編集",
+  "clockLocationPickerAppBarTitle": "時計を追加・編集",
   "clockLocationPickerSectionPinned": "登録済み ({count}/{max})",
   "@clockLocationPickerSectionPinned": {
     "placeholders": {

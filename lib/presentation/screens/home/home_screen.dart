@@ -291,9 +291,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           case 'manage_presets':
             context.push('/presets');
             break;
-          case 'edit_locations':
-            context.push('/clock/locations');
-            break;
         }
       },
       itemBuilder: (BuildContext context) {
@@ -304,15 +301,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               key: const Key('home_menu_manage_presets'),
               value: 'manage_presets',
               child: Text(l.presetManageMenuOverflow),
-            ),
-          );
-        }
-        if (_currentPage == 3) {
-          items.add(
-            PopupMenuItem<String>(
-              key: const Key('home_menu_edit_locations'),
-              value: 'edit_locations',
-              child: Text(l.clockMenuEditLocations),
             ),
           );
         }
@@ -332,6 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return switch (_currentPage) {
       1 => TimerListPage.buildFab(context, ref),
       2 => AlarmListPage.buildFab(context),
+      3 => ClockPage.buildFab(context),
       _ => null,
     };
   }
