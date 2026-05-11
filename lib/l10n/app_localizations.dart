@@ -203,7 +203,7 @@ abstract class AppLocalizations {
   /// No description provided for @timerListEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'タイマーがありません。\n右下の「タイマーを追加」から追加できます。'**
+  /// **'タイマーがありません。\n右下の「＋」ボタンから追加できます。'**
   String get timerListEmptyHint;
 
   /// No description provided for @timerListLimitReached.
@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @alarmListEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'アラームがありません。\n右下の「アラームを追加」から追加できます。'**
+  /// **'アラームがありません。\n右下の「＋」ボタンから追加できます。'**
   String get alarmListEmptyHint;
 
   /// No description provided for @alarmListRepeatEveryday.
@@ -935,7 +935,7 @@ abstract class AppLocalizations {
   /// No description provided for @clockEmptyHint.
   ///
   /// In ja, this message translates to:
-  /// **'都市が登録されていません — メニューから追加してください'**
+  /// **'時計が登録されていません。\n右下の「＋」ボタンから追加できます。'**
   String get clockEmptyHint;
 }
 

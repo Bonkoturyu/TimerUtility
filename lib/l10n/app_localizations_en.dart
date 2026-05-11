@@ -67,7 +67,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timerListEmptyHint =>
-      'No timers yet.\nTap “Add Timer” at the bottom-right to create one.';
+      'No timers yet.\nTap + at the bottom-right to add one.';
 
   @override
   String timerListLimitReached(int count) {
@@ -127,7 +127,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alarmListEmptyHint =>
-      'No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.';
+      'No alarms yet.\nTap + at the bottom-right to add one.';
 
   @override
   String get alarmListRepeatEveryday => 'Every day';
@@ -509,5 +509,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'All available cities are already pinned';
 
   @override
-  String get clockEmptyHint => 'No cities yet — tap menu to add';
+  String get clockEmptyHint =>
+      'No clocks yet.\nTap + at the bottom-right to add one.';
 }

@@ -47,7 +47,7 @@
 
   "timerListAppBarTitle": "Timers",
   "timerListAddFab": "Add Timer",
-  "timerListEmptyHint": "No timers yet.\nTap “Add Timer” at the bottom-right to create one.",
+  "timerListEmptyHint": "No timers yet.\nTap + at the bottom-right to add one.",
   "timerListLimitReached": "{count, plural, =1{Limit reached: 1 item} other{Limit reached: {count} items}}",
   "@timerListLimitReached": {
     "placeholders": {
@@ -72,7 +72,7 @@
 
   "alarmListAppBarTitle": "Alarms",
   "alarmListAddFab": "Add Alarm",
-  "alarmListEmptyHint": "No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.",
+  "alarmListEmptyHint": "No alarms yet.\nTap + at the bottom-right to add one.",
   "alarmListRepeatEveryday": "Every day",
 
   "alarmAppBarTitle": "Alarm",
@@ -235,5 +235,5 @@
     }
   },
   "clockLocationPickerCatalogEmpty": "All available cities are already pinned",
-  "clockEmptyHint": "No cities yet — tap menu to add"
+  "clockEmptyHint": "No clocks yet.\nTap + at the bottom-right to add one."
 }

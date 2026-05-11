@@ -41,14 +41,18 @@ class TimerListPage extends ConsumerStatefulWidget {
   const TimerListPage({super.key});
 
   /// FAB shared between the deep-link `TimerListScreen` wrapper and the
-  /// HomeScreen's dynamic FAB slot.
+  /// HomeScreen's dynamic FAB slot. PR #29 follow-up #3: icon-only to
+  /// match the Alarm / Clock FAB silhouette across all four tabs — the
+  /// previous `FloatingActionButton.extended` morphed the button shape
+  /// during PageView swipes. The "タイマーを追加" / "Add Timer" label
+  /// survives as a tooltip (long-press / screen-reader).
   static FloatingActionButton buildFab(BuildContext context, WidgetRef ref) {
     final AppLocalizations l = AppLocalizations.of(context);
-    return FloatingActionButton.extended(
+    return FloatingActionButton(
       key: const Key('timer_list_add_fab'),
+      tooltip: l.timerListAddFab,
       onPressed: () => handleAddTap(context, ref),
-      icon: const Icon(Icons.add),
-      label: Text(l.timerListAddFab),
+      child: const Icon(Icons.add),
     );
   }
 

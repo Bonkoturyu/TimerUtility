@@ -66,7 +66,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timerListAddFab => 'タイマーを追加';
 
   @override
-  String get timerListEmptyHint => 'タイマーがありません。\n右下の「タイマーを追加」から追加できます。';
+  String get timerListEmptyHint => 'タイマーがありません。\n右下の「＋」ボタンから追加できます。';
 
   @override
   String timerListLimitReached(int count) {
@@ -119,7 +119,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmListAddFab => 'アラームを追加';
 
   @override
-  String get alarmListEmptyHint => 'アラームがありません。\n右下の「アラームを追加」から追加できます。';
+  String get alarmListEmptyHint => 'アラームがありません。\n右下の「＋」ボタンから追加できます。';
 
   @override
   String get alarmListRepeatEveryday => '毎日';
@@ -461,5 +461,5 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
 
   @override
-  String get clockEmptyHint => '都市が登録されていません — メニューから追加してください';
+  String get clockEmptyHint => '時計が登録されていません。\n右下の「＋」ボタンから追加できます。';
 }

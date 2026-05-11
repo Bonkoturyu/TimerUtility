@@ -35,7 +35,7 @@
 
   "timerListAppBarTitle": "タイマー",
   "timerListAddFab": "タイマーを追加",
-  "timerListEmptyHint": "タイマーがありません。\n右下の「タイマーを追加」から追加できます。",
+  "timerListEmptyHint": "タイマーがありません。\n右下の「＋」ボタンから追加できます。",
   "timerListLimitReached": "上限 {count} 件に達しています",
   "@timerListLimitReached": {
     "placeholders": {
@@ -60,7 +60,7 @@
 
   "alarmListAppBarTitle": "アラーム",
   "alarmListAddFab": "アラームを追加",
-  "alarmListEmptyHint": "アラームがありません。\n右下の「アラームを追加」から追加できます。",
+  "alarmListEmptyHint": "アラームがありません。\n右下の「＋」ボタンから追加できます。",
   "alarmListRepeatEveryday": "毎日",
 
   "alarmAppBarTitle": "アラーム",
@@ -223,5 +223,5 @@
     }
   },
   "clockLocationPickerCatalogEmpty": "すべての都市が登録済みです",
-  "clockEmptyHint": "都市が登録されていません — メニューから追加してください"
+  "clockEmptyHint": "時計が登録されていません。\n右下の「＋」ボタンから追加できます。"
 }
