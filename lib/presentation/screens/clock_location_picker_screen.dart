@@ -8,12 +8,24 @@ import '../../domain/clock/exceptions.dart';
 import '../../domain/clock/timezone_catalog.dart';
 import '../../l10n/app_localizations.dart';
 
-/// Phase 10.5 picker screen for the world clock. Reached from
-/// `ClockScreen` AppBar overflow ("都市を編集"). One screen completes
-/// the full lifecycle: list pinned cities, drag to reorder, delete,
-/// and add from the curated [TimezoneCatalog]. There is intentionally
-/// no FAB — taps on a catalog row are the single add path so the user
-/// never has to choose between two equivalent affordances.
+/// Phase 10.5 picker screen for the world clock. Reached from the
+/// Clock tab's right-bottom FAB (`ClockPage.buildFab`, PR #29 follow-up
+/// #2). One screen completes the full lifecycle: list pinned cities,
+/// drag to reorder, delete, and add from the curated [TimezoneCatalog].
+/// There is intentionally no in-screen FAB — taps on a catalog row are
+/// the single add path so the user never has to choose between two
+/// equivalent affordances.
+///
+/// Naming note: the displayed AppBar title is "時計を追加・編集"
+/// (Japanese) / "Add or edit clocks" (English) — this app's world clock
+/// is a *time-difference* UI, so user-facing copy talks about "clocks"
+/// rather than "cities". The class name [ClockLocationPickerScreen],
+/// route `/clock/locations`, and ARB keys
+/// (`clockLocationPickerAppBarTitle`, `clockMenuEditLocations`, etc.)
+/// still carry their original `Location` heritage from Phase 10.5 —
+/// renaming them is tracked as a future task in BACKLOG.md (Phase 11)
+/// because the blast radius (tests, docs, comments) is large compared
+/// to a UX-only patch.
 ///
 /// 6-entry cap is enforced both by the aggregate
 /// ([MaxClockLocationCountExceededException]) and by visually disabling

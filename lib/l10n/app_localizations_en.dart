@@ -12,16 +12,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'TimerUtility';
 
   @override
-  String get homeOpenStopwatch => 'Open Stopwatch';
+  String get homeOpenStopwatch => 'Stopwatch';
 
   @override
-  String get homeOpenTimer => 'Open Timer';
+  String get homeOpenTimer => 'Timer';
 
   @override
-  String get homeOpenAlarm => 'Open Alarms';
+  String get homeOpenAlarm => 'Alarm';
 
   @override
-  String get homeOpenClock => 'Open World Clock';
+  String get homeOpenClock => 'World Clock';
 
   @override
   String get stopwatchAppBarTitle => 'Stopwatch';
@@ -67,7 +67,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get timerListEmptyHint =>
-      'No timers yet.\nTap “Add Timer” at the bottom-right to create one.';
+      'No timers yet.\nTap + at the bottom-right to add one.';
 
   @override
   String timerListLimitReached(int count) {
@@ -127,7 +127,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alarmListEmptyHint =>
-      'No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.';
+      'No alarms yet.\nTap + at the bottom-right to add one.';
 
   @override
   String get alarmListRepeatEveryday => 'Every day';
@@ -471,7 +471,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockMenuEditLocations => 'Edit cities';
 
   @override
-  String get clockLocationPickerAppBarTitle => 'Edit cities';
+  String get clockListAddFab => 'Add clock';
+
+  @override
+  String get clockDesignSegmentAnalog => 'Analog';
+
+  @override
+  String get clockDesignSegmentDigital => 'Digital';
+
+  @override
+  String get clockDesignSegmentCompact => 'Compact';
+
+  @override
+  String get clockLocationPickerAppBarTitle => 'Add or edit clocks';
 
   @override
   String clockLocationPickerSectionPinned(int count, int max) {
@@ -497,5 +509,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'All available cities are already pinned';
 
   @override
-  String get clockEmptyHint => 'No cities yet — tap menu to add';
+  String get clockEmptyHint =>
+      'No clocks yet.\nTap + at the bottom-right to add one.';
 }

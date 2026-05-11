@@ -254,27 +254,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(player.stopCalls, greaterThanOrEqualTo(1));
-      final BuildContext context = tester.element(find.text('timer-stub'));
+      // Phase 11 follow-up: Stop の cold-launch fallback は `/` 単独に
+      // 置換 (Phase 10.5 までの「`/timer` push で 2 段再構築」は廃止)。
+      // tab 復元は HomeScreen の lastHomePageIndex に委譲するので、
+      // ここでは home-stub への遷移のみを assert する。
+      final BuildContext context = tester.element(find.text('home-stub'));
       final container = ProviderScope.containerOf(context);
       final ringing = container.read(alarmRingingNotifierProvider);
       expect(ringing.isPlaying, isFalse);
       expect(ringing.currentTimerId, isNull);
       final collection = container.read(timerCollectionNotifierProvider);
       expect(collection.findById('ringing-1')?.status, TimerStatus.cancelled);
-      expect(find.text('timer-stub'), findsOneWidget);
+      expect(find.text('home-stub'), findsOneWidget);
       expect(find.byType(AlarmRingingScreen), findsNothing);
     });
 
     testWidgets(
-      'cold-start: Stop rebuilds Home → list 2-stack so back returns to home (F-4)',
+      'cold-start: Stop replaces the stack with Home so back-key exits the app',
       (WidgetTester tester) async {
-        // F-4 cold-start fallback の回帰テスト。
-        // initialLocation = '/alarm-ringing' (cold-start FSI 経路を再現、
-        // canPop は false) で起動 → Stop → _leaveAlarmScreen が
-        // router.go('/') → router.push('/timer') で 2 段スタックを再構築。
-        // その後 GoRouter.pop() を呼ぶと list ('/timer') が剥がれて Home
-        // ('/') が表に出ることを確認することで、戻るキー → Home →
-        // アプリ終了の正しい動線を検証する。
+        // Phase 11 follow-up: cold-start fallback は `/` 単独 push に
+        // 戻った (旧 F-4 修正の「Home → list 2 段再構築」は Phase 11 で
+        // HomeScreen が PageView 化したことで `/timer` が薄ラッパに縮退
+        // し、戻ると見覚えのない左上 ← だけの画面になる退行を起こした)。
+        // 1 段スタックで Home に直行し、戻るキー = アプリ終了が正解。
         final player = _StubAlarmSoundPlayer();
         final TimerEntity seeded = _seedRinging();
         await tester.pumpWidget(_harness(player, seedRinging: seeded));
@@ -284,19 +286,16 @@ void main() {
         await tester.tap(find.byKey(const Key('alarm_stop_button')));
         await tester.pumpAndSettle();
 
-        // 1) Stop 直後の最前面は list (timer-stub)
-        expect(find.text('timer-stub'), findsOneWidget);
-        expect(find.text('home-stub'), findsNothing);
-
-        // 2) GoRouter.pop() で 1 段戻る (= Android 戻るキー相当)。
-        //    旧実装 (1 段スタック) なら pop しても何も起きないが、新実装は
-        //    Home → list の 2 段なので Home が出るはず。
-        final BuildContext ctx = tester.element(find.text('timer-stub'));
-        GoRouter.of(ctx).pop();
-        await tester.pumpAndSettle();
-
+        // 1) Stop 直後は home-stub が最前面 (1 段スタック)。
         expect(find.text('home-stub'), findsOneWidget);
         expect(find.text('timer-stub'), findsNothing);
+
+        // 2) `canPop` は false (= 戻るキーで pop すべき何もない)。
+        //    Android 側はこの状態で system back を握ってアプリを終了
+        //    させる。`pop()` 呼び出しは何も起こさず、home-stub のまま。
+        final BuildContext ctx = tester.element(find.text('home-stub'));
+        expect(GoRouter.of(ctx).canPop(), isFalse);
+        expect(find.text('home-stub'), findsOneWidget);
       },
     );
 
@@ -336,14 +335,16 @@ void main() {
         await tester.tap(find.byKey(const Key('alarm_snooze_choice_5m')));
         await tester.pumpAndSettle();
 
-        final BuildContext context = tester.element(find.text('timer-stub'));
+        // Phase 11 follow-up: snooze の cold-launch fallback も Stop と
+        // 同じく `/` 単独 push に統一。home-stub への遷移を assert する。
+        final BuildContext context = tester.element(find.text('home-stub'));
         final container = ProviderScope.containerOf(context);
         final TimerEntity entity = container
             .read(timerCollectionNotifierProvider)
             .findById('ringing-1')!;
         expect(entity.status, TimerStatus.running);
         expect(entity.endAt, isNotNull);
-        expect(find.text('timer-stub'), findsOneWidget);
+        expect(find.text('home-stub'), findsOneWidget);
         expect(find.byType(AlarmRingingScreen), findsNothing);
       },
     );

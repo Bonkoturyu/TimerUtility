@@ -2,10 +2,22 @@
   "@@locale": "en",
 
   "appTitle": "TimerUtility",
-  "homeOpenStopwatch": "Open Stopwatch",
-  "homeOpenTimer": "Open Timer",
-  "homeOpenAlarm": "Open Alarms",
-  "homeOpenClock": "Open World Clock",
+  "homeOpenStopwatch": "Stopwatch",
+  "@homeOpenStopwatch": {
+    "description": "Phase 11: short tab label used by PageNavigationHint as the 'previous tab' hint in the HomeScreen AppBar. Originally a verbose 'Open Stopwatch' label for the Phase 10 vertical-button Home, which Phase 11 deleted."
+  },
+  "homeOpenTimer": "Timer",
+  "@homeOpenTimer": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
+  "homeOpenAlarm": "Alarm",
+  "@homeOpenAlarm": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
+  "homeOpenClock": "World Clock",
+  "@homeOpenClock": {
+    "description": "Phase 11: short tab label for HomeScreen page hints."
+  },
 
   "stopwatchAppBarTitle": "Stopwatch",
   "stopwatchStart": "Start",
@@ -35,7 +47,7 @@
 
   "timerListAppBarTitle": "Timers",
   "timerListAddFab": "Add Timer",
-  "timerListEmptyHint": "No timers yet.\nTap “Add Timer” at the bottom-right to create one.",
+  "timerListEmptyHint": "No timers yet.\nTap + at the bottom-right to add one.",
   "timerListLimitReached": "{count, plural, =1{Limit reached: 1 item} other{Limit reached: {count} items}}",
   "@timerListLimitReached": {
     "placeholders": {
@@ -60,7 +72,7 @@
 
   "alarmListAppBarTitle": "Alarms",
   "alarmListAddFab": "Add Alarm",
-  "alarmListEmptyHint": "No alarms yet.\nTap “Add Alarm” at the bottom-right to create one.",
+  "alarmListEmptyHint": "No alarms yet.\nTap + at the bottom-right to add one.",
   "alarmListRepeatEveryday": "Every day",
 
   "alarmAppBarTitle": "Alarm",
@@ -203,7 +215,11 @@
 
   "clockAppBarTitle": "World Clock",
   "clockMenuEditLocations": "Edit cities",
-  "clockLocationPickerAppBarTitle": "Edit cities",
+  "clockListAddFab": "Add clock",
+  "clockDesignSegmentAnalog": "Analog",
+  "clockDesignSegmentDigital": "Digital",
+  "clockDesignSegmentCompact": "Compact",
+  "clockLocationPickerAppBarTitle": "Add or edit clocks",
   "clockLocationPickerSectionPinned": "Pinned ({count}/{max})",
   "@clockLocationPickerSectionPinned": {
     "placeholders": {
@@ -219,5 +235,5 @@
     }
   },
   "clockLocationPickerCatalogEmpty": "All available cities are already pinned",
-  "clockEmptyHint": "No cities yet — tap menu to add"
+  "clockEmptyHint": "No clocks yet.\nTap + at the bottom-right to add one."
 }

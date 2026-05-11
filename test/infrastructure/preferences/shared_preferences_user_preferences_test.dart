@@ -50,6 +50,47 @@ void main() {
     });
   });
 
+  group('getInt', () {
+    test('returns null for an absent key', () async {
+      final adapter = await makeAdapter();
+      expect(await adapter.getInt('lastHomePageIndex'), isNull);
+    });
+
+    test('returns the stored int verbatim (including 0)', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.lastHomePageIndex': 0,
+      });
+      // 0 is the Stopwatch tab in Phase 11; we assert on it explicitly
+      // because a naive implementation that uses falsy checks (`?? null`
+      // logic on the bare `getInt` result) would lose the distinction
+      // between "explicitly 0" and "absent".
+      expect(await adapter.getInt('lastHomePageIndex'), 0);
+    });
+
+    test('returns positive values verbatim', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.lastHomePageIndex': 3,
+      });
+      expect(await adapter.getInt('lastHomePageIndex'), 3);
+    });
+  });
+
+  group('setInt', () {
+    test('persists a value that getInt reads back', () async {
+      final adapter = await makeAdapter();
+      await adapter.setInt('lastHomePageIndex', 2);
+      expect(await adapter.getInt('lastHomePageIndex'), 2);
+    });
+
+    test('overwrites an existing value', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.lastHomePageIndex': 1,
+      });
+      await adapter.setInt('lastHomePageIndex', 3);
+      expect(await adapter.getInt('lastHomePageIndex'), 3);
+    });
+  });
+
   group('remove', () {
     test('removes the key so subsequent getBool returns null', () async {
       final adapter = await makeAdapter(<String, Object>{
@@ -57,6 +98,14 @@ void main() {
       });
       await adapter.remove('skipPresetDeleteConfirm');
       expect(await adapter.getBool('skipPresetDeleteConfirm'), isNull);
+    });
+
+    test('removes an int key so subsequent getInt returns null', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.lastHomePageIndex': 2,
+      });
+      await adapter.remove('lastHomePageIndex');
+      expect(await adapter.getInt('lastHomePageIndex'), isNull);
     });
 
     test('is a no-op for an absent key', () async {

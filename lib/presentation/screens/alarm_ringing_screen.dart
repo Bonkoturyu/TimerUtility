@@ -420,32 +420,27 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// Leaves the alarm screen back to wherever the user came from.
   ///
   /// Prefer `pop` so the back stack is preserved — when this screen was
-  /// pushed onto `[home, /timer]` (in-app ringing or warm-launch from
-  /// notification tap with the new push semantics), pop returns to
-  /// `[home, /timer]` and the user can back-navigate to home as
-  /// expected.
+  /// pushed onto `[home]` (in-app ringing or warm-launch from
+  /// notification tap), pop returns to the keep-alive HomeScreen and
+  /// its PageView state (current tab, ticker, etc.) is intact.
   ///
   /// Cold-launch from a dead-process notification tap starts directly
   /// on `/alarm-ringing` as the initial location, so canPop is false
-  /// there. Phase 9.5 follow-up (2026-05-04): payload 種別で fallback
-  /// 行き先を切り替える。[source] = alarm なら `/alarms` (一覧)、
-  /// それ以外 (timer 由来 / source 不明) なら `/timer` に飛ばす。
-  /// fallback では `go` を使うため back-stack はリセットされる。
+  /// there. Phase 11 follow-up (2026-05-10): the legacy fallback used
+  /// `go('/') + push(source == alarm ? '/alarms' : '/timer')` to land
+  /// the user on the deep-link list Screen that matched the source.
+  /// Phase 11 unified those screens behind a single PageView HomeScreen
+  /// and demoted `/timer` / `/alarms` to thin Scaffold wrappers — the
+  /// extra `push` after `go('/')` lands the user on a wrapper Scaffold
+  /// (just an AppBar with a back arrow) which looks like leftover
+  /// pre-Phase-11 UI. Drop the `push` and let HomeScreen restore the
+  /// last tab via `UserPreferences.lastHomePageIndex`.
   ///
-  /// 注意: `ringingNotifier.stop()` を呼んだ後だと
-  /// `alarmRingingNotifierProvider.currentSource` は null にリセット
-  /// 済なので、呼び出し側が build 時にクロージャした値を [source] で
-  /// 引き渡すこと。`ref.read` で取り直すと判別不能になる
-  /// (2026-05-04 シナリオ 4 再検証で発覚)。
-  ///
-  /// F-4 対応: cold-start FSI 経由で起動した場合の戻るキー UX を改善。
-  /// 旧実装は `context.go('/alarms')` などで list 画面に直行していたため、
-  /// 戻るキーを押すとアプリが終了してしまった (back-stack に Home が無い)。
-  /// 新実装は `context.go('/')` で Home に置換した後、同期で list を
-  /// `push` して Home → list の 2 段スタックを再構築する。これで戻るキー
-  /// 押下時は list → Home → アプリ終了の順に正しく辿れる。
-  /// Native 側の `launchMode="singleTask"` + `taskAffinity` 削除と組み合わせ、
-  /// Recent 二重 task 問題と戻るキー終了問題の両方をカバーする。
+  /// The [source] argument is kept on the signature for diagnostic /
+  /// future-routing-rules use, but no longer affects the navigation
+  /// path. Native side (`launchMode="singleTask"` + no `taskAffinity`)
+  /// still covers the Recent-double-task and back-key-exit issues from
+  /// F-4.
   void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
     _permissionChannel
         .invokeMethod<void>('clearShowWhenLocked')
@@ -461,9 +456,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       context.pop();
       return;
     }
-    final String dest = source == AlarmSource.alarm ? '/alarms' : '/timer';
-    final GoRouter router = GoRouter.of(context);
-    router.go('/');
-    router.push(dest);
+    GoRouter.of(context).go('/');
   }
 }

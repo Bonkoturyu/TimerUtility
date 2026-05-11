@@ -149,14 +149,20 @@ lib/
 │
 ├── presentation/
 │   ├── screens/
-│   │   ├── stopwatch_screen.dart
-│   │   ├── timer_list_screen.dart           # Phase 8 で実装済み（Phase 3 の単一 timer_screen を置換）
+│   │   ├── home/                            # Phase 11: PageView ベース HomeScreen と各タブの Page widget 群
+│   │   │   ├── home_screen.dart             # Phase 11 で実装済み（4 タブの動的 AppBar / FAB / DotIndicator / lastHomePageIndex 復元）
+│   │   │   ├── stopwatch_page.dart          # Phase 11: 旧 StopwatchScreen の body を Page widget 化
+│   │   │   ├── timer_list_page.dart         # Phase 11: 旧 TimerListScreen の body を Page widget 化（FAB / Add 動線は static helper として公開）
+│   │   │   ├── alarm_list_page.dart         # Phase 11: 旧 AlarmListScreen の body を Page widget 化
+│   │   │   └── clock_page.dart              # Phase 11: 旧 ClockScreen の body を Page widget 化（SegmentedButton で 3 design 切替）
+│   │   ├── stopwatch_screen.dart            # Phase 11 で薄ラッパ化（/stopwatch deep link、body は StopwatchPage に委譲）
+│   │   ├── timer_list_screen.dart           # Phase 11 で薄ラッパ化（/timer deep link、body は TimerListPage に委譲）
 │   │   ├── alarm_ringing_screen.dart        # Phase 5 で実装済み（Phase 8 Collection / Phase 9.5 alarm payload 両用化）
 │   │   ├── preset_manage_screen.dart        # Phase 9 で実装済み
-│   │   ├── alarm_list_screen.dart           # Phase 9.5 で実装済み（指定時刻アラーム一覧、ON/OFF Switch、FAB）
+│   │   ├── alarm_list_screen.dart           # Phase 11 で薄ラッパ化（/alarms deep link、body は AlarmListPage に委譲）
 │   │   ├── alarm_edit_screen.dart           # Phase 9.5 で実装済み（新規 / 編集両用、TimePicker + WeekdaySelector）
 │   │   ├── licenses_screen.dart             # Phase 11 ライセンス画面（先行実装）
-│   │   ├── clock_screen.dart                # Phase 10.5 で実装済み（PageView 3 デザイン切替）
+│   │   ├── clock_screen.dart                # Phase 11 で薄ラッパ化（/clock deep link、body は ClockPage に委譲）
 │   │   └── clock_location_picker_screen.dart # Phase 10.5 で実装済み（都市追加 / 並替 / 削除）
 │   ├── widgets/
 │   │   ├── lap_list.dart
@@ -174,6 +180,7 @@ lib/
 │   │   ├── clock_design_b.dart              # Phase 10.5 で実装済み（縦 list + 日付）
 │   │   ├── clock_design_c.dart              # Phase 10.5 で実装済み（3x2 コンパクト grid）
 │   │   ├── utc_offset_formatter.dart        # Phase 10.5 で実装済み（"UTC+09:00" 形式）
+│   │   ├── home_dot_indicator.dart          # Phase 11 で実装済み（HomeScreen PageView 用ドットインジケータ、Phase 10.5 ClockScreen 内部 PageView の private _DotIndicator から昇格）
 │   │   └── page_navigation_hint.dart        # Phase 10.5 で実装済み（PageView インジケータ）
 │   └── routing/
 │       └── app_router.dart
@@ -267,6 +274,26 @@ infrastructure 層から見ると Pure Dart の値オブジェクト相当とし
 - ❌ Domain Service の直接呼び出し（必ず Notifier 経由）
 - ❌ Infrastructure への直接 import
 - ❌ ビジネスロジックの実装
+
+#### Phase 11: HomeScreen PageView と Page widget 分離パターン
+
+Phase 11 で HomeScreen を `PageView` 化したことに伴い、各タブ
+(Stopwatch / Timer / Alarm / Clock) を 2 段構成で実装している:
+
+- `lib/presentation/screens/home/<feature>_page.dart` — body のみを
+  返す `Page widget`。Scaffold / AppBar / FAB は持たない。タブ固有の
+  状態 (Timer.periodic / WidgetsBindingObserver / ref.listen) はこの
+  Page widget が所有する。HomeScreen の PageView から直接 mount され
+  る。
+- `lib/presentation/screens/<feature>_screen.dart` — `/stopwatch` 等の
+  deep link 経路用。`Scaffold(appBar: ..., body: const <Feature>Page(),
+  floatingActionButton: <Feature>Page.buildFab(...))` の薄ラッパに縮退
+  しており、HomeScreen と同じ Page widget を共有する。
+
+タブ固有の FAB / AppBar overflow ロジックは `static Widget? buildFab(...)`
+や `static Future<void> handleAddTap(...)` のような形で Page widget の
+class 名前空間に置く。HomeScreen と deep link Screen の両方が同じ
+helper を呼ぶことで、ロジックの duplicate を避ける。
 
 ---
 

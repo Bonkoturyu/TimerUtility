@@ -12,16 +12,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'TimerUtility';
 
   @override
-  String get homeOpenStopwatch => 'ストップウォッチを開く';
+  String get homeOpenStopwatch => 'ストップウォッチ';
 
   @override
-  String get homeOpenTimer => 'タイマーを開く';
+  String get homeOpenTimer => 'タイマー';
 
   @override
-  String get homeOpenAlarm => 'アラームを開く';
+  String get homeOpenAlarm => 'アラーム';
 
   @override
-  String get homeOpenClock => '世界時計を開く';
+  String get homeOpenClock => '世界時計';
 
   @override
   String get stopwatchAppBarTitle => 'ストップウォッチ';
@@ -66,7 +66,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timerListAddFab => 'タイマーを追加';
 
   @override
-  String get timerListEmptyHint => 'タイマーがありません。\n右下の「タイマーを追加」から追加できます。';
+  String get timerListEmptyHint => 'タイマーがありません。\n右下の「＋」ボタンから追加できます。';
 
   @override
   String timerListLimitReached(int count) {
@@ -119,7 +119,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmListAddFab => 'アラームを追加';
 
   @override
-  String get alarmListEmptyHint => 'アラームがありません。\n右下の「アラームを追加」から追加できます。';
+  String get alarmListEmptyHint => 'アラームがありません。\n右下の「＋」ボタンから追加できます。';
 
   @override
   String get alarmListRepeatEveryday => '毎日';
@@ -430,7 +430,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockMenuEditLocations => '都市を編集';
 
   @override
-  String get clockLocationPickerAppBarTitle => '都市を編集';
+  String get clockListAddFab => '時計を追加';
+
+  @override
+  String get clockDesignSegmentAnalog => 'アナログ';
+
+  @override
+  String get clockDesignSegmentDigital => 'デジタル';
+
+  @override
+  String get clockDesignSegmentCompact => 'コンパクト';
+
+  @override
+  String get clockLocationPickerAppBarTitle => '時計を追加・編集';
 
   @override
   String clockLocationPickerSectionPinned(int count, int max) {
@@ -449,5 +461,5 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
 
   @override
-  String get clockEmptyHint => '都市が登録されていません — メニューから追加してください';
+  String get clockEmptyHint => '時計が登録されていません。\n右下の「＋」ボタンから追加できます。';
 }
