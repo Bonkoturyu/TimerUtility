@@ -427,9 +427,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockAppBarTitle => '世界時計';
 
   @override
-  String get clockMenuEditLocations => '都市を編集';
-
-  @override
   String get clockListAddFab => '時計を追加';
 
   @override
@@ -442,23 +439,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clockDesignSegmentCompact => 'コンパクト';
 
   @override
-  String get clockLocationPickerAppBarTitle => '時計を追加・編集';
+  String get clockEntryEditAppBarTitle => '時計を追加・編集';
 
   @override
-  String clockLocationPickerSectionPinned(int count, int max) {
+  String clockEntryEditSectionPinned(int count, int max) {
     return '登録済み ($count/$max)';
   }
 
   @override
-  String get clockLocationPickerSectionAvailable => '追加できる都市';
+  String get clockEntryEditSectionAvailable => '追加できる都市';
 
   @override
-  String clockLocationPickerLimitReached(int count) {
+  String clockEntryEditLimitReached(int count) {
     return '上限 $count 件に達しています。削除してから追加してください';
   }
 
   @override
-  String get clockLocationPickerCatalogEmpty => 'すべての都市が登録済みです';
+  String get clockEntryEditCatalogEmpty => 'すべての都市が登録済みです';
 
   @override
   String get clockEmptyHint => '時計が登録されていません。\n右下の「＋」ボタンから追加できます。';

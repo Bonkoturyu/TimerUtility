@@ -872,12 +872,6 @@ abstract class AppLocalizations {
   /// **'世界時計'**
   String get clockAppBarTitle;
 
-  /// No description provided for @clockMenuEditLocations.
-  ///
-  /// In ja, this message translates to:
-  /// **'都市を編集'**
-  String get clockMenuEditLocations;
-
   /// No description provided for @clockListAddFab.
   ///
   /// In ja, this message translates to:
@@ -902,35 +896,35 @@ abstract class AppLocalizations {
   /// **'コンパクト'**
   String get clockDesignSegmentCompact;
 
-  /// No description provided for @clockLocationPickerAppBarTitle.
+  /// No description provided for @clockEntryEditAppBarTitle.
   ///
   /// In ja, this message translates to:
   /// **'時計を追加・編集'**
-  String get clockLocationPickerAppBarTitle;
+  String get clockEntryEditAppBarTitle;
 
-  /// No description provided for @clockLocationPickerSectionPinned.
+  /// No description provided for @clockEntryEditSectionPinned.
   ///
   /// In ja, this message translates to:
   /// **'登録済み ({count}/{max})'**
-  String clockLocationPickerSectionPinned(int count, int max);
+  String clockEntryEditSectionPinned(int count, int max);
 
-  /// No description provided for @clockLocationPickerSectionAvailable.
+  /// No description provided for @clockEntryEditSectionAvailable.
   ///
   /// In ja, this message translates to:
   /// **'追加できる都市'**
-  String get clockLocationPickerSectionAvailable;
+  String get clockEntryEditSectionAvailable;
 
-  /// No description provided for @clockLocationPickerLimitReached.
+  /// No description provided for @clockEntryEditLimitReached.
   ///
   /// In ja, this message translates to:
   /// **'上限 {count} 件に達しています。削除してから追加してください'**
-  String clockLocationPickerLimitReached(int count);
+  String clockEntryEditLimitReached(int count);
 
-  /// No description provided for @clockLocationPickerCatalogEmpty.
+  /// No description provided for @clockEntryEditCatalogEmpty.
   ///
   /// In ja, this message translates to:
   /// **'すべての都市が登録済みです'**
-  String get clockLocationPickerCatalogEmpty;
+  String get clockEntryEditCatalogEmpty;
 
   /// No description provided for @clockEmptyHint.
   ///
