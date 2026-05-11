@@ -25,27 +25,26 @@ import 'package:timer_utility/infrastructure/database/drift_clock_entry_reposito
 /// 必要 (transitive のままでは lint info 扱い) なので、Drift 公開 API の
 /// `customStatement` 経由に統一している。
 void main() {
+  late Directory tmpDir;
   late File tmpFile;
 
   setUp(() {
-    final String uniq = DateTime.now().microsecondsSinceEpoch.toString();
-    tmpFile = File(
-      '${Directory.systemTemp.path}/clock_migration_v4_to_v5_$uniq.sqlite',
-    );
-    if (tmpFile.existsSync()) {
-      tmpFile.deleteSync();
-    }
+    // OS 任せの一意 temp ディレクトリ生成。`DateTime.now()` 直接呼び出しを
+    // 避ける (`.gemini/styleguide.md` L50 禁止事項) と同時に、並列テスト
+    // 実行時のファイル名衝突も完全に避けられる。
+    tmpDir = Directory.systemTemp.createTempSync('clock_migration_v4_to_v5_');
+    tmpFile = File('${tmpDir.path}/db.sqlite');
   });
 
   tearDown(() {
-    if (tmpFile.existsSync()) {
-      try {
-        tmpFile.deleteSync();
-      } catch (_) {
-        // Best-effort: Windows can hold a transient lock on sqlite
-        // shared-cache files even after close(); not worth failing
-        // the test over.
+    try {
+      if (tmpDir.existsSync()) {
+        tmpDir.deleteSync(recursive: true);
       }
+    } catch (_) {
+      // Best-effort: Windows can hold a transient lock on sqlite
+      // shared-cache files even after close(); not worth failing
+      // the test over.
     }
   });
 
