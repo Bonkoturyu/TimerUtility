@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_repository_provider.dart';
-import 'package:timer_utility/application/clock_location_repository_provider.dart';
+import 'package:timer_utility/application/clock_entry_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/location_detector_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
@@ -15,10 +15,10 @@ import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/application/timezone_resolver_provider.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
 import 'package:timer_utility/domain/alarm/alarm_entity.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
 import 'package:timer_utility/domain/clock/clock_time.dart';
 import 'package:timer_utility/domain/ports/alarm_repository.dart';
-import 'package:timer_utility/domain/ports/clock_location_repository.dart';
+import 'package:timer_utility/domain/ports/clock_entry_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
@@ -34,12 +34,11 @@ import 'helpers/test_notification_strings.dart';
 
 class _MockScheduler extends Mock implements NotificationScheduler {}
 
-class _MockClockLocationRepository extends Mock
-    implements ClockLocationRepository {}
+class _MockClockEntryRepository extends Mock implements ClockEntryRepository {}
 
 class _MockLocationDetector extends Mock implements LocationDetector {}
 
-class _ClockLocationFake extends Fake implements ClockLocation {}
+class _ClockEntryFake extends Fake implements ClockEntry {}
 
 class _IdentityResolver implements TimezoneResolver {
   @override
@@ -159,9 +158,9 @@ NotificationScheduler _stubScheduler() {
   return s;
 }
 
-ClockLocationRepository _stubClockRepo() {
-  final r = _MockClockLocationRepository();
-  when(() => r.findAll()).thenAnswer((_) async => <ClockLocation>[]);
+ClockEntryRepository _stubClockRepo() {
+  final r = _MockClockEntryRepository();
+  when(() => r.findAll()).thenAnswer((_) async => <ClockEntry>[]);
   when(() => r.upsert(any())).thenAnswer((_) async {});
   when(() => r.delete(any())).thenAnswer((_) async {});
   when(() => r.replaceAll(any())).thenAnswer((_) async {});
@@ -177,8 +176,8 @@ LocationDetector _stubDetector() {
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));
-    registerFallbackValue(_ClockLocationFake());
-    registerFallbackValue(<ClockLocation>[]);
+    registerFallbackValue(_ClockEntryFake());
+    registerFallbackValue(<ClockEntry>[]);
   });
 
   testWidgets('App boots and mounts the Phase 11 PageView HomeScreen', (
@@ -198,7 +197,7 @@ void main() {
           presetRepositoryProvider.overrideWithValue(_InMemoryPresetRepo()),
           alarmRepositoryProvider.overrideWithValue(_InMemoryAlarmRepo()),
           notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
-          clockLocationRepositoryProvider.overrideWithValue(_stubClockRepo()),
+          clockEntryRepositoryProvider.overrideWithValue(_stubClockRepo()),
           locationDetectorProvider.overrideWithValue(_stubDetector()),
           timezoneResolverProvider.overrideWithValue(_IdentityResolver()),
           testNotificationStringsOverride(),

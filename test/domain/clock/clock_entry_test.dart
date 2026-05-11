@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
 
-ClockLocation _location({
+ClockEntry _entry({
   String id = 'l1',
   String displayName = 'Tokyo',
   String timezoneId = 'Asia/Tokyo',
   bool isCurrentLocation = false,
   int displayOrder = 0,
-}) => ClockLocation(
+}) => ClockEntry(
   id: id,
   displayName: displayName,
   timezoneId: timezoneId,
@@ -17,20 +17,20 @@ ClockLocation _location({
 );
 
 void main() {
-  group('ClockLocation', () {
+  group('ClockEntry', () {
     test('value equality (same fields → equal)', () {
-      expect(_location(), equals(_location()));
+      expect(_entry(), equals(_entry()));
     });
 
     test('differing field breaks equality', () {
       expect(
-        _location(displayName: 'Tokyo'),
-        isNot(equals(_location(displayName: 'Kyoto'))),
+        _entry(displayName: 'Tokyo'),
+        isNot(equals(_entry(displayName: 'Kyoto'))),
       );
     });
 
     test('copyWith preserves untouched fields', () {
-      final original = _location(displayName: 'Tokyo');
+      final original = _entry(displayName: 'Tokyo');
       final copy = original.copyWith(displayName: 'Kyoto');
       expect(copy.displayName, 'Kyoto');
       expect(copy.timezoneId, 'Asia/Tokyo');
@@ -39,7 +39,7 @@ void main() {
     });
 
     test('copyWith on isCurrentLocation flips flag only', () {
-      final original = _location(isCurrentLocation: false);
+      final original = _entry(isCurrentLocation: false);
       final copy = original.copyWith(isCurrentLocation: true);
       expect(copy.isCurrentLocation, isTrue);
       expect(copy.id, original.id);

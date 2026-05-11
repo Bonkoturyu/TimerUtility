@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/timezone_resolver_provider.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
 import 'package:timer_utility/domain/clock/clock_time.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_b.dart';
@@ -14,7 +14,7 @@ class _FixedResolver implements TimezoneResolver {
   DateTime computeAt(DateTime now, String timezoneId) => _returns;
 }
 
-ClockLocation _loc(int order, String name) => ClockLocation(
+ClockEntry _entry(int order, String name) => ClockEntry(
   id: 'id-$order',
   displayName: name,
   timezoneId: 'Etc/UTC',
@@ -25,7 +25,7 @@ ClockLocation _loc(int order, String name) => ClockLocation(
 
 Future<void> _pump(
   WidgetTester tester, {
-  required List<ClockLocation> locations,
+  required List<ClockEntry> entries,
 }) async {
   await tester.binding.setSurfaceSize(const Size(800, 1600));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -42,7 +42,7 @@ Future<void> _pump(
         supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
         home: Scaffold(
           body: ClockDesignB(
-            locations: locations,
+            entries: entries,
             now: DateTime.utc(2026, 1, 15, 12),
           ),
         ),
@@ -53,27 +53,25 @@ Future<void> _pump(
 
 void main() {
   group('ClockDesignB', () {
-    testWidgets('6 件のロケーション displayName がすべて表示される', (
-      WidgetTester tester,
-    ) async {
-      final List<ClockLocation> locations = <ClockLocation>[
-        _loc(0, 'Tokyo'),
-        _loc(1, 'New York'),
-        _loc(2, 'London'),
-        _loc(3, 'Paris'),
-        _loc(4, 'Sydney'),
-        _loc(5, 'Dubai'),
+    testWidgets('6 件のエントリ displayName がすべて表示される', (WidgetTester tester) async {
+      final List<ClockEntry> entries = <ClockEntry>[
+        _entry(0, 'Tokyo'),
+        _entry(1, 'New York'),
+        _entry(2, 'London'),
+        _entry(3, 'Paris'),
+        _entry(4, 'Sydney'),
+        _entry(5, 'Dubai'),
       ];
-      await _pump(tester, locations: locations);
-      for (final ClockLocation loc in locations) {
-        expect(find.text(loc.displayName), findsOneWidget);
+      await _pump(tester, entries: entries);
+      for (final ClockEntry entry in entries) {
+        expect(find.text(entry.displayName), findsOneWidget);
       }
     });
 
-    testWidgets('locations 空のとき empty hint が key で見つかる', (
+    testWidgets('entries 空のとき empty hint が key で見つかる', (
       WidgetTester tester,
     ) async {
-      await _pump(tester, locations: const <ClockLocation>[]);
+      await _pump(tester, entries: const <ClockEntry>[]);
       expect(find.byKey(const Key('clock_design_b_empty')), findsOneWidget);
     });
   });
