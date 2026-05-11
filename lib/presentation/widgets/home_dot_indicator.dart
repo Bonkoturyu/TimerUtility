@@ -18,11 +18,18 @@ import 'package:flutter/material.dart';
 /// Per-dot keys (`home_dot_<i>`) are stable across rebuilds so tests
 /// can target a specific position regardless of render order.
 class HomeDotIndicator extends StatelessWidget {
+  /// PR #29 C2: fail fast on out-of-range inputs. A silent miss (no
+  /// active dot) is hard to debug, so make the contract explicit at
+  /// the call site.
   const HomeDotIndicator({
     super.key,
     required this.count,
     required this.current,
-  });
+  }) : assert(count > 0, 'HomeDotIndicator.count must be > 0'),
+       assert(
+         current >= 0 && current < count,
+         'HomeDotIndicator.current must satisfy 0 <= current < count',
+       );
 
   final int count;
   final int current;
