@@ -143,5 +143,7 @@
   - `TimerStatus` → `TEXT` (`enum.name`)。enum 値追加に対し前方互換、
     未知の name は `cancelled` フォールバック
 - **次のスキーマ Bump タイミング**: Preset (Phase 9) / Alarm (Phase 9.5) /
-  ClockLocation (Phase 10.5) のテーブル追加時。`schemaVersion` を bump し
-  `migration` を書く。当面は単一テーブルのため migration コードは未整備。
+  ClockEntry (Phase 10.5、Phase 11 で `clock_locations` → `clock_entries` に
+  リネーム、schemaVersion 4 → 5、INSERT…SELECT + DROP 方式の migration) の
+  テーブル追加時。`schemaVersion` を bump し `migration` を書く。当面は単一
+  テーブルのため migration コードは未整備。
