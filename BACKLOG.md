@@ -616,7 +616,7 @@ AndroidManifest 編集はユーザー確認必須。
       例外名 / Port / Provider 名もリネーム。`isCurrentLocation`
       フィールドと `LocationDetector` ポートは GPS 由来の概念として
       valid なため据置）。
-- [x] Phase 11 Clock ドメインリネーム 実機検証完了 (2026-05-11)
+- [x] Phase 11 Clock ドメインリネーム 実機検証完了 (2026-05-11、PR #31)
       - ケース A: 実機で v4 (commit 2842221) → v5 (commit cff04d8) 上書き
         インストール、登録エントリの件数・順序・displayName 保持を UI 上で確認
       - `isCurrentLocation` フラグの保持は
