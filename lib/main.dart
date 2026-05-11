@@ -17,6 +17,7 @@ import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/timezone_resolver_provider.dart';
 import 'application/user_preferences_provider.dart';
+import 'domain/ports/user_preferences.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_alarm_repository.dart';
 import 'infrastructure/clock/tz_database_timezone_resolver.dart';
@@ -195,6 +196,20 @@ Future<void> main() async {
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
 
+  // PR #29 G3: read the last-visited tab synchronously here (we're
+  // still pre-runApp and shared_preferences has resolved) so HomeScreen
+  // can paint its first frame at the right tab. Reading via a
+  // post-frame microtask would briefly flash the default Timer tab
+  // before the jumpToPage kicked in.
+  final int? storedHomePageIndex = await userPrefs.getInt(
+    UserPreferenceKeys.lastHomePageIndex,
+  );
+  final int initialHomePageIndex =
+      (storedHomePageIndex ?? HomeScreen.defaultPageIndex).clamp(
+        0,
+        HomeScreen.pageCount - 1,
+      );
+
   // `late final` lets the warm-launch tap callback reference the router
   // that's only constructed after we know the cold-launch payload below.
   late final GoRouter router;
@@ -245,7 +260,7 @@ Future<void> main() async {
       GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) =>
-            const HomeScreen(),
+            HomeScreen(initialPageIndex: initialHomePageIndex),
       ),
       GoRoute(
         path: StopwatchScreen.routeLocation,

@@ -198,14 +198,22 @@ LocationDetector _stubDetector() {
 /// preferences fake used by the persistence-verify scenario.
 /// [timerRepo] lets the (m) ringing-listener test seed an already-
 /// ringing TimerEntity so the HomeScreen-level `ref.listen` fires.
+/// [initialPageIndex] mirrors the `main()` post-prefs-read value that
+/// HomeScreen takes through its constructor (PR #29 G3); pass it to
+/// exercise the restore path without relying on a microtask-based
+/// jump.
 Widget _harness({
   required _RecordingPrefs prefs,
   _InMemoryTimerRepo? timerRepo,
+  int initialPageIndex = HomeScreen.defaultPageIndex,
 }) {
   final router = GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+      GoRoute(
+        path: '/',
+        builder: (_, _) => HomeScreen(initialPageIndex: initialPageIndex),
+      ),
       GoRoute(
         path: '/licenses',
         builder: (_, _) => const Scaffold(
@@ -310,15 +318,13 @@ void main() {
       expect(find.byType(TimerListPage), findsOneWidget);
     });
 
-    testWidgets('(b) lastHomePageIndex = 2 で Alarm ページが復元される', (
+    testWidgets('(b) initialPageIndex = 2 で Alarm ページが復元される', (
       WidgetTester tester,
     ) async {
+      // PR #29 G3: HomeScreen は initialPageIndex をコンストラクタで
+      // 受け取る方式に変更。`main()` が prefs を読んでこの値に解決する。
       await tester.pumpWidget(
-        _harness(
-          prefs: _RecordingPrefs(
-            seedInts: <String, int>{'lastHomePageIndex': 2},
-          ),
-        ),
+        _harness(prefs: _RecordingPrefs(), initialPageIndex: 2),
       );
       await _settleRestore(tester);
 
@@ -375,11 +381,7 @@ void main() {
       (WidgetTester tester) async {
         // Clock (index 3) 起動 → 左 fling で Stopwatch (index 0) に循環。
         await tester.pumpWidget(
-          _harness(
-            prefs: _RecordingPrefs(
-              seedInts: <String, int>{'lastHomePageIndex': 3},
-            ),
-          ),
+          _harness(prefs: _RecordingPrefs(), initialPageIndex: 3),
         );
         await _settleRestore(tester);
         expect(find.byType(ClockPage), findsOneWidget);
@@ -655,10 +657,9 @@ void main() {
         // 状況を作る。
         await tester.pumpWidget(
           _harness(
-            prefs: _RecordingPrefs(
-              seedInts: <String, int>{'lastHomePageIndex': 0},
-            ),
+            prefs: _RecordingPrefs(),
             timerRepo: timerRepo,
+            initialPageIndex: 0,
           ),
         );
         await _settleRestore(tester);

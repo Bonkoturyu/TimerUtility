@@ -53,7 +53,17 @@ import 'timer_list_page.dart';
 /// (`raw % pageCount` ∈ [0..3]); raw values are session-local so a kill
 /// → restart cycle never carries a thousand-page offset.
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.initialPageIndex = defaultPageIndex});
+
+  /// Resolved landing tab passed in from `main()` after it has read
+  /// `lastHomePageIndex` from `SharedPreferences`. Doing the read in
+  /// `main()` (instead of an `initState` microtask) lets the very
+  /// first frame paint at the right tab and avoids the previous
+  /// "flash of Timer then jump" behaviour reported on Pixel 6a
+  /// (PR #29 G3). Tests that pump HomeScreen directly fall back to
+  /// the default; the harness can pass `initialPageIndex` explicitly
+  /// when it wants to exercise the restore path.
+  final int initialPageIndex;
 
   /// Default landing tab when no `lastHomePageIndex` is stored. Timer
   /// is the everyday workflow; Stopwatch / Alarm / Clock are
@@ -83,34 +93,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Raw page index (potentially many thousands). The on-screen
   /// indicator and persistence layer translate this through
   /// `% HomeScreen.pageCount` to get the logical 0..3 page.
-  int _rawPage = HomeScreen._initialRawPage + HomeScreen.defaultPageIndex;
+  late int _rawPage;
 
   int get _currentPage => _rawPage % HomeScreen.pageCount;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(initialPage: _rawPage);
-    // Defer to a microtask so we can `await` the prefs read; the first
-    // frame still paints with `defaultPageIndex` if the user happens to
-    // glance at the screen during the first ~1ms.
-    Future<void>.microtask(_restoreLastPage);
-  }
-
-  Future<void> _restoreLastPage() async {
-    final UserPreferences prefs = ref.read(userPreferencesProvider);
-    final int? stored = await prefs.getInt(
-      UserPreferenceKeys.lastHomePageIndex,
+    final int logical = widget.initialPageIndex.clamp(
+      0,
+      HomeScreen.pageCount - 1,
     );
-    if (!mounted) return;
-    if (stored == null) return;
-    // Persisted values are always logical (0..3). A stale value from a
-    // future tab reordering still has to clamp here.
-    final int clamped = stored.clamp(0, HomeScreen.pageCount - 1);
-    if (clamped == _currentPage) return;
-    final int targetRaw = HomeScreen._initialRawPage + clamped;
-    setState(() => _rawPage = targetRaw);
-    _controller.jumpToPage(targetRaw);
+    _rawPage = HomeScreen._initialRawPage + logical;
+    _controller = PageController(initialPage: _rawPage);
   }
 
   void _onPageChanged(int rawIndex) {
