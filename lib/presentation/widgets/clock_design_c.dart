@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/clock/clock_location.dart';
+import '../../domain/clock/clock_entry.dart';
 import '../../l10n/app_localizations.dart';
 import 'analog_clock_widget.dart';
 import 'digital_clock_widget.dart';
@@ -11,14 +11,14 @@ import 'digital_clock_widget.dart';
 /// cell budget can't carry a fourth line legibly); users who need the
 /// offset pick Design A or B.
 class ClockDesignC extends ConsumerWidget {
-  const ClockDesignC({super.key, required this.locations, required this.now});
+  const ClockDesignC({super.key, required this.entries, required this.now});
 
-  final List<ClockLocation> locations;
+  final List<ClockEntry> entries;
   final DateTime now;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (locations.isEmpty) {
+    if (entries.isEmpty) {
       final AppLocalizations l = AppLocalizations.of(context);
       return Center(
         child: Text(l.clockEmptyHint, key: const Key('clock_design_c_empty')),
@@ -31,7 +31,7 @@ class ClockDesignC extends ConsumerWidget {
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
       children: <Widget>[
-        for (final ClockLocation loc in locations)
+        for (final ClockEntry entry in entries)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(4),
@@ -40,19 +40,19 @@ class ClockDesignC extends ConsumerWidget {
                 children: <Widget>[
                   AnalogClockWidget(
                     time: now,
-                    timezoneId: loc.timezoneId,
+                    timezoneId: entry.timezoneId,
                     size: 64,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    loc.displayName,
+                    entry.displayName,
                     style: const TextStyle(fontSize: 11),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
                   DigitalClockWidget(
                     time: now,
-                    timezoneId: loc.timezoneId,
+                    timezoneId: entry.timezoneId,
                     showSeconds: false,
                     fontSize: 18,
                   ),

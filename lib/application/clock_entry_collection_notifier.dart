@@ -4,36 +4,38 @@ import 'package:clock/clock.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../domain/clock/clock_collection.dart';
-import '../domain/clock/clock_location.dart';
+import '../domain/clock/clock_entry.dart';
+import '../domain/clock/clock_entry_collection.dart';
 import '../domain/clock/timezone_catalog.dart';
-import '../domain/ports/clock_location_repository.dart';
+import '../domain/ports/clock_entry_repository.dart';
 import '../domain/ports/location_detector.dart';
-import 'clock_location_repository_provider.dart';
+import 'clock_entry_repository_provider.dart';
 import 'clock_provider.dart';
 import 'location_detector_provider.dart';
 
-part 'clock_collection_notifier.g.dart';
+part 'clock_entry_collection_notifier.g.dart';
 
-/// Phase 10.5 single source of truth for pinned world-clock locations.
+/// Phase 10.5 single source of truth for pinned world-clock entries
+/// (Phase 11 で `ClockCollectionNotifier` → `ClockEntryCollectionNotifier`
+/// にリネーム)。
 ///
 /// Mirrors `PresetCollectionNotifier`:
-///   - State = immutable aggregate ([ClockCollection]).
+///   - State = immutable aggregate ([ClockEntryCollection]).
 ///   - Mutations: validate via the aggregate, update [state], persist
-///     via [ClockLocationRepository] in a fire-and-forget pattern.
+///     via [ClockEntryRepository] in a fire-and-forget pattern.
 ///   - Restore on build: asynchronously load the persisted collection.
 ///     On a fresh install (DB empty) we additionally call
 ///     [LocationDetector.detectTimezoneId] to seed a single
 ///     "current location" entry so the first launch shows local time.
 @Riverpod(keepAlive: true)
-class ClockCollectionNotifier extends _$ClockCollectionNotifier {
+class ClockEntryCollectionNotifier extends _$ClockEntryCollectionNotifier {
   String Function()? _idGenerator;
   bool _initialDetectionAttempted = false;
 
   @override
-  ClockCollection build() {
+  ClockEntryCollection build() {
     Future<void>.microtask(_loadAndMaybeDetect);
-    return ClockCollection.empty();
+    return ClockEntryCollection.empty();
   }
 
   Future<void> _loadAndMaybeDetect() async {
@@ -41,15 +43,15 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
     // a faster code path (e.g. direct `addPreset` from a deeplink).
     if (state.size > 0) return;
 
-    final List<ClockLocation> persisted = await ref
-        .read(clockLocationRepositoryProvider)
+    final List<ClockEntry> persisted = await ref
+        .read(clockEntryRepositoryProvider)
         .findAll();
     // Re-check after the await: another mutation may have populated
     // `state` while `findAll` was in flight. Overwriting it would clobber
     // the user-visible change.
     if (state.size > 0) return;
     if (persisted.isNotEmpty) {
-      state = ClockCollection.fromList(persisted);
+      state = ClockEntryCollection.fromList(persisted);
       return;
     }
 
@@ -63,11 +65,11 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
         .detectTimezoneId();
     // Re-check after the detection await: a mutation may have raced in
     // and made the seed redundant (size > 0) or impossible (isFull, which
-    // would otherwise throw `MaxClockLocationCountExceededException` from
+    // would otherwise throw `MaxClockEntryCountExceededException` from
     // an unawaited microtask).
     if (state.size > 0) return;
     final Clock clock = ref.read(clockProvider);
-    final ClockLocation seeded = ClockLocation(
+    final ClockEntry seeded = ClockEntry(
       id: _newId(),
       displayName: _deriveDisplayName(tzId),
       timezoneId: tzId,
@@ -76,18 +78,18 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
       createdAt: clock.now(),
     );
     state = state.add(seeded);
-    unawaited(ref.read(clockLocationRepositoryProvider).upsert(seeded));
+    unawaited(ref.read(clockEntryRepositoryProvider).upsert(seeded));
   }
 
   /// Add a user-picked preset city. The aggregate enforces the 6-entry
-  /// cap by throwing [MaxClockLocationCountExceededException] which the
+  /// cap by throwing [MaxClockEntryCountExceededException] which the
   /// notifier surfaces unchanged for the UI to translate to a SnackBar.
-  ClockLocation addPreset({
+  ClockEntry addPreset({
     required String timezoneId,
     required String displayName,
   }) {
     final Clock clock = ref.read(clockProvider);
-    final ClockLocation entity = ClockLocation(
+    final ClockEntry entity = ClockEntry(
       id: _newId(),
       displayName: displayName,
       timezoneId: timezoneId,
@@ -96,17 +98,17 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
       createdAt: clock.now(),
     );
     state = state.add(entity);
-    unawaited(ref.read(clockLocationRepositoryProvider).upsert(entity));
+    unawaited(ref.read(clockEntryRepositoryProvider).upsert(entity));
     return entity;
   }
 
-  /// Remove a clock location by id. No-op (gracefully) if absent so
+  /// Remove a clock entry by id. No-op (gracefully) if absent so
   /// callers don't have to guard against double-tap races.
   void remove(String id) {
-    final ClockLocation? existing = state.findById(id);
+    final ClockEntry? existing = state.findById(id);
     if (existing == null) return;
     state = state.remove(id);
-    unawaited(ref.read(clockLocationRepositoryProvider).delete(id));
+    unawaited(ref.read(clockEntryRepositoryProvider).delete(id));
   }
 
   /// Reorder by destination indices (not Flutter's post-removal
@@ -117,7 +119,7 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
   void reorder(int oldIndex, int newIndex) {
     if (oldIndex == newIndex) return;
     state = state.reorder(oldIndex, newIndex);
-    unawaited(ref.read(clockLocationRepositoryProvider).replaceAll(state.all));
+    unawaited(ref.read(clockEntryRepositoryProvider).replaceAll(state.all));
   }
 
   /// Lightweight rename (timezoneId edits go through "remove + add"
@@ -125,13 +127,13 @@ class ClockCollectionNotifier extends _$ClockCollectionNotifier {
   /// No-op when the id is gone (mirrors `remove`) so a double-tap or
   /// stale UI reference can't crash the notifier.
   void update(String id, {String? displayName}) {
-    final ClockLocation? existing = state.findById(id);
+    final ClockEntry? existing = state.findById(id);
     if (existing == null) return;
-    final ClockLocation next = existing.copyWith(
+    final ClockEntry next = existing.copyWith(
       displayName: displayName ?? existing.displayName,
     );
     state = state.update(next);
-    unawaited(ref.read(clockLocationRepositoryProvider).upsert(next));
+    unawaited(ref.read(clockEntryRepositoryProvider).upsert(next));
   }
 
   /// Test seam: lets unit tests inject a deterministic id sequence.

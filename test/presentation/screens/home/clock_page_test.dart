@@ -3,28 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:timer_utility/application/clock_collection_notifier.dart';
-import 'package:timer_utility/application/clock_location_repository_provider.dart';
+import 'package:timer_utility/application/clock_entry_collection_notifier.dart';
+import 'package:timer_utility/application/clock_entry_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/clock_tick/current_time_stream_provider.dart';
 import 'package:timer_utility/application/location_detector_provider.dart';
 import 'package:timer_utility/application/timezone_resolver_provider.dart';
-import 'package:timer_utility/domain/clock/clock_collection.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
+import 'package:timer_utility/domain/clock/clock_entry_collection.dart';
 import 'package:timer_utility/domain/clock/clock_time.dart';
-import 'package:timer_utility/domain/ports/clock_location_repository.dart';
+import 'package:timer_utility/domain/ports/clock_entry_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/home/clock_page.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_a.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_b.dart';
 
-class _MockClockLocationRepository extends Mock
-    implements ClockLocationRepository {}
+class _MockClockEntryRepository extends Mock implements ClockEntryRepository {}
 
 class _MockLocationDetector extends Mock implements LocationDetector {}
 
-class _ClockLocationFake extends Fake implements ClockLocation {}
+class _ClockEntryFake extends Fake implements ClockEntry {}
 
 class _IdentityResolver implements TimezoneResolver {
   @override
@@ -33,16 +32,16 @@ class _IdentityResolver implements TimezoneResolver {
 
 /// Same seam as `clock_screen_test.dart`: bypass the production
 /// notifier's microtask seed so the test mounts a deterministic
-/// `ClockCollection` without the repo / detector dance.
-class _SeededClockCollectionNotifier extends ClockCollectionNotifier {
-  _SeededClockCollectionNotifier(this._initial);
-  final ClockCollection _initial;
+/// `ClockEntryCollection` without the repo / detector dance.
+class _SeededClockEntryCollectionNotifier extends ClockEntryCollectionNotifier {
+  _SeededClockEntryCollectionNotifier(this._initial);
+  final ClockEntryCollection _initial;
 
   @override
-  ClockCollection build() => _initial;
+  ClockEntryCollection build() => _initial;
 }
 
-ClockLocation _loc(int order, String name) => ClockLocation(
+ClockEntry _entry(int order, String name) => ClockEntry(
   id: 'id-$order',
   displayName: name,
   timezoneId: 'Etc/UTC',
@@ -51,13 +50,13 @@ ClockLocation _loc(int order, String name) => ClockLocation(
   createdAt: DateTime.utc(2026, 1, 1),
 );
 
-Widget _harness({required List<ClockLocation> seeded}) {
+Widget _harness({required List<ClockEntry> seeded}) {
   final DateTime now = DateTime.utc(2026, 5, 10, 9);
-  final ClockCollection collection = seeded.isEmpty
-      ? ClockCollection.empty()
-      : ClockCollection.fromList(seeded);
+  final ClockEntryCollection collection = seeded.isEmpty
+      ? ClockEntryCollection.empty()
+      : ClockEntryCollection.fromList(seeded);
 
-  final repo = _MockClockLocationRepository();
+  final repo = _MockClockEntryRepository();
   final detector = _MockLocationDetector();
   when(() => repo.findAll()).thenAnswer((_) async => seeded);
   when(() => repo.upsert(any())).thenAnswer((_) async {});
@@ -72,10 +71,10 @@ Widget _harness({required List<ClockLocation> seeded}) {
       currentTimeProvider.overrideWith(
         (Ref ref) => Stream<DateTime>.value(now),
       ),
-      clockCollectionNotifierProvider.overrideWith(
-        () => _SeededClockCollectionNotifier(collection),
+      clockEntryCollectionNotifierProvider.overrideWith(
+        () => _SeededClockEntryCollectionNotifier(collection),
       ),
-      clockLocationRepositoryProvider.overrideWithValue(repo),
+      clockEntryRepositoryProvider.overrideWithValue(repo),
       locationDetectorProvider.overrideWithValue(detector),
     ],
     child: const MaterialApp(
@@ -89,8 +88,8 @@ Widget _harness({required List<ClockLocation> seeded}) {
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(_ClockLocationFake());
-    registerFallbackValue(<ClockLocation>[]);
+    registerFallbackValue(_ClockEntryFake());
+    registerFallbackValue(<ClockEntry>[]);
   });
 
   group('ClockPage (Phase 11 body widget)', () {
@@ -103,7 +102,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
         await tester.pumpWidget(
-          _harness(seeded: <ClockLocation>[_loc(0, 'Tokyo')]),
+          _harness(seeded: <ClockEntry>[_entry(0, 'Tokyo')]),
         );
         await tester.pumpAndSettle();
 

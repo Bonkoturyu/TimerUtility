@@ -1589,12 +1589,12 @@ class AlarmsCompanion extends UpdateCompanion<AlarmRow> {
   }
 }
 
-class $ClockLocationsTable extends ClockLocations
-    with TableInfo<$ClockLocationsTable, ClockLocationRow> {
+class $ClockEntriesTable extends ClockEntries
+    with TableInfo<$ClockEntriesTable, ClockEntryRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ClockLocationsTable(this.attachedDatabase, [this._alias]);
+  $ClockEntriesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1675,10 +1675,10 @@ class $ClockLocationsTable extends ClockLocations
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'clock_locations';
+  static const String $name = 'clock_entries';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ClockLocationRow> instance, {
+    Insertable<ClockEntryRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1746,9 +1746,9 @@ class $ClockLocationsTable extends ClockLocations
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  ClockLocationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ClockEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ClockLocationRow(
+    return ClockEntryRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1777,20 +1777,19 @@ class $ClockLocationsTable extends ClockLocations
   }
 
   @override
-  $ClockLocationsTable createAlias(String alias) {
-    return $ClockLocationsTable(attachedDatabase, alias);
+  $ClockEntriesTable createAlias(String alias) {
+    return $ClockEntriesTable(attachedDatabase, alias);
   }
 }
 
-class ClockLocationRow extends DataClass
-    implements Insertable<ClockLocationRow> {
+class ClockEntryRow extends DataClass implements Insertable<ClockEntryRow> {
   final String id;
   final String displayName;
   final String timezoneId;
   final bool isCurrentLocation;
   final int displayOrder;
   final int createdAtUtcMs;
-  const ClockLocationRow({
+  const ClockEntryRow({
     required this.id,
     required this.displayName,
     required this.timezoneId,
@@ -1810,8 +1809,8 @@ class ClockLocationRow extends DataClass
     return map;
   }
 
-  ClockLocationsCompanion toCompanion(bool nullToAbsent) {
-    return ClockLocationsCompanion(
+  ClockEntriesCompanion toCompanion(bool nullToAbsent) {
+    return ClockEntriesCompanion(
       id: Value(id),
       displayName: Value(displayName),
       timezoneId: Value(timezoneId),
@@ -1821,12 +1820,12 @@ class ClockLocationRow extends DataClass
     );
   }
 
-  factory ClockLocationRow.fromJson(
+  factory ClockEntryRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ClockLocationRow(
+    return ClockEntryRow(
       id: serializer.fromJson<String>(json['id']),
       displayName: serializer.fromJson<String>(json['displayName']),
       timezoneId: serializer.fromJson<String>(json['timezoneId']),
@@ -1848,14 +1847,14 @@ class ClockLocationRow extends DataClass
     };
   }
 
-  ClockLocationRow copyWith({
+  ClockEntryRow copyWith({
     String? id,
     String? displayName,
     String? timezoneId,
     bool? isCurrentLocation,
     int? displayOrder,
     int? createdAtUtcMs,
-  }) => ClockLocationRow(
+  }) => ClockEntryRow(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
     timezoneId: timezoneId ?? this.timezoneId,
@@ -1863,8 +1862,8 @@ class ClockLocationRow extends DataClass
     displayOrder: displayOrder ?? this.displayOrder,
     createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
   );
-  ClockLocationRow copyWithCompanion(ClockLocationsCompanion data) {
-    return ClockLocationRow(
+  ClockEntryRow copyWithCompanion(ClockEntriesCompanion data) {
+    return ClockEntryRow(
       id: data.id.present ? data.id.value : this.id,
       displayName: data.displayName.present
           ? data.displayName.value
@@ -1886,7 +1885,7 @@ class ClockLocationRow extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('ClockLocationRow(')
+    return (StringBuffer('ClockEntryRow(')
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('timezoneId: $timezoneId, ')
@@ -1909,7 +1908,7 @@ class ClockLocationRow extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is ClockLocationRow &&
+      (other is ClockEntryRow &&
           other.id == this.id &&
           other.displayName == this.displayName &&
           other.timezoneId == this.timezoneId &&
@@ -1918,7 +1917,7 @@ class ClockLocationRow extends DataClass
           other.createdAtUtcMs == this.createdAtUtcMs);
 }
 
-class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
+class ClockEntriesCompanion extends UpdateCompanion<ClockEntryRow> {
   final Value<String> id;
   final Value<String> displayName;
   final Value<String> timezoneId;
@@ -1926,7 +1925,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
   final Value<int> displayOrder;
   final Value<int> createdAtUtcMs;
   final Value<int> rowid;
-  const ClockLocationsCompanion({
+  const ClockEntriesCompanion({
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
     this.timezoneId = const Value.absent(),
@@ -1935,7 +1934,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
     this.createdAtUtcMs = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ClockLocationsCompanion.insert({
+  ClockEntriesCompanion.insert({
     required String id,
     required String displayName,
     required String timezoneId,
@@ -1949,7 +1948,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
        isCurrentLocation = Value(isCurrentLocation),
        displayOrder = Value(displayOrder),
        createdAtUtcMs = Value(createdAtUtcMs);
-  static Insertable<ClockLocationRow> custom({
+  static Insertable<ClockEntryRow> custom({
     Expression<String>? id,
     Expression<String>? displayName,
     Expression<String>? timezoneId,
@@ -1969,7 +1968,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
     });
   }
 
-  ClockLocationsCompanion copyWith({
+  ClockEntriesCompanion copyWith({
     Value<String>? id,
     Value<String>? displayName,
     Value<String>? timezoneId,
@@ -1978,7 +1977,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
     Value<int>? createdAtUtcMs,
     Value<int>? rowid,
   }) {
-    return ClockLocationsCompanion(
+    return ClockEntriesCompanion(
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       timezoneId: timezoneId ?? this.timezoneId,
@@ -2018,7 +2017,7 @@ class ClockLocationsCompanion extends UpdateCompanion<ClockLocationRow> {
 
   @override
   String toString() {
-    return (StringBuffer('ClockLocationsCompanion(')
+    return (StringBuffer('ClockEntriesCompanion(')
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('timezoneId: $timezoneId, ')
@@ -2037,7 +2036,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TimersTable timers = $TimersTable(this);
   late final $PresetsTable presets = $PresetsTable(this);
   late final $AlarmsTable alarms = $AlarmsTable(this);
-  late final $ClockLocationsTable clockLocations = $ClockLocationsTable(this);
+  late final $ClockEntriesTable clockEntries = $ClockEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2046,7 +2045,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     timers,
     presets,
     alarms,
-    clockLocations,
+    clockEntries,
   ];
 }
 
@@ -2829,8 +2828,8 @@ typedef $$AlarmsTableProcessedTableManager =
       AlarmRow,
       PrefetchHooks Function()
     >;
-typedef $$ClockLocationsTableCreateCompanionBuilder =
-    ClockLocationsCompanion Function({
+typedef $$ClockEntriesTableCreateCompanionBuilder =
+    ClockEntriesCompanion Function({
       required String id,
       required String displayName,
       required String timezoneId,
@@ -2839,8 +2838,8 @@ typedef $$ClockLocationsTableCreateCompanionBuilder =
       required int createdAtUtcMs,
       Value<int> rowid,
     });
-typedef $$ClockLocationsTableUpdateCompanionBuilder =
-    ClockLocationsCompanion Function({
+typedef $$ClockEntriesTableUpdateCompanionBuilder =
+    ClockEntriesCompanion Function({
       Value<String> id,
       Value<String> displayName,
       Value<String> timezoneId,
@@ -2850,9 +2849,9 @@ typedef $$ClockLocationsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-class $$ClockLocationsTableFilterComposer
-    extends Composer<_$AppDatabase, $ClockLocationsTable> {
-  $$ClockLocationsTableFilterComposer({
+class $$ClockEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $ClockEntriesTable> {
+  $$ClockEntriesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2890,9 +2889,9 @@ class $$ClockLocationsTableFilterComposer
   );
 }
 
-class $$ClockLocationsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ClockLocationsTable> {
-  $$ClockLocationsTableOrderingComposer({
+class $$ClockEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClockEntriesTable> {
+  $$ClockEntriesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2930,9 +2929,9 @@ class $$ClockLocationsTableOrderingComposer
   );
 }
 
-class $$ClockLocationsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ClockLocationsTable> {
-  $$ClockLocationsTableAnnotationComposer({
+class $$ClockEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClockEntriesTable> {
+  $$ClockEntriesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2968,41 +2967,35 @@ class $$ClockLocationsTableAnnotationComposer
   );
 }
 
-class $$ClockLocationsTableTableManager
+class $$ClockEntriesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ClockLocationsTable,
-          ClockLocationRow,
-          $$ClockLocationsTableFilterComposer,
-          $$ClockLocationsTableOrderingComposer,
-          $$ClockLocationsTableAnnotationComposer,
-          $$ClockLocationsTableCreateCompanionBuilder,
-          $$ClockLocationsTableUpdateCompanionBuilder,
+          $ClockEntriesTable,
+          ClockEntryRow,
+          $$ClockEntriesTableFilterComposer,
+          $$ClockEntriesTableOrderingComposer,
+          $$ClockEntriesTableAnnotationComposer,
+          $$ClockEntriesTableCreateCompanionBuilder,
+          $$ClockEntriesTableUpdateCompanionBuilder,
           (
-            ClockLocationRow,
-            BaseReferences<
-              _$AppDatabase,
-              $ClockLocationsTable,
-              ClockLocationRow
-            >,
+            ClockEntryRow,
+            BaseReferences<_$AppDatabase, $ClockEntriesTable, ClockEntryRow>,
           ),
-          ClockLocationRow,
+          ClockEntryRow,
           PrefetchHooks Function()
         > {
-  $$ClockLocationsTableTableManager(
-    _$AppDatabase db,
-    $ClockLocationsTable table,
-  ) : super(
+  $$ClockEntriesTableTableManager(_$AppDatabase db, $ClockEntriesTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ClockLocationsTableFilterComposer($db: db, $table: table),
+              $$ClockEntriesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ClockLocationsTableOrderingComposer($db: db, $table: table),
+              $$ClockEntriesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ClockLocationsTableAnnotationComposer($db: db, $table: table),
+              $$ClockEntriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
@@ -3012,7 +3005,7 @@ class $$ClockLocationsTableTableManager
                 Value<int> displayOrder = const Value.absent(),
                 Value<int> createdAtUtcMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ClockLocationsCompanion(
+              }) => ClockEntriesCompanion(
                 id: id,
                 displayName: displayName,
                 timezoneId: timezoneId,
@@ -3030,7 +3023,7 @@ class $$ClockLocationsTableTableManager
                 required int displayOrder,
                 required int createdAtUtcMs,
                 Value<int> rowid = const Value.absent(),
-              }) => ClockLocationsCompanion.insert(
+              }) => ClockEntriesCompanion.insert(
                 id: id,
                 displayName: displayName,
                 timezoneId: timezoneId,
@@ -3047,21 +3040,21 @@ class $$ClockLocationsTableTableManager
       );
 }
 
-typedef $$ClockLocationsTableProcessedTableManager =
+typedef $$ClockEntriesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ClockLocationsTable,
-      ClockLocationRow,
-      $$ClockLocationsTableFilterComposer,
-      $$ClockLocationsTableOrderingComposer,
-      $$ClockLocationsTableAnnotationComposer,
-      $$ClockLocationsTableCreateCompanionBuilder,
-      $$ClockLocationsTableUpdateCompanionBuilder,
+      $ClockEntriesTable,
+      ClockEntryRow,
+      $$ClockEntriesTableFilterComposer,
+      $$ClockEntriesTableOrderingComposer,
+      $$ClockEntriesTableAnnotationComposer,
+      $$ClockEntriesTableCreateCompanionBuilder,
+      $$ClockEntriesTableUpdateCompanionBuilder,
       (
-        ClockLocationRow,
-        BaseReferences<_$AppDatabase, $ClockLocationsTable, ClockLocationRow>,
+        ClockEntryRow,
+        BaseReferences<_$AppDatabase, $ClockEntriesTable, ClockEntryRow>,
       ),
-      ClockLocationRow,
+      ClockEntryRow,
       PrefetchHooks Function()
     >;
 
@@ -3074,6 +3067,6 @@ class $AppDatabaseManager {
       $$PresetsTableTableManager(_db, _db.presets);
   $$AlarmsTableTableManager get alarms =>
       $$AlarmsTableTableManager(_db, _db.alarms);
-  $$ClockLocationsTableTableManager get clockLocations =>
-      $$ClockLocationsTableTableManager(_db, _db.clockLocations);
+  $$ClockEntriesTableTableManager get clockEntries =>
+      $$ClockEntriesTableTableManager(_db, _db.clockEntries);
 }

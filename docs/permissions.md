@@ -185,13 +185,13 @@ false:
 
 世界時計の「初回起動時の現在地検出」のみで使用。市区町村レベルの精度で十分なため
 `ACCESS_FINE_LOCATION` ではなく COARSE のみ。許可後は緯度経度 → 国コード逆引き
-→ 代表 TZ マップで IANA TZ ID を解決し、`ClockLocation(isCurrentLocation: true)`
+→ 代表 TZ マップで IANA TZ ID を解決し、`ClockEntry(isCurrentLocation: true)`
 として 1 件登録する。**継続的な位置追跡は行わない**（旅行先での自動更新は将来 Phase）。
 
 #### フロー
 
 ```
-[初回時計画面を開く] (ClockCollection が空)
+[初回時計画面を開く] (ClockEntryCollection が空)
    ↓
 permission_handler で locationWhenInUse 状態確認
    ↓
@@ -202,7 +202,7 @@ status == granted ?
    │           ↓
    │        国コード + administrative_area_1 → 代表 TZ マップで解決
    │           ↓
-   │        ClockLocation(isCurrentLocation: true) を Drift に保存
+   │        ClockEntry(isCurrentLocation: true) を Drift に保存
    │
    └─ No → 説明ダイアログ表示
               ↓
@@ -220,15 +220,15 @@ status == granted ?
 
 GPS 拒否 / オフライン / 逆ジオコーディング失敗のいずれかでも、
 `FlutterTimezone.getLocalTimezone()` で端末タイムゾーンを取得し、
-`ClockLocation(isCurrentLocation: true, timezoneId: <端末 TZ>)` として登録する。
+`ClockEntry(isCurrentLocation: true, timezoneId: <端末 TZ>)` として登録する。
 ユーザーが端末で「Asia/Tokyo」を設定しているなら、それが「現在地」時計になる。
 位置情報権限がなくても時計機能は完全に動作する（劣化体験ゼロに近い）。
 
 #### 「後で」を選んだ場合
 
 - 同じセッション内では再要求しない
-- 次回時計画面を開いたとき、ClockCollection が依然空ならもう一度ダイアログ
-- ClockCollection に手動追加されたエントリが既にある場合は再要求しない（ユーザーが
+- 次回時計画面を開いたとき、ClockEntryCollection が依然空ならもう一度ダイアログ
+- ClockEntryCollection に手動追加されたエントリが既にある場合は再要求しない（ユーザーが
   手動運用に切り替えた意思表示として扱う）
 
 ---

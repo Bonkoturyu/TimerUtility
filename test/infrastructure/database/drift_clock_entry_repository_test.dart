@@ -1,23 +1,23 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
 import 'package:timer_utility/infrastructure/database/app_database.dart';
-import 'package:timer_utility/infrastructure/database/drift_clock_location_repository.dart';
+import 'package:timer_utility/infrastructure/database/drift_clock_entry_repository.dart';
 
 void main() {
   late AppDatabase db;
-  late DriftClockLocationRepository repo;
+  late DriftClockEntryRepository repo;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    repo = DriftClockLocationRepository(db);
+    repo = DriftClockEntryRepository(db);
   });
 
   tearDown(() async {
     await db.close();
   });
 
-  ClockLocation entity({
+  ClockEntry entity({
     String id = 'c1',
     String displayName = 'Tokyo',
     String timezoneId = 'Asia/Tokyo',
@@ -25,7 +25,7 @@ void main() {
     int displayOrder = 0,
     DateTime? createdAt,
   }) {
-    return ClockLocation(
+    return ClockEntry(
       id: id,
       displayName: displayName,
       timezoneId: timezoneId,
@@ -40,26 +40,22 @@ void main() {
   });
 
   test('upsert + findAll: 1 件挿入できる', () async {
-    final ClockLocation input = entity();
+    final ClockEntry input = entity();
     await repo.upsert(input);
-    final List<ClockLocation> all = await repo.findAll();
-    expect(all, <ClockLocation>[input]);
+    final List<ClockEntry> all = await repo.findAll();
+    expect(all, <ClockEntry>[input]);
   });
 
   test('findAll: displayOrder 昇順で返る (挿入順と無関係)', () async {
     // 意図的に挿入順を逆にして、order by が効くことを検証する。
-    final ClockLocation a = entity(id: 'a', displayOrder: 2);
-    final ClockLocation b = entity(id: 'b', displayOrder: 0);
-    final ClockLocation c = entity(id: 'c', displayOrder: 1);
+    final ClockEntry a = entity(id: 'a', displayOrder: 2);
+    final ClockEntry b = entity(id: 'b', displayOrder: 0);
+    final ClockEntry c = entity(id: 'c', displayOrder: 1);
     await repo.upsert(a);
     await repo.upsert(b);
     await repo.upsert(c);
-    final List<ClockLocation> all = await repo.findAll();
-    expect(all.map((ClockLocation e) => e.id).toList(), <String>[
-      'b',
-      'c',
-      'a',
-    ]);
+    final List<ClockEntry> all = await repo.findAll();
+    expect(all.map((ClockEntry e) => e.id).toList(), <String>['b', 'c', 'a']);
   });
 
   test('findById: 存在しない id は null', () async {
@@ -67,7 +63,7 @@ void main() {
   });
 
   test('findById: 既存 id を返す', () async {
-    final ClockLocation input = entity(id: 'target');
+    final ClockEntry input = entity(id: 'target');
     await repo.upsert(input);
     expect(await repo.findById('target'), input);
   });
@@ -75,9 +71,9 @@ void main() {
   test('upsert は同 id で上書き (update セマンティクス)', () async {
     await repo.upsert(entity(id: 'c1', displayName: 'before'));
     await repo.upsert(entity(id: 'c1', displayName: 'after'));
-    final ClockLocation? fetched = await repo.findById('c1');
+    final ClockEntry? fetched = await repo.findById('c1');
     expect(fetched?.displayName, 'after');
-    final List<ClockLocation> all = await repo.findAll();
+    final List<ClockEntry> all = await repo.findAll();
     expect(all.length, 1);
   });
 
@@ -94,9 +90,9 @@ void main() {
   });
 
   test('isCurrentLocation=true が永続化を経て復元される', () async {
-    final ClockLocation input = entity(id: 'home', isCurrentLocation: true);
+    final ClockEntry input = entity(id: 'home', isCurrentLocation: true);
     await repo.upsert(input);
-    final ClockLocation? restored = await repo.findById('home');
+    final ClockEntry? restored = await repo.findById('home');
     expect(restored, isNotNull);
     expect(restored!.isCurrentLocation, isTrue);
   });
@@ -107,7 +103,7 @@ void main() {
       await repo.upsert(entity(id: 'old2', displayOrder: 1));
       expect((await repo.findAll()).length, 2);
 
-      final List<ClockLocation> replacement = <ClockLocation>[
+      final List<ClockEntry> replacement = <ClockEntry>[
         entity(
           id: 'r1',
           displayName: 'NY',
@@ -122,32 +118,28 @@ void main() {
         ),
       ];
       await repo.replaceAll(replacement);
-      final List<ClockLocation> after = await repo.findAll();
-      expect(after.map((ClockLocation e) => e.id).toList(), <String>[
-        'r1',
-        'r2',
-      ]);
+      final List<ClockEntry> after = await repo.findAll();
+      expect(after.map((ClockEntry e) => e.id).toList(), <String>['r1', 'r2']);
     });
 
     test('空 list で全消し', () async {
       await repo.upsert(entity(id: 'a'));
       await repo.upsert(entity(id: 'b'));
-      await repo.replaceAll(<ClockLocation>[]);
+      await repo.replaceAll(<ClockEntry>[]);
       expect(await repo.findAll(), isEmpty);
     });
   });
 
   test(
-    'onCreate (fresh install, schemaVersion=4) で clock_locations テーブルが作成される',
+    'onCreate (fresh install, schemaVersion=5) で clock_entries テーブルが作成される',
     () async {
       // 本テストは fresh install 経路 (Migrator.createAll) のスモーク。
       // テーブルへの insert/select が例外なく成立すれば onCreate は
       // スキーマを通せている。
-      // v3 → v4 の onUpgrade 経路は SchemaPerVersion test (drift verify
-      // ヘルパ) が必要となるため導入見送り (既存の v1→v2 / v2→v3
-      // upgrade テストも未導入で一貫)。
+      // v4 → v5 の onUpgrade 経路 (clock_locations → clock_entries リネーム)
+      // は専用テスト migration_v4_to_v5_test.dart でカバー。
       await repo.upsert(entity(id: 'smoke'));
-      final ClockLocation? row = await repo.findById('smoke');
+      final ClockEntry? row = await repo.findById('smoke');
       expect(row, isNotNull);
     },
   );

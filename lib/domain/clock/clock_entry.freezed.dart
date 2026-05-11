@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'clock_location.dart';
+part of 'clock_entry.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -16,7 +16,7 @@ final _privateConstructorUsedError = UnsupportedError(
 );
 
 /// @nodoc
-mixin _$ClockLocation {
+mixin _$ClockEntry {
   String get id => throw _privateConstructorUsedError;
   String get displayName => throw _privateConstructorUsedError;
   String get timezoneId => throw _privateConstructorUsedError;
@@ -24,19 +24,19 @@ mixin _$ClockLocation {
   int get displayOrder => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
 
-  /// Create a copy of ClockLocation
+  /// Create a copy of ClockEntry
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $ClockLocationCopyWith<ClockLocation> get copyWith =>
+  $ClockEntryCopyWith<ClockEntry> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $ClockLocationCopyWith<$Res> {
-  factory $ClockLocationCopyWith(
-    ClockLocation value,
-    $Res Function(ClockLocation) then,
-  ) = _$ClockLocationCopyWithImpl<$Res, ClockLocation>;
+abstract class $ClockEntryCopyWith<$Res> {
+  factory $ClockEntryCopyWith(
+    ClockEntry value,
+    $Res Function(ClockEntry) then,
+  ) = _$ClockEntryCopyWithImpl<$Res, ClockEntry>;
   @useResult
   $Res call({
     String id,
@@ -49,16 +49,16 @@ abstract class $ClockLocationCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ClockLocationCopyWithImpl<$Res, $Val extends ClockLocation>
-    implements $ClockLocationCopyWith<$Res> {
-  _$ClockLocationCopyWithImpl(this._value, this._then);
+class _$ClockEntryCopyWithImpl<$Res, $Val extends ClockEntry>
+    implements $ClockEntryCopyWith<$Res> {
+  _$ClockEntryCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ClockLocation
+  /// Create a copy of ClockEntry
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -103,12 +103,12 @@ class _$ClockLocationCopyWithImpl<$Res, $Val extends ClockLocation>
 }
 
 /// @nodoc
-abstract class _$$ClockLocationImplCopyWith<$Res>
-    implements $ClockLocationCopyWith<$Res> {
-  factory _$$ClockLocationImplCopyWith(
-    _$ClockLocationImpl value,
-    $Res Function(_$ClockLocationImpl) then,
-  ) = __$$ClockLocationImplCopyWithImpl<$Res>;
+abstract class _$$ClockEntryImplCopyWith<$Res>
+    implements $ClockEntryCopyWith<$Res> {
+  factory _$$ClockEntryImplCopyWith(
+    _$ClockEntryImpl value,
+    $Res Function(_$ClockEntryImpl) then,
+  ) = __$$ClockEntryImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({
@@ -122,15 +122,15 @@ abstract class _$$ClockLocationImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$ClockLocationImplCopyWithImpl<$Res>
-    extends _$ClockLocationCopyWithImpl<$Res, _$ClockLocationImpl>
-    implements _$$ClockLocationImplCopyWith<$Res> {
-  __$$ClockLocationImplCopyWithImpl(
-    _$ClockLocationImpl _value,
-    $Res Function(_$ClockLocationImpl) _then,
+class __$$ClockEntryImplCopyWithImpl<$Res>
+    extends _$ClockEntryCopyWithImpl<$Res, _$ClockEntryImpl>
+    implements _$$ClockEntryImplCopyWith<$Res> {
+  __$$ClockEntryImplCopyWithImpl(
+    _$ClockEntryImpl _value,
+    $Res Function(_$ClockEntryImpl) _then,
   ) : super(_value, _then);
 
-  /// Create a copy of ClockLocation
+  /// Create a copy of ClockEntry
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -143,7 +143,7 @@ class __$$ClockLocationImplCopyWithImpl<$Res>
     Object? createdAt = null,
   }) {
     return _then(
-      _$ClockLocationImpl(
+      _$ClockEntryImpl(
         id: null == id
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
@@ -175,8 +175,8 @@ class __$$ClockLocationImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$ClockLocationImpl implements _ClockLocation {
-  const _$ClockLocationImpl({
+class _$ClockEntryImpl implements _ClockEntry {
+  const _$ClockEntryImpl({
     required this.id,
     required this.displayName,
     required this.timezoneId,
@@ -200,14 +200,14 @@ class _$ClockLocationImpl implements _ClockLocation {
 
   @override
   String toString() {
-    return 'ClockLocation(id: $id, displayName: $displayName, timezoneId: $timezoneId, isCurrentLocation: $isCurrentLocation, displayOrder: $displayOrder, createdAt: $createdAt)';
+    return 'ClockEntry(id: $id, displayName: $displayName, timezoneId: $timezoneId, isCurrentLocation: $isCurrentLocation, displayOrder: $displayOrder, createdAt: $createdAt)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ClockLocationImpl &&
+            other is _$ClockEntryImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
@@ -232,24 +232,24 @@ class _$ClockLocationImpl implements _ClockLocation {
     createdAt,
   );
 
-  /// Create a copy of ClockLocation
+  /// Create a copy of ClockEntry
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ClockLocationImplCopyWith<_$ClockLocationImpl> get copyWith =>
-      __$$ClockLocationImplCopyWithImpl<_$ClockLocationImpl>(this, _$identity);
+  _$$ClockEntryImplCopyWith<_$ClockEntryImpl> get copyWith =>
+      __$$ClockEntryImplCopyWithImpl<_$ClockEntryImpl>(this, _$identity);
 }
 
-abstract class _ClockLocation implements ClockLocation {
-  const factory _ClockLocation({
+abstract class _ClockEntry implements ClockEntry {
+  const factory _ClockEntry({
     required final String id,
     required final String displayName,
     required final String timezoneId,
     required final bool isCurrentLocation,
     required final int displayOrder,
     required final DateTime createdAt,
-  }) = _$ClockLocationImpl;
+  }) = _$ClockEntryImpl;
 
   @override
   String get id;
@@ -264,10 +264,10 @@ abstract class _ClockLocation implements ClockLocation {
   @override
   DateTime get createdAt;
 
-  /// Create a copy of ClockLocation
+  /// Create a copy of ClockEntry
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ClockLocationImplCopyWith<_$ClockLocationImpl> get copyWith =>
+  _$$ClockEntryImplCopyWith<_$ClockEntryImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
