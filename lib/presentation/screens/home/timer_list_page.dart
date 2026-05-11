@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/home_active_page_index_provider.dart';
 import '../../../application/permission_notifier.dart';
 import '../../../application/timer_collection_notifier.dart';
 import '../../../application/timer_service_provider.dart';
@@ -45,6 +46,12 @@ String _localizedStatus(AppLocalizations l, TimerStatus status) {
 /// Screen wrapper and the new HomeScreen can share the same logic.
 class TimerListPage extends ConsumerStatefulWidget {
   const TimerListPage({super.key});
+
+  /// Logical HomeScreen tab index this Page occupies. Used by
+  /// `homeActivePageIndexProvider`-driven ticker gating (PR #29
+  /// follow-up #4) so the 200ms `Timer.periodic` pauses while the
+  /// user is looking at another tab.
+  static const int homeTabIndex = 1;
 
   /// FAB shared between the deep-link `TimerListScreen` wrapper and the
   /// HomeScreen's dynamic FAB slot. PR #29 follow-up #3: icon-only to
@@ -166,8 +173,14 @@ class _TimerListPageState extends ConsumerState<TimerListPage>
     }
   }
 
-  void _ensureTickerForState(TimerCollection collection) {
-    final bool shouldRun = collection.runningCount > 0;
+  void _ensureTickerForState(TimerCollection collection, bool isVisible) {
+    // PR #29 follow-up #4 (Copilot C3): gate the running-timer ticker
+    // by visibility so a Timer kept alive across HomeScreen tab swipes
+    // (via `AutomaticKeepAliveClientMixin`) does not burn CPU
+    // repainting elapsed-time rows the user can't see. The
+    // `endAt`-based elapsed calculation stays accurate during the
+    // pause and catches up as soon as `isVisible` flips back to true.
+    final bool shouldRun = collection.runningCount > 0 && isVisible;
     if (shouldRun && _ticker == null) {
       _ticker = Timer.periodic(const Duration(milliseconds: 200), (_) {
         if (mounted) setState(() {});
@@ -192,7 +205,13 @@ class _TimerListPageState extends ConsumerState<TimerListPage>
     final TimerCollection collection = ref.watch(
       timerCollectionNotifierProvider,
     );
-    _ensureTickerForState(collection);
+    // PR #29 follow-up #4: `null` = deep-link Screen mount (HomeScreen
+    // absent → only Page on screen, run ticker); 0..3 = HomeScreen
+    // hosted, compare to this Page's tab index.
+    final int? active = ref.watch(homeActivePageIndexProvider);
+    final bool isVisible =
+        active == null || active == TimerListPage.homeTabIndex;
+    _ensureTickerForState(collection, isVisible);
 
     // Phase 11 follow-up (PR #29 G1): the ringing→/alarm-ringing push
     // used to live here, but `TimerListPage` is dispose()d whenever the

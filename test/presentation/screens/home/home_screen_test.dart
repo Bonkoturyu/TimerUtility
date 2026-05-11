@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/clock_location_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/home_active_page_index_provider.dart';
 import 'package:timer_utility/application/location_detector_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
@@ -701,6 +702,46 @@ void main() {
       } finally {
         handle.dispose();
       }
+    });
+
+    testWidgets('(p) HomeScreen が active page index を provider に流す', (
+      WidgetTester tester,
+    ) async {
+      // PR #29 follow-up #4 (Copilot C3/C4): TimerListPage /
+      // StopwatchPage は `homeActivePageIndexProvider` を ref.watch
+      // して、自タブが非表示の間 `Timer.periodic` を pause する。
+      // 本テストは HomeScreen 側の更新責務 (initState postFrame /
+      // onPageChanged / dispose) が正しく provider を駆動することを
+      // 検証する。
+      await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
+      await _settleRestore(tester);
+
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(find.byType(HomeScreen)),
+      );
+
+      // 初期値は initialPageIndex (= defaultPageIndex = 1)。
+      expect(container.read(homeActivePageIndexProvider), 1);
+
+      // Alarm にスワイプ → 2。
+      await tester.fling(
+        find.byKey(const Key('home_page_view')),
+        const Offset(-400, 0),
+        1000,
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(homeActivePageIndexProvider), 2);
+
+      // 末端越え wrap で Stopwatch (index 0) まで進める。
+      for (int i = 0; i < 2; i++) {
+        await tester.fling(
+          find.byKey(const Key('home_page_view')),
+          const Offset(-400, 0),
+          1000,
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(container.read(homeActivePageIndexProvider), 0);
     });
 
     testWidgets('(o) Clock タブの FAB タップで /clock/locations に push される', (

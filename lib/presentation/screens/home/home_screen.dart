@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/home_active_page_index_provider.dart';
 import '../../../application/timer_collection_notifier.dart';
 import '../../../application/user_preferences_provider.dart';
 import '../../../domain/ports/user_preferences.dart';
@@ -109,20 +110,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     _rawPage = HomeScreen._initialRawPage + logical;
     _controller = PageController(initialPage: _rawPage);
+
+    // PR #29 follow-up #4: publish the active tab to the global
+    // [homeActivePageIndexProvider] so HomeScreen-hosted Pages
+    // (TimerListPage / StopwatchPage) can gate their `Timer.periodic`
+    // tickers. Deferred to a post-frame callback so the ProviderScope
+    // is fully constructed before we mutate the StateProvider; the UI
+    // is unaffected because each Page treats `null` as "I'm visible"
+    // until the very next frame flips the value.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(homeActivePageIndexProvider.notifier).state = logical;
+    });
   }
 
   void _onPageChanged(int rawIndex) {
     setState(() => _rawPage = rawIndex);
+    final int logical = rawIndex % HomeScreen.pageCount;
     // Fire-and-forget persistence. Save the **logical** index so we
     // don't carry the raw offset across launches. shared_preferences
     // debounces internally and a missed write is self-correcting on
     // the next swipe / app exit.
     ref
         .read(userPreferencesProvider)
-        .setInt(
-          UserPreferenceKeys.lastHomePageIndex,
-          rawIndex % HomeScreen.pageCount,
-        );
+        .setInt(UserPreferenceKeys.lastHomePageIndex, logical);
+    // PR #29 follow-up #4: keep the visibility provider in sync so the
+    // newly-shown tab's Page rebuilds with `isVisible == true` and the
+    // tab being swiped away from rebuilds with `isVisible == false`.
+    ref.read(homeActivePageIndexProvider.notifier).state = logical;
   }
 
   /// Animate by ±1 raw page. Wrap-around is automatic because the
@@ -137,6 +152,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    // PR #29 follow-up #4: we deliberately do NOT reset
+    // `homeActivePageIndexProvider` here. The provider is marked
+    // `autoDispose`, so it tears down to its initial `null` value as
+    // soon as our child Pages stop watching it (i.e. when this whole
+    // HomeScreen subtree is unmounted). Trying to write `null` from
+    // dispose throws "Cannot use ref after the widget was disposed";
+    // moving the write to `deactivate` instead throws "setState()
+    // during build" because the children are still watching when this
+    // State leaves the tree.
     _controller.dispose();
     super.dispose();
   }
