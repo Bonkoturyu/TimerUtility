@@ -16,6 +16,7 @@ import 'package:timer_utility/domain/clock/clock_time.dart';
 import 'package:timer_utility/domain/ports/clock_location_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
+import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 import 'package:timer_utility/presentation/screens/clock_screen.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_a.dart';
 import 'package:timer_utility/presentation/widgets/clock_design_b.dart';
@@ -97,10 +98,10 @@ Widget _harness({
             const ClockScreen(),
       ),
       GoRoute(
-        path: '/clock/entries',
+        path: ClockEntryEditScreen.routeLocation,
         builder: (BuildContext context, GoRouterState state) => const Scaffold(
-          key: Key('clock_locations_stub'),
-          body: Center(child: Text('locations-stub')),
+          key: Key('clock_entries_stub'),
+          body: Center(child: Text('entries-stub')),
         ),
       ),
     ],
@@ -224,8 +225,8 @@ void main() {
       await tester.tap(find.byKey(const Key('clock_list_add_fab')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);
-      expect(find.text('locations-stub'), findsOneWidget);
+      expect(find.byKey(const Key('clock_entries_stub')), findsOneWidget);
+      expect(find.text('entries-stub'), findsOneWidget);
     });
 
     testWidgets('時刻 stream の値が選択中の Design 配下のデジタル時計に伝搬する (smoke)', (

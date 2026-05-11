@@ -32,6 +32,7 @@ import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
+import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 import 'package:timer_utility/presentation/screens/home/alarm_list_page.dart';
 import 'package:timer_utility/presentation/screens/home/clock_page.dart';
 import 'package:timer_utility/presentation/screens/home/home_screen.dart';
@@ -230,10 +231,10 @@ Widget _harness({
         ),
       ),
       GoRoute(
-        path: '/clock/entries',
+        path: ClockEntryEditScreen.routeLocation,
         builder: (_, _) => const Scaffold(
-          key: Key('clock_locations_stub'),
-          body: Center(child: Text('locations-stub')),
+          key: Key('clock_entries_stub'),
+          body: Center(child: Text('entries-stub')),
         ),
       ),
       GoRoute(
@@ -759,8 +760,8 @@ void main() {
       await tester.tap(find.byKey(const Key('clock_list_add_fab')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('clock_locations_stub')), findsOneWidget);
-      expect(find.text('locations-stub'), findsOneWidget);
+      expect(find.byKey(const Key('clock_entries_stub')), findsOneWidget);
+      expect(find.text('entries-stub'), findsOneWidget);
     });
   });
 }
