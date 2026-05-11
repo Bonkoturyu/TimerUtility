@@ -1344,4 +1344,23 @@ audioplayers のループ再生が重なって聞こえる問題を修正。
 
 ---
 
-最終更新日: 2026-05-04（Phase 9.5 実機検証完了、Pixel 6a / Android 16 で 4 シナリオ確認済、F-1 = PR #12 / F-3 = PR #11 / F-4 = PR #13 で fix 反映済）
+## Phase 11: ClockLocationPicker リネーム (2026-05-11 完了)
+
+PR #29 follow-up として内部識別子を表示文言に揃えるリファクタリング。
+スコープは UI 動作・表示文言は変更せず、識別子のみリネーム。
+
+- ARB キー: `clockLocationPicker*` → `clockEntryEdit*` (5 件)、
+  未参照になった `clockMenuEditLocations` を削除
+- クラス: `ClockLocationPickerScreen` → `ClockEntryEditScreen`
+- ルート: `/clock/locations` → `/clock/entries`
+- ファイル: `clock_location_picker_screen.dart` → `clock_entry_edit_screen.dart`
+  (test も同様)
+- Widget Key prefix: `clock_picker_*` → `clock_entry_edit_*`
+- `clock_page.dart` の FAB push をリテラル直書きから
+  `ClockEntryEditScreen.routeLocation` 定数参照に統一
+
+Phase 10.5 履歴コメント中の `/clock/locations` 言及は履歴なので意図的に残す。
+
+---
+
+最終更新日: 2026-05-11（Phase 11 ClockLocationPicker リネーム完了）

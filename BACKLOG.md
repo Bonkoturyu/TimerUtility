@@ -599,7 +599,7 @@ AndroidManifest 編集はユーザー確認必須。
       に縮退して同じ Page widget を共有する (`docs/architecture.md` Presentation Layer 節参照)。
       旧 4 ボタン縦並び UI は完全削除。実機検証は Phase 11 仕上げの一環として Pixel 6a / Android 16
       で 6 シナリオを別途実施 (実機検証着手前にユーザ確認)。
-- [ ] ClockLocationPicker 周辺の内部識別子リネーム（2026-05-11 起票、PR #29 で
+- [x] ClockLocationPicker 周辺の内部識別子リネーム（2026-05-11 起票、2026-05-11 完了。PR #29 で
       表示文言は「時計を追加・編集」/「Add or edit clocks」に更新済）。
       クラス名 `ClockLocationPickerScreen` / ルート `/clock/locations` /
       ARB キー名 `clockLocationPickerAppBarTitle` / `clockMenuEditLocations` /
@@ -609,6 +609,25 @@ AndroidManifest 編集はユーザー確認必須。
       影響範囲 (テスト / docs / コメント) が広く UX 改善 PR とは別 PR に分離。
       未参照になった `clockMenuEditLocations` ARB エントリ削除もこのリネーム
       PR にまとめてクリーンアップする。
+- [ ] Clock ドメイン層の「Location」系識別子リネーム（2026-05-11 起票、PR #30
+      gemini-code-assist レビュー G1 より）。
+      Phase 11 の PR #30 で presentation 層 (Screen / route / ARB / Widget Key)
+      は `ClockEntryEdit*` 系に揃えたが、ドメイン層 (Aggregate /
+      Entity / VO / 例外) は `ClockLocation` /
+      `ClockCollection` / `MaxClockLocationCountExceededException` のまま残存している。
+      ドメイン層の命名は「世界時計の場所 = 都市/タイムゾーン」という
+      地理的抽象として valid な見方もあるため、即時リネームではなく
+      「詳細設計探検を含む件」として起票、最小でも BACKLOG 以下の判断を付与する:
+      - (案 A) 全面リネーム: `ClockLocation` → `ClockEntry`、
+        `ClockCollection` → `ClockEntryCollection`、例外名も同様。テスト +
+        Drift スキーマ、migration を含む
+      - (案 B) 中間位置: 「タイムゾーン = 地理抽象」と「エントリ =
+        UI 抽象」を分離 (ドメインは `ClockLocation` のまま、
+        エントリ抽象は Application 層に ClockEntryView を新規)
+      - (案 C) 現状維持: ドメインは タイムゾーン = 地理抽象として整合している
+        と見なし、リネームしない
+      Drift スキーマを含むリネームはデータ migration コストが出るため、
+      公開ビルド前に誤りを見つけて (Phase 8 GA 前) たい。
 - [x] ライセンス表示画面（2026-05-02、Phase 11 先行小タスクとして実装）
       `LicenseRegistry.addLicense` で `assets/sounds/LICENSES.md` を 1 行 1 段落
       の `LicenseEntry` として登録、`LicensesScreen` (2 セクション ExpansionTile：

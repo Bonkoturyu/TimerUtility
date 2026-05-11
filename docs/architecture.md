@@ -163,7 +163,7 @@ lib/
 │   │   ├── alarm_edit_screen.dart           # Phase 9.5 で実装済み（新規 / 編集両用、TimePicker + WeekdaySelector）
 │   │   ├── licenses_screen.dart             # Phase 11 ライセンス画面（先行実装）
 │   │   ├── clock_screen.dart                # Phase 11 で薄ラッパ化（/clock deep link、body は ClockPage に委譲）
-│   │   └── clock_location_picker_screen.dart # Phase 10.5 で実装済み（都市追加 / 並替 / 削除）
+│   │   └── clock_entry_edit_screen.dart      # Phase 10.5 実装、Phase 11 でリネーム（時計の追加 / 並替 / 削除）
 │   ├── widgets/
 │   │   ├── lap_list.dart
 │   │   ├── duration_picker.dart             # Phase 7 で実装済み（Phase 9 で wheel 部分を再利用可能化）

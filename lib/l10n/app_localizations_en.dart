@@ -468,9 +468,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockAppBarTitle => 'World Clock';
 
   @override
-  String get clockMenuEditLocations => 'Edit cities';
-
-  @override
   String get clockListAddFab => 'Add clock';
 
   @override
@@ -483,18 +480,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clockDesignSegmentCompact => 'Compact';
 
   @override
-  String get clockLocationPickerAppBarTitle => 'Add or edit clocks';
+  String get clockEntryEditAppBarTitle => 'Add or edit clocks';
 
   @override
-  String clockLocationPickerSectionPinned(int count, int max) {
+  String clockEntryEditSectionPinned(int count, int max) {
     return 'Pinned ($count/$max)';
   }
 
   @override
-  String get clockLocationPickerSectionAvailable => 'Available cities';
+  String get clockEntryEditSectionAvailable => 'Available cities';
 
   @override
-  String clockLocationPickerLimitReached(int count) {
+  String clockEntryEditLimitReached(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -505,7 +502,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get clockLocationPickerCatalogEmpty =>
+  String get clockEntryEditCatalogEmpty =>
       'All available cities are already pinned';
 
   @override
