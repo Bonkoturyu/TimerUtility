@@ -37,7 +37,12 @@ class AlarmListPage extends ConsumerStatefulWidget {
 }
 
 class _AlarmListPageState extends ConsumerState<AlarmListPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  // PR #29 G2: keep alarm-card scroll position alive across HomeScreen
+  // tab swipes.
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +67,7 @@ class _AlarmListPageState extends ConsumerState<AlarmListPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin contract.
     final AppLocalizations l = AppLocalizations.of(context);
     final List<AlarmEntity> alarms = ref.watch(alarmCollectionNotifierProvider);
     final List<AlarmEntity> sorted = List<AlarmEntity>.from(alarms)

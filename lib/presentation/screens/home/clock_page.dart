@@ -26,11 +26,19 @@ class ClockPage extends ConsumerStatefulWidget {
   ConsumerState<ClockPage> createState() => _ClockPageState();
 }
 
-class _ClockPageState extends ConsumerState<ClockPage> {
+class _ClockPageState extends ConsumerState<ClockPage>
+    with AutomaticKeepAliveClientMixin {
   int _selectedIndex = 0;
+
+  // PR #29 G2: keep the selected design segment (analog / digital /
+  // compact) alive across HomeScreen tab swipes — without this the
+  // SegmentedButton resets to Analog every time the user comes back.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin contract.
     final AppLocalizations l = AppLocalizations.of(context);
     final AsyncValue<DateTime> nowAsync = ref.watch(currentTimeProvider);
     final List<ClockLocation> locations = ref

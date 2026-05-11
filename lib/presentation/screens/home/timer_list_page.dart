@@ -132,8 +132,13 @@ class TimerListPage extends ConsumerStatefulWidget {
 }
 
 class _TimerListPageState extends ConsumerState<TimerListPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   Timer? _ticker;
+
+  // PR #29 G2: keep timer-card scroll position and the running ticker
+  // alive across HomeScreen tab swipes.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -173,6 +178,7 @@ class _TimerListPageState extends ConsumerState<TimerListPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin contract.
     final TimerCollection collection = ref.watch(
       timerCollectionNotifierProvider,
     );

@@ -21,10 +21,17 @@ class StopwatchPage extends ConsumerStatefulWidget {
   ConsumerState<StopwatchPage> createState() => _StopwatchPageState();
 }
 
-class _StopwatchPageState extends ConsumerState<StopwatchPage> {
+class _StopwatchPageState extends ConsumerState<StopwatchPage>
+    with AutomaticKeepAliveClientMixin {
   static const DurationFormatter _formatter = DurationFormatter();
 
   Timer? _ticker;
+
+  // PR #29 G2: keep the running stopwatch state alive even when the
+  // user swipes to another HomeScreen tab — without this the page is
+  // dispose()d on tab change and the elapsed-time readout resets.
+  @override
+  bool get wantKeepAlive => true;
 
   void _ensureTickerForState(StopwatchState state) {
     final shouldRun = state is StopwatchRunning;
@@ -47,6 +54,7 @@ class _StopwatchPageState extends ConsumerState<StopwatchPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin contract.
     final state = ref.watch(stopwatchNotifierProvider);
     _ensureTickerForState(state);
 
