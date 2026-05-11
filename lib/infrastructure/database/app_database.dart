@@ -52,7 +52,8 @@ class Presets extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
-/// Drift テーブル定義: 世界時計のピン留め拠点 (Phase 10.5)。
+/// Drift テーブル定義: 世界時計のピン留めエントリ (Phase 10.5、
+/// Phase 11 で `clock_locations` → `clock_entries` にリネーム)。
 ///
 /// 永続化方針:
 ///   - `id`: UUID v4 文字列 (Application 層で採番)。PK。
@@ -61,16 +62,17 @@ class Presets extends Table {
 ///   - `timezoneId`: IANA Time Zone Database 識別子
 ///     (例: 'Asia/Tokyo')。妥当性は `TimezoneResolver` が render 時に
 ///     検証するため、DB 層では生文字列のまま保存。
-///   - `isCurrentLocation`: 「現在地」フラグ。集約 (`ClockCollection`)
-///     で「true は最大 1 件」を保証する。BoolColumn (SQLite では
-///     INTEGER 0/1)。
+///   - `isCurrentLocation`: 「現在地」フラグ (GPS 由来の概念として
+///     valid なため Phase 11 リネームでも据置)。集約
+///     (`ClockEntryCollection`) で「true は最大 1 件」を保証する。
+///     BoolColumn (SQLite では INTEGER 0/1)。
 ///   - `displayOrder`: 0..5 の表示順。ASC で findAll される前提
 ///     (port doc に明記)。
 ///   - `createdAtUtcMs`: epoch-ms UTC (Timer/Preset/Alarm と同じ規約)。
 ///
 /// seed なし — 起動時に Notifier が現在地を 1 件追加する設計。
-@DataClassName('ClockLocationRow')
-class ClockLocations extends Table {
+@DataClassName('ClockEntryRow')
+class ClockEntries extends Table {
   TextColumn get id => text()();
   TextColumn get displayName => text()();
   TextColumn get timezoneId => text()();
@@ -116,12 +118,14 @@ class Alarms extends Table {
 /// a default-profile seed in `onCreate` / `onUpgrade`. Phase 9.5 adds
 /// the `alarms` table (schemaVersion bump 2 → 3). Phase 10.5 adds the
 /// `clock_locations` table (schemaVersion bump 3 → 4) — seed なしで、
-/// 起動時に Notifier が現在地を 1 件追加する設計。
+/// 起動時に Notifier が現在地を 1 件追加する設計。Phase 11 で
+/// `clock_locations` → `clock_entries` にリネーム (schemaVersion bump
+/// 4 → 5、INSERT…SELECT migration)。
 ///
 /// Use [AppDatabase.forTesting] to spin up an in-memory SQLite instance
 /// without touching disk. `clock` and `idGenerator` are injectable so
 /// migration / seed paths stay deterministic in unit tests.
-@DriftDatabase(tables: <Type>[Timers, Presets, Alarms, ClockLocations])
+@DriftDatabase(tables: <Type>[Timers, Presets, Alarms, ClockEntries])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({Clock? clock, String Function()? idGenerator})
     : _clock = clock ?? const Clock(),
@@ -139,7 +143,7 @@ class AppDatabase extends _$AppDatabase {
   final String Function() _idGenerator;
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -163,10 +167,27 @@ class AppDatabase extends _$AppDatabase {
         // (seed なし) — ユーザが UI から作成する設計。
         await m.createTable(alarms);
       }
-      if (from < 4) {
-        // Phase 9.5 → Phase 10.5: clock_locations テーブルを追加。
-        // seed なし — 起動時に Notifier が現在地を 1 件追加する。
-        await m.createTable(clockLocations);
+      if (from < 5) {
+        // Phase 11: 旧 Phase 10.5 で導入した `clock_locations` を
+        // `clock_entries` にリネーム。new-table + INSERT…SELECT + DROP
+        // 方式 (Drift Migrator が安定して扱える)。カラム名は据置
+        // (Dart 側フィールド名も isCurrentLocation を維持) なので
+        // 1:1 で SELECT * できる。
+        //
+        // - from < 4 (Phase 9.5 以前のユーザ): `clock_locations` は
+        //   存在しないので、新規 `clock_entries` を空作成するだけ。
+        // - from == 4 (Phase 10.5 ユーザ): 旧テーブルからコピーして DROP。
+        await m.createTable(clockEntries);
+        if (from == 4) {
+          await customStatement(
+            'INSERT INTO clock_entries '
+            '(id, display_name, timezone_id, is_current_location, '
+            'display_order, created_at_utc_ms) '
+            'SELECT id, display_name, timezone_id, is_current_location, '
+            'display_order, created_at_utc_ms FROM clock_locations',
+          );
+          await customStatement('DROP TABLE clock_locations');
+        }
       }
     },
   );

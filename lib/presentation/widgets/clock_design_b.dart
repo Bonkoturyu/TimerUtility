@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/timezone_resolver_provider.dart';
-import '../../domain/clock/clock_location.dart';
+import '../../domain/clock/clock_entry.dart';
 import '../../domain/clock/clock_time.dart';
 import '../../l10n/app_localizations.dart';
 import 'digital_clock_widget.dart';
@@ -15,14 +15,14 @@ import 'utc_offset_formatter.dart';
 /// Card/Decoration cost) — the row layout itself carries the visual
 /// hierarchy via font sizing.
 class ClockDesignB extends ConsumerWidget {
-  const ClockDesignB({super.key, required this.locations, required this.now});
+  const ClockDesignB({super.key, required this.entries, required this.now});
 
-  final List<ClockLocation> locations;
+  final List<ClockEntry> entries;
   final DateTime now;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (locations.isEmpty) {
+    if (entries.isEmpty) {
       final AppLocalizations l = AppLocalizations.of(context);
       return Center(
         child: Text(l.clockEmptyHint, key: const Key('clock_design_b_empty')),
@@ -31,11 +31,11 @@ class ClockDesignB extends ConsumerWidget {
     final TimezoneResolver resolver = ref.watch(timezoneResolverProvider);
     final Color subColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return ListView.separated(
-      itemCount: locations.length,
+      itemCount: entries.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (BuildContext context, int index) {
-        final ClockLocation loc = locations[index];
-        final DateTime wall = resolver.computeAt(now, loc.timezoneId);
+        final ClockEntry entry = entries[index];
+        final DateTime wall = resolver.computeAt(now, entry.timezoneId);
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -45,7 +45,7 @@ class ClockDesignB extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      loc.displayName,
+                      entry.displayName,
                       style: const TextStyle(fontSize: 16),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -53,7 +53,7 @@ class ClockDesignB extends ConsumerWidget {
                     const SizedBox(height: 4),
                     DigitalClockWidget(
                       time: now,
-                      timezoneId: loc.timezoneId,
+                      timezoneId: entry.timezoneId,
                       fontSize: 36,
                     ),
                   ],

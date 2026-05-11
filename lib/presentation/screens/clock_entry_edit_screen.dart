@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/clock_collection_notifier.dart';
-import '../../domain/clock/clock_collection.dart';
-import '../../domain/clock/clock_location.dart';
+import '../../application/clock_entry_collection_notifier.dart';
+import '../../domain/clock/clock_entry.dart';
+import '../../domain/clock/clock_entry_collection.dart';
 import '../../domain/clock/exceptions.dart';
 import '../../domain/clock/timezone_catalog.dart';
 import '../../l10n/app_localizations.dart';
@@ -22,12 +22,13 @@ import '../../l10n/app_localizations.dart';
 /// rather than "cities". The original Phase 10.5 implementation used
 /// `Location` based identifiers (`ClockLocationPickerScreen`,
 /// `/clock/locations`, `clockLocationPicker*` ARB keys); Phase 11
-/// renamed them to the current `ClockEntryEdit*` form to keep internal
-/// identifiers aligned with the displayed copy.
+/// renamed presentation to `ClockEntryEdit*` (PR #30) and the underlying
+/// domain to `ClockEntry` / `ClockEntryCollection` (this commit) to keep
+/// internal identifiers aligned with the displayed copy.
 ///
 /// 6-entry cap is enforced both by the aggregate
-/// ([MaxClockLocationCountExceededException]) and by visually disabling
-/// catalog rows when [ClockCollection.isFull]. The SnackBar fallback
+/// ([MaxClockEntryCountExceededException]) and by visually disabling
+/// catalog rows when [ClockEntryCollection.isFull]. The SnackBar fallback
 /// catches the exception in the rare case a stale UI state slips
 /// through (multi-tap race), keeping the cap a user-visible event
 /// rather than an unhandled throw.
@@ -39,17 +40,17 @@ class ClockEntryEditScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLocalizations l = AppLocalizations.of(context);
-    final ClockCollection collection = ref.watch(
-      clockCollectionNotifierProvider,
+    final ClockEntryCollection collection = ref.watch(
+      clockEntryCollectionNotifierProvider,
     );
-    final List<ClockLocation> pinned = collection.all;
+    final List<ClockEntry> pinned = collection.all;
     final bool isFull = collection.isFull;
     // Set lookup keeps the per-frame filter O(catalog) rather than
     // O(catalog * pinned). Catalog (~24) and pinned (≤6) are tiny, but
     // the conversion also makes the intent ("dedupe by timezoneId")
     // obvious.
     final Set<String> registeredTz = pinned
-        .map((ClockLocation e) => e.timezoneId)
+        .map((ClockEntry e) => e.timezoneId)
         .toSet();
     final List<TimezoneCatalogEntry> available = TimezoneCatalog.presets
         .where((TimezoneCatalogEntry e) => !registeredTz.contains(e.timezoneId))
@@ -64,7 +65,7 @@ class ClockEntryEditScreen extends ConsumerWidget {
             key: const Key('clock_entry_edit_pinned_header'),
             text: l.clockEntryEditSectionPinned(
               pinned.length,
-              ClockCollection.maxSize,
+              ClockEntryCollection.maxSize,
             ),
           ),
           Expanded(
@@ -73,26 +74,26 @@ class ClockEntryEditScreen extends ConsumerWidget {
               onReorder: (int oldIndex, int newIndex) {
                 // Translate Flutter's post-removal `newIndex` convention
                 // into the destination index that
-                // `ClockCollection.reorder` expects.
+                // `ClockEntryCollection.reorder` expects.
                 if (newIndex > oldIndex) newIndex -= 1;
                 if (oldIndex == newIndex) return;
                 ref
-                    .read(clockCollectionNotifierProvider.notifier)
+                    .read(clockEntryCollectionNotifierProvider.notifier)
                     .reorder(oldIndex, newIndex);
               },
               itemBuilder: (BuildContext context, int index) {
-                final ClockLocation loc = pinned[index];
+                final ClockEntry entry = pinned[index];
                 return ListTile(
-                  key: Key('clock_entry_edit_pinned_${loc.id}'),
-                  title: Text(loc.displayName),
-                  subtitle: Text(loc.timezoneId),
+                  key: Key('clock_entry_edit_pinned_${entry.id}'),
+                  title: Text(entry.displayName),
+                  subtitle: Text(entry.timezoneId),
                   trailing: IconButton(
-                    key: Key('clock_entry_edit_remove_${loc.id}'),
+                    key: Key('clock_entry_edit_remove_${entry.id}'),
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
                       ref
-                          .read(clockCollectionNotifierProvider.notifier)
-                          .remove(loc.id);
+                          .read(clockEntryCollectionNotifierProvider.notifier)
+                          .remove(entry.id);
                     },
                   ),
                 );
@@ -111,7 +112,7 @@ class ClockEntryEditScreen extends ConsumerWidget {
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                l.clockEntryEditLimitReached(ClockCollection.maxSize),
+                l.clockEntryEditLimitReached(ClockEntryCollection.maxSize),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -152,12 +153,12 @@ class ClockEntryEditScreen extends ConsumerWidget {
     final AppLocalizations l = AppLocalizations.of(context);
     try {
       ref
-          .read(clockCollectionNotifierProvider.notifier)
+          .read(clockEntryCollectionNotifierProvider.notifier)
           .addPreset(
             timezoneId: entry.timezoneId,
             displayName: entry.displayName,
           );
-    } on MaxClockLocationCountExceededException catch (e) {
+    } on MaxClockEntryCountExceededException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.clockEntryEditLimitReached(e.maxSize))),

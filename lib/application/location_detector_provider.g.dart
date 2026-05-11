@@ -9,7 +9,7 @@ part of 'location_detector_provider.dart';
 String _$locationDetectorHash() => r'ee515a3a9ec36f2d57885e709980609b1f917ad7';
 
 /// Provider for the [LocationDetector] used by
-/// [ClockCollectionNotifier]'s first-launch detection path. Tests
+/// [ClockEntryCollectionNotifier]'s first-launch detection path. Tests
 /// override this with a `mocktail` mock; production binding is wired
 /// in `main()` with [LocationDetectorAdapter].
 ///

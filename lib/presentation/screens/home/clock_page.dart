@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../application/clock_collection_notifier.dart';
+import '../../../application/clock_entry_collection_notifier.dart';
 import '../../../application/clock_provider.dart';
 import '../../../application/clock_tick/current_time_stream_provider.dart';
-import '../../../domain/clock/clock_location.dart';
+import '../../../domain/clock/clock_entry.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/clock_design_a.dart';
 import '../../widgets/clock_design_b.dart';
@@ -59,8 +59,8 @@ class _ClockPageState extends ConsumerState<ClockPage>
     super.build(context); // AutomaticKeepAliveClientMixin contract.
     final AppLocalizations l = AppLocalizations.of(context);
     final AsyncValue<DateTime> nowAsync = ref.watch(currentTimeProvider);
-    final List<ClockLocation> locations = ref
-        .watch(clockCollectionNotifierProvider)
+    final List<ClockEntry> entries = ref
+        .watch(clockEntryCollectionNotifierProvider)
         .all;
     // `currentTimeProvider` is backed by `Stream.multi` which emits the
     // initial value synchronously, so the loading branch is essentially
@@ -75,9 +75,9 @@ class _ClockPageState extends ConsumerState<ClockPage>
     );
 
     final List<Widget> pages = <Widget>[
-      ClockDesignA(locations: locations, now: now),
-      ClockDesignB(locations: locations, now: now),
-      ClockDesignC(locations: locations, now: now),
+      ClockDesignA(entries: entries, now: now),
+      ClockDesignB(entries: entries, now: now),
+      ClockDesignC(entries: entries, now: now),
     ];
 
     return Column(
