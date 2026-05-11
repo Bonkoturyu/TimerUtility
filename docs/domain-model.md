@@ -512,7 +512,7 @@ ClockTime {
   `clockCollectionNotifierProvider.select((c) => c.locations)` と
   `currentTimeStreamProvider` を watch、3 デザイン widget
   (`ClockDesignA/B/C`) に `locations` / `now` を props 注入する。
-- `ClockLocationPickerScreen` (`lib/presentation/screens/clock_location_picker_screen.dart`):
+- `ClockEntryEditScreen` (`lib/presentation/screens/clock_entry_edit_screen.dart`):
   `TimezoneCatalog.presets` から都市を add、`ClockCollectionNotifier`
   経由で `ClockCollection` 集約に対する mutation
   (add / remove / reorder) を行う。

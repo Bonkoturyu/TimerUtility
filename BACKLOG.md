@@ -599,7 +599,7 @@ AndroidManifest 編集はユーザー確認必須。
       に縮退して同じ Page widget を共有する (`docs/architecture.md` Presentation Layer 節参照)。
       旧 4 ボタン縦並び UI は完全削除。実機検証は Phase 11 仕上げの一環として Pixel 6a / Android 16
       で 6 シナリオを別途実施 (実機検証着手前にユーザ確認)。
-- [ ] ClockLocationPicker 周辺の内部識別子リネーム（2026-05-11 起票、PR #29 で
+- [x] ClockLocationPicker 周辺の内部識別子リネーム（2026-05-11 起票、2026-05-11 完了。PR #29 で
       表示文言は「時計を追加・編集」/「Add or edit clocks」に更新済）。
       クラス名 `ClockLocationPickerScreen` / ルート `/clock/locations` /
       ARB キー名 `clockLocationPickerAppBarTitle` / `clockMenuEditLocations` /
