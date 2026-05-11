@@ -6,7 +6,7 @@ import '../domain/ports/location_detector.dart';
 part 'location_detector_provider.g.dart';
 
 /// Provider for the [LocationDetector] used by
-/// [ClockCollectionNotifier]'s first-launch detection path. Tests
+/// [ClockEntryCollectionNotifier]'s first-launch detection path. Tests
 /// override this with a `mocktail` mock; production binding is wired
 /// in `main()` with [LocationDetectorAdapter].
 @Riverpod(keepAlive: true)

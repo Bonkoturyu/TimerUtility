@@ -1,10 +1,11 @@
-import 'clock_location.dart';
+import 'clock_entry.dart';
 import 'exceptions.dart';
 
-/// Aggregate root for the set of pinned clock locations on the world
-/// clock screen (Phase 10.5).
+/// Aggregate root for the set of pinned clock entries on the world
+/// clock screen (Phase 10.5; Phase 11 で `ClockCollection` から
+/// `ClockEntryCollection` にリネーム)。
 ///
-/// Pure value type: every mutation returns a new [ClockCollection]
+/// Pure value type: every mutation returns a new [ClockEntryCollection]
 /// rather than mutating in place. The Notifier sits on top of this and
 /// owns persistence + GPS detection orchestration.
 ///
@@ -13,21 +14,22 @@ import 'exceptions.dart';
 ///   - All entries have unique `id`.
 ///   - At most one entry has `isCurrentLocation == true`. [add] /
 ///     [update] enforce this by demoting any prior holder when a new
-///     entry comes in flagged.
-class ClockCollection {
-  const ClockCollection._(this._byId);
+///     entry comes in flagged. (フィールド名 `isCurrentLocation` は
+///     GPS 由来の概念として valid なため Phase 11 リネームでも据置。)
+class ClockEntryCollection {
+  const ClockEntryCollection._(this._byId);
 
-  factory ClockCollection.empty() =>
-      const ClockCollection._(<String, ClockLocation>{});
+  factory ClockEntryCollection.empty() =>
+      const ClockEntryCollection._(<String, ClockEntry>{});
 
-  factory ClockCollection.fromList(List<ClockLocation> locations) {
-    if (locations.length > maxSize) {
-      throw const MaxClockLocationCountExceededException(maxSize);
+  factory ClockEntryCollection.fromList(List<ClockEntry> entries) {
+    if (entries.length > maxSize) {
+      throw const MaxClockEntryCountExceededException(maxSize);
     }
-    final Map<String, ClockLocation> byId = <String, ClockLocation>{};
+    final Map<String, ClockEntry> byId = <String, ClockEntry>{};
     bool seenCurrent = false;
-    for (final ClockLocation l in locations) {
-      ClockLocation entry = l;
+    for (final ClockEntry e in entries) {
+      ClockEntry entry = e;
       if (entry.isCurrentLocation) {
         if (seenCurrent) {
           // Persisted state contains more than one current-location
@@ -41,12 +43,12 @@ class ClockCollection {
       }
       byId[entry.id] = entry;
     }
-    return ClockCollection._(Map<String, ClockLocation>.unmodifiable(byId));
+    return ClockEntryCollection._(Map<String, ClockEntry>.unmodifiable(byId));
   }
 
-  final Map<String, ClockLocation> _byId;
+  final Map<String, ClockEntry> _byId;
 
-  /// Hard cap on pinned clock locations (Phase 10.5 decision: 6 cities
+  /// Hard cap on pinned clock entries (Phase 10.5 decision: 6 cities
   /// fit a 2x3 Grid without horizontal overflow on a Pixel 6a).
   /// Bumps require revisiting the design grid in
   /// `presentation/screens/clock_screen.dart`.
@@ -56,74 +58,68 @@ class ClockCollection {
   bool get isEmpty => _byId.isEmpty;
   bool get isFull => _byId.length >= maxSize;
 
-  /// Snapshot of every location in insertion order.
-  List<ClockLocation> get all => List<ClockLocation>.unmodifiable(_byId.values);
+  /// Snapshot of every entry in insertion order.
+  List<ClockEntry> get all => List<ClockEntry>.unmodifiable(_byId.values);
 
-  ClockLocation? findById(String id) => _byId[id];
+  ClockEntry? findById(String id) => _byId[id];
 
   /// The single entry flagged `isCurrentLocation == true`, or `null`
   /// if none. Caller can rely on at most one match — the invariant is
   /// enforced by [add] / [update] / [fromList].
-  ClockLocation? currentLocation() {
-    for (final ClockLocation l in _byId.values) {
-      if (l.isCurrentLocation) {
-        return l;
+  ClockEntry? currentEntry() {
+    for (final ClockEntry e in _byId.values) {
+      if (e.isCurrentLocation) {
+        return e;
       }
     }
     return null;
   }
 
-  /// Insert a new clock location. If `entity.id` already exists, treat
+  /// Insert a new clock entry. If `entity.id` already exists, treat
   /// as update — keeps callers simple when re-loading from DB. Throws
-  /// [MaxClockLocationCountExceededException] when the collection is
+  /// [MaxClockEntryCountExceededException] when the collection is
   /// already full and the id is new.
   ///
   /// When `entity.isCurrentLocation == true`, any existing entry with
   /// the same flag is demoted to `false`.
-  ClockCollection add(ClockLocation entity) {
+  ClockEntryCollection add(ClockEntry entity) {
     if (_byId.containsKey(entity.id)) {
       return update(entity);
     }
     if (isFull) {
-      throw const MaxClockLocationCountExceededException(maxSize);
+      throw const MaxClockEntryCountExceededException(maxSize);
     }
-    final Map<String, ClockLocation> next = Map<String, ClockLocation>.of(
-      _byId,
-    );
+    final Map<String, ClockEntry> next = Map<String, ClockEntry>.of(_byId);
     if (entity.isCurrentLocation) {
-      _demoteOtherCurrentLocations(next, except: entity.id);
+      _demoteOtherCurrentEntries(next, except: entity.id);
     }
     next[entity.id] = entity;
-    return ClockCollection._(Map<String, ClockLocation>.unmodifiable(next));
+    return ClockEntryCollection._(Map<String, ClockEntry>.unmodifiable(next));
   }
 
-  /// Replace the location stored under `entity.id`. Throws
-  /// [ClockLocationNotFoundException] when no such entry exists.
-  ClockCollection update(ClockLocation entity) {
+  /// Replace the entry stored under `entity.id`. Throws
+  /// [ClockEntryNotFoundException] when no such entry exists.
+  ClockEntryCollection update(ClockEntry entity) {
     if (!_byId.containsKey(entity.id)) {
-      throw ClockLocationNotFoundException(entity.id);
+      throw ClockEntryNotFoundException(entity.id);
     }
-    final Map<String, ClockLocation> next = Map<String, ClockLocation>.of(
-      _byId,
-    );
+    final Map<String, ClockEntry> next = Map<String, ClockEntry>.of(_byId);
     if (entity.isCurrentLocation) {
-      _demoteOtherCurrentLocations(next, except: entity.id);
+      _demoteOtherCurrentEntries(next, except: entity.id);
     }
     next[entity.id] = entity;
-    return ClockCollection._(Map<String, ClockLocation>.unmodifiable(next));
+    return ClockEntryCollection._(Map<String, ClockEntry>.unmodifiable(next));
   }
 
-  /// Remove a location by id. Throws [ClockLocationNotFoundException]
+  /// Remove an entry by id. Throws [ClockEntryNotFoundException]
   /// when absent to flag stale UI references.
-  ClockCollection remove(String id) {
+  ClockEntryCollection remove(String id) {
     if (!_byId.containsKey(id)) {
-      throw ClockLocationNotFoundException(id);
+      throw ClockEntryNotFoundException(id);
     }
-    final Map<String, ClockLocation> next = Map<String, ClockLocation>.of(
-      _byId,
-    );
+    final Map<String, ClockEntry> next = Map<String, ClockEntry>.of(_byId);
     next.remove(id);
-    return ClockCollection._(Map<String, ClockLocation>.unmodifiable(next));
+    return ClockEntryCollection._(Map<String, ClockEntry>.unmodifiable(next));
   }
 
   /// Reorder entries by list position (0-indexed). Recalculates
@@ -138,28 +134,28 @@ class ClockCollection {
   ///
   /// Throws [RangeError] when either index is out of bounds.
   /// `oldIndex == newIndex` is a no-op and returns `this` unchanged.
-  ClockCollection reorder(int oldIndex, int newIndex) {
-    final List<ClockLocation> ordered = _byId.values.toList();
+  ClockEntryCollection reorder(int oldIndex, int newIndex) {
+    final List<ClockEntry> ordered = _byId.values.toList();
     RangeError.checkValidIndex(oldIndex, ordered, 'oldIndex');
     RangeError.checkValidIndex(newIndex, ordered, 'newIndex');
     if (oldIndex == newIndex) {
       return this;
     }
-    final ClockLocation moved = ordered.removeAt(oldIndex);
+    final ClockEntry moved = ordered.removeAt(oldIndex);
     ordered.insert(newIndex, moved);
 
-    final Map<String, ClockLocation> next = <String, ClockLocation>{};
+    final Map<String, ClockEntry> next = <String, ClockEntry>{};
     for (int i = 0; i < ordered.length; i++) {
       next[ordered[i].id] = ordered[i].copyWith(displayOrder: i);
     }
-    return ClockCollection._(Map<String, ClockLocation>.unmodifiable(next));
+    return ClockEntryCollection._(Map<String, ClockEntry>.unmodifiable(next));
   }
 
-  void _demoteOtherCurrentLocations(
-    Map<String, ClockLocation> map, {
+  void _demoteOtherCurrentEntries(
+    Map<String, ClockEntry> map, {
     required String except,
   }) {
-    for (final MapEntry<String, ClockLocation> entry in map.entries.toList(
+    for (final MapEntry<String, ClockEntry> entry in map.entries.toList(
       growable: false,
     )) {
       if (entry.key != except && entry.value.isCurrentLocation) {

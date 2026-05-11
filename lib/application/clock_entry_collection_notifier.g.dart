@@ -1,38 +1,43 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'clock_collection_notifier.dart';
+part of 'clock_entry_collection_notifier.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$clockCollectionNotifierHash() =>
-    r'd027575cd6a094e60ff525fef169cf3c2d4b7088';
+String _$clockEntryCollectionNotifierHash() =>
+    r'c11098e27d0aad0b9e6ed7ecc429f0d3eb65579f';
 
-/// Phase 10.5 single source of truth for pinned world-clock locations.
+/// Phase 10.5 single source of truth for pinned world-clock entries
+/// (Phase 11 で `ClockCollectionNotifier` → `ClockEntryCollectionNotifier`
+/// にリネーム)。
 ///
 /// Mirrors `PresetCollectionNotifier`:
-///   - State = immutable aggregate ([ClockCollection]).
+///   - State = immutable aggregate ([ClockEntryCollection]).
 ///   - Mutations: validate via the aggregate, update [state], persist
-///     via [ClockLocationRepository] in a fire-and-forget pattern.
+///     via [ClockEntryRepository] in a fire-and-forget pattern.
 ///   - Restore on build: asynchronously load the persisted collection.
 ///     On a fresh install (DB empty) we additionally call
 ///     [LocationDetector.detectTimezoneId] to seed a single
 ///     "current location" entry so the first launch shows local time.
 ///
-/// Copied from [ClockCollectionNotifier].
-@ProviderFor(ClockCollectionNotifier)
-final clockCollectionNotifierProvider =
-    NotifierProvider<ClockCollectionNotifier, ClockCollection>.internal(
-      ClockCollectionNotifier.new,
-      name: r'clockCollectionNotifierProvider',
+/// Copied from [ClockEntryCollectionNotifier].
+@ProviderFor(ClockEntryCollectionNotifier)
+final clockEntryCollectionNotifierProvider =
+    NotifierProvider<
+      ClockEntryCollectionNotifier,
+      ClockEntryCollection
+    >.internal(
+      ClockEntryCollectionNotifier.new,
+      name: r'clockEntryCollectionNotifierProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$clockCollectionNotifierHash,
+          : _$clockEntryCollectionNotifierHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$ClockCollectionNotifier = Notifier<ClockCollection>;
+typedef _$ClockEntryCollectionNotifier = Notifier<ClockEntryCollection>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

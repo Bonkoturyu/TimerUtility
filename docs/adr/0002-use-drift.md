@@ -142,6 +142,14 @@
   - `Duration` → `INTEGER` (ms)
   - `TimerStatus` → `TEXT` (`enum.name`)。enum 値追加に対し前方互換、
     未知の name は `cancelled` フォールバック
-- **次のスキーマ Bump タイミング**: Preset (Phase 9) / Alarm (Phase 9.5) /
-  ClockLocation (Phase 10.5) のテーブル追加時。`schemaVersion` を bump し
-  `migration` を書く。当面は単一テーブルのため migration コードは未整備。
+- **スキーマ Bump の履歴と方針**: 当初 Phase 8 では timers のみ (v1) だったが、
+  以下の通り追加 / リネームを重ねている。`schemaVersion` を bump し
+  `MigrationStrategy.onUpgrade` の `if (from < N)` ブロックを足す方針:
+  - v1 → v2 (Phase 9): `presets` テーブル追加 + default preset 6 件 seed
+  - v2 → v3 (Phase 9.5): `alarms` テーブル追加
+  - v3 → v4 (Phase 10.5): `clock_locations` テーブル追加 (seed なし)
+  - v4 → v5 (Phase 11): `clock_locations` → `clock_entries` リネーム。
+    `INSERT INTO clock_entries SELECT * FROM clock_locations` + `DROP TABLE` の
+    new-table 方式 (カラム名据置で 1:1 コピー可)。専用 migration テスト
+    `test/infrastructure/database/migration_v4_to_v5_test.dart` で
+    Happy path / 空テーブル / bool 保存の 3 ケースを検証。

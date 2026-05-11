@@ -3,45 +3,44 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:timer_utility/application/clock_collection_notifier.dart';
-import 'package:timer_utility/application/clock_location_repository_provider.dart';
+import 'package:timer_utility/application/clock_entry_collection_notifier.dart';
+import 'package:timer_utility/application/clock_entry_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/location_detector_provider.dart';
-import 'package:timer_utility/domain/clock/clock_collection.dart';
-import 'package:timer_utility/domain/clock/clock_location.dart';
-import 'package:timer_utility/domain/ports/clock_location_repository.dart';
+import 'package:timer_utility/domain/clock/clock_entry.dart';
+import 'package:timer_utility/domain/clock/clock_entry_collection.dart';
+import 'package:timer_utility/domain/ports/clock_entry_repository.dart';
 import 'package:timer_utility/domain/ports/location_detector.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 
-class _MockClockLocationRepository extends Mock
-    implements ClockLocationRepository {}
+class _MockClockEntryRepository extends Mock implements ClockEntryRepository {}
 
 class _MockLocationDetector extends Mock implements LocationDetector {}
 
-class _ClockLocationFake extends Fake implements ClockLocation {}
+class _ClockEntryFake extends Fake implements ClockEntry {}
 
 /// Pre-seeded variant of the production notifier. Bypasses the
 /// async restore + first-launch detection in `build()` so the widget
 /// renders the desired collection on the very first frame, while the
 /// inherited mutation methods (`addPreset` / `remove` / `reorder`)
 /// run their real bodies — that is the seam under test in scenarios
-/// 2, 4, and 5 (we observe the resulting `ClockCollection` state via
+/// 2, 4, and 5 (we observe the resulting `ClockEntryCollection` state via
 /// `ProviderContainer.read`).
-class _SeededClockCollectionNotifier extends ClockCollectionNotifier {
-  _SeededClockCollectionNotifier(this._initial);
-  final ClockCollection _initial;
+class _SeededClockEntryCollectionNotifier extends ClockEntryCollectionNotifier {
+  _SeededClockEntryCollectionNotifier(this._initial);
+  final ClockEntryCollection _initial;
 
   @override
-  ClockCollection build() => _initial;
+  ClockEntryCollection build() => _initial;
 }
 
-ClockLocation _loc(
+ClockEntry _entry(
   int order,
   String displayName, {
   required String tz,
   bool current = false,
-}) => ClockLocation(
+}) => ClockEntry(
   id: 'id-$order',
   displayName: displayName,
   timezoneId: tz,
@@ -50,11 +49,11 @@ ClockLocation _loc(
   createdAt: DateTime.utc(2026, 1, 1),
 );
 
-Widget _harness({required List<ClockLocation> seeded}) {
-  final ClockCollection collection = seeded.isEmpty
-      ? ClockCollection.empty()
-      : ClockCollection.fromList(seeded);
-  final repo = _MockClockLocationRepository();
+Widget _harness({required List<ClockEntry> seeded}) {
+  final ClockEntryCollection collection = seeded.isEmpty
+      ? ClockEntryCollection.empty()
+      : ClockEntryCollection.fromList(seeded);
+  final repo = _MockClockEntryRepository();
   final detector = _MockLocationDetector();
   // Mutations on the notifier (`addPreset` / `remove` / `reorder`) fire
   // unawaited persistence calls; stubbing keeps them benign no-ops.
@@ -69,10 +68,10 @@ Widget _harness({required List<ClockLocation> seeded}) {
       clockProvider.overrideWithValue(
         Clock.fixed(DateTime.utc(2026, 5, 10, 9)),
       ),
-      clockCollectionNotifierProvider.overrideWith(
-        () => _SeededClockCollectionNotifier(collection),
+      clockEntryCollectionNotifierProvider.overrideWith(
+        () => _SeededClockEntryCollectionNotifier(collection),
       ),
-      clockLocationRepositoryProvider.overrideWithValue(repo),
+      clockEntryRepositoryProvider.overrideWithValue(repo),
       locationDetectorProvider.overrideWithValue(detector),
     ],
     child: const MaterialApp(
@@ -91,8 +90,8 @@ ProviderContainer _containerOf(WidgetTester tester) {
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(_ClockLocationFake());
-    registerFallbackValue(<ClockLocation>[]);
+    registerFallbackValue(_ClockEntryFake());
+    registerFallbackValue(<ClockEntry>[]);
   });
 
   group('ClockEntryEditScreen', () {
@@ -113,8 +112,8 @@ void main() {
       await setLargeSurface(tester);
       await tester.pumpWidget(
         _harness(
-          seeded: <ClockLocation>[
-            _loc(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
+          seeded: <ClockEntry>[
+            _entry(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
           ],
         ),
       );
@@ -159,27 +158,27 @@ void main() {
         await setLargeSurface(tester);
         await tester.pumpWidget(
           _harness(
-            seeded: <ClockLocation>[
-              _loc(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
+            seeded: <ClockEntry>[
+              _entry(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
             ],
           ),
         );
         await tester.pumpAndSettle();
 
         final container = _containerOf(tester);
-        expect(container.read(clockCollectionNotifierProvider).size, 1);
+        expect(container.read(clockEntryCollectionNotifierProvider).size, 1);
 
         await tester.tap(
           find.byKey(const Key('clock_entry_edit_catalog_Asia/Seoul')),
         );
         await tester.pumpAndSettle();
 
-        final ClockCollection next = container.read(
-          clockCollectionNotifierProvider,
+        final ClockEntryCollection next = container.read(
+          clockEntryCollectionNotifierProvider,
         );
         expect(next.size, 2);
         // 末尾に Seoul が積まれていること (displayOrder = 1)
-        final ClockLocation added = next.all.last;
+        final ClockEntry added = next.all.last;
         expect(added.timezoneId, 'Asia/Seoul');
         expect(added.displayName, 'Seoul');
       },
@@ -191,13 +190,13 @@ void main() {
       await setLargeSurface(tester);
       await tester.pumpWidget(
         _harness(
-          seeded: <ClockLocation>[
-            _loc(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
-            _loc(1, 'Seoul', tz: 'Asia/Seoul'),
-            _loc(2, 'Shanghai', tz: 'Asia/Shanghai'),
-            _loc(3, 'Hong Kong', tz: 'Asia/Hong_Kong'),
-            _loc(4, 'Singapore', tz: 'Asia/Singapore'),
-            _loc(5, 'Bangkok', tz: 'Asia/Bangkok'),
+          seeded: <ClockEntry>[
+            _entry(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
+            _entry(1, 'Seoul', tz: 'Asia/Seoul'),
+            _entry(2, 'Shanghai', tz: 'Asia/Shanghai'),
+            _entry(3, 'Hong Kong', tz: 'Asia/Hong_Kong'),
+            _entry(4, 'Singapore', tz: 'Asia/Singapore'),
+            _entry(5, 'Bangkok', tz: 'Asia/Bangkok'),
           ],
         ),
       );
@@ -225,9 +224,9 @@ void main() {
         await setLargeSurface(tester);
         await tester.pumpWidget(
           _harness(
-            seeded: <ClockLocation>[
-              _loc(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
-              _loc(1, 'Seoul', tz: 'Asia/Seoul'),
+            seeded: <ClockEntry>[
+              _entry(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
+              _entry(1, 'Seoul', tz: 'Asia/Seoul'),
             ],
           ),
         );
@@ -236,7 +235,10 @@ void main() {
         final container = _containerOf(tester);
         // 初期順序: Tokyo(0), Seoul(1)
         expect(
-          container.read(clockCollectionNotifierProvider).all.map((e) => e.id),
+          container
+              .read(clockEntryCollectionNotifierProvider)
+              .all
+              .map((e) => e.id),
           equals(<String>['id-0', 'id-1']),
         );
 
@@ -250,7 +252,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          container.read(clockCollectionNotifierProvider).all.map((e) => e.id),
+          container
+              .read(clockEntryCollectionNotifierProvider)
+              .all
+              .map((e) => e.id),
           equals(<String>['id-1', 'id-0']),
         );
       },
@@ -262,20 +267,20 @@ void main() {
         await setLargeSurface(tester);
         await tester.pumpWidget(
           _harness(
-            seeded: <ClockLocation>[
-              _loc(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
+            seeded: <ClockEntry>[
+              _entry(0, 'Tokyo', tz: 'Asia/Tokyo', current: true),
             ],
           ),
         );
         await tester.pumpAndSettle();
 
         final container = _containerOf(tester);
-        expect(container.read(clockCollectionNotifierProvider).size, 1);
+        expect(container.read(clockEntryCollectionNotifierProvider).size, 1);
 
         await tester.tap(find.byKey(const Key('clock_entry_edit_remove_id-0')));
         await tester.pumpAndSettle();
 
-        expect(container.read(clockCollectionNotifierProvider).size, 0);
+        expect(container.read(clockEntryCollectionNotifierProvider).size, 0);
         // 削除後は catalog 側に Tokyo が再度現れる
         expect(
           find.byKey(const Key('clock_entry_edit_catalog_Asia/Tokyo')),

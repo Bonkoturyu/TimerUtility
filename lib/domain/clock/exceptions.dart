@@ -1,27 +1,27 @@
-/// Thrown when adding a new clock location would push
-/// [ClockCollection.size] past [ClockCollection.maxSize].
+/// Thrown when adding a new clock entry would push
+/// [ClockEntryCollection.size] past [ClockEntryCollection.maxSize].
 ///
 /// The application layer is expected to surface this to the UI as a
 /// SnackBar.
-class MaxClockLocationCountExceededException implements Exception {
-  const MaxClockLocationCountExceededException(this.maxSize);
+class MaxClockEntryCountExceededException implements Exception {
+  const MaxClockEntryCountExceededException(this.maxSize);
 
   final int maxSize;
 
   @override
   String toString() =>
-      'MaxClockLocationCountExceededException: cannot exceed $maxSize clock locations';
+      'MaxClockEntryCountExceededException: cannot exceed $maxSize clock entries';
 }
 
-/// Thrown when an operation references a clock location id that is not
+/// Thrown when an operation references a clock entry id that is not
 /// in the collection. Indicates either a stale UI reference or a bug.
-class ClockLocationNotFoundException implements Exception {
-  const ClockLocationNotFoundException(this.id);
+class ClockEntryNotFoundException implements Exception {
+  const ClockEntryNotFoundException(this.id);
 
   final String id;
 
   @override
-  String toString() => 'ClockLocationNotFoundException: $id';
+  String toString() => 'ClockEntryNotFoundException: $id';
 }
 
 /// Thrown when [TimezoneResolver.computeAt] is given an id that is not

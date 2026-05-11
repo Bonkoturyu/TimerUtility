@@ -77,9 +77,9 @@ lib/
 │   │   ├── alarm_entity.dart               # freezed Entity
 │   │   ├── alarm_service.dart              # nextFireAt / advanceAfterFire / snoozeUntil
 │   │   └── exceptions.dart                 # AlarmNotFoundException 等
-│   ├── clock/                              # Phase 10.5 で実装済み（世界時計）
-│   │   ├── clock_location.dart             # ClockLocation Entity
-│   │   ├── clock_collection.dart           # 集約ルート（最大 6 件）
+│   ├── clock/                              # Phase 10.5 で実装済み（世界時計、Phase 11 で ClockEntry にリネーム）
+│   │   ├── clock_entry.dart                # ClockEntry Entity
+│   │   ├── clock_entry_collection.dart     # 集約ルート（最大 6 件）
 │   │   ├── clock_time.dart                 # ClockTime ValueObject + TimezoneResolver port
 │   │   ├── timezone_catalog.dart           # 25 都市プリセット（pure Dart、IANA TZ ID マップ）
 │   │   └── exceptions.dart
@@ -93,7 +93,7 @@ lib/
 │       ├── preset_repository.dart          # Phase 9 で実装済み
 │       ├── user_preferences.dart           # Phase 9 で実装済み（SharedPreferences 抽象）
 │       ├── alarm_repository.dart           # Phase 9.5 で実装済み
-│       ├── clock_location_repository.dart  # Phase 10.5 で実装済み
+│       ├── clock_entry_repository.dart     # Phase 10.5 で実装済み（Phase 11 で ClockEntry にリネーム）
 │       └── location_detector.dart          # Phase 10.5 で実装済み（GPS → IANA TZ）
 │
 ├── infrastructure/
@@ -121,7 +121,7 @@ lib/
 │       │   ├── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
 │       │   ├── preset_mapper.dart                   # Phase 9 で実装済み
 │       │   └── alarm_mapper.dart                    # Phase 9.5 で実装済み
-│       └── drift_clock_location_repository.dart     # Phase 10.5 で実装済み
+│       └── drift_clock_entry_repository.dart        # Phase 10.5 で実装済み（Phase 11 で clock_locations → clock_entries にリネーム、schemaVersion 4→5）
 │
 ├── application/                  # Riverpod Providers
 │   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
@@ -140,8 +140,8 @@ lib/
 │   ├── alarm_repository_provider.dart        # Phase 9.5 で実装済み
 │   ├── alarm_service_provider.dart           # Phase 9.5 で実装済み
 │   ├── alarm_collection_notifier.dart        # Phase 9.5 で実装済み（最大 50 件、起動時 DB 復元）
-│   ├── clock_collection_notifier.dart        # Phase 10.5 で実装済み
-│   ├── clock_location_repository_provider.dart # Phase 10.5 で実装済み
+│   ├── clock_entry_collection_notifier.dart  # Phase 10.5 で実装済み（Phase 11 で ClockEntry にリネーム）
+│   ├── clock_entry_repository_provider.dart  # Phase 10.5 で実装済み（Phase 11 で ClockEntry にリネーム）
 │   ├── location_detector_provider.dart       # Phase 10.5 で実装済み
 │   ├── timezone_resolver_provider.dart       # Phase 10.5 で実装済み（keepAlive、TZ DB を 1 度だけ load）
 │   └── clock_tick/
