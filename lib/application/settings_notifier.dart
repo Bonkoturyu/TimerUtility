@@ -73,21 +73,25 @@ class SettingsNotifier extends _$SettingsNotifier {
       UserPreferenceKeys.defaultAlarmSoundId,
     );
 
+    // フォールバック値は SettingsState.defaults() を唯一の情報源にして
+    // ハードコード重複を避ける (Gemini review #36)。将来 defaults() の
+    // 規定値を変更した際に _restore 側の取りこぼしを防ぐ。
+    final SettingsState defaults = SettingsState.defaults();
     final ThemeMode themeMode =
         (storedTheme != null &&
             storedTheme >= 0 &&
             storedTheme < ThemeMode.values.length)
         ? ThemeMode.values[storedTheme]
-        : ThemeMode.system;
+        : defaults.themeMode;
     final int snooze =
         (storedSnooze != null &&
             kAllowedDefaultSnoozeMinutes.contains(storedSnooze))
         ? storedSnooze
-        : 5;
+        : defaults.defaultSnoozeMinutes;
     final String soundId =
         (storedSound != null && AlarmSoundCatalog.findById(storedSound) != null)
         ? storedSound
-        : AlarmSoundCatalog.defaultSound.id;
+        : defaults.defaultAlarmSoundId;
 
     state = SettingsState(
       themeMode: themeMode,
