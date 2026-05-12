@@ -13,7 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../widgets/home_dot_indicator.dart';
 import '../../widgets/page_navigation_hint.dart';
 import '../alarm_ringing_screen.dart' show AlarmRingingScreen;
-import '../licenses_screen.dart';
+import '../settings_screen.dart';
 import 'alarm_list_page.dart';
 import 'clock_page.dart';
 import 'stopwatch_page.dart';
@@ -312,8 +312,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       key: const Key('home_menu'),
       onSelected: (String value) {
         switch (value) {
-          case 'licenses':
-            context.push(LicensesScreen.routeLocation);
+          case 'settings':
+            context.push(SettingsScreen.routeLocation);
             break;
           case 'manage_presets':
             context.push('/presets');
@@ -333,9 +333,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
         items.add(
           PopupMenuItem<String>(
-            key: const Key('home_menu_licenses'),
-            value: 'licenses',
-            child: Text(l.licenseMenuOverflow),
+            key: const Key('home_menu_settings'),
+            value: 'settings',
+            child: Text(l.homeMenuSettings),
           ),
         );
         return items;

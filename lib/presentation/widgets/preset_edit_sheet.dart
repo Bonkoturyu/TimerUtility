@@ -25,10 +25,21 @@ class PresetEditResult {
 /// title, save creates a new entity. `editing != null` → "Edit"
 /// mode: fields prefilled from the existing entity, "Edit preset"
 /// title, save returns updated values.
+///
+/// [defaultSoundId] is consulted only in Add mode (when [editing] is
+/// `null`). Edit mode always seeds the sound from the entity. The
+/// caller resolves the default from `settingsNotifierProvider` so the
+/// Phase 11 settings screen's "Default alarm sound" choice flows in
+/// here without coupling the sheet to Riverpod.
 class PresetEditSheet extends StatefulWidget {
-  const PresetEditSheet({super.key, this.editing});
+  const PresetEditSheet({
+    super.key,
+    this.editing,
+    required this.defaultSoundId,
+  });
 
   final Preset? editing;
+  final String defaultSoundId;
 
   @override
   State<PresetEditSheet> createState() => _PresetEditSheetState();
@@ -44,7 +55,7 @@ class _PresetEditSheetState extends State<PresetEditSheet> {
     super.initState();
     _labelController = TextEditingController(text: widget.editing?.label ?? '');
     _duration = widget.editing?.duration ?? const Duration(minutes: 1);
-    _soundId = widget.editing?.soundId ?? 'default';
+    _soundId = widget.editing?.soundId ?? widget.defaultSoundId;
   }
 
   @override

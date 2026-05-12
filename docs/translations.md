@@ -10,7 +10,7 @@
 - ICU plural 構文（`{count, plural, ...}`）は `ja` / `en` で形式が異なるので注釈欄に明記する
 - 既存翻訳の文言調整は ARB 側を直し、本書を同じ commit で更新する
 
-最終更新日: 2026-05-04（Phase 9.5: alarmList* / alarmEdit* / alarmDelete* / weekday* を追記）
+最終更新日: 2026-05-12（Phase 11 設定画面: homeMenuSettings / settings* を追記）
 
 ---
 
@@ -252,6 +252,30 @@
 | `presetLabelHours` | {count}時間 | {count, plural, =1{1 hour} other{{count} hours}} | 時のみ（分 = 0 & 秒 = 0） |
 
 > 1h30m / 5m20s のような複合 duration はこの表に当てはまらず、`HH:MM:SS` 形式（`DurationFormatter`）にフォールバックする。
+
+---
+
+## 設定画面（Phase 11）
+
+`SettingsScreen` (`/settings`) のセクション見出しと各 ListTile 用ラベル。
+HomeScreen overflow から旧「ライセンス」エントリを削除し、ここに集約する。
+`licenseMenuOverflow` (既存キー) はライセンス導線の ListTile と LicensesScreen
+AppBar 両方で再利用。
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `homeMenuSettings` | 設定 | Settings | HomeScreen AppBar overflow メニュー項目 |
+| `settingsAppBarTitle` | 設定 | Settings | AppBar |
+| `settingsSectionDisplay` | 表示 | Display | セクション見出し |
+| `settingsSectionDefaults` | デフォルト | Defaults | セクション見出し |
+| `settingsSectionAbout` | 情報 | About | セクション見出し |
+| `settingsThemeLabel` | テーマ | Theme | ListTile title |
+| `settingsThemeSystem` | システム | System | SegmentedButton ラベル (ThemeMode.system) |
+| `settingsThemeLight` | ライト | Light | SegmentedButton ラベル (ThemeMode.light) |
+| `settingsThemeDark` | ダーク | Dark | SegmentedButton ラベル (ThemeMode.dark) |
+| `settingsDefaultSnoozeLabel` | スヌーズ分 | Snooze minutes | ListTile title |
+| `settingsDefaultSnoozeOption` | {minutes} 分 | {minutes} min | SegmentedButton ラベル (5/10/15) |
+| `settingsDefaultAlarmSoundLabel` | アラーム音源 | Alarm sound | ListTile title |
 
 ---
 
