@@ -224,6 +224,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get presetSheetCustomButton => 'カスタム時間で作成';
 
   @override
+  String get presetSheetManageButton => 'プリセットを管理...';
+
+  @override
   String get presetManageAppBarTitle => 'プリセット管理';
 
   @override
