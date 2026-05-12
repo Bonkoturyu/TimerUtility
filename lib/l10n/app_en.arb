@@ -116,6 +116,7 @@
 
   "presetSheetTitle": "Choose preset",
   "presetSheetCustomButton": "Create with custom time",
+  "presetSheetManageButton": "Manage presets...",
 
   "presetManageAppBarTitle": "Manage presets",
   "presetManageMenuOverflow": "Manage presets",

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../application/home_active_page_index_provider.dart';
 import '../../../application/permission_notifier.dart';
@@ -17,6 +18,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../widgets/duration_picker.dart';
 import '../../widgets/permission_banners.dart';
 import '../../widgets/preset_select_sheet.dart';
+import '../preset_manage_screen.dart';
 import '../../widgets/sound_select_sheet.dart';
 
 String _localizedStatus(AppLocalizations l, TimerStatus status) {
@@ -108,6 +110,10 @@ class TimerListPage extends ConsumerStatefulWidget {
       if (chosen == null) return;
       if (!context.mounted) return;
       _createTimer(context, ref, label: '', duration: chosen, soundId: null);
+      return;
+    }
+    if (selection.manageRequested) {
+      unawaited(context.push(PresetManageScreen.routeLocation));
     }
   }
 

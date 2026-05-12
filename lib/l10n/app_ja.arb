@@ -104,6 +104,7 @@
 
   "presetSheetTitle": "プリセットから選択",
   "presetSheetCustomButton": "カスタム時間で作成",
+  "presetSheetManageButton": "プリセットを管理...",
 
   "presetManageAppBarTitle": "プリセット管理",
   "presetManageMenuOverflow": "プリセット管理",
