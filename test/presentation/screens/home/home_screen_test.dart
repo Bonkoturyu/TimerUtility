@@ -64,6 +64,7 @@ class _RecordingPrefs implements UserPreferences {
 
   final Map<String, bool> _bools = <String, bool>{};
   final Map<String, int> _ints;
+  final Map<String, String> _strings = <String, String>{};
   final List<MapEntry<String, int>> setIntCalls = <MapEntry<String, int>>[];
 
   @override
@@ -82,9 +83,18 @@ class _RecordingPrefs implements UserPreferences {
   }
 
   @override
+  Future<String?> getString(String key) async => _strings[key];
+
+  @override
+  Future<void> setString(String key, String value) async {
+    _strings[key] = value;
+  }
+
+  @override
   Future<void> remove(String key) async {
     _bools.remove(key);
     _ints.remove(key);
+    _strings.remove(key);
   }
 }
 
@@ -220,6 +230,13 @@ Widget _harness({
         builder: (_, _) => const Scaffold(
           key: Key('licenses_stub'),
           body: Center(child: Text('licenses-stub')),
+        ),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, _) => const Scaffold(
+          key: Key('settings_stub'),
+          body: Center(child: Text('settings-stub')),
         ),
       ),
       GoRoute(
@@ -493,18 +510,25 @@ void main() {
       },
     );
 
-    testWidgets('(h) AppBar overflow → ライセンス で /licenses が push される', (
+    testWidgets('(h) AppBar overflow → 設定 で /settings が push される', (
       WidgetTester tester,
     ) async {
+      // Phase 11 (設定画面 PR): 旧「ライセンス」エントリは設定画面側に
+      // 移設したため、HomeScreen overflow は「設定」のみを公開する。
       await tester.pumpWidget(_harness(prefs: _RecordingPrefs()));
       await _settleRestore(tester);
 
       await tester.tap(find.byKey(const Key('home_menu')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('home_menu_licenses')));
+      expect(
+        find.byKey(const Key('home_menu_licenses')),
+        findsNothing,
+        reason: '旧ライセンス導線は overflow から削除されている必要がある',
+      );
+      await tester.tap(find.byKey(const Key('home_menu_settings')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('licenses_stub')), findsOneWidget);
+      expect(find.byKey(const Key('settings_stub')), findsOneWidget);
     });
 
     testWidgets('(i) overflow メニューは Timer タブでのみ manage_presets が出る', (

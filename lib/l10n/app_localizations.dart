@@ -937,6 +937,78 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'時計が登録されていません。\n右下の「＋」ボタンから追加できます。'**
   String get clockEmptyHint;
+
+  /// No description provided for @homeMenuSettings.
+  ///
+  /// In ja, this message translates to:
+  /// **'設定'**
+  String get homeMenuSettings;
+
+  /// No description provided for @settingsAppBarTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'設定'**
+  String get settingsAppBarTitle;
+
+  /// No description provided for @settingsSectionDisplay.
+  ///
+  /// In ja, this message translates to:
+  /// **'表示'**
+  String get settingsSectionDisplay;
+
+  /// No description provided for @settingsSectionDefaults.
+  ///
+  /// In ja, this message translates to:
+  /// **'デフォルト'**
+  String get settingsSectionDefaults;
+
+  /// No description provided for @settingsSectionAbout.
+  ///
+  /// In ja, this message translates to:
+  /// **'情報'**
+  String get settingsSectionAbout;
+
+  /// No description provided for @settingsThemeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'テーマ'**
+  String get settingsThemeLabel;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In ja, this message translates to:
+  /// **'システム'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In ja, this message translates to:
+  /// **'ライト'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In ja, this message translates to:
+  /// **'ダーク'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsDefaultSnoozeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'スヌーズ分'**
+  String get settingsDefaultSnoozeLabel;
+
+  /// No description provided for @settingsDefaultSnoozeOption.
+  ///
+  /// In ja, this message translates to:
+  /// **'{minutes} 分'**
+  String settingsDefaultSnoozeOption(int minutes);
+
+  /// No description provided for @settingsDefaultAlarmSoundLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'アラーム音源'**
+  String get settingsDefaultAlarmSoundLabel;
 }
 
 class _AppLocalizationsDelegate
