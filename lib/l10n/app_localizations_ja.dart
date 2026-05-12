@@ -462,4 +462,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clockEmptyHint => '時計が登録されていません。\n右下の「＋」ボタンから追加できます。';
+
+  @override
+  String get homeMenuSettings => '設定';
+
+  @override
+  String get settingsAppBarTitle => '設定';
+
+  @override
+  String get settingsSectionDisplay => '表示';
+
+  @override
+  String get settingsSectionDefaults => 'デフォルト';
+
+  @override
+  String get settingsSectionAbout => '情報';
+
+  @override
+  String get settingsThemeLabel => 'テーマ';
+
+  @override
+  String get settingsThemeSystem => 'システム';
+
+  @override
+  String get settingsThemeLight => 'ライト';
+
+  @override
+  String get settingsThemeDark => 'ダーク';
+
+  @override
+  String get settingsDefaultSnoozeLabel => 'スヌーズ分';
+
+  @override
+  String settingsDefaultSnoozeOption(int minutes) {
+    return '$minutes 分';
+  }
+
+  @override
+  String get settingsDefaultAlarmSoundLabel => 'アラーム音源';
 }

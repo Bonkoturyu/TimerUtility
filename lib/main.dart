@@ -13,6 +13,7 @@ import 'application/location_detector_provider.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
+import 'application/settings_notifier.dart';
 import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/timezone_resolver_provider.dart';
@@ -36,6 +37,7 @@ import 'presentation/screens/clock_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
+import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
 
@@ -316,6 +318,11 @@ Future<void> main() async {
         builder: (BuildContext context, GoRouterState state) =>
             const LicensesScreen(),
       ),
+      GoRoute(
+        path: SettingsScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SettingsScreen(),
+      ),
     ],
   );
 
@@ -386,6 +393,9 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
 
   @override
   Widget build(BuildContext context) {
+    final ThemeMode themeMode = ref.watch(
+      settingsNotifierProvider.select((SettingsState s) => s.themeMode),
+    );
     return MaterialApp.router(
       title: 'TimerUtility',
       theme: ThemeData(
@@ -397,6 +407,7 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
           brightness: Brightness.dark,
         ),
       ),
+      themeMode: themeMode,
       routerConfig: widget.router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: supportedLocales,

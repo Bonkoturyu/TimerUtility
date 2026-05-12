@@ -511,4 +511,42 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clockEmptyHint =>
       'No clocks yet.\nTap + at the bottom-right to add one.';
+
+  @override
+  String get homeMenuSettings => 'Settings';
+
+  @override
+  String get settingsAppBarTitle => 'Settings';
+
+  @override
+  String get settingsSectionDisplay => 'Display';
+
+  @override
+  String get settingsSectionDefaults => 'Defaults';
+
+  @override
+  String get settingsSectionAbout => 'About';
+
+  @override
+  String get settingsThemeLabel => 'Theme';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsDefaultSnoozeLabel => 'Snooze minutes';
+
+  @override
+  String settingsDefaultSnoozeOption(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get settingsDefaultAlarmSoundLabel => 'Alarm sound';
 }
