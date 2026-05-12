@@ -46,7 +46,18 @@ UX フィードバック。設計セッションで案 (a) 空状態ボタン / 
 - Timer タブ AppBar overflow の旧「プリセット管理」エントリは残置
   (両方からアクセス可、慣れたユーザの shortcut を温存)
 
-**現状**: 528 件全件緑 (旧 527 + 新規 1)、`flutter analyze` 緑、push 待ち。
+**現状**: 528 件全件緑 (旧 527 + 新規 1)、`flutter analyze` 緑、PR #35 (push 済 +
+review 2 件対応済 + main rebase 済)、CI 緑、**Pixel 6a / Android 16 で 6 シナリオ
+実機検証完了 (2026-05-12、不具合なし)**、マージ可否確認待ち。
+
+**実機検証結果**:
+
+- S1 通常状態 (preset あり) で manage button 表示: OK
+- S2 Manage button → `/presets` 遷移 + 戻る: OK
+- S3 Empty 状態でも manage button 表示 / 遷移: OK
+- S4 AppBar overflow 旧導線リグレッションなし: OK
+- S5 ダークモードで視認性: OK
+- S6 ライトモードで視認性: OK
 
 ---
 
