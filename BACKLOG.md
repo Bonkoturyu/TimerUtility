@@ -588,7 +588,17 @@ AndroidManifest 編集はユーザー確認必須。
 ## Phase 11（任意）: 仕上げ
 
 - [ ] アプリアイコン・スプラッシュ
-- [ ] 設定画面（音源選択、デフォルトスヌーズ時間、テーマ手動切替、色覚多様性対応モードなど）
+- [~] 設定画面（音源選択、デフォルトスヌーズ時間、テーマ手動切替、色覚多様性対応モードなど）
+  - 初回 PR 完了 (2026-05-12、PR #36)。テーマ手動切替 / デフォルトスヌーズ分 /
+    デフォルトアラーム音源 / ライセンス導線移設の 4 項目を `SettingsNotifier`
+    (`@Riverpod(keepAlive: true)` + freezed `SettingsState`) で一元管理。
+    `UserPreferences` port に `getString` / `setString` を追加し、
+    `themeMode` / `defaultSnoozeMinutes` / `defaultAlarmSoundId` キーを永続化。
+    HomeScreen overflow は「ライセンス」を削除して「設定」のみを公開、ライセンス
+    画面導線は設定画面の「情報」セクションに移設。Pixel 6a / Android 16 で
+    7 シナリオ実機検証完了 (2026-05-12、不具合なし)。
+  - 残: CVD モード (方針 (a) 冗長表示で全ユーザ適用に決定済) / 言語手動切替
+    UI / 通知 channel 名 i18n / 中韓 ARB 本格翻訳 は別 PR。
   - **テーマ手動切替**: `MaterialApp.themeMode` を `UserPreferences` に
     `ThemeMode.index` (`int`、`0=system` / `1=light` / `2=dark`、Flutter SDK
     `material/app.dart:57` の宣言順) として永続化、キーは規約に合わせて
@@ -596,7 +606,7 @@ AndroidManifest 編集はユーザー確認必須。
     `bool` / `int` のみで `String` 非対応のため、文字列リテラルではなく `int`
     保存とする)。Riverpod `ThemeMode` Notifier 経由で MaterialApp に注入。
     Phase 11 ダークモード対応 (PR #33) では `ThemeMode.system` 固定にして手動切替
-    UI を意図的に持ち越したので、本タスクで蓋を閉じる。
+    UI を意図的に持ち越したので、本タスクで蓋を閉じる。**→ PR #36 で実装完了**。
   - **色覚多様性 (CVD、いわゆる色盲) 対応モード**: 現状 `permission_banners.dart` の
     3 種バナー (post_notifications / exact_alarm / full_screen_intent) は MD3
     semantic role `errorContainer` / `tertiaryContainer` / `secondaryContainer`
