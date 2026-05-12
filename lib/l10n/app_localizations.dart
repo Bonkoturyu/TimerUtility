@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'カスタム時間で作成'**
   String get presetSheetCustomButton;
 
+  /// No description provided for @presetSheetManageButton.
+  ///
+  /// In ja, this message translates to:
+  /// **'プリセットを管理...'**
+  String get presetSheetManageButton;
+
   /// No description provided for @presetManageAppBarTitle.
   ///
   /// In ja, this message translates to:

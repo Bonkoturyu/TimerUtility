@@ -99,17 +99,21 @@ void main() {
     expect(find.text('プリセットから選択'), findsOneWidget);
     expect(find.byKey(const Key('preset_chip_p-30s')), findsOneWidget);
     expect(find.byKey(const Key('preset_sheet_custom_button')), findsOneWidget);
+    expect(find.byKey(const Key('preset_sheet_manage_button')), findsOneWidget);
   });
 
-  testWidgets('empty collection shows only the custom button', (tester) async {
+  testWidgets('empty collection shows custom + manage buttons (no chips)', (
+    tester,
+  ) async {
     await tester.pumpWidget(_harness(null));
     await _settleRestore(tester);
     await tester.tap(find.byKey(const Key('open')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('preset_sheet_custom_button')), findsOneWidget);
-    // No preset chips rendered.
-    expect(find.byType(FilledButton), findsOneWidget); // only custom button
+    expect(find.byKey(const Key('preset_sheet_manage_button')), findsOneWidget);
+    // No preset chips rendered → only the custom FilledButton, no chips.
+    expect(find.byType(FilledButton), findsOneWidget);
   });
 
   testWidgets('tapping a preset chip pops PresetSelectResult.preset', (
@@ -149,6 +153,24 @@ void main() {
 
       expect(captured?.preset, isNull);
       expect(captured?.customRequested, isTrue);
+      expect(captured?.manageRequested, isFalse);
+    },
+  );
+
+  testWidgets(
+    'tapping the manage button pops PresetSelectResult.manageRequested',
+    (tester) async {
+      PresetSelectResult? captured;
+      await tester.pumpWidget(_harness(null, capture: (r) => captured = r));
+      await _settleRestore(tester);
+      await tester.tap(find.byKey(const Key('open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('preset_sheet_manage_button')));
+      await tester.pumpAndSettle();
+
+      expect(captured?.preset, isNull);
+      expect(captured?.customRequested, isFalse);
+      expect(captured?.manageRequested, isTrue);
     },
   );
 }

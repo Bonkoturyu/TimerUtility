@@ -12,11 +12,18 @@ import 'preset_label_formatter.dart';
 ///     create a timer using that preset's duration / soundId.
 ///   - `customRequested == true`: user tapped "Create with custom
 ///     time" → caller should open the existing [DurationPicker].
-///   - both `null` / `false`: dismissed.
+///   - `manageRequested == true`: user tapped "Manage presets..." →
+///     caller should navigate to [PresetManageScreen].
+///   - all `null` / `false`: dismissed.
 class PresetSelectResult {
-  const PresetSelectResult({this.preset, this.customRequested = false});
+  const PresetSelectResult({
+    this.preset,
+    this.customRequested = false,
+    this.manageRequested = false,
+  });
   final Preset? preset;
   final bool customRequested;
+  final bool manageRequested;
 }
 
 /// Phase 9 bottom sheet shown when the user taps the "Add timer" FAB
@@ -89,6 +96,17 @@ class PresetSelectSheet extends ConsumerWidget {
                 context,
               ).pop(const PresetSelectResult(customRequested: true)),
               child: Text(l.presetSheetCustomButton),
+            ),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              key: const Key('preset_sheet_manage_button'),
+              icon: const Icon(Icons.tune),
+              label: Text(l.presetSheetManageButton),
+              onPressed: () => Navigator.of(
+                context,
+              ).pop(const PresetSelectResult(manageRequested: true)),
             ),
           ],
         ),

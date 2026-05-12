@@ -19,6 +19,57 @@
 
 ## 進行中
 
+### Phase 11 follow-up: プリセット管理の発見性改善 (2026-05-12)
+
+Phase 11 ダークモード対応の Pixel 6a 実機検証 (2026-05-12) で、ユーザから
+「プリセット管理が右上 overflow menu (3 点リーダー) だと発見しにくい」との
+UX フィードバック。設計セッションで案 (a) 空状態ボタン / (b) 長押し /
+(c) sheet 末尾エントリ / (d) 2 つ目 FAB / (e) 設定画面集約 を比較し、
+発見性 / 既存 UX 影響 / 実装コストのバランスから **(c) sheet 末尾エントリ**
+を採用。
+
+**実装サマリ (commits, branch `feature/phase-11-preset-discoverability`)**:
+
+- `PresetSelectResult` に `manageRequested` フィールド追加 (既存
+  `preset` / `customRequested` と並ぶ 3 つ目の選択肢)
+- `PresetSelectSheet` 末尾の custom button の下に Divider + `TextButton.icon`
+  (`Icons.tune`、key `preset_sheet_manage_button`) で「プリセットを管理...」
+  エントリ追加。primary action と secondary action を視覚的に分離
+- caller `timer_list_page._onAddPressed` で `selection.manageRequested`
+  分岐を追加し `unawaited(context.push(PresetManageScreen.routeLocation))`
+  で遷移。go_router import 追加
+- ARB ja/en に `presetSheetManageButton` 追加 (「プリセットを管理...」/
+  "Manage presets...")、`flutter gen-l10n` で `AppLocalizations` 再生成
+- `preset_select_sheet_test.dart`: 既存 2 件 (chip+custom 両表示 / empty
+  collection) のアサート更新 + 新規 2 件 (manage button が manageRequested
+  で pop / customRequested != manageRequested の排他確認) 追加
+- Timer タブ AppBar overflow の旧「プリセット管理」エントリは残置
+  (両方からアクセス可、慣れたユーザの shortcut を温存)
+
+**現状**: 528 件全件緑 (旧 527 + 新規 1)、`flutter analyze` 緑、push 待ち。
+
+---
+
+### Phase 11 (ダークモード対応) 実装完了 → 実機検証完了 (2026-05-12)
+
+実機検証完了。Pixel 6a / Android 16 で 7 シナリオ全 OK:
+
+- S1〜S6: すべて期待通り
+- **S2 (e)** preset 削除確認ダイアログ: 出ない = 仕様
+  (`UserPreferenceKeys.skipPresetDeleteConfirm` が過去操作で永続化済み、
+  `preset_manage_screen.dart:357` で skip 判定)。**今後の検証手順書には事前準備
+  「`adb shell pm clear com.bonkotu.timer` でクリア」を入れる**
+- **S7** Recent 画面のテーマ非追従: Android `TaskSnapshot` 仕様
+  (Activity が onPause / onStop の間は再描画されない、フォアグラウンド復帰で
+  最新 theme で描画)。**Flutter / アプリ側で対応しても意味がない**
+
+実機検証フィードバックから派生した「プリセット管理発見性」は別 follow-up
+(上記参照) で対応中。
+
+実機検証以前の元ログは過去セッションを参照。
+
+---
+
 ### Phase 11 (ダークモード対応) 実装完了 → 実機検証待ち (2026-05-11)
 
 BACKLOG.md L633「ダークモード対応」を Auto セッションで実装。設計判断は
