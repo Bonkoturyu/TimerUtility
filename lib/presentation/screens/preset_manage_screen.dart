@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/preset_collection_notifier.dart';
+import '../../application/settings_notifier.dart';
 import '../../application/user_preferences_provider.dart';
 import '../../domain/ports/user_preferences.dart';
 import '../../domain/timer/preset.dart';
@@ -96,10 +97,13 @@ class PresetManageScreen extends ConsumerWidget {
   Future<void> _onAdd(BuildContext context, WidgetRef ref) async {
     final AppLocalizations l = AppLocalizations.of(context);
     final notifier = ref.read(presetCollectionNotifierProvider.notifier);
+    final String defaultSoundId = ref
+        .read(settingsNotifierProvider)
+        .defaultAlarmSoundId;
     final result = await showModalBottomSheet<PresetEditResult>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => const PresetEditSheet(),
+      builder: (_) => PresetEditSheet(defaultSoundId: defaultSoundId),
     );
     if (result == null) return;
     try {
@@ -334,10 +338,17 @@ class _PresetCard extends ConsumerWidget {
     WidgetRef ref,
     PresetCollectionNotifier notifier,
   ) async {
+    // 編集モードでは widget.editing.soundId が優先されるため、defaultSoundId
+    // は実際には使われない。設定画面の現在値を素直に渡してパス自体を
+    // 共通化する。
+    final String defaultSoundId = ref
+        .read(settingsNotifierProvider)
+        .defaultAlarmSoundId;
     final result = await showModalBottomSheet<PresetEditResult>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => PresetEditSheet(editing: preset),
+      builder: (_) =>
+          PresetEditSheet(editing: preset, defaultSoundId: defaultSoundId),
     );
     if (result == null) return;
     notifier.update(

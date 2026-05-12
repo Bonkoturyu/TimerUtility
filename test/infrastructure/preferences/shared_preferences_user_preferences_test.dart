@@ -91,6 +91,44 @@ void main() {
     });
   });
 
+  group('getString', () {
+    test('returns null for an absent key', () async {
+      final adapter = await makeAdapter();
+      expect(await adapter.getString('defaultAlarmSoundId'), isNull);
+    });
+
+    test('returns the stored string verbatim (including empty)', () async {
+      // 空文字列を「未設定」と混同しないことを明示するためのテスト。
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.defaultAlarmSoundId': '',
+      });
+      expect(await adapter.getString('defaultAlarmSoundId'), '');
+    });
+
+    test('returns positive values verbatim', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.defaultAlarmSoundId': 'gentle',
+      });
+      expect(await adapter.getString('defaultAlarmSoundId'), 'gentle');
+    });
+  });
+
+  group('setString', () {
+    test('persists a value that getString reads back', () async {
+      final adapter = await makeAdapter();
+      await adapter.setString('defaultAlarmSoundId', 'gentle');
+      expect(await adapter.getString('defaultAlarmSoundId'), 'gentle');
+    });
+
+    test('overwrites an existing value', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.defaultAlarmSoundId': 'default',
+      });
+      await adapter.setString('defaultAlarmSoundId', 'warning');
+      expect(await adapter.getString('defaultAlarmSoundId'), 'warning');
+    });
+  });
+
   group('remove', () {
     test('removes the key so subsequent getBool returns null', () async {
       final adapter = await makeAdapter(<String, Object>{
@@ -106,6 +144,14 @@ void main() {
       });
       await adapter.remove('lastHomePageIndex');
       expect(await adapter.getInt('lastHomePageIndex'), isNull);
+    });
+
+    test('removes a string key so subsequent getString returns null', () async {
+      final adapter = await makeAdapter(<String, Object>{
+        'flutter.defaultAlarmSoundId': 'gentle',
+      });
+      await adapter.remove('defaultAlarmSoundId');
+      expect(await adapter.getString('defaultAlarmSoundId'), isNull);
     });
 
     test('is a no-op for an absent key', () async {

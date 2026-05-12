@@ -235,5 +235,23 @@
     }
   },
   "clockEntryEditCatalogEmpty": "All available cities are already pinned",
-  "clockEmptyHint": "No clocks yet.\nTap + at the bottom-right to add one."
+  "clockEmptyHint": "No clocks yet.\nTap + at the bottom-right to add one.",
+
+  "homeMenuSettings": "Settings",
+  "settingsAppBarTitle": "Settings",
+  "settingsSectionDisplay": "Display",
+  "settingsSectionDefaults": "Defaults",
+  "settingsSectionAbout": "About",
+  "settingsThemeLabel": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsDefaultSnoozeLabel": "Snooze minutes",
+  "settingsDefaultSnoozeOption": "{minutes} min",
+  "@settingsDefaultSnoozeOption": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "settingsDefaultAlarmSoundLabel": "Alarm sound"
 }

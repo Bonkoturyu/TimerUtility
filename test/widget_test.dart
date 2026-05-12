@@ -48,6 +48,7 @@ class _IdentityResolver implements TimezoneResolver {
 class _FakePrefs implements UserPreferences {
   final Map<String, bool> _bools = <String, bool>{};
   final Map<String, int> _ints = <String, int>{};
+  final Map<String, String> _strings = <String, String>{};
 
   @override
   Future<bool?> getBool(String key) async => _bools[key];
@@ -62,9 +63,17 @@ class _FakePrefs implements UserPreferences {
   Future<void> setInt(String key, int value) async => _ints[key] = value;
 
   @override
+  Future<String?> getString(String key) async => _strings[key];
+
+  @override
+  Future<void> setString(String key, String value) async =>
+      _strings[key] = value;
+
+  @override
   Future<void> remove(String key) async {
     _bools.remove(key);
     _ints.remove(key);
+    _strings.remove(key);
   }
 }
 

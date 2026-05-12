@@ -223,5 +223,23 @@
     }
   },
   "clockEntryEditCatalogEmpty": "すべての都市が登録済みです",
-  "clockEmptyHint": "時計が登録されていません。\n右下の「＋」ボタンから追加できます。"
+  "clockEmptyHint": "時計が登録されていません。\n右下の「＋」ボタンから追加できます。",
+
+  "homeMenuSettings": "設定",
+  "settingsAppBarTitle": "設定",
+  "settingsSectionDisplay": "表示",
+  "settingsSectionDefaults": "デフォルト",
+  "settingsSectionAbout": "情報",
+  "settingsThemeLabel": "テーマ",
+  "settingsThemeSystem": "システム",
+  "settingsThemeLight": "ライト",
+  "settingsThemeDark": "ダーク",
+  "settingsDefaultSnoozeLabel": "スヌーズ分",
+  "settingsDefaultSnoozeOption": "{minutes} 分",
+  "@settingsDefaultSnoozeOption": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "settingsDefaultAlarmSoundLabel": "アラーム音源"
 }

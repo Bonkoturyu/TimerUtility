@@ -27,6 +27,16 @@ abstract class UserPreferences {
   /// Writes an int. Persists immediately on the underlying store.
   Future<void> setInt(String key, int value);
 
+  /// Reads a stored string. Returns `null` when the key has never been
+  /// written so callers can distinguish "first launch" from an
+  /// explicitly stored empty string. Phase 11 settings screen uses this
+  /// for the default alarm sound id (catalog ids are strings); future
+  /// language-preference work is expected to reuse the same surface.
+  Future<String?> getString(String key);
+
+  /// Writes a string. Persists immediately on the underlying store.
+  Future<void> setString(String key, String value);
+
   /// Removes a key. No-op if absent.
   Future<void> remove(String key);
 }
@@ -52,4 +62,21 @@ class UserPreferenceKeys {
   /// kill/restart cycle. Absent / `null` means "first launch — fall
   /// back to the default landing tab".
   static const String lastHomePageIndex = 'lastHomePageIndex';
+
+  /// Manual theme override. Stored as `ThemeMode.index` (`0=system /
+  /// 1=light / 2=dark` per Flutter SDK `material/app.dart` declaration
+  /// order). Absent / out-of-range value means "follow the system" —
+  /// the Phase 11 settings notifier clamps and falls back accordingly.
+  static const String themeMode = 'themeMode';
+
+  /// Default snooze minutes seeded into newly-created alarms. Allowed
+  /// values are `{5, 10, 15}` (matches the alarm edit `SegmentedButton`
+  /// choices); anything else falls back to `5`.
+  static const String defaultSnoozeMinutes = 'defaultSnoozeMinutes';
+
+  /// Default alarm sound id seeded into newly-created alarms and
+  /// presets. Resolved against `AlarmSoundCatalog.findById`; an unknown
+  /// id (e.g. asset removed in a future release) falls back to the
+  /// catalog's `defaultSound`.
+  static const String defaultAlarmSoundId = 'defaultAlarmSoundId';
 }

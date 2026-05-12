@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_collection_notifier.dart';
+import '../../application/settings_notifier.dart';
 import '../../application/user_preferences_provider.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/alarm_repeat.dart';
@@ -54,6 +55,12 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   String? _soundId;
   int _snoozeMinutes = 5;
   bool _initialized = false;
+  // Phase 11 設定画面: 新規作成モードでユーザ設定のデフォルト
+  // (defaultSnoozeMinutes / defaultAlarmSoundId) を 1 度だけ反映する。
+  // didChangeDependencies が複数回呼ばれてもユーザ入力を上書きしないよう
+  // フラグで二重実行を防ぐ。編集モードでは既存値が優先なのでこのパスを
+  // 通らない (else 分岐に依存しない: ガードは _isEditMode で十分)。
+  bool _appliedDefaults = false;
 
   late final TextEditingController _labelController;
 
@@ -68,13 +75,22 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_initialized || !_isEditMode) return;
-    // Notifier の state が既に populated されているケース (warm load)
-    // で即時初期化。空のときは build の ref.listen で microtask 完了を
-    // 待つ。
-    final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);
-    final AlarmEntity? entity = _findById(all, widget.alarmId!);
-    if (entity != null) _applyEntity(entity);
+    if (_isEditMode) {
+      if (_initialized) return;
+      // Notifier の state が既に populated されているケース (warm load)
+      // で即時初期化。空のときは build の ref.listen で microtask 完了を
+      // 待つ。
+      final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);
+      final AlarmEntity? entity = _findById(all, widget.alarmId!);
+      if (entity != null) _applyEntity(entity);
+      return;
+    }
+    // 新規作成モード: 設定画面のデフォルトを 1 度だけシードする。
+    if (_appliedDefaults) return;
+    final SettingsState settings = ref.read(settingsNotifierProvider);
+    _snoozeMinutes = settings.defaultSnoozeMinutes;
+    _soundId = settings.defaultAlarmSoundId;
+    _appliedDefaults = true;
   }
 
   void _applyEntity(AlarmEntity entity) {
