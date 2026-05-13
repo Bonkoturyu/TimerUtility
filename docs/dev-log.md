@@ -57,8 +57,12 @@ CVD 対応の本質的合格条件を満たした。
 
 本検証では Manifest 編集はスコープ外とし、`[推奨]` バナーの rendering
 品質は Widget Test `test/presentation/widgets/permission_banners_test.dart`
-の 7 件 (中間値 `recommended` の accent 幅 5.0pt / titleWeight w700 を assert
-する 2 件含む) で代替担保とした。`flutter test` 558 件緑。
+の 7 件で代替担保とした。具体的には accent 幅 5.0pt を `Container.constraints.maxWidth`
+で assert する 2 件 (個別 + 3 種同時表示) と、ラベル `[推奨]` 文字を
+`find.textContaining` で確認する 1 件で間接的にカバー。`titleWeight` の
+FontWeight 値そのものを assert するテストは現状無く、これは F-x 候補
+(本 PR スコープ外、追加するなら別 PR で `tester.widget<Text>(...).style?.fontWeight`
+を assert)。`flutter test` 558 件緑。
 
 `[重要]` (critical, 8pt, w900) と `[補助]` (supplementary, 3pt, w600) の
 2 種が実機で同時表示できることから、中間値 (5pt, w700) は線形補間で
@@ -122,9 +126,10 @@ Pixel 6a / Android 16 の applicationId は `com.bonkotu.timer.timer_utility`
 - [x] タップ動作 (S11) / 言語切替 (S12 日英) / 全 granted で非表示 (S13)
   すべて実機 OK 確認
 - [x] Widget Test 7 件 (`requestNotification` / `openSettings` 呼び出し +
-  `SizedBox.shrink` 落ち + 中間値 `recommended` の幅・太さ assert) も緑
+  `SizedBox.shrink` 落ち + accent 幅 5.0pt assert + `[推奨]` ラベル文字
+  `find.textContaining`) も緑
 
-本 PR (#39) の CVD 対応はクローズ。Phase 11 残タスクは BACKLOG.md
+PR #39 の CVD 対応はこれでクローズ。Phase 11 残タスクは BACKLOG.md
 進捗サマリ表を参照。
 
 ---
