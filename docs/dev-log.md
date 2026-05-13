@@ -60,7 +60,7 @@ MD3 semantic role による色相区別 (`errorContainer` / `tertiaryContainer`
 - 他ウィジェット (`alarm_ringing_screen.dart` 等) の CVD レビュー
 
 **現状**: 558 テストパス (旧 552 + 新規 7 - 旧 1)、`flutter analyze` 緑、
-PR #XX 作成済。実機検証 (Pixel 6a + Android「色補正」で Protanomaly /
+PR #39 作成済。実機検証 (Pixel 6a + Android「色補正」で Protanomaly /
 Deuteranomaly / Tritanomaly 切替時の重大度識別、ライト / ダーク両モード
 視認性) はユーザ側で PR レビュー時に実施予定。
 
