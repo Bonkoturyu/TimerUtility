@@ -48,6 +48,41 @@
 
 ---
 
+### F-8. `PermissionBanner` の本文折り返し品質改善 (PR #39 実機検証で発見)
+
+**経緯**: PR #39 (Phase 11 CVD banner labels、2026-05-13 main マージ) の
+Pixel 6a 実機検証で、`[重要]` バナーの本文が「許可する」ボタンの
+幅を避けて折り返すため、文の途中で改行が発生することを確認:
+
+```text
+タイマーが終了したときに通知が表    [許可する]
+示されません。
+```
+
+[`lib/presentation/widgets/permission_banners.dart`](lib/presentation/widgets/permission_banners.dart)
+の `_PermissionBanner.build` が `Row(Icon → Column(title + description)
+→ TextButton)` 構造で、`Expanded` の本文がボタン幅を確保した残りで
+折り返すため。**PR #39 以前から存在する既存挙動**で、CVD 改修
+スコープでは触っていない。機能影響なし、視覚品質のみの課題。
+
+**修正内容** (TODO):
+
+- [ ] 本文を縦並び (`Column(title + description + ActionRow)`) に再構成し、
+  「許可する」/「設定を開く」ボタンを下段独立配置にする案を検討
+- [ ] あるいは Wrap 化 (title + button を 1 行 → 溢れたら折り返し) も検討
+- [ ] 画面サイズ分岐 (タブレット / 横画面では現状 Row が自然)
+- [ ] Widget Test を追加: 長文タイトルでも文中改行が起きないことを assert
+
+**トリガ**: PermissionBanner の他の UI 改修 PR でまとめる、または
+「本文表示品質」テーマで単独 PR を切る。実機検証で UX 影響が
+許容できないとユーザ判断された場合は単独 PR に格上げ。
+
+**優先度**: 低 (cosmetic、CVD 識別性自体は損なわれていない、機能影響なし)。
+本文折り返しがあっても重大度ラベル `[重要]` / `[補助]` は先頭にあるため
+読み始めは保たれている。
+
+---
+
 ## ブロック中
 
 <!-- ブロック要因と解消条件をここに記載 -->
@@ -63,7 +98,9 @@
 
 ---
 
-最終更新日: 2026-05-13（Phase 11 CVD banner labels 完了 — 設定画面サブタスク「色覚多様性 (CVD) 対応モード」を方針 (a) 冗長表示で全ユーザ適用として完結 (PR #39)。詳細は `docs/dev-log.md` 「Phase 11 CVD banner labels (2026-05-13)」参照）
+最終更新日: 2026-05-13（Phase 11 CVD banner labels の Pixel 6a 実機検証で発見した本文折り返し品質課題を F-8 として記録。CVD 識別性自体は損なわれていない既存挙動、cosmetic）
+
+過去の更新: 2026-05-13（Phase 11 CVD banner labels 完了 — 設定画面サブタスク「色覚多様性 (CVD) 対応モード」を方針 (a) 冗長表示で全ユーザ適用として完結 (PR #39)。詳細は `docs/dev-log.md` 「Phase 11 CVD banner labels (2026-05-13)」参照）
 
 過去の更新: 2026-05-13（Phase 6 完全クローズ — `docs/platform-channels.md` を実装ベースに整列、4 ch 採用見送り確定 + `clearShowWhenLocked` 後付け文書化）
 
