@@ -193,6 +193,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get permissionBannerActionOpenSettings => '設定を開く';
 
   @override
+  String get permissionBannerSeverityCritical => '[重要]';
+
+  @override
+  String get permissionBannerSeverityRecommended => '[推奨]';
+
+  @override
+  String get permissionBannerSeveritySupplementary => '[補助]';
+
+  @override
   String get alarmSoundDefault => 'デフォルト';
 
   @override
