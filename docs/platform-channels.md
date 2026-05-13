@@ -208,16 +208,28 @@ flutter_local_notifications パッケージ内蔵の `ScheduledNotificationBootR
 
 ### Provider / 利用箇所
 
-`PermissionChannel` クラスは Riverpod Provider 化していない。利用箇所は 2 つ:
+`PermissionChannel` クラスは Riverpod Provider 化していない。利用箇所は 3 つ:
 
-1. `PermissionHandlerAdapter` 内部で `late final PermissionChannel` として
-   保持し、FSI 権限の問い合わせ / 設定画面遷移に使用
-2. [alarm_ringing_screen.dart:22-24](../lib/presentation/screens/alarm_ringing_screen.dart#L22-L24)
+1. [`PermissionHandlerAdapter`](../lib/infrastructure/permission/permission_handler_adapter.dart)
+   内部で `final PermissionChannel _channel` として保持し、FSI 権限の
+   問い合わせ (`checkFullScreenIntent`) / 設定画面遷移
+   (`openFullScreenIntentSettings`) に使用
+2. [`FlutterLocalNotificationAdapter`](../lib/infrastructure/notification/flutter_local_notification_adapter.dart)
+   内部で `final PermissionChannel _permissionChannel` として保持し、
+   `_safeCanUseFullScreenIntent()` 経由で `schedule()` から FSI 可否を
+   再問い合わせ（OS 設定がいつでも変わる可能性があるためキャッシュしない）
+3. [alarm_ringing_screen.dart:22-24](../lib/presentation/screens/alarm_ringing_screen.dart#L22-L24)
    で `const MethodChannel('com.bonkotu.timer/permission')` を直接生成し、
    `clearShowWhenLocked` のみ単発呼び出し（ラッパクラスを介さない）
 
-この実態は「Channel が増えたら Provider 化を検討」程度の方針で十分機能して
-おり、現状の 1 Channel / 3 メソッドの規模では設計上の負債になっていない。
+3 の Presentation 層 (`AlarmRingingScreen`) から Infrastructure 詳細
+(`MethodChannel`) を直接参照している構造は、CLAUDE.md および
+`.gemini/styleguide.md` の依存方向原則
+（`Presentation → Application → Domain ← Infrastructure`）に対する
+**例外（技術的負債）として認識** している。1 メソッドのために
+`PermissionChannel` ラッパ経由 / Riverpod Provider 経由に整える価値が
+低かったため現状こうなっているが、Channel / メソッドが増えた段階で
+ラッパー経由への統一を検討する。
 
 ---
 
@@ -260,6 +272,11 @@ try {
   // 現状の Channel では明示的な error code は飛ばない。
   // 将来 error code を導入する場合は switch (e.code) で分岐する。
   return false;
+} on MissingPluginException {
+  // テスト環境や Native 側 handler 未登録時に発生。
+  // 実態として [`FlutterLocalNotificationAdapter._safeCanUseFullScreenIntent`](../lib/infrastructure/notification/flutter_local_notification_adapter.dart)
+  // で同様の catch を行い、ヘッドアップ通知へフォールバックしている。
+  return false;
 }
 ```
 
@@ -274,16 +291,32 @@ try {
 }
 ```
 
-現実態の `MainActivity.kt` は例外 catch を入れておらず、`result.success(...)` /
-`result.notImplemented()` のみ。Android 14+ の `canUseFullScreenIntent()` は
-NPE / SecurityException を投げない保証があるため、現状の最小実装で十分。
+現実態の `MainActivity.kt` は `openFullScreenIntentSettingsInternal` のみで
+`ActivityNotFoundException` を catch し、汎用設定画面へフォールバックしている
+（[MainActivity.kt:121-126](../android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/MainActivity.kt#L121-L126)）。
+それ以外の handler は `result.success(...)` / `result.notImplemented()` のみで、
+明示的な error code は投げていない。`canUseFullScreenIntent` についても現状の
+最小実装で安定動作しているが、将来 SDK 変更で例外伝播が変わる可能性は残るので、
+問題が観測されたら上記サンプルのような汎用 try / catch を追加する方針。
 
 ---
 
 ## テスト戦略
 
-参考情報。現状 `com.bonkotu.timer/permission` 周辺の Native ↔ Dart 通信に対する
-専用テストは持っていない（ロジックが薄く、実機検証でカバーできているため）。
+現状の `com.bonkotu.timer/permission` 周辺の Native ↔ Dart 通信に対するテスト
+状況:
+
+- **Dart 側**:
+  [`test/infrastructure/platform/permission_channel_test.dart`](../test/infrastructure/platform/permission_channel_test.dart)
+  に MethodChannel モックベースの Unit Test が 4 ケースあり
+  (`canUseFullScreenIntent` の true / false / null → false フォールバック +
+  `openFullScreenIntentSettings` の呼び出し検証)。
+  `clearShowWhenLocked` および `PermissionHandlerAdapter` /
+  `FlutterLocalNotificationAdapter` の MethodChannel 経由パスは現時点で
+  専用ユニットテスト未整備（実機検証でカバー）
+- **Native 側**: 専用 Unit Test / Integration Test は無し。Phase 6 実機検証
+  (Pixel 6a / Android 16、2026-04-30) と Phase 6 follow-up (2026-05-04 の
+  recents ボタン消失修正) で動作確認済み
 
 将来 Channel を拡張する場合の方針:
 
