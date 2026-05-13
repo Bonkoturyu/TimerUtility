@@ -103,6 +103,9 @@
   "permissionBannerFullScreenIntentDescription": "Without this permission, alarms will appear as a heads-up banner instead.",
   "permissionBannerActionAllow": "Allow",
   "permissionBannerActionOpenSettings": "Open settings",
+  "permissionBannerSeverityCritical": "Critical",
+  "permissionBannerSeverityRecommended": "Recommended",
+  "permissionBannerSeveritySupplementary": "Supplementary",
 
   "alarmSoundDefault": "Default",
   "alarmSoundGentle": "Gentle",

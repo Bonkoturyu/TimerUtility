@@ -63,6 +63,8 @@
 
 ---
 
-最終更新日: 2026-05-13（Phase 6 完全クローズ — `docs/platform-channels.md` を実装ベースに整列、4 ch 採用見送り確定 + `clearShowWhenLocked` 後付け文書化。詳細は `docs/dev-log.md` 「Phase 6 docs cleanup (2026-05-13)」参照）
+最終更新日: 2026-05-13（Phase 11 CVD banner labels 完了 — 設定画面サブタスク「色覚多様性 (CVD) 対応モード」を方針 (a) 冗長表示で全ユーザ適用として完結 (PR #XX)。詳細は `docs/dev-log.md` 「Phase 11 CVD banner labels (2026-05-13)」参照）
+
+過去の更新: 2026-05-13（Phase 6 完全クローズ — `docs/platform-channels.md` を実装ベースに整列、4 ch 採用見送り確定 + `clearShowWhenLocked` 後付け文書化）
 
 過去の更新: 2026-05-12（完了タスクログを `docs/dev-log.md` に移管、1505 行 → 約 60 行に整理）

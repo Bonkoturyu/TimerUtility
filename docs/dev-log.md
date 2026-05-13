@@ -12,6 +12,60 @@ Follow-up 対応の詳細記録。各 Phase の実装過程・実機検証結果
 
 ---
 
+## Phase 11 CVD banner labels (2026-05-13)
+
+Phase 11「設定画面」サブタスクの「色覚多様性 (CVD) 対応モード」を BACKLOG.md
+方針 (a) 冗長表示で完結。`lib/presentation/widgets/permission_banners.dart`
+の 3 種バナー (post_notifications / exact_alarm / full_screen_intent) に
+以下の冗長表示を追加:
+
+1. タイトル先頭に重大度ラベル `[重要]` / `[推奨]` / `[補助]` を併記 (ARB
+   新規キー `permissionBannerSeverity{Critical,Recommended,Supplementary}`
+   経由、日英のみ追加)
+2. タイトル `FontWeight` を critical=w900 / recommended=w700 /
+   supplementary=w600 に段階差
+3. バナー左端に縦色帯 (幅 8 / 5 / 3 pt、色は `onColor` の alpha 60%) を
+   追加して形状差。`Material(color, borderRadius)` の中を `ClipRRect` +
+   `Row(IntrinsicHeight)` 構成に変更し、最左に accent `Container`、
+   その右に既存の Padding + Row (Icon + 本文 + TextButton) を配置
+
+MD3 semantic role による色相区別 (`errorContainer` / `tertiaryContainer`
+/ `secondaryContainer`) は維持。CVD タイプ別の見え方は色相に依存しない
+3 つの冗長情報で識別可能になった。
+
+**実装サマリ (branch `feature/phase-11-cvd-banner-labels`)**:
+
+- `lib/l10n/app_ja.arb` / `app_en.arb`: 3 重大度ラベルキーを ARB に追加
+- `lib/l10n/app_localizations*.dart`: `flutter gen-l10n` で再生成
+  (test 起動時に自動再生成された)
+- `lib/presentation/widgets/permission_banners.dart`: file-private
+  `enum _PermissionBannerSeverity { critical, recommended, supplementary }`
+  追加、`_PermissionBanner` に `severity` / `accentKey` フィールド追加、
+  タイトルを `Text.rich` でラベル + 既存タイトルの 2 TextSpan 化、
+  最外殻を `Material` → `Material > ClipRRect > Row(IntrinsicHeight) >
+  [accent Container, Expanded(既存 Padding+Row)]` に変更
+- `test/presentation/widgets/permission_banners_test.dart` 新規 7 ケース
+  (3 severity ごとのラベル + accent 幅検証、全 granted で SizedBox.shrink、
+  Allow タップで `requestNotification`、Open settings タップで
+  `openSettings`、3 種同時表示で accent 幅 8 > 5 > 3 の形状差検証)
+- BACKLOG.md / docs/dev-log.md / tasklist.md の進捗反映
+
+**スコープ外**:
+
+- 設定画面への CVD ON/OFF トグル (方針 (b) は不採用、BACKLOG L600 で確定済)
+- CVD-safe palette (Okabe-Ito / IBM Color Palette) への切替
+- 中韓 ARB (`zh` / `zh-Hant` / `ko`) は別 PR (ローカライズ実翻訳タスク)
+  と統合 — `ENABLE_EXPERIMENTAL_LOCALES=true` 起動時は
+  `AppLocalizations` の fallback 仕様で英訳が当たる前提
+- 他ウィジェット (`alarm_ringing_screen.dart` 等) の CVD レビュー
+
+**現状**: 558 テストパス (旧 552 + 新規 7 - 旧 1)、`flutter analyze` 緑、
+PR #XX 作成済。実機検証 (Pixel 6a + Android「色補正」で Protanomaly /
+Deuteranomaly / Tritanomaly 切替時の重大度識別、ライト / ダーク両モード
+視認性) はユーザ側で PR レビュー時に実施予定。
+
+---
+
 ## Phase 11 follow-up: プリセット管理の発見性改善 (2026-05-12)
 
 Phase 11 ダークモード対応の Pixel 6a 実機検証 (2026-05-12) で、ユーザから

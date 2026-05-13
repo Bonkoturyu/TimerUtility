@@ -33,9 +33,11 @@ class PermissionBanners extends ConsumerWidget {
       banners.add(
         _PermissionBanner(
           key: const Key('banner_post_notifications'),
+          accentKey: const Key('banner_post_notifications_accent'),
           icon: Icons.notifications_off_outlined,
           color: scheme.errorContainer,
           onColor: scheme.onErrorContainer,
+          severity: _PermissionBannerSeverity.critical,
           title: l.permissionBannerNotificationsTitle,
           description: l.permissionBannerNotificationsDescription,
           actionLabel:
@@ -57,9 +59,11 @@ class PermissionBanners extends ConsumerWidget {
       banners.add(
         _PermissionBanner(
           key: const Key('banner_exact_alarm'),
+          accentKey: const Key('banner_exact_alarm_accent'),
           icon: Icons.alarm_off_outlined,
           color: scheme.tertiaryContainer,
           onColor: scheme.onTertiaryContainer,
+          severity: _PermissionBannerSeverity.recommended,
           title: l.permissionBannerExactAlarmTitle,
           description: l.permissionBannerExactAlarmDescription,
           actionLabel:
@@ -81,9 +85,11 @@ class PermissionBanners extends ConsumerWidget {
       banners.add(
         _PermissionBanner(
           key: const Key('banner_full_screen_intent'),
+          accentKey: const Key('banner_full_screen_intent_accent'),
           icon: Icons.lock_outline,
           color: scheme.secondaryContainer,
           onColor: scheme.onSecondaryContainer,
+          severity: _PermissionBannerSeverity.supplementary,
           title: l.permissionBannerFullScreenIntentTitle,
           description: l.permissionBannerFullScreenIntentDescription,
           actionLabel: l.permissionBannerActionOpenSettings,
@@ -107,21 +113,29 @@ class PermissionBanners extends ConsumerWidget {
   }
 }
 
+/// Phase 11 CVD 冗長表示用の重大度。色相に依存しない 3 種の冗長情報
+/// (ラベル / FontWeight / 左端色帯幅) を一括で決定するためのキー。
+enum _PermissionBannerSeverity { critical, recommended, supplementary }
+
 class _PermissionBanner extends StatelessWidget {
   const _PermissionBanner({
     required super.key,
+    required this.accentKey,
     required this.icon,
     required this.color,
     required this.onColor,
+    required this.severity,
     required this.title,
     required this.description,
     required this.actionLabel,
     required this.onAction,
   });
 
+  final Key accentKey;
   final IconData icon;
   final Color color;
   final Color onColor;
+  final _PermissionBannerSeverity severity;
   final String title;
   final String description;
   final String actionLabel;
@@ -129,38 +143,91 @@ class _PermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final String severityLabel = switch (severity) {
+      _PermissionBannerSeverity.critical => l.permissionBannerSeverityCritical,
+      _PermissionBannerSeverity.recommended =>
+        l.permissionBannerSeverityRecommended,
+      _PermissionBannerSeverity.supplementary =>
+        l.permissionBannerSeveritySupplementary,
+    };
+    final FontWeight titleWeight = switch (severity) {
+      _PermissionBannerSeverity.critical => FontWeight.w900,
+      _PermissionBannerSeverity.recommended => FontWeight.w700,
+      _PermissionBannerSeverity.supplementary => FontWeight.w600,
+    };
+    final double accentWidth = switch (severity) {
+      _PermissionBannerSeverity.critical => 8.0,
+      _PermissionBannerSeverity.recommended => 5.0,
+      _PermissionBannerSeverity.supplementary => 3.0,
+    };
+
+    final BorderRadius radius = BorderRadius.circular(8);
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: DefaultTextStyle.merge(
-          style: TextStyle(color: onColor),
-          child: IconTheme.merge(
-            data: IconThemeData(color: onColor),
-            child: Row(
-              children: <Widget>[
-                Icon(icon),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+      borderRadius: radius,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Container(
+                key: accentKey,
+                width: accentWidth,
+                color: onColor.withValues(alpha: 0.6),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: DefaultTextStyle.merge(
+                    style: TextStyle(color: onColor),
+                    child: IconTheme.merge(
+                      data: IconThemeData(color: onColor),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(icon),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text.rich(
+                                  TextSpan(
+                                    children: <InlineSpan>[
+                                      TextSpan(
+                                        text: '[$severityLabel] ',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: title,
+                                        style: TextStyle(
+                                          fontWeight: titleWeight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(description),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: onAction,
+                            style: TextButton.styleFrom(
+                              foregroundColor: onColor,
+                            ),
+                            child: Text(actionLabel),
+                          ),
+                        ],
                       ),
-                      Text(description),
-                    ],
+                    ),
                   ),
                 ),
-                TextButton(
-                  onPressed: onAction,
-                  style: TextButton.styleFrom(foregroundColor: onColor),
-                  child: Text(actionLabel),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
