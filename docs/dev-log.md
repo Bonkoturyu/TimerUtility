@@ -28,6 +28,9 @@ Color correction (Settings → Accessibility → Color and motion → Color corr
 | Deuteranomaly (2 型色覚) | ✓ | ✓ | OK |
 | Tritanomaly (3 型色覚) | ✓ | ✓ | OK |
 | Grayscale (色相完全排除) | ✓ | ✓ | OK (目視のみ判定、後述) |
+| S11 タップ動作 (Allow / Open settings) | ✓ | — | OK (`requestNotification` / `openFullScreenIntentSettings` 呼出確認) |
+| S12 言語切替 日 → 英 | ✓ | — | OK (`[Critical]` / `[Supplementary]` に切替) |
+| S13 全 granted で `SizedBox.shrink` | ✓ | — | OK (バナー完全に消える) |
 
 **判定基準**: 3 つの冗長要素 (ラベル `[重要]`/`[補助]` + 左端色帯幅 8pt/3pt +
 タイトル `FontWeight` w900/w600) のすべてが各シナリオで視認可能であり、
@@ -94,22 +97,32 @@ Pixel 6a / Android 16 の applicationId は `com.bonkotu.timer.timer_utility`
 物理撮影、(b) PC で screenshot を後加工してグレースケール変換、(c) 目視判定
 の 3 択になる。本検証は (c) を採用。
 
-### 副次発見: F-8 — PermissionBanner の本文折り返し品質
+### 副次発見
 
-実機検証中に、`[重要]` バナーの本文が「許可する」ボタン幅を避けて
-折り返すため、文の途中で改行が発生する既存挙動を確認 (例:
-「タイマーが終了したときに通知が表」「示されません」)。CVD 改修以前から
-存在し、CVD 識別性自体には影響しない (重大度ラベル `[重要]` は先頭で読める)
-cosmetic 課題のため、別 follow-up `tasklist.md` F-8 (PR #41) として記録。
+実機検証中に CVD 改修以前から存在する既存挙動を 2 件発見、`tasklist.md`
+の follow-up として記録 (PR #41 にまとめて記録):
+
+- **F-8**: `[重要]` バナーの本文が「許可する」ボタン幅を避けて折り返す
+  ため、文の途中で改行 (例: 「タイマーが終了したときに通知が表」「示
+  されません」)。CVD 識別性自体には影響しない cosmetic 課題
+- **F-9**: S12 言語切替で繁体中文 (台湾) 選択時、英訳ではなく日本語に
+  フォールバック。`lib/main.dart` の `_publicSupportedLocales` 先頭が
+  `Locale('ja')` + `localeResolutionCallback` 未設定のため、Flutter の
+  `basicLocaleListResolution` が `supportedLocales[0] = ja` にフォールバック
+  する標準挙動。Phase 8.5 ローカライズ土台導入時からの既存仕様で、
+  PR #39 起因ではない。修正案 (5 行程度の `localeResolutionCallback`
+  追加で `Locale('en')` フォールバック化) を F-9 に記載。中韓 ARB 実翻訳
+  タスクで吸収するか単独 PR で先行修正するかは別途検討
 
 ### 検証 DoD 達成
 
 - [x] Grayscale (色相完全排除) で重大度識別可能 → **CVD 対応本質達成**
 - [x] ライト / ダーク両モードでコントラスト保持
 - [x] 第一 / 第二 / 第三色弱の 3 タイプで識別可能
-- [x] 既存挙動 (タップ動作 / 全 granted で非表示) は本検証では未確認だが、
-  Widget Test 7 件で `requestNotification` / `openSettings` 呼び出しと
-  `SizedBox.shrink` 落ちはカバー済み
+- [x] タップ動作 (S11) / 言語切替 (S12 日英) / 全 granted で非表示 (S13)
+  すべて実機 OK 確認
+- [x] Widget Test 7 件 (`requestNotification` / `openSettings` 呼び出し +
+  `SizedBox.shrink` 落ち + 中間値 `recommended` の幅・太さ assert) も緑
 
 本 PR (#39) の CVD 対応はクローズ。Phase 11 残タスクは BACKLOG.md
 進捗サマリ表を参照。
