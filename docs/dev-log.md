@@ -12,6 +12,110 @@ Follow-up 対応の詳細記録。各 Phase の実装過程・実機検証結果
 
 ---
 
+## Phase 11 CVD banner labels 実機検証完了 (2026-05-13)
+
+PR #39 (Phase 11 CVD banner labels) の Pixel 6a / Android 16 (API 36) 実機検証を完了。
+
+### 検証範囲と結果
+
+Color correction (Settings → Accessibility → Color and motion → Color correction) を
+切り替えながら、`PermissionBanners` の重大度識別性を目視確認:
+
+| シナリオ | ライト | ダーク | 結果 |
+| --- | --- | --- | --- |
+| 色補正 OFF (基本表示) | ✓ | ✓ | OK |
+| Protanomaly (1 型色覚) | ✓ | ✓ | OK |
+| Deuteranomaly (2 型色覚) | ✓ | ✓ | OK |
+| Tritanomaly (3 型色覚) | ✓ | ✓ | OK |
+| Grayscale (色相完全排除) | ✓ | ✓ | OK (目視のみ判定、後述) |
+
+**判定基準**: 3 つの冗長要素 (ラベル `[重要]`/`[補助]` + 左端色帯幅 8pt/3pt +
+タイトル `FontWeight` w900/w600) のすべてが各シナリオで視認可能であり、
+色相情報に依存せず重大度の段階差が読み取れること。
+
+Grayscale (最厳格条件、色相情報ゼロ) でも識別可能だったことで、
+CVD 対応の本質的合格条件を満たした。
+
+### 検証できなかった範囲とその理由
+
+`[推奨]` バナー (`SCHEDULE_EXACT_ALARM` denied 状態) は実機では再現不可:
+
+- `android/app/src/main/AndroidManifest.xml` で
+  `android.permission.USE_EXACT_ALARM` (Android 13+ で導入された install
+  permission) を宣言しており、`dumpsys package` で
+  `USE_EXACT_ALARM: granted=true` が install permission として自動付与される
+- `AlarmManager.canScheduleExactAlarms()` は `USE_EXACT_ALARM` OR
+  ユーザの `SCHEDULE_EXACT_ALARM` special access の OR 判定なので、
+  TimerUtility では常に true を返す
+- → `permission_handler` の `Permission.scheduleExactAlarm.status` も常に granted、
+  `state.scheduleExactAlarm == denied` 分岐が実機で発生しない
+- → `[推奨]` バナーは Manifest を一時編集しないと実機表示できない (CLAUDE.md
+  「編集時にユーザー確認が必要なファイル」のスコープ追加が必要)
+
+本検証では Manifest 編集はスコープ外とし、`[推奨]` バナーの rendering
+品質は Widget Test `test/presentation/widgets/permission_banners_test.dart`
+の 7 件 (中間値 `recommended` の accent 幅 5.0pt / titleWeight w700 を assert
+する 2 件含む) で代替担保とした。`flutter test` 558 件緑。
+
+`[重要]` (critical, 8pt, w900) と `[補助]` (supplementary, 3pt, w600) の
+2 種が実機で同時表示できることから、中間値 (5pt, w700) は線形補間で
+識別可能と判定。
+
+### 実機検証フローで使ったコマンド (再発時の手順メモ)
+
+`appops` でユーザの special access 設定を deny:
+
+```text
+adb shell appops set com.bonkotu.timer.timer_utility USE_FULL_SCREEN_INTENT ignore
+adb shell pm revoke com.bonkotu.timer.timer_utility android.permission.POST_NOTIFICATIONS
+```
+
+権限を元に戻す:
+
+```text
+adb shell pm reset-permissions com.bonkotu.timer.timer_utility
+adb shell cmd appops reset com.bonkotu.timer.timer_utility
+```
+
+Pixel 6a / Android 16 の applicationId は `com.bonkotu.timer.timer_utility`
+(`com.bonkotu.timer` だと `appops` が `No UID for ... in user 0` エラー、
+今回の検証で 30 分時間ロスした実績あり)。
+
+### Android の screenshot 仕様メモ
+
+`Color correction` (Accessibility) は SurfaceFlinger の合成パイプライン
+最終段で適用され、screencap API はその上流から取得するため、
+**Color correction フィルタは screenshot に反映されない仕様**。
+本検証の Protanomaly / Deuteranomaly / Tritanomaly のスクリーンショットは
+オリジナルカラーで保存されており、Grayscale 状態の見え方は実機目視のみ判定。
+
+「色覚補助は本人が見る画面のみで完結し、共有時には元の色情報を保持する」
+という Accessibility 設計思想に沿った挙動。検証時は (a) 別端末/カメラで
+物理撮影、(b) PC で screenshot を後加工してグレースケール変換、(c) 目視判定
+の 3 択になる。本検証は (c) を採用。
+
+### 副次発見: F-8 — PermissionBanner の本文折り返し品質
+
+実機検証中に、`[重要]` バナーの本文が「許可する」ボタン幅を避けて
+折り返すため、文の途中で改行が発生する既存挙動を確認 (例:
+「タイマーが終了したときに通知が表」「示されません」)。CVD 改修以前から
+存在し、CVD 識別性自体には影響しない (重大度ラベル `[重要]` は先頭で読める)
+cosmetic 課題のため、別 follow-up `tasklist.md` F-8 (PR #41) として記録。
+
+### 検証 DoD 達成
+
+- [x] Grayscale (色相完全排除) で重大度識別可能 → **CVD 対応本質達成**
+- [x] ライト / ダーク両モードでコントラスト保持
+- [x] 第一 / 第二 / 第三色弱の 3 タイプで識別可能
+- [x] 既存挙動 (タップ動作 / 全 granted で非表示) は本検証では未確認だが、
+  Widget Test 7 件で `requestNotification` / `openSettings` 呼び出しと
+  `SizedBox.shrink` 落ちはカバー済み
+
+本 PR (#39) の CVD 対応はクローズ。Phase 11 残タスクは BACKLOG.md
+進捗サマリ表を参照。
+
+---
+
 ## Phase 11 CVD banner labels (2026-05-13)
 
 Phase 11「設定画面」サブタスクの「色覚多様性 (CVD) 対応モード」を BACKLOG.md
