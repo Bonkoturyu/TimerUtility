@@ -63,4 +63,6 @@
 
 ---
 
-最終更新日: 2026-05-12（完了タスクログを `docs/dev-log.md` に移管、1505 行 → 約 60 行に整理）
+最終更新日: 2026-05-13（Phase 6 完全クローズ — `docs/platform-channels.md` を実装ベースに整列、4 ch 採用見送り確定 + `clearShowWhenLocked` 後付け文書化。詳細は `docs/dev-log.md` 「Phase 6 docs cleanup (2026-05-13)」参照）
+
+過去の更新: 2026-05-12（完了タスクログを `docs/dev-log.md` に移管、1505 行 → 約 60 行に整理）

@@ -1282,4 +1282,37 @@ PR #30 gemini-code-assist レビュー G1 follow-up。presentation 層は
 
 ---
 
-最終更新日: 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）
+### Phase 6 docs cleanup (2026-05-13)
+
+Phase 6 最後の残課題「Native → Flutter のイベント送信仕様確定
+(`docs/platform-channels.md` 更新)」を closing。
+
+Phase 9.5 / 10 / 10.5 / 11 まで進めても Native → Flutter の能動イベントは
+結局不要で、flutter_local_notifications の payload + `MainActivity.onNewIntent`
+で完結したため、当初予定の 4 Channel (`/notification` / `/alarm_event` /
+`/boot` / `/lockscreen`) を採用見送りとして整理。
+
+整理内容:
+
+- 実装済み Channel = `com.bonkotu.timer/permission` 1 つのみ
+  (3 メソッド: `canUseFullScreenIntent` / `openFullScreenIntentSettings` /
+  `clearShowWhenLocked`)
+- `clearShowWhenLocked` は Phase 6 実機検証フォローで後付け追加されたが
+  docs 未反映だったため、本セッションで正式に文書化 (用途・対応 API・
+  なぜ必要かを含む)
+- 4 採用見送り Channel について、それぞれの代替手段と「将来再採用する
+  なら何が必要か」を docs に明記
+- 旧 docs にあった `AlarmEventChannelHandler` / `LockscreenChannelHandler`
+  などの架空クラス分離案、`alarm_event_channel.dart` / `boot_channel.dart`
+  などの架空ラッパファイル参照を削除し、実態 (MainActivity 単体 +
+  `permission_channel.dart` 1 ファイル) に整列
+
+成果物: `docs/platform-channels.md` 全面リライト、`BACKLOG.md` Phase 6
+残課題 [x] 化 + 進捗サマリ更新、本 dev-log エントリ追加、`tasklist.md`
+最終更新日更新。コード変更なし。
+
+---
+
+最終更新日: 2026-05-13（Phase 6 docs cleanup エントリ追加）
+
+過去の更新: 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）
