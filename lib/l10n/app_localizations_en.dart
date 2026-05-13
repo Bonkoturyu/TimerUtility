@@ -208,6 +208,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionBannerActionOpenSettings => 'Open settings';
 
   @override
+  String get permissionBannerSeverityCritical => '[Critical]';
+
+  @override
+  String get permissionBannerSeverityRecommended => '[Recommended]';
+
+  @override
+  String get permissionBannerSeveritySupplementary => '[Supplementary]';
+
+  @override
   String get alarmSoundDefault => 'Default';
 
   @override

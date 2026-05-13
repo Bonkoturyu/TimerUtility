@@ -91,6 +91,9 @@
   "permissionBannerFullScreenIntentDescription": "権限がない場合は通知バナーで代わりにお知らせします。",
   "permissionBannerActionAllow": "許可する",
   "permissionBannerActionOpenSettings": "設定を開く",
+  "permissionBannerSeverityCritical": "[重要]",
+  "permissionBannerSeverityRecommended": "[推奨]",
+  "permissionBannerSeveritySupplementary": "[補助]",
 
   "alarmSoundDefault": "デフォルト",
   "alarmSoundGentle": "やさしい",
