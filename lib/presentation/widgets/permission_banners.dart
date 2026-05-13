@@ -194,19 +194,10 @@ class _PermissionBanner extends StatelessWidget {
                               children: <Widget>[
                                 Text.rich(
                                   TextSpan(
+                                    style: TextStyle(fontWeight: titleWeight),
                                     children: <InlineSpan>[
-                                      TextSpan(
-                                        text: '[$severityLabel] ',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: title,
-                                        style: TextStyle(
-                                          fontWeight: titleWeight,
-                                        ),
-                                      ),
+                                      TextSpan(text: '$severityLabel '),
+                                      TextSpan(text: title),
                                     ],
                                   ),
                                 ),

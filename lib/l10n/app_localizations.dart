@@ -443,19 +443,19 @@ abstract class AppLocalizations {
   /// No description provided for @permissionBannerSeverityCritical.
   ///
   /// In ja, this message translates to:
-  /// **'重要'**
+  /// **'[重要]'**
   String get permissionBannerSeverityCritical;
 
   /// No description provided for @permissionBannerSeverityRecommended.
   ///
   /// In ja, this message translates to:
-  /// **'推奨'**
+  /// **'[推奨]'**
   String get permissionBannerSeverityRecommended;
 
   /// No description provided for @permissionBannerSeveritySupplementary.
   ///
   /// In ja, this message translates to:
-  /// **'補助'**
+  /// **'[補助]'**
   String get permissionBannerSeveritySupplementary;
 
   /// No description provided for @alarmSoundDefault.
