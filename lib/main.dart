@@ -69,12 +69,44 @@ List<Locale> get supportedLocales => <Locale>[
   if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,
 ];
 
+/// Resolve a device locale to one of [supported], falling back to
+/// [Locale('en')] when no language code matches.
+///
+/// This intentionally differs from Flutter's default
+/// `basicLocaleListResolution`, which falls back to `supported[0]` —
+/// here we fall back to English to give users of unsupported languages
+/// a more globally readable text than Japanese.
+///
+/// We evaluate a **single** device locale (not the full preferred-locale
+/// chain) because Flutter's `localeResolutionCallback` only hands us
+/// one locale, and we want the notification resolver to behave the same
+/// way. If the language code matches any entry in [supported], we
+/// delegate to `basicLocaleListResolution` (with a singleton list) so
+/// the SDK can still pick the best script/country variant.
+@visibleForTesting
+Locale resolveSupportedLocale(Locale? deviceLocale, List<Locale> supported) {
+  if (deviceLocale != null) {
+    for (final Locale s in supported) {
+      if (s.languageCode == deviceLocale.languageCode) {
+        return basicLocaleListResolution(<Locale>[deviceLocale], supported);
+      }
+    }
+  }
+  return const Locale('en');
+}
+
 /// Resolve the localized strings used for OS notifications against the
-/// device's preferred locale, fall back to the first supported locale
-/// when no match exists. Notifier code can't call
+/// device's preferred locale. Delegates to [resolveSupportedLocale], so
+/// any locale whose language code isn't in [supportedLocales] falls
+/// back to `Locale('en')` — matching the UI side's
+/// `localeResolutionCallback` behavior. Notifier code can't call
 /// `AppLocalizations.of(context)` (no `BuildContext`), so we resolve
 /// against `AppLocalizations.delegate.load` and stash the result in
 /// `notificationStringsNotifierProvider`.
+///
+/// We evaluate only `platformDispatcher.locales.first` (not the full
+/// chain) to keep UI and notification semantics identical — Flutter's
+/// `localeResolutionCallback` only hands us a single locale.
 ///
 /// Called both at startup (initial value) and from
 /// `_TimerUtilityAppState.didChangeLocales` whenever the OS reports a
@@ -83,8 +115,11 @@ List<Locale> get supportedLocales => <Locale>[
 Future<NotificationStrings> _resolveNotificationStrings() async {
   final List<Locale> systemLocales =
       WidgetsBinding.instance.platformDispatcher.locales;
-  final Locale resolved = basicLocaleListResolution(
-    systemLocales,
+  final Locale? deviceLocale = systemLocales.isEmpty
+      ? null
+      : systemLocales.first;
+  final Locale resolved = resolveSupportedLocale(
+    deviceLocale,
     supportedLocales,
   );
   final AppLocalizations l = await AppLocalizations.delegate.load(resolved);
@@ -411,6 +446,9 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
       routerConfig: widget.router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: supportedLocales,
+      localeResolutionCallback:
+          (Locale? deviceLocale, Iterable<Locale> supported) =>
+              resolveSupportedLocale(deviceLocale, supported.toList()),
       onGenerateTitle: (BuildContext context) =>
           AppLocalizations.of(context).appTitle,
     );
