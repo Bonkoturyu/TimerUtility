@@ -79,4 +79,11 @@ class UserPreferenceKeys {
   /// id (e.g. asset removed in a future release) falls back to the
   /// catalog's `defaultSound`.
   static const String defaultAlarmSoundId = 'defaultAlarmSoundId';
+
+  /// Manual locale override (BCP-47 language tag, e.g. `'ja'`, `'en'`,
+  /// `'zh-Hant'`). Absent / null means "follow the system" — the settings
+  /// notifier returns `null` for `localeOverride` and `MaterialApp.locale`
+  /// stays null so the `localeResolutionCallback` (F-9) keeps deciding.
+  /// Unsupported / malformed tags also fall back to null on restore.
+  static const String localeTag = 'localeTag';
 }

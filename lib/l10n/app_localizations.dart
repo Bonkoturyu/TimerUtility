@@ -1027,6 +1027,24 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'アラーム音源'**
   String get settingsDefaultAlarmSoundLabel;
+
+  /// No description provided for @settingsLanguageLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'言語'**
+  String get settingsLanguageLabel;
+
+  /// No description provided for @settingsLanguageSystem.
+  ///
+  /// In ja, this message translates to:
+  /// **'システムに合わせる'**
+  String get settingsLanguageSystem;
+
+  /// No description provided for @settingsLanguageDialogTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'言語を選択'**
+  String get settingsLanguageDialogTitle;
 }
 
 class _AppLocalizationsDelegate

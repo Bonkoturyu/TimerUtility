@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$SettingsState {
   ThemeMode get themeMode => throw _privateConstructorUsedError;
+  Locale? get localeOverride => throw _privateConstructorUsedError;
   int get defaultSnoozeMinutes => throw _privateConstructorUsedError;
   String get defaultAlarmSoundId => throw _privateConstructorUsedError;
 
@@ -37,6 +38,7 @@ abstract class $SettingsStateCopyWith<$Res> {
   @useResult
   $Res call({
     ThemeMode themeMode,
+    Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
   });
@@ -58,6 +60,7 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
   @override
   $Res call({
     Object? themeMode = null,
+    Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
   }) {
@@ -67,6 +70,10 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
                 ? _value.themeMode
                 : themeMode // ignore: cast_nullable_to_non_nullable
                       as ThemeMode,
+            localeOverride: freezed == localeOverride
+                ? _value.localeOverride
+                : localeOverride // ignore: cast_nullable_to_non_nullable
+                      as Locale?,
             defaultSnoozeMinutes: null == defaultSnoozeMinutes
                 ? _value.defaultSnoozeMinutes
                 : defaultSnoozeMinutes // ignore: cast_nullable_to_non_nullable
@@ -92,6 +99,7 @@ abstract class _$$SettingsStateImplCopyWith<$Res>
   @useResult
   $Res call({
     ThemeMode themeMode,
+    Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
   });
@@ -112,6 +120,7 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? themeMode = null,
+    Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
   }) {
@@ -121,6 +130,10 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
             ? _value.themeMode
             : themeMode // ignore: cast_nullable_to_non_nullable
                   as ThemeMode,
+        localeOverride: freezed == localeOverride
+            ? _value.localeOverride
+            : localeOverride // ignore: cast_nullable_to_non_nullable
+                  as Locale?,
         defaultSnoozeMinutes: null == defaultSnoozeMinutes
             ? _value.defaultSnoozeMinutes
             : defaultSnoozeMinutes // ignore: cast_nullable_to_non_nullable
@@ -139,6 +152,7 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
 class _$SettingsStateImpl implements _SettingsState {
   const _$SettingsStateImpl({
     required this.themeMode,
+    required this.localeOverride,
     required this.defaultSnoozeMinutes,
     required this.defaultAlarmSoundId,
   });
@@ -146,13 +160,15 @@ class _$SettingsStateImpl implements _SettingsState {
   @override
   final ThemeMode themeMode;
   @override
+  final Locale? localeOverride;
+  @override
   final int defaultSnoozeMinutes;
   @override
   final String defaultAlarmSoundId;
 
   @override
   String toString() {
-    return 'SettingsState(themeMode: $themeMode, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId)';
+    return 'SettingsState(themeMode: $themeMode, localeOverride: $localeOverride, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId)';
   }
 
   @override
@@ -162,6 +178,8 @@ class _$SettingsStateImpl implements _SettingsState {
             other is _$SettingsStateImpl &&
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
+            (identical(other.localeOverride, localeOverride) ||
+                other.localeOverride == localeOverride) &&
             (identical(other.defaultSnoozeMinutes, defaultSnoozeMinutes) ||
                 other.defaultSnoozeMinutes == defaultSnoozeMinutes) &&
             (identical(other.defaultAlarmSoundId, defaultAlarmSoundId) ||
@@ -172,6 +190,7 @@ class _$SettingsStateImpl implements _SettingsState {
   int get hashCode => Object.hash(
     runtimeType,
     themeMode,
+    localeOverride,
     defaultSnoozeMinutes,
     defaultAlarmSoundId,
   );
@@ -188,12 +207,15 @@ class _$SettingsStateImpl implements _SettingsState {
 abstract class _SettingsState implements SettingsState {
   const factory _SettingsState({
     required final ThemeMode themeMode,
+    required final Locale? localeOverride,
     required final int defaultSnoozeMinutes,
     required final String defaultAlarmSoundId,
   }) = _$SettingsStateImpl;
 
   @override
   ThemeMode get themeMode;
+  @override
+  Locale? get localeOverride;
   @override
   int get defaultSnoozeMinutes;
   @override

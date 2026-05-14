@@ -244,5 +244,8 @@
       "minutes": {"type": "int"}
     }
   },
-  "settingsDefaultAlarmSoundLabel": "アラーム音源"
+  "settingsDefaultAlarmSoundLabel": "アラーム音源",
+  "settingsLanguageLabel": "言語",
+  "settingsLanguageSystem": "システムに合わせる",
+  "settingsLanguageDialogTitle": "言語を選択"
 }
