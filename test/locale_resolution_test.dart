@@ -60,6 +60,13 @@ void main() {
       );
     });
 
+    // Resolver-only contract: this test verifies that when a caller
+    // includes zh-Hant in `supported`, the resolver returns it
+    // unchanged. It does NOT assert that `AppLocalizations.delegate`
+    // can load zh-Hant — at the time of this PR (F-9), only en/ja ARB
+    // files are generated under `lib/l10n/`. Loading zh-Hant is the
+    // responsibility of the upcoming zh/ko translation task tracked in
+    // BACKLOG.md L694, not of this resolver's unit tests.
     test(
       'zh-Hant resolves to itself when listed in supported (experimental)',
       () {

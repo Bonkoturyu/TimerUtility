@@ -96,11 +96,17 @@ Locale resolveSupportedLocale(Locale? deviceLocale, List<Locale> supported) {
 }
 
 /// Resolve the localized strings used for OS notifications against the
-/// device's preferred locale, fall back to the first supported locale
-/// when no match exists. Notifier code can't call
+/// device's preferred locale. Delegates to [resolveSupportedLocale], so
+/// any locale whose language code isn't in [supportedLocales] falls
+/// back to `Locale('en')` — matching the UI side's
+/// `localeResolutionCallback` behavior. Notifier code can't call
 /// `AppLocalizations.of(context)` (no `BuildContext`), so we resolve
 /// against `AppLocalizations.delegate.load` and stash the result in
 /// `notificationStringsNotifierProvider`.
+///
+/// We evaluate only `platformDispatcher.locales.first` (not the full
+/// chain) to keep UI and notification semantics identical — Flutter's
+/// `localeResolutionCallback` only hands us a single locale.
 ///
 /// Called both at startup (initial value) and from
 /// `_TimerUtilityAppState.didChangeLocales` whenever the OS reports a
