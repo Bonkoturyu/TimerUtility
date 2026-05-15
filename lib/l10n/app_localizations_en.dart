@@ -202,12 +202,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Without this permission, alarms will appear as a heads-up banner instead.';
 
   @override
-  String get permissionBannerActionAllow => 'Allow';
-
-  @override
-  String get permissionBannerActionOpenSettings => 'Open settings';
-
-  @override
   String get permissionBannerHintTapToAllow =>
       'Tap anywhere to change this permission.';
 

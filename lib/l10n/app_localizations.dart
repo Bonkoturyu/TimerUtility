@@ -428,18 +428,6 @@ abstract class AppLocalizations {
   /// **'権限がない場合は通知バナーで代わりにお知らせします。'**
   String get permissionBannerFullScreenIntentDescription;
 
-  /// No description provided for @permissionBannerActionAllow.
-  ///
-  /// In ja, this message translates to:
-  /// **'許可する'**
-  String get permissionBannerActionAllow;
-
-  /// No description provided for @permissionBannerActionOpenSettings.
-  ///
-  /// In ja, this message translates to:
-  /// **'設定を開く'**
-  String get permissionBannerActionOpenSettings;
-
   /// No description provided for @permissionBannerHintTapToAllow.
   ///
   /// In ja, this message translates to:
