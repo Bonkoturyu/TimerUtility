@@ -40,11 +40,11 @@ class PermissionBanners extends ConsumerWidget {
           severity: _PermissionBannerSeverity.critical,
           title: l.permissionBannerNotificationsTitle,
           description: l.permissionBannerNotificationsDescription,
-          actionLabel:
+          hint:
               state.postNotifications ==
                   DomainPermissionStatus.permanentlyDenied
-              ? l.permissionBannerActionOpenSettings
-              : l.permissionBannerActionAllow,
+              ? l.permissionBannerHintTapToOpenSettings
+              : l.permissionBannerHintTapToAllow,
           onAction:
               state.postNotifications ==
                   DomainPermissionStatus.permanentlyDenied
@@ -66,11 +66,11 @@ class PermissionBanners extends ConsumerWidget {
           severity: _PermissionBannerSeverity.recommended,
           title: l.permissionBannerExactAlarmTitle,
           description: l.permissionBannerExactAlarmDescription,
-          actionLabel:
+          hint:
               state.scheduleExactAlarm ==
                   DomainPermissionStatus.permanentlyDenied
-              ? l.permissionBannerActionOpenSettings
-              : l.permissionBannerActionAllow,
+              ? l.permissionBannerHintTapToOpenSettings
+              : l.permissionBannerHintTapToAllow,
           onAction:
               state.scheduleExactAlarm ==
                   DomainPermissionStatus.permanentlyDenied
@@ -92,7 +92,7 @@ class PermissionBanners extends ConsumerWidget {
           severity: _PermissionBannerSeverity.supplementary,
           title: l.permissionBannerFullScreenIntentTitle,
           description: l.permissionBannerFullScreenIntentDescription,
-          actionLabel: l.permissionBannerActionOpenSettings,
+          hint: l.permissionBannerHintTapToOpenSettings,
           onAction: () => notifier.openFullScreenIntentSettings(),
         ),
       );
@@ -127,7 +127,7 @@ class _PermissionBanner extends StatelessWidget {
     required this.severity,
     required this.title,
     required this.description,
-    required this.actionLabel,
+    required this.hint,
     required this.onAction,
   });
 
@@ -138,7 +138,7 @@ class _PermissionBanner extends StatelessWidget {
   final _PermissionBannerSeverity severity;
   final String title;
   final String description;
-  final String actionLabel;
+  final String hint;
   final VoidCallback onAction;
 
   @override
@@ -163,67 +163,78 @@ class _PermissionBanner extends StatelessWidget {
     };
 
     final BorderRadius radius = BorderRadius.circular(8);
-    return Material(
-      color: color,
-      borderRadius: radius,
-      child: ClipRRect(
+    final TextStyle? hintStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85));
+
+    return Semantics(
+      button: true,
+      container: true,
+      onTap: onAction,
+      label: '$severityLabel $title。$description $hint',
+      child: Material(
+        color: color,
         borderRadius: radius,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Container(
-                key: accentKey,
-                width: accentWidth,
-                color: onColor.withValues(alpha: 0.6),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: DefaultTextStyle.merge(
-                    style: TextStyle(color: onColor),
-                    child: IconTheme.merge(
-                      data: IconThemeData(color: onColor),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Icon(icon),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text.rich(
-                                  TextSpan(
-                                    style: TextStyle(fontWeight: titleWeight),
-                                    children: <InlineSpan>[
-                                      TextSpan(text: '$severityLabel '),
-                                      TextSpan(text: title),
+        child: InkWell(
+          onTap: onAction,
+          borderRadius: radius,
+          child: ClipRRect(
+            borderRadius: radius,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  ExcludeSemantics(
+                    child: Container(
+                      key: accentKey,
+                      width: accentWidth,
+                      color: onColor.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: DefaultTextStyle.merge(
+                        style: TextStyle(color: onColor),
+                        child: IconTheme.merge(
+                          data: IconThemeData(color: onColor),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              ExcludeSemantics(child: Icon(icon)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ExcludeSemantics(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text.rich(
+                                        TextSpan(
+                                          style: TextStyle(
+                                            fontWeight: titleWeight,
+                                          ),
+                                          children: <InlineSpan>[
+                                            TextSpan(text: '$severityLabel '),
+                                            TextSpan(text: title),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(description),
+                                      Text(hint, style: hintStyle),
                                     ],
                                   ),
                                 ),
-                                Text(description),
-                                const SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: onAction,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: onColor,
-                                    ),
-                                    child: Text(actionLabel),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
