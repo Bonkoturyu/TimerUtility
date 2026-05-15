@@ -116,6 +116,10 @@
   "notificationTimerCompletedBackgroundBody": "Timer ended while the app was in the background.",
   "notificationAlarmRingingTitle": "Alarm",
   "notificationAlarmRingingBody": "It's time for your alarm.",
+  "notificationTimerAlarmChannelName": "Timer Alarm",
+  "notificationTimerAlarmChannelDescription": "Alarm notification when a timer ends",
+  "notificationTimerCompletedChannelName": "Timer Completed (Background)",
+  "notificationTimerCompletedChannelDescription": "Silent notification when a timer ended while the app was in the background",
 
   "presetSheetTitle": "Choose preset",
   "presetSheetCustomButton": "Create with custom time",

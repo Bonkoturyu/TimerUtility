@@ -227,6 +227,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationAlarmRingingBody => 'アラームの時刻になりました。';
 
   @override
+  String get notificationTimerAlarmChannelName => 'タイマーアラーム';
+
+  @override
+  String get notificationTimerAlarmChannelDescription => 'タイマー終了時のアラーム通知';
+
+  @override
+  String get notificationTimerCompletedChannelName => 'タイマー完了（バックグラウンド）';
+
+  @override
+  String get notificationTimerCompletedChannelDescription =>
+      'バックグラウンド中にタイマーが終了したことを知らせる無音通知';
+
+  @override
   String get presetSheetTitle => 'プリセットから選択';
 
   @override

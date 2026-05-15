@@ -1,3 +1,5 @@
+import '../notifications/notification_strings.dart';
+
 /// Port for scheduling and cancelling timer-end notifications.
 ///
 /// The implementation lives in `infrastructure/notification/` and is wired
@@ -39,4 +41,20 @@ abstract class NotificationScheduler {
 
   /// Cancel every scheduled / displayed notification owned by this app.
   Future<void> cancelAll();
+
+  /// Re-push locale-aware channel names/descriptions after a language
+  /// switch.
+  ///
+  /// On Android this re-creates the OS notification channels with the
+  /// same ids but updated `name` and `description` fields — the
+  /// documented way to localise the labels that appear in
+  /// Settings → Apps → … → Notifications. Importance / sound / vibration
+  /// stay locked to the original values (the OS protects user
+  /// overrides).
+  ///
+  /// Platforms without the channel concept (iOS, …) implement this as a
+  /// no-op. Callers should treat this as fire-and-forget: in-flight
+  /// scheduled notifications are not re-issued by this call (caller
+  /// handles that separately when needed — e.g. `rescheduleAllRunning`).
+  Future<void> updateChannelNames(NotificationStrings strings);
 }

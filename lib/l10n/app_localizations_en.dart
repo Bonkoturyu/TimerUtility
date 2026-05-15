@@ -244,6 +244,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationAlarmRingingBody => 'It\'s time for your alarm.';
 
   @override
+  String get notificationTimerAlarmChannelName => 'Timer Alarm';
+
+  @override
+  String get notificationTimerAlarmChannelDescription =>
+      'Alarm notification when a timer ends';
+
+  @override
+  String get notificationTimerCompletedChannelName =>
+      'Timer Completed (Background)';
+
+  @override
+  String get notificationTimerCompletedChannelDescription =>
+      'Silent notification when a timer ended while the app was in the background';
+
+  @override
   String get presetSheetTitle => 'Choose preset';
 
   @override
