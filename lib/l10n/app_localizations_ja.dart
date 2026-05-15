@@ -533,6 +533,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsDiagnosticShareLogs => 'ログを共有';
 
   @override
+  String get settingsDiagnosticShareLogsSubject => 'TimerUtility 診断ログ';
+
+  @override
   String get settingsDiagnosticShareLogsDescription =>
       '保存済みログを zip にまとめて共有メニューを開きます。';
 

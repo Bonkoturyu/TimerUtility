@@ -41,7 +41,7 @@ class _MemoryPrefs implements UserPreferences {
     _strings.remove(key);
   }
 
-  bool? diagBool() => _bools['diagnostic_log_enabled'];
+  bool? diagBool() => _bools[UserPreferenceKeys.diagnosticLogEnabled];
 }
 
 /// Fake exporter: records calls and lets the test pick success / error.
@@ -59,9 +59,12 @@ class _FakeExporter implements DiagnosticLogExporter {
     return '/tmp/zip.zip';
   }
 
+  String? lastSubject;
+
   @override
-  Future<void> share(String path) async {
+  Future<void> share(String path, {required String subject}) async {
     shareCalls++;
+    lastSubject = subject;
   }
 }
 

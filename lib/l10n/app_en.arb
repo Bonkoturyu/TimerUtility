@@ -265,6 +265,7 @@
   "settingsDiagnosticLogToggle": "Enable diagnostic logging",
   "settingsDiagnosticLogToggleDescription": "Record timer actions, permission changes, notification fires, and exceptions to on-device files. No personal data (labels / location) is captured.",
   "settingsDiagnosticShareLogs": "Share logs",
+  "settingsDiagnosticShareLogsSubject": "TimerUtility diagnostic logs",
   "settingsDiagnosticShareLogsDescription": "Bundle stored logs into a zip and open the share sheet.",
   "settingsDiagnosticShareLogsInProgress": "Preparing logs…",
   "settingsDiagnosticShareLogsSuccess": "Share sheet opened",

@@ -582,6 +582,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDiagnosticShareLogs => 'Share logs';
 
   @override
+  String get settingsDiagnosticShareLogsSubject =>
+      'TimerUtility diagnostic logs';
+
+  @override
   String get settingsDiagnosticShareLogsDescription =>
       'Bundle stored logs into a zip and open the share sheet.';
 

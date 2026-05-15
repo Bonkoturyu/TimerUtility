@@ -350,9 +350,14 @@ class _DiagnosticShareTile extends ConsumerWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : const Icon(Icons.chevron_right),
+      // Disable the tile while an export is already running. The
+      // notifier itself also re-entrancy-guards in `export()` (PR #51
+      // review #3246688302), so even a same-frame double-tap can't
+      // kick off a second archive build.
       enabled: !inProgress,
-      onTap: () =>
-          ref.read(diagnosticExportControllerProvider.notifier).export(),
+      onTap: () => ref
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: l.settingsDiagnosticShareLogsSubject),
     );
   }
 }

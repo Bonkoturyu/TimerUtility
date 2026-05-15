@@ -253,6 +253,7 @@
   "settingsDiagnosticLogToggle": "診断ログを有効化",
   "settingsDiagnosticLogToggleDescription": "タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。",
   "settingsDiagnosticShareLogs": "ログを共有",
+  "settingsDiagnosticShareLogsSubject": "TimerUtility 診断ログ",
   "settingsDiagnosticShareLogsDescription": "保存済みログを zip にまとめて共有メニューを開きます。",
   "settingsDiagnosticShareLogsInProgress": "ログを準備しています…",
   "settingsDiagnosticShareLogsSuccess": "共有メニューを開きました",

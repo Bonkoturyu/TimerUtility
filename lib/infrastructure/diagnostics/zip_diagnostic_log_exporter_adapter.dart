@@ -9,14 +9,18 @@ import '../../domain/ports/diagnostic_log_exporter.dart';
 /// Pluggable share delegate so the unit test can record what would be
 /// sent to the OS without actually firing the Share Sheet (which is a
 /// Platform Channel call that doesn't work under `flutter test`).
-typedef ShareDelegate = Future<void> Function(List<XFile> files);
+typedef ShareDelegate =
+    Future<void> Function(List<XFile> files, {required String subject});
 
 /// Default production share delegate: hands the files to `share_plus`
-/// with a fixed subject. Returning `void` is intentional — `share_plus`
-/// reports cancellation as a regular result, not an exception, and the
-/// Settings UI doesn't surface that distinction in Phase D-3.
-Future<void> _defaultShareDelegate(List<XFile> files) async {
-  await Share.shareXFiles(files, subject: 'Timer Utility diagnostic logs');
+/// with the caller-supplied subject. Returning `void` is intentional —
+/// `share_plus` reports cancellation as a regular result, not an
+/// exception, and the Settings UI doesn't surface that distinction.
+Future<void> _defaultShareDelegate(
+  List<XFile> files, {
+  required String subject,
+}) async {
+  await Share.shareXFiles(files, subject: subject);
 }
 
 /// Phase D-3 [DiagnosticLogExporter] implementation.
@@ -83,8 +87,8 @@ class ZipDiagnosticLogExporterAdapter implements DiagnosticLogExporter {
   }
 
   @override
-  Future<void> share(String path) async {
-    await shareDelegate(<XFile>[XFile(path)]);
+  Future<void> share(String path, {required String subject}) async {
+    await shareDelegate(<XFile>[XFile(path)], subject: subject);
   }
 
   /// `YYYYMMDD_HHmmss` in UTC. UTC keeps filenames stable across

@@ -22,13 +22,14 @@ void main() {
   });
 
   /// Test-recording share delegate.
-  List<List<XFile>> shareCalls = <List<XFile>>[];
-  Future<void> fakeShare(List<XFile> files) async {
-    shareCalls.add(files);
+  List<({List<XFile> files, String subject})> shareCalls =
+      <({List<XFile> files, String subject})>[];
+  Future<void> fakeShare(List<XFile> files, {required String subject}) async {
+    shareCalls.add((files: files, subject: subject));
   }
 
   setUp(() {
-    shareCalls = <List<XFile>>[];
+    shareCalls = <({List<XFile> files, String subject})>[];
   });
 
   ZipDiagnosticLogExporterAdapter makeExporter({Clock? clock}) {
@@ -126,12 +127,13 @@ void main() {
   });
 
   group('share', () {
-    test('share() は shareDelegate に XFile を渡す', () async {
+    test('share() は shareDelegate に XFile と subject を渡す', () async {
       final ZipDiagnosticLogExporterAdapter exp = makeExporter();
-      await exp.share('${outDir.path}/zip.zip');
+      await exp.share('${outDir.path}/zip.zip', subject: 'test-subject');
       expect(shareCalls, hasLength(1));
-      expect(shareCalls.first, hasLength(1));
-      expect(shareCalls.first.first.path, '${outDir.path}/zip.zip');
+      expect(shareCalls.first.files, hasLength(1));
+      expect(shareCalls.first.files.first.path, '${outDir.path}/zip.zip');
+      expect(shareCalls.first.subject, 'test-subject');
     });
   });
 }

@@ -1070,6 +1070,12 @@ abstract class AppLocalizations {
   /// **'ログを共有'**
   String get settingsDiagnosticShareLogs;
 
+  /// No description provided for @settingsDiagnosticShareLogsSubject.
+  ///
+  /// In ja, this message translates to:
+  /// **'TimerUtility 診断ログ'**
+  String get settingsDiagnosticShareLogsSubject;
+
   /// No description provided for @settingsDiagnosticShareLogsDescription.
   ///
   /// In ja, this message translates to:

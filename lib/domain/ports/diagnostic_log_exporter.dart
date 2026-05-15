@@ -9,9 +9,14 @@ abstract class DiagnosticLogExporter {
   /// extension and naming.
   Future<String> createArchive();
 
-  /// Hand the file at [path] to the OS Share Sheet. Returns once the
-  /// share intent has been launched; success/cancellation of the
-  /// downstream OS picker is not reported back (share_plus does not
-  /// surface that).
-  Future<void> share(String path);
+  /// Hand the file at [path] to the OS Share Sheet, labelling the
+  /// intent with [subject] (passed through to `share_plus`). Returns
+  /// once the share intent has been launched; success/cancellation of
+  /// the downstream OS picker is not reported back (share_plus does
+  /// not surface that).
+  ///
+  /// [subject] is resolved by the Presentation layer from
+  /// `AppLocalizations` so the label localises with the rest of the
+  /// app (PR #51 review #3246650206 / #3246688356).
+  Future<void> share(String path, {required String subject});
 }

@@ -28,11 +28,15 @@ class _FakeExporter implements DiagnosticLogExporter {
     return archivePath;
   }
 
+  String? lastSubject;
+
   @override
-  Future<void> share(String path) async {
+  Future<void> share(String path, {required String subject}) async {
     shareCalls++;
     lastSharedPath = path;
+    lastSubject = subject;
     if (throwOnShare) throw StateError('share boom');
+    return;
   }
 }
 
@@ -62,7 +66,9 @@ void main() {
         archivePath: '/tmp/diag.zip',
       );
       final ProviderContainer c = _container(exporter);
-      await c.read(diagnosticExportControllerProvider.notifier).export();
+      await c
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: 'test-subject');
 
       final DiagnosticExportState s = c.read(
         diagnosticExportControllerProvider,
@@ -77,7 +83,9 @@ void main() {
     test('createArchive 失敗時: idle → error(message)', () async {
       final _FakeExporter exporter = _FakeExporter(throwOnCreate: true);
       final ProviderContainer c = _container(exporter);
-      await c.read(diagnosticExportControllerProvider.notifier).export();
+      await c
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: 'test-subject');
 
       final DiagnosticExportState s = c.read(
         diagnosticExportControllerProvider,
@@ -90,7 +98,9 @@ void main() {
     test('share 失敗時: idle → error(message)', () async {
       final _FakeExporter exporter = _FakeExporter(throwOnShare: true);
       final ProviderContainer c = _container(exporter);
-      await c.read(diagnosticExportControllerProvider.notifier).export();
+      await c
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: 'test-subject');
 
       final DiagnosticExportState s = c.read(
         diagnosticExportControllerProvider,
@@ -102,7 +112,9 @@ void main() {
     test('reset() で done / error から idle に戻る', () async {
       final _FakeExporter exporter = _FakeExporter();
       final ProviderContainer c = _container(exporter);
-      await c.read(diagnosticExportControllerProvider.notifier).export();
+      await c
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: 'test-subject');
       expect(
         c.read(diagnosticExportControllerProvider),
         isA<DiagnosticExportDone>(),

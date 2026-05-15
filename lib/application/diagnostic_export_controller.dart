@@ -71,7 +71,12 @@ class DiagnosticExportController extends _$DiagnosticExportController {
   /// SnackBar instead of letting it bubble into the Flutter error
   /// handler (which would also write a diagnostic event and create a
   /// loop on top of the failure).
-  Future<void> export() async {
+  ///
+  /// [shareSubject] is the localised text label the OS Share Sheet
+  /// presents to the user (PR #51 review #3246650206 / #3246688356).
+  /// Pulled from `AppLocalizations` by the Settings screen and threaded
+  /// through here so the Domain port stays language-agnostic.
+  Future<void> export({required String shareSubject}) async {
     // Re-entrancy guard: rapidly tapping the Settings "Share logs" tile
     // must not kick off a second archive build concurrently. The tile
     // also disables itself on inProgress for UI feedback, but this
@@ -81,7 +86,7 @@ class DiagnosticExportController extends _$DiagnosticExportController {
     try {
       final exporter = ref.read(diagnosticLogExporterProvider);
       final String path = await exporter.createArchive();
-      await exporter.share(path);
+      await exporter.share(path, subject: shareSubject);
       state = DiagnosticExportDone(path);
     } catch (e) {
       state = DiagnosticExportError(e.toString());
