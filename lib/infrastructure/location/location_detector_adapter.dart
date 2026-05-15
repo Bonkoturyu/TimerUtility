@@ -1,8 +1,11 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logger/logger.dart';
 
+import '../../domain/diagnostics/diagnostic_event.dart';
+import '../../domain/diagnostics/diagnostic_logger.dart';
 import '../../domain/ports/location_detector.dart';
 import 'country_to_timezone.dart';
 
@@ -29,11 +32,31 @@ import 'country_to_timezone.dart';
 /// 分岐ロジックは「失敗したら次段」の単純チェーンしかないため、
 /// Unit Test は書かず実機検証で担保 (BACKLOG にコメント済)。
 class LocationDetectorAdapter implements LocationDetector {
-  LocationDetectorAdapter();
+  /// [loggerLookup] returns the current shared [DiagnosticLogger] or
+  /// null when diagnostic logging is unavailable. Implemented as a
+  /// thunk (not a direct reference) so the adapter can be constructed
+  /// in `main()` *before* the `ProviderContainer` that owns the
+  /// logger is built — the closure captures a `late final container`
+  /// reference and is only ever invoked on a real GPS / TZ failure
+  /// (well after app boot).
+  ///
+  /// Going through [DiagnosticLogger] (rather than writing to a
+  /// [DiagnosticSink] directly) means the user's
+  /// `diagnosticSettingsNotifier.enabled` toggle gates these writes
+  /// too — matches the gating that the Application-side Notifier
+  /// instrumentation already gets, per PR #50 review #3246543096.
+  ///
+  /// [clock] is used to timestamp the diagnostic event; defaults to
+  /// a real wall clock so the optional injection path stays terse.
+  LocationDetectorAdapter({this.loggerLookup, Clock? clock})
+    : _clock = clock ?? const Clock();
 
   static const String _ultimateFallback = 'Asia/Tokyo';
   static const Duration _gpsTimeout = Duration(seconds: 5);
   static const Duration _geocodingTimeout = Duration(seconds: 5);
+
+  final DiagnosticLogger? Function()? loggerLookup;
+  final Clock _clock;
 
   // Single Logger reused across detection attempts: it's stateful
   // (output formatter / level filter) and constructing a fresh one per
@@ -88,6 +111,7 @@ class LocationDetectorAdapter implements LocationDetector {
         error: e,
         stackTrace: st,
       );
+      _recordDiagnostic(e, st);
       return null;
     }
   }
@@ -104,7 +128,26 @@ class LocationDetectorAdapter implements LocationDetector {
         error: e,
         stackTrace: st,
       );
+      _recordDiagnostic(e, st);
       return null;
     }
+  }
+
+  /// Forward the GPS / TZ-resolution failure through the diagnostic
+  /// logger so the user's logging toggle gates these writes. No-op
+  /// when [loggerLookup] is null or returns null (Phase 10.5-era
+  /// construction sites that haven't been migrated). Stack-trace
+  /// digest is delegated to `DiagnosticEvent.digestStackTrace` so
+  /// the PII rules are single-sourced.
+  void _recordDiagnostic(Object error, StackTrace st) {
+    final DiagnosticLogger? l = loggerLookup?.call();
+    if (l == null) return;
+    l.log(
+      DiagnosticEvent.uncaughtException(
+        occurredAt: _clock.now(),
+        exceptionType: error.runtimeType.toString(),
+        stackTraceDigest: DiagnosticEvent.digestStackTrace(st),
+      ),
+    );
   }
 }

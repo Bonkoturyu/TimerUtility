@@ -1,6 +1,9 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show Directory;
 
 import 'package:clock/clock.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'
     show
         LicenseEntry,
@@ -36,7 +39,9 @@ import 'infrastructure/clock/tz_database_timezone_resolver.dart';
 import 'infrastructure/database/drift_clock_entry_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
-import 'infrastructure/diagnostics/in_memory_diagnostic_sink_adapter.dart';
+import 'infrastructure/diagnostics/diagnostic_log_formatter.dart';
+import 'infrastructure/diagnostics/diagnostic_log_rotator.dart';
+import 'infrastructure/diagnostics/file_diagnostic_sink_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
@@ -219,31 +224,17 @@ class _BundledSoundLicenseEntry extends LicenseEntry {
       lines.map((String line) => LicenseParagraph(line, 0));
 }
 
-/// First few frames of a stack trace, joined by `\n`. Keeps the
-/// diagnostic payload small and avoids leaking long internal frame
-/// strings that occasionally embed file paths. 3 frames is enough to
-/// localize most errors to the relevant Notifier / Adapter.
-String _digestStackTrace(StackTrace? trace) {
-  if (trace == null) return '';
-  final List<String> lines = trace.toString().split('\n');
-  final List<String> top = lines
-      .where((String l) => l.trim().isNotEmpty)
-      .take(3)
-      .toList();
-  return top.join('\n');
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ──────────────────────────────────────────────────────────────
   // Phase D-1: diagnostic logging bootstrap
   //
-  // Build the in-memory sink *before* doing anything else so the
+  // Build the file-backed sink *before* doing anything else so the
   // FlutterError / PlatformDispatcher uncaught-exception handlers we
-  // register below have a sink to forward into. Phase D-2 swaps this
-  // for the file-backed adapter; the public Provider wiring stays the
-  // same.
+  // register below have a sink to forward into. The Phase D-1
+  // in-memory adapter is no longer reachable from main(); tests still
+  // default to the in-memory one via diagnosticSinkProvider's default.
   //
   // Note (PR #49 review #3246516898 / #3246537710): the error handlers
   // are installed *after* the ProviderContainer is built so they can
@@ -256,8 +247,19 @@ Future<void> main() async {
   // diagnostic sink, which is the intended behaviour when the user
   // has logging disabled.
   // ──────────────────────────────────────────────────────────────
-  final InMemoryDiagnosticSinkAdapter diagnosticSink =
-      InMemoryDiagnosticSinkAdapter();
+  final FileDiagnosticSinkAdapter diagnosticSink = FileDiagnosticSinkAdapter(
+    // p.join keeps the path separator platform-correct (PR #50 review
+    // #3246519123). Phase D-2 currently targets Android only, where
+    // '/' is fine — but the indirection prepares the same path-build
+    // for the Phase 12 iOS port.
+    rootDirProvider: () async {
+      final Directory base = await getApplicationSupportDirectory();
+      return Directory(p.join(base.path, 'diagnostic_logs'));
+    },
+    formatter: const DiagnosticLogFormatter(),
+    rotator: const DiagnosticLogRotator(clock: Clock()),
+    clock: const Clock(),
+  );
   // Default-enabled in debug builds, off in release builds. The
   // notifier reads `defaultEnabled` from the field below at build()
   // time. A persisted user toggle (if any) overrides this.
@@ -274,7 +276,16 @@ Future<void> main() async {
   final DriftClockEntryRepository clockRepo = DriftClockEntryRepository(
     database,
   );
-  final LocationDetectorAdapter detector = LocationDetectorAdapter();
+  // Phase D-2 / PR #50 review #3246543096: forward GPS /
+  // TZ-resolution failures through the diagnostic logger, so the
+  // user's `enabled` toggle gates these writes. `loggerLookup` is a
+  // thunk so the adapter can be constructed *before* the
+  // `ProviderContainer` below — the closure only runs on a real
+  // failure, by which time `container` is assigned.
+  late final ProviderContainer container;
+  final LocationDetectorAdapter detector = LocationDetectorAdapter(
+    loggerLookup: () => container.read(diagnosticLoggerProvider),
+  );
   final TzDatabaseTimezoneResolver timezoneResolver =
       TzDatabaseTimezoneResolver();
   final SharedPreferencesUserPreferences userPrefs =
@@ -415,7 +426,7 @@ Future<void> main() async {
   // #3246516898 / #3246537710). UncontrolledProviderScope wraps this
   // same container for the widget tree so reads from both sides see
   // identical state.
-  final ProviderContainer container = ProviderContainer(
+  container = ProviderContainer(
     overrides: <Override>[
       notificationSchedulerProvider.overrideWithValue(adapter),
       notificationStringsNotifierProvider.overrideWith(
@@ -455,7 +466,7 @@ Future<void> main() async {
           DiagnosticEvent.uncaughtException(
             occurredAt: clock.now(),
             exceptionType: details.exception.runtimeType.toString(),
-            stackTraceDigest: _digestStackTrace(details.stack),
+            stackTraceDigest: DiagnosticEvent.digestStackTrace(details.stack),
           ),
         );
     if (previousOnError != null) {
@@ -471,7 +482,7 @@ Future<void> main() async {
           DiagnosticEvent.uncaughtException(
             occurredAt: clock.now(),
             exceptionType: error.runtimeType.toString(),
-            stackTraceDigest: _digestStackTrace(stack),
+            stackTraceDigest: DiagnosticEvent.digestStackTrace(stack),
           ),
         );
     // Returning `false` lets the engine continue its default handling
