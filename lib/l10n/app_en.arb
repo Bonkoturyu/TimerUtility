@@ -259,5 +259,19 @@
   "settingsDefaultAlarmSoundLabel": "Alarm sound",
   "settingsLanguageLabel": "Language",
   "settingsLanguageSystem": "Follow system",
-  "settingsLanguageDialogTitle": "Select language"
+  "settingsLanguageDialogTitle": "Select language",
+
+  "settingsSectionDiagnostics": "Diagnostic logs",
+  "settingsDiagnosticLogToggle": "Enable diagnostic logging",
+  "settingsDiagnosticLogToggleDescription": "Record timer actions, permission changes, notification fires, and exceptions to on-device files. No personal data (labels / location) is captured.",
+  "settingsDiagnosticShareLogs": "Share logs",
+  "settingsDiagnosticShareLogsDescription": "Bundle stored logs into a zip and open the share sheet.",
+  "settingsDiagnosticShareLogsInProgress": "Preparing logs…",
+  "settingsDiagnosticShareLogsSuccess": "Share sheet opened",
+  "settingsDiagnosticShareLogsError": "Failed to share logs: {message}",
+  "@settingsDiagnosticShareLogsError": {
+    "placeholders": {
+      "message": {"type": "String"}
+    }
+  }
 }

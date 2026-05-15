@@ -1045,6 +1045,54 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'言語を選択'**
   String get settingsLanguageDialogTitle;
+
+  /// No description provided for @settingsSectionDiagnostics.
+  ///
+  /// In ja, this message translates to:
+  /// **'診断ログ'**
+  String get settingsSectionDiagnostics;
+
+  /// No description provided for @settingsDiagnosticLogToggle.
+  ///
+  /// In ja, this message translates to:
+  /// **'診断ログを有効化'**
+  String get settingsDiagnosticLogToggle;
+
+  /// No description provided for @settingsDiagnosticLogToggleDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。'**
+  String get settingsDiagnosticLogToggleDescription;
+
+  /// No description provided for @settingsDiagnosticShareLogs.
+  ///
+  /// In ja, this message translates to:
+  /// **'ログを共有'**
+  String get settingsDiagnosticShareLogs;
+
+  /// No description provided for @settingsDiagnosticShareLogsDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存済みログを zip にまとめて共有メニューを開きます。'**
+  String get settingsDiagnosticShareLogsDescription;
+
+  /// No description provided for @settingsDiagnosticShareLogsInProgress.
+  ///
+  /// In ja, this message translates to:
+  /// **'ログを準備しています…'**
+  String get settingsDiagnosticShareLogsInProgress;
+
+  /// No description provided for @settingsDiagnosticShareLogsSuccess.
+  ///
+  /// In ja, this message translates to:
+  /// **'共有メニューを開きました'**
+  String get settingsDiagnosticShareLogsSuccess;
+
+  /// No description provided for @settingsDiagnosticShareLogsError.
+  ///
+  /// In ja, this message translates to:
+  /// **'ログの共有に失敗しました: {message}'**
+  String settingsDiagnosticShareLogsError(String message);
 }
 
 class _AppLocalizationsDelegate

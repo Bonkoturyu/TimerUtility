@@ -18,6 +18,7 @@ import 'package:go_router/go_router.dart';
 
 import 'application/alarm_repository_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
+import 'application/diagnostic_log_exporter_provider.dart';
 import 'application/diagnostic_logger_provider.dart';
 import 'application/diagnostic_settings_notifier.dart';
 import 'application/diagnostic_sink_provider.dart';
@@ -42,6 +43,7 @@ import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/diagnostics/diagnostic_log_formatter.dart';
 import 'infrastructure/diagnostics/diagnostic_log_rotator.dart';
 import 'infrastructure/diagnostics/file_diagnostic_sink_adapter.dart';
+import 'infrastructure/diagnostics/zip_diagnostic_log_exporter_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
@@ -247,19 +249,33 @@ Future<void> main() async {
   // diagnostic sink, which is the intended behaviour when the user
   // has logging disabled.
   // ──────────────────────────────────────────────────────────────
-  final FileDiagnosticSinkAdapter diagnosticSink = FileDiagnosticSinkAdapter(
+  // Shared closure: Phase D-2 sink + Phase D-3 zip exporter both need
+  // to point at the same on-disk directory, so resolution is hoisted
+  // to a single Future-returning helper.
+  Future<Directory> resolveLogDir() async {
     // p.join keeps the path separator platform-correct (PR #50 review
     // #3246519123). Phase D-2 currently targets Android only, where
     // '/' is fine — but the indirection prepares the same path-build
     // for the Phase 12 iOS port.
-    rootDirProvider: () async {
-      final Directory base = await getApplicationSupportDirectory();
-      return Directory(p.join(base.path, 'diagnostic_logs'));
-    },
+    final Directory base = await getApplicationSupportDirectory();
+    return Directory(p.join(base.path, 'diagnostic_logs'));
+  }
+
+  final FileDiagnosticSinkAdapter diagnosticSink = FileDiagnosticSinkAdapter(
+    rootDirProvider: resolveLogDir,
     formatter: const DiagnosticLogFormatter(),
     rotator: const DiagnosticLogRotator(clock: Clock()),
     clock: const Clock(),
   );
+  // Phase D-3: zip exporter that the Settings "Share logs" action drives.
+  // outputDirProvider goes to the OS temp dir — share_plus reads from
+  // there and the file is opaque to the user after the share completes.
+  final ZipDiagnosticLogExporterAdapter diagnosticExporter =
+      ZipDiagnosticLogExporterAdapter(
+        logDirProvider: resolveLogDir,
+        outputDirProvider: getTemporaryDirectory,
+        clock: const Clock(),
+      );
   // Default-enabled in debug builds, off in release builds. The
   // notifier reads `defaultEnabled` from the field below at build()
   // time. A persisted user toggle (if any) overrides this.
@@ -440,6 +456,7 @@ Future<void> main() async {
       timezoneResolverProvider.overrideWithValue(timezoneResolver),
       userPreferencesProvider.overrideWithValue(userPrefs),
       diagnosticSinkProvider.overrideWithValue(diagnosticSink),
+      diagnosticLogExporterProvider.overrideWithValue(diagnosticExporter),
       diagnosticSettingsNotifierProvider.overrideWith(
         () =>
             DiagnosticSettingsNotifier()

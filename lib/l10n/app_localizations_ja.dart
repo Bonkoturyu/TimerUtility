@@ -518,4 +518,32 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsLanguageDialogTitle => '言語を選択';
+
+  @override
+  String get settingsSectionDiagnostics => '診断ログ';
+
+  @override
+  String get settingsDiagnosticLogToggle => '診断ログを有効化';
+
+  @override
+  String get settingsDiagnosticLogToggleDescription =>
+      'タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。';
+
+  @override
+  String get settingsDiagnosticShareLogs => 'ログを共有';
+
+  @override
+  String get settingsDiagnosticShareLogsDescription =>
+      '保存済みログを zip にまとめて共有メニューを開きます。';
+
+  @override
+  String get settingsDiagnosticShareLogsInProgress => 'ログを準備しています…';
+
+  @override
+  String get settingsDiagnosticShareLogsSuccess => '共有メニューを開きました';
+
+  @override
+  String settingsDiagnosticShareLogsError(String message) {
+    return 'ログの共有に失敗しました: $message';
+  }
 }
