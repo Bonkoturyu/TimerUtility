@@ -6,14 +6,21 @@ part of 'diagnostic_sink_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$diagnosticSinkHash() => r'63c3140e0dcc7069a4a6b7e1b783598b85043c7a';
+String _$diagnosticSinkHash() => r'ffeaf28e9cc41eaf4042108bc8e926d3f5b02224';
 
-/// Provider for the diagnostic-log sink. Phase D-1 overrides this in
-/// `main()` with `InMemoryDiagnosticSinkAdapter`; Phase D-2 swaps it
-/// for the file-backed adapter. Tests override with a fake.
+/// Provider for the diagnostic-log sink.
 ///
-/// Throws by default so a missing override is loud rather than silent —
-/// matches the [userPreferencesProvider] pattern.
+/// Defaults to an [InMemoryDiagnosticSinkAdapter] so that existing
+/// unit tests (which don't care about diagnostic logging) don't need to
+/// override anything to instantiate notifiers that record events. The
+/// logger's [DiagnosticLogger.isEnabled] gate keeps these default
+/// in-memory sinks empty in disabled (release-default) state, so the
+/// fallback is a true no-op.
+///
+/// Production wiring overrides this in `main()` with the same in-memory
+/// adapter (Phase D-1) or the file-backed adapter (Phase D-2) so the
+/// app can observe writes; the override is preserved even with this
+/// default for clarity of intent.
 ///
 /// Copied from [diagnosticSink].
 @ProviderFor(diagnosticSink)

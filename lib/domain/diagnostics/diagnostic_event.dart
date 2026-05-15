@@ -167,9 +167,12 @@ final class DiagnosticPermissionTransition extends DiagnosticEvent {
   });
 
   /// Renamed from `kind` so it doesn't collide with the inherited
-  /// [DiagnosticEvent.kind] (which is the JSON kind string). The
-  /// factory parameter is still named `kind` so call sites stay
-  /// idiomatic.
+  /// [DiagnosticEvent.kind] (the JSON kind discriminator).
+  /// `permissionKind` is used consistently for both the field name and
+  /// the factory parameter (`DiagnosticEvent.permissionTransition` /
+  /// `DiagnosticPermissionTransition`) — Dart's factory-redirect rule
+  /// requires the name to match between the sealed parent's factory
+  /// and the concrete subclass constructor.
   final PermissionKind permissionKind;
   final DomainPermissionStatus before;
   final DomainPermissionStatus after;

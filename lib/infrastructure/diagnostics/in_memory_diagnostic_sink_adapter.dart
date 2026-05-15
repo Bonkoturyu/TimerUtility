@@ -9,8 +9,10 @@ class InMemoryDiagnosticSinkAdapter implements DiagnosticSink {
 
   final List<DiagnosticEvent> _events = <DiagnosticEvent>[];
 
-  /// Unmodifiable snapshot of every event written so far. Re-evaluate
-  /// after each `write` since this returns a live wrapper.
+  /// Unmodifiable snapshot of the events written so far. Each call
+  /// returns a fresh copy via [List.unmodifiable], so callers should
+  /// re-read the getter after a [write] to see the new entry rather
+  /// than holding the previous return value.
   List<DiagnosticEvent> get events =>
       List<DiagnosticEvent>.unmodifiable(_events);
 

@@ -41,6 +41,13 @@ class DiagnosticSettingsNotifier extends _$DiagnosticSettingsNotifier {
   /// Production wiring passes `!kReleaseMode` from `main.dart`.
   bool defaultEnabled = false;
 
+  /// Set the first time the user touches the toggle. Guards
+  /// the [build] → microtask [_restore] race: if the user flips
+  /// the switch before the (async) prefs read returns, the late
+  /// `_restore` write would otherwise clobber their choice with the
+  /// previously-persisted value. See Gemini review on PR #49.
+  bool _userMutated = false;
+
   @override
   DiagnosticSettingsState build() {
     Future<void>.microtask(_restore);
@@ -58,6 +65,9 @@ class DiagnosticSettingsNotifier extends _$DiagnosticSettingsNotifier {
       final bool? stored = await prefs.getBool(
         UserPreferenceKeys.diagnosticLogEnabled,
       );
+      // Late-arriving prefs value must not overwrite a user toggle
+      // that landed while the await above was outstanding.
+      if (_userMutated) return;
       state = DiagnosticSettingsState(enabled: stored ?? defaultEnabled);
     } on UnimplementedError {
       // userPreferencesProvider is the standard UnimplementedError
@@ -67,6 +77,7 @@ class DiagnosticSettingsNotifier extends _$DiagnosticSettingsNotifier {
 
   /// Flip / set the toggle and persist immediately.
   Future<void> setEnabled(bool enabled) async {
+    _userMutated = true;
     state = DiagnosticSettingsState(enabled: enabled);
     await ref
         .read(userPreferencesProvider)

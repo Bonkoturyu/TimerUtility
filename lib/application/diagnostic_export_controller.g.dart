@@ -7,7 +7,7 @@ part of 'diagnostic_export_controller.dart';
 // **************************************************************************
 
 String _$diagnosticExportControllerHash() =>
-    r'8ab35a843b15e2b3a6a7bc0683764d18dd5a29bf';
+    r'e7acdaaefa66a3e152e3584a68ab5186cf64e455';
 
 /// Drives the "Share logs" action from the Settings screen.
 ///

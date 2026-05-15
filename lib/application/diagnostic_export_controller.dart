@@ -72,6 +72,11 @@ class DiagnosticExportController extends _$DiagnosticExportController {
   /// handler (which would also write a diagnostic event and create a
   /// loop on top of the failure).
   Future<void> export() async {
+    // Re-entrancy guard: rapidly tapping the Settings "Share logs" tile
+    // must not kick off a second archive build concurrently. The tile
+    // also disables itself on inProgress for UI feedback, but this
+    // guard keeps the invariant at the notifier level too.
+    if (state is DiagnosticExportInProgress) return;
     state = const DiagnosticExportInProgress();
     try {
       final exporter = ref.read(diagnosticLogExporterProvider);

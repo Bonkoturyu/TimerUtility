@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 
 import 'application/alarm_repository_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
+import 'application/diagnostic_logger_provider.dart';
 import 'application/diagnostic_settings_notifier.dart';
 import 'application/diagnostic_sink_provider.dart';
 import 'application/location_detector_provider.dart';
@@ -243,6 +244,17 @@ Future<void> main() async {
   // register below have a sink to forward into. Phase D-2 swaps this
   // for the file-backed adapter; the public Provider wiring stays the
   // same.
+  //
+  // Note (PR #49 review #3246516898 / #3246537710): the error handlers
+  // are installed *after* the ProviderContainer is built so they can
+  // route through `diagnosticLoggerProvider` and respect the
+  // `diagnosticSettingsNotifier.enabled` toggle (which defaults to
+  // `!kReleaseMode`). Errors during the sub-100ms boot window between
+  // `WidgetsFlutterBinding.ensureInitialized()` and the container
+  // construction below are still surfaced by Flutter's default
+  // red-screen / stderr presentation — they just don't reach the
+  // diagnostic sink, which is the intended behaviour when the user
+  // has logging disabled.
   // ──────────────────────────────────────────────────────────────
   final InMemoryDiagnosticSinkAdapter diagnosticSink =
       InMemoryDiagnosticSinkAdapter();
@@ -250,41 +262,6 @@ Future<void> main() async {
   // notifier reads `defaultEnabled` from the field below at build()
   // time. A persisted user toggle (if any) overrides this.
   const bool diagnosticDefaultEnabled = !kReleaseMode;
-
-  // Funnel both the Flutter framework's caught errors (build / layout /
-  // render) and asynchronous PlatformDispatcher errors into the sink.
-  // We keep Flutter's default presentation (red screen / console dump)
-  // by delegating to `FlutterError.presentError` after recording, so
-  // existing development feedback is preserved.
-  final void Function(FlutterErrorDetails)? previousOnError =
-      FlutterError.onError;
-  FlutterError.onError = (FlutterErrorDetails details) {
-    diagnosticSink.write(
-      DiagnosticEvent.uncaughtException(
-        occurredAt: clock.now(),
-        exceptionType: details.exception.runtimeType.toString(),
-        stackTraceDigest: _digestStackTrace(details.stack),
-      ),
-    );
-    if (previousOnError != null) {
-      previousOnError(details);
-    } else {
-      FlutterError.presentError(details);
-    }
-  };
-  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    diagnosticSink.write(
-      DiagnosticEvent.uncaughtException(
-        occurredAt: clock.now(),
-        exceptionType: error.runtimeType.toString(),
-        stackTraceDigest: _digestStackTrace(stack),
-      ),
-    );
-    // Returning `false` lets the engine continue its default handling
-    // (logging to stderr in debug, crashing in release). We only want
-    // to *observe*, not swallow.
-    return false;
-  };
 
   _registerBundledSoundsLicense();
   final NotificationStrings notificationStrings =
@@ -431,27 +408,81 @@ Future<void> main() async {
     ],
   );
 
+  // Build the container ourselves rather than relying on ProviderScope
+  // so the FlutterError / PlatformDispatcher handlers below can route
+  // through `diagnosticLoggerProvider` and pick up the user's
+  // `diagnosticSettingsNotifier.enabled` toggle (PR #49 review
+  // #3246516898 / #3246537710). UncontrolledProviderScope wraps this
+  // same container for the widget tree so reads from both sides see
+  // identical state.
+  final ProviderContainer container = ProviderContainer(
+    overrides: <Override>[
+      notificationSchedulerProvider.overrideWithValue(adapter),
+      notificationStringsNotifierProvider.overrideWith(
+        () => _BootstrappedNotificationStringsNotifier(notificationStrings),
+      ),
+      timerRepositoryProvider.overrideWithValue(repository),
+      presetRepositoryProvider.overrideWithValue(presetRepo),
+      alarmRepositoryProvider.overrideWithValue(alarmRepo),
+      clockEntryRepositoryProvider.overrideWithValue(clockRepo),
+      locationDetectorProvider.overrideWithValue(detector),
+      timezoneResolverProvider.overrideWithValue(timezoneResolver),
+      userPreferencesProvider.overrideWithValue(userPrefs),
+      diagnosticSinkProvider.overrideWithValue(diagnosticSink),
+      diagnosticSettingsNotifierProvider.overrideWith(
+        () =>
+            DiagnosticSettingsNotifier()
+              ..defaultEnabled = diagnosticDefaultEnabled,
+      ),
+    ],
+  );
+
+  // Funnel both the Flutter framework's caught errors (build / layout /
+  // render) and asynchronous PlatformDispatcher errors through the
+  // diagnostic logger. Going via `diagnosticLoggerProvider` (rather
+  // than writing to the sink directly) means the
+  // `diagnosticSettingsNotifier.enabled` toggle gates these too, so
+  // the release default (`!kReleaseMode == false`) no longer leaks
+  // uncaught-exception records onto disk against the user's choice.
+  // We keep Flutter's default presentation (red screen / console dump)
+  // by delegating to `FlutterError.presentError` after recording.
+  final void Function(FlutterErrorDetails)? previousOnError =
+      FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    container
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.uncaughtException(
+            occurredAt: clock.now(),
+            exceptionType: details.exception.runtimeType.toString(),
+            stackTraceDigest: _digestStackTrace(details.stack),
+          ),
+        );
+    if (previousOnError != null) {
+      previousOnError(details);
+    } else {
+      FlutterError.presentError(details);
+    }
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    container
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.uncaughtException(
+            occurredAt: clock.now(),
+            exceptionType: error.runtimeType.toString(),
+            stackTraceDigest: _digestStackTrace(stack),
+          ),
+        );
+    // Returning `false` lets the engine continue its default handling
+    // (logging to stderr in debug, crashing in release). We only want
+    // to *observe*, not swallow.
+    return false;
+  };
+
   runApp(
-    ProviderScope(
-      overrides: <Override>[
-        notificationSchedulerProvider.overrideWithValue(adapter),
-        notificationStringsNotifierProvider.overrideWith(
-          () => _BootstrappedNotificationStringsNotifier(notificationStrings),
-        ),
-        timerRepositoryProvider.overrideWithValue(repository),
-        presetRepositoryProvider.overrideWithValue(presetRepo),
-        alarmRepositoryProvider.overrideWithValue(alarmRepo),
-        clockEntryRepositoryProvider.overrideWithValue(clockRepo),
-        locationDetectorProvider.overrideWithValue(detector),
-        timezoneResolverProvider.overrideWithValue(timezoneResolver),
-        userPreferencesProvider.overrideWithValue(userPrefs),
-        diagnosticSinkProvider.overrideWithValue(diagnosticSink),
-        diagnosticSettingsNotifierProvider.overrideWith(
-          () =>
-              DiagnosticSettingsNotifier()
-                ..defaultEnabled = diagnosticDefaultEnabled,
-        ),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: TimerUtilityApp(router: router, diagnosticSink: diagnosticSink),
     ),
   );
@@ -504,7 +535,18 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
       // Phase D-2 will swap the in-memory sink for the file adapter
       // whose flush() drains the IOSink to disk. The Phase D-1
       // in-memory adapter no-ops, so this is harmless until then.
-      unawaited(widget.diagnosticSink.flush());
+      //
+      // PR #49 review #3246537686: flush() can throw under the file
+      // sink (disk full / permissions). Catch here so a lifecycle
+      // transition cannot crash the app — losing the unflushed bytes
+      // is acceptable, taking the app down is not.
+      unawaited(
+        widget.diagnosticSink.flush().catchError((Object _) {
+          // Best-effort flush. The Phase D-2 file adapter swallows
+          // I/O failures internally too; this is belt-and-braces for
+          // future sinks that may not.
+        }),
+      );
     }
   }
 

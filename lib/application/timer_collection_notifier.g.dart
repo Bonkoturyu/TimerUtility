@@ -7,7 +7,7 @@ part of 'timer_collection_notifier.dart';
 // **************************************************************************
 
 String _$timerCollectionNotifierHash() =>
-    r'b055e2bc3786d43a6c6f7781902ed67d785f9da5';
+    r'6249e172738184220071764835edaa817ccd3d2a';
 
 /// Phase 8 single source of truth for every active timer.
 ///

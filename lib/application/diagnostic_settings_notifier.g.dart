@@ -7,7 +7,7 @@ part of 'diagnostic_settings_notifier.dart';
 // **************************************************************************
 
 String _$diagnosticSettingsNotifierHash() =>
-    r'94435ca083b0382e7339d59c47678b322d1cf022';
+    r'1b417d785ad2bcd886a023bbd1875b60d6a2be1d';
 
 /// Persists the diagnostic-logging on/off toggle.
 ///
