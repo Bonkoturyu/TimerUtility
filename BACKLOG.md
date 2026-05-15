@@ -249,9 +249,9 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
 ベータテスター / 開発者向けに「アプリの動作ログを zip にまとめて OS Share Sheet で
 送れる」観測機構を 3 PR で実装。Domain (PII セーフな sealed class) → Application
 (`DiagnosticLogger` + isEnabled ゲート + `DiagnosticExportController`) →
-Infrastructure (`FileDiagnosticSinkAdapter` JSON Lines + `DiagnosticLogRotator` 7 日 /
-5 MB + `ZipDiagnosticLogExporterAdapter` + `share_plus`) → Presentation
-(SettingsScreen に診断ログトグル + 共有 tile) の 4 層構成。
+Infrastructure (`FileDiagnosticSinkAdapter` JSON Lines + `DiagnosticLogRotator`
+retention 14 日 / 累計 50 MB / 1 ファイル 1 MB で分割 + `ZipDiagnosticLogExporterAdapter` +
+`share_plus`) → Presentation (SettingsScreen に診断ログトグル + 共有 tile) の 4 層構成。
 
 - D-1 (PR #49): Domain + Application、Sink は In-Memory のみ
 - D-2 (PR #52、当初 #50 が D-1 マージで auto-close したため再作成): File-backed sink +
