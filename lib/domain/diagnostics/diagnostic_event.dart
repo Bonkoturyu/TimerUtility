@@ -111,6 +111,25 @@ sealed class DiagnosticEvent {
   /// the envelope (`t` / `sev` / `kind`) on serialization. Returning a
   /// `Map<String, Object?>` avoids `toJson` callbacks per variant.
   Map<String, Object?> toJsonPayload();
+
+  /// PII-safe stack-trace digest: the first 3 non-empty frames joined
+  /// with `\n`. Keeps the on-disk payload small and avoids leaking
+  /// long internal frame strings that occasionally embed file paths.
+  ///
+  /// Centralised in the domain layer (PR #50 review #3246519127) so
+  /// the Application-side `FlutterError.onError` / `PlatformDispatcher`
+  /// handlers and the Infrastructure-side [LocationDetectorAdapter]
+  /// share a single contract; if the cap or PII rules need to tighten,
+  /// they tighten in one place.
+  static String digestStackTrace(StackTrace? trace) {
+    if (trace == null) return '';
+    final List<String> lines = trace.toString().split('\n');
+    final List<String> top = lines
+        .where((String l) => l.trim().isNotEmpty)
+        .take(3)
+        .toList();
+    return top.join('\n');
+  }
 }
 
 final class DiagnosticUncaughtException extends DiagnosticEvent {

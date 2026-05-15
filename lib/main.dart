@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 import 'dart:io' show Directory;
 
 import 'package:clock/clock.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'
     show
@@ -223,20 +224,6 @@ class _BundledSoundLicenseEntry extends LicenseEntry {
       lines.map((String line) => LicenseParagraph(line, 0));
 }
 
-/// First few frames of a stack trace, joined by `\n`. Keeps the
-/// diagnostic payload small and avoids leaking long internal frame
-/// strings that occasionally embed file paths. 3 frames is enough to
-/// localize most errors to the relevant Notifier / Adapter.
-String _digestStackTrace(StackTrace? trace) {
-  if (trace == null) return '';
-  final List<String> lines = trace.toString().split('\n');
-  final List<String> top = lines
-      .where((String l) => l.trim().isNotEmpty)
-      .take(3)
-      .toList();
-  return top.join('\n');
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -261,9 +248,13 @@ Future<void> main() async {
   // has logging disabled.
   // ──────────────────────────────────────────────────────────────
   final FileDiagnosticSinkAdapter diagnosticSink = FileDiagnosticSinkAdapter(
+    // p.join keeps the path separator platform-correct (PR #50 review
+    // #3246519123). Phase D-2 currently targets Android only, where
+    // '/' is fine — but the indirection prepares the same path-build
+    // for the Phase 12 iOS port.
     rootDirProvider: () async {
       final Directory base = await getApplicationSupportDirectory();
-      return Directory('${base.path}/diagnostic_logs');
+      return Directory(p.join(base.path, 'diagnostic_logs'));
     },
     formatter: const DiagnosticLogFormatter(),
     rotator: const DiagnosticLogRotator(clock: Clock()),
@@ -285,11 +276,15 @@ Future<void> main() async {
   final DriftClockEntryRepository clockRepo = DriftClockEntryRepository(
     database,
   );
-  // Phase D-2: forward GPS / TZ-resolution failures to the diagnostic
-  // sink so testers can see them in the exported zip. The same sink
-  // also powers FlutterError / PlatformDispatcher captures above.
+  // Phase D-2 / PR #50 review #3246543096: forward GPS /
+  // TZ-resolution failures through the diagnostic logger, so the
+  // user's `enabled` toggle gates these writes. `loggerLookup` is a
+  // thunk so the adapter can be constructed *before* the
+  // `ProviderContainer` below — the closure only runs on a real
+  // failure, by which time `container` is assigned.
+  late final ProviderContainer container;
   final LocationDetectorAdapter detector = LocationDetectorAdapter(
-    sink: diagnosticSink,
+    loggerLookup: () => container.read(diagnosticLoggerProvider),
   );
   final TzDatabaseTimezoneResolver timezoneResolver =
       TzDatabaseTimezoneResolver();
@@ -431,7 +426,7 @@ Future<void> main() async {
   // #3246516898 / #3246537710). UncontrolledProviderScope wraps this
   // same container for the widget tree so reads from both sides see
   // identical state.
-  final ProviderContainer container = ProviderContainer(
+  container = ProviderContainer(
     overrides: <Override>[
       notificationSchedulerProvider.overrideWithValue(adapter),
       notificationStringsNotifierProvider.overrideWith(
@@ -471,7 +466,7 @@ Future<void> main() async {
           DiagnosticEvent.uncaughtException(
             occurredAt: clock.now(),
             exceptionType: details.exception.runtimeType.toString(),
-            stackTraceDigest: _digestStackTrace(details.stack),
+            stackTraceDigest: DiagnosticEvent.digestStackTrace(details.stack),
           ),
         );
     if (previousOnError != null) {
@@ -487,7 +482,7 @@ Future<void> main() async {
           DiagnosticEvent.uncaughtException(
             occurredAt: clock.now(),
             exceptionType: error.runtimeType.toString(),
-            stackTraceDigest: _digestStackTrace(stack),
+            stackTraceDigest: DiagnosticEvent.digestStackTrace(stack),
           ),
         );
     // Returning `false` lets the engine continue its default handling
