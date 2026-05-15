@@ -167,29 +167,32 @@ class _PermissionBanner extends StatelessWidget {
       context,
     ).textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85));
 
+    // excludeSemantics: true で descendant の semantics を全遮断し、
+    // 親 Semantics の label のみを TalkBack に届ける。InkWell も
+    // excludeFromSemantics: true で暗黙の button ノード生成を抑止し、
+    // 親の button role と競合させない。
     return Semantics(
       button: true,
-      container: true,
       onTap: onAction,
       label: '$severityLabel $title。$description $hint',
+      excludeSemantics: true,
       child: Material(
         color: color,
         borderRadius: radius,
         child: InkWell(
           onTap: onAction,
           borderRadius: radius,
+          excludeFromSemantics: true,
           child: ClipRRect(
             borderRadius: radius,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  ExcludeSemantics(
-                    child: Container(
-                      key: accentKey,
-                      width: accentWidth,
-                      color: onColor.withValues(alpha: 0.6),
-                    ),
+                  Container(
+                    key: accentKey,
+                    width: accentWidth,
+                    color: onColor.withValues(alpha: 0.6),
                   ),
                   Expanded(
                     child: Padding(
@@ -201,29 +204,26 @@ class _PermissionBanner extends StatelessWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              ExcludeSemantics(child: Icon(icon)),
+                              Icon(icon),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: ExcludeSemantics(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text.rich(
-                                        TextSpan(
-                                          style: TextStyle(
-                                            fontWeight: titleWeight,
-                                          ),
-                                          children: <InlineSpan>[
-                                            TextSpan(text: '$severityLabel '),
-                                            TextSpan(text: title),
-                                          ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text.rich(
+                                      TextSpan(
+                                        style: TextStyle(
+                                          fontWeight: titleWeight,
                                         ),
+                                        children: <InlineSpan>[
+                                          TextSpan(text: '$severityLabel '),
+                                          TextSpan(text: title),
+                                        ],
                                       ),
-                                      Text(description),
-                                      Text(hint, style: hintStyle),
-                                    ],
-                                  ),
+                                    ),
+                                    Text(description),
+                                    Text(hint, style: hintStyle),
+                                  ],
                                 ),
                               ),
                             ],

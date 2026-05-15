@@ -239,6 +239,22 @@ void main() {
           semantics.getSemanticsData().hasAction(SemanticsAction.tap),
           isTrue,
         );
+        // TalkBack に「ラベルなし」と読まれる回帰を防ぐため、
+        // 親 Semantics の label が severity / title / description /
+        // hint をすべて含むこと、かつ descendant の Text 群が独立した
+        // 子 Semantics ノードとして残っていないこと (excludeSemantics
+        // が効いていること) を検証する。
+        expect(semantics.label, contains('[重要]'));
+        expect(semantics.label, contains('通知が無効です'));
+        expect(semantics.label, contains('タイマーが終了したときに通知が表示されません。'));
+        expect(semantics.label, contains('タップで権限を変更できます。'));
+        expect(
+          semantics.childrenCount,
+          0,
+          reason:
+              'excludeSemantics: true により子 Semantics ノードが残ってはならない '
+              '(残っていると TalkBack が「ラベルなし テキスト N」と読み上げる)',
+        );
 
         handle.dispose();
       },
