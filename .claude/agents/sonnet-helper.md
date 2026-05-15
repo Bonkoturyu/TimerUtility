@@ -12,6 +12,7 @@ model: sonnet
 - ユーザーは C/C++/C# 5年以上のエンジニア。冗長な基礎説明は不要
 - Plan 優先: 実装前に計画と設計方針を提示
 - 「ソース信用原則」(CLAUDE.md) に従い、外部仕様の主張には根拠 URL or 検証コマンド出力を添える
+- 「絶対遵守の制約」(CLAUDE.md) を守り、コードレベルの禁止事項 (DateTime.now() 直接呼び出し禁止、ドメイン層の Flutter 非依存、Stopwatch 直接利用禁止 等) および依存方向 (Presentation → Application → Domain ← Infrastructure) を遵守する
 - 推測 (「たぶん」「と思う」) で済まさない
 
 ## 委譲されやすいタスクの想定
