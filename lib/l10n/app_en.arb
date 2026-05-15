@@ -103,6 +103,8 @@
   "permissionBannerFullScreenIntentDescription": "Without this permission, alarms will appear as a heads-up banner instead.",
   "permissionBannerActionAllow": "Allow",
   "permissionBannerActionOpenSettings": "Open settings",
+  "permissionBannerHintTapToAllow": "Tap anywhere to change this permission.",
+  "permissionBannerHintTapToOpenSettings": "Tap anywhere to open settings.",
   "permissionBannerSeverityCritical": "[Critical]",
   "permissionBannerSeverityRecommended": "[Recommended]",
   "permissionBannerSeveritySupplementary": "[Supplementary]",

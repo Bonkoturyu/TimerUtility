@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -169,7 +170,7 @@ void main() {
     });
 
     testWidgets(
-      'post_notifications denied 時に「許可する」タップで requestNotification 呼出',
+      'F-10: post_notifications denied 時にバナータップで requestNotification 呼出',
       (WidgetTester tester) async {
         final delegate = _MockPermissionNotifier();
         when(() => delegate.requestNotification()).thenAnswer((_) async {});
@@ -183,7 +184,7 @@ void main() {
           ),
         );
 
-        await tester.tap(find.text('許可する'));
+        await tester.tap(find.byKey(const Key('banner_post_notifications')));
         await tester.pump();
 
         verify(() => delegate.requestNotification()).called(1);
@@ -192,7 +193,7 @@ void main() {
     );
 
     testWidgets(
-      'post_notifications permanentlyDenied 時に「設定を開く」タップで openSettings 呼出',
+      'F-10: post_notifications permanentlyDenied 時にバナータップで openSettings 呼出',
       (WidgetTester tester) async {
         final delegate = _MockPermissionNotifier();
         when(() => delegate.openSettings()).thenAnswer((_) async => true);
@@ -206,7 +207,7 @@ void main() {
           ),
         );
 
-        await tester.tap(find.text('設定を開く'));
+        await tester.tap(find.byKey(const Key('banner_post_notifications')));
         await tester.pump();
 
         verify(() => delegate.openSettings()).called(1);
@@ -214,7 +215,116 @@ void main() {
       },
     );
 
-    testWidgets('F-8: description は TextButton の上段に独立配置され、文中改行が起きない', (
+    testWidgets(
+      'F-10: post_notifications denied → Semantics に button role + tap action が立つ',
+      (WidgetTester tester) async {
+        final delegate = _MockPermissionNotifier();
+        when(() => delegate.requestNotification()).thenAnswer((_) async {});
+        // expect 失敗時にも確実に SemanticsHandle を解放するため try/finally
+        // で囲む (addTearDown は flutter_test 側の
+        // _verifySemanticsHandlesWereDisposed より後に実行されるため
+        // ハンドル解放には使えない)。
+        final SemanticsHandle handle = tester.ensureSemantics();
+        try {
+          await tester.pumpWidget(
+            _harness(
+              state: _granted.copyWith(
+                postNotifications: DomainPermissionStatus.denied,
+              ),
+              delegate: delegate,
+            ),
+          );
+
+          final SemanticsNode semantics = tester.getSemantics(
+            find.byKey(const Key('banner_post_notifications')),
+          );
+          expect(semantics.flagsCollection.isButton, isTrue);
+          expect(
+            semantics.getSemanticsData().hasAction(SemanticsAction.tap),
+            isTrue,
+          );
+          // TalkBack に「ラベルなし」と読まれる回帰を防ぐため、
+          // 親 Semantics の label が severity / title / description /
+          // hint をすべて含むこと、かつ descendant の Text 群が独立した
+          // 子 Semantics ノードとして残っていないこと (excludeSemantics
+          // が効いていること) を検証する。
+          expect(semantics.label, contains('[重要]'));
+          expect(semantics.label, contains('通知が無効です'));
+          expect(semantics.label, contains('タイマーが終了したときに通知が表示されません。'));
+          expect(semantics.label, contains('タップで権限を変更できます。'));
+          expect(
+            semantics.childrenCount,
+            0,
+            reason:
+                'excludeSemantics: true により子 Semantics ノードが残ってはならない '
+                '(残っていると TalkBack が「ラベルなし テキスト N」と読み上げる)',
+          );
+        } finally {
+          handle.dispose();
+        }
+      },
+    );
+
+    testWidgets('F-10: 兄弟 Text と並べても Semantics ノードが合流せず独立した label を保つ', (
+      WidgetTester tester,
+    ) async {
+      final delegate = _MockPermissionNotifier();
+      when(() => delegate.requestNotification()).thenAnswer((_) async {});
+      final SemanticsHandle handle = tester.ensureSemantics();
+      try {
+        // 実画面 (TimerListPage) では PermissionBanners の直下に
+        // 「タイマーがありません。...」等の兄弟 Text が並ぶ。outer
+        // Semantics が container: false だと props が祖先ノードへ合流
+        // し、兄弟 Text と同じノードに吸収される (TalkBack のフォーカス
+        // 枠が画面全体に広がる) ため、container: true で独立ノードを
+        // 維持していることを検証する。
+        const String siblingText = 'タイマーがありません。右下の「＋」ボタンから追加できます。';
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: <Override>[
+              permissionNotifierProvider.overrideWith(
+                _notifierBuilder(
+                  state: _granted.copyWith(
+                    postNotifications: DomainPermissionStatus.denied,
+                  ),
+                  delegate: delegate,
+                ),
+              ),
+            ],
+            child: const MaterialApp(
+              locale: Locale('ja'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: <Locale>[Locale('ja'), Locale('en')],
+              home: Scaffold(
+                body: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: <Widget>[PermissionBanners(), Text(siblingText)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final SemanticsNode semantics = tester.getSemantics(
+          find.byKey(const Key('banner_post_notifications')),
+        );
+        expect(
+          semantics.label,
+          isNot(contains(siblingText)),
+          reason:
+              'バナーの Semantics に兄弟 Text の文言が含まれている = '
+              'container: true が外れて props が祖先ノードへ合流し、'
+              'TalkBack のフォーカス枠が画面全体に広がる症状の再発',
+        );
+        expect(semantics.label, contains('[重要]'));
+      } finally {
+        handle.dispose();
+      }
+    });
+
+    testWidgets('F-10: denied 時に hint「タップで権限を変更できます。」が表示される', (
       WidgetTester tester,
     ) async {
       final delegate = _MockPermissionNotifier();
@@ -227,25 +337,40 @@ void main() {
         ),
       );
 
-      // description の Text と TextButton の座標を取得し、ボタンが
-      // description より下にあることを assert。これにより description が
-      // ボタン領域を避けて折り返す現象が起きないことを担保する。
-      final Finder descriptionFinder = find.text('タイマーが終了したときに通知が表示されません。');
-      expect(descriptionFinder, findsOneWidget);
-      final Finder buttonFinder = find.byType(TextButton);
-      expect(buttonFinder, findsOneWidget);
+      expect(find.textContaining('タップで権限を変更できます'), findsOneWidget);
+    });
 
-      final Rect descriptionRect = tester.getRect(descriptionFinder);
-      final Rect buttonRect = tester.getRect(buttonFinder);
-
-      // TextButton の top が description の bottom 以上なら、ボタンは
-      // description の真下にあり、同一行で領域を奪い合っていない。
-      expect(
-        buttonRect.top,
-        greaterThanOrEqualTo(descriptionRect.bottom),
-        reason:
-            'TextButton must sit below the description (buttonTop=${buttonRect.top}, descriptionBottom=${descriptionRect.bottom})',
+    testWidgets('F-10: permanentlyDenied 時に hint「タップで設定を開けます。」が表示される', (
+      WidgetTester tester,
+    ) async {
+      final delegate = _MockPermissionNotifier();
+      when(() => delegate.openSettings()).thenAnswer((_) async => true);
+      await tester.pumpWidget(
+        _harness(
+          state: _granted.copyWith(
+            postNotifications: DomainPermissionStatus.permanentlyDenied,
+          ),
+          delegate: delegate,
+        ),
       );
+
+      expect(find.textContaining('タップで設定を開けます'), findsOneWidget);
+    });
+
+    testWidgets('F-10: バナーに TextButton が存在しない (全体タップで代替)', (
+      WidgetTester tester,
+    ) async {
+      final delegate = _MockPermissionNotifier();
+      await tester.pumpWidget(
+        _harness(
+          state: _granted.copyWith(
+            postNotifications: DomainPermissionStatus.denied,
+          ),
+          delegate: delegate,
+        ),
+      );
+
+      expect(find.byType(TextButton), findsNothing);
     });
 
     testWidgets('3 種 denied 同時表示で accent 幅が severity 順 (8 / 5 / 3) で差別化される', (

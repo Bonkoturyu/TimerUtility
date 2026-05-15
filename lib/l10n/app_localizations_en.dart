@@ -208,6 +208,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionBannerActionOpenSettings => 'Open settings';
 
   @override
+  String get permissionBannerHintTapToAllow =>
+      'Tap anywhere to change this permission.';
+
+  @override
+  String get permissionBannerHintTapToOpenSettings =>
+      'Tap anywhere to open settings.';
+
+  @override
   String get permissionBannerSeverityCritical => '[Critical]';
 
   @override
