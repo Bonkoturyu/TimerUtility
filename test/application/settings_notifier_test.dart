@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
@@ -50,6 +50,8 @@ class _MemoryUserPrefs implements UserPreferences {
   int get themeMode => _ints[UserPreferenceKeys.themeMode] ?? -1;
   int get snoozeMinutes => _ints[UserPreferenceKeys.defaultSnoozeMinutes] ?? -1;
   String? get alarmSoundId => _strings[UserPreferenceKeys.defaultAlarmSoundId];
+  String? get localeTag => _strings[UserPreferenceKeys.localeTag];
+  bool hasLocaleTag() => _strings.containsKey(UserPreferenceKeys.localeTag);
 }
 
 ProviderContainer _makeContainer(UserPreferences prefs) {
@@ -62,9 +64,10 @@ ProviderContainer _makeContainer(UserPreferences prefs) {
 
 void main() {
   group('SettingsState.defaults', () {
-    test('returns ThemeMode.system / 5 分 / default 音源', () {
+    test('returns ThemeMode.system / null locale / 5 分 / default 音源', () {
       final SettingsState s = SettingsState.defaults();
       expect(s.themeMode, ThemeMode.system);
+      expect(s.localeOverride, isNull);
       expect(s.defaultSnoozeMinutes, 5);
       expect(s.defaultAlarmSoundId, 'default');
     });
@@ -262,5 +265,95 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+  });
+
+  group('SettingsNotifier localeOverride', () {
+    test('永続化された "ja" は Locale("ja") に復元される', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'ja'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('ja'),
+      );
+    });
+
+    test('永続化された "en" は Locale("en") に復元される', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'en'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('en'),
+      );
+    });
+
+    test('未サポート文字列 "xx" は null にフォールバック', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'xx'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(container.read(settingsNotifierProvider).localeOverride, isNull);
+    });
+
+    test('setLocaleOverride(null) は localeTag を remove する', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'ja'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setLocaleOverride(null);
+
+      expect(container.read(settingsNotifierProvider).localeOverride, isNull);
+      expect(prefs.hasLocaleTag(), isFalse);
+    });
+
+    test('setLocaleOverride("en") は "en" を setString で永続化', () async {
+      final prefs = _MemoryUserPrefs();
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setLocaleOverride('en');
+
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('en'),
+      );
+      expect(prefs.localeTag, 'en');
+    });
+
+    test(
+      'setLocaleOverride(unsupported "xx") は null に矯正され remove される',
+      () async {
+        final prefs = _MemoryUserPrefs(
+          strings: <String, String>{UserPreferenceKeys.localeTag: 'ja'},
+        );
+        final container = _makeContainer(prefs);
+        container.read(settingsNotifierProvider);
+        await Future<void>.delayed(Duration.zero);
+
+        await container
+            .read(settingsNotifierProvider.notifier)
+            .setLocaleOverride('xx');
+
+        expect(container.read(settingsNotifierProvider).localeOverride, isNull);
+        expect(prefs.hasLocaleTag(), isFalse);
+      },
+    );
   });
 }

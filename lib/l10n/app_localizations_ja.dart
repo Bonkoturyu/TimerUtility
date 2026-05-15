@@ -509,4 +509,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsDefaultAlarmSoundLabel => 'アラーム音源';
+
+  @override
+  String get settingsLanguageLabel => '言語';
+
+  @override
+  String get settingsLanguageSystem => 'システムに合わせる';
+
+  @override
+  String get settingsLanguageDialogTitle => '言語を選択';
 }

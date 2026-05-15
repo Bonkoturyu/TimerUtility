@@ -6,7 +6,7 @@ part of 'settings_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsNotifierHash() => r'c266446dc7d7e1d67ccbb115ea03a7fedfe737d4';
+String _$settingsNotifierHash() => r'7be41fa332c0f16481238df3289e8dcfac802b20';
 
 /// Phase 11 settings notifier.
 ///
@@ -21,7 +21,10 @@ String _$settingsNotifierHash() => r'c266446dc7d7e1d67ccbb115ea03a7fedfe737d4';
 /// respectively and throw `ArgumentError` on invalid input — the UI
 /// only ever passes values from the curated lists, so these are
 /// programmer-error paths. `setThemeMode` takes a typed `ThemeMode` so
-/// no validation is needed at the call site.
+/// no validation is needed at the call site. `setLocaleOverride` takes
+/// a nullable `Locale` (null = follow system) and silently drops tags
+/// outside [supportedLocaleTags] (defence in depth — the UI already
+/// hides experimental options on public builds).
 ///
 /// Copied from [SettingsNotifier].
 @ProviderFor(SettingsNotifier)
