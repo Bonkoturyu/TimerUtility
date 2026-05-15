@@ -558,4 +558,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDefaultAlarmSoundLabel => 'Alarm sound';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'Follow system';
+
+  @override
+  String get settingsLanguageDialogTitle => 'Select language';
 }

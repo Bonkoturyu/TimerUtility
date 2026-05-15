@@ -256,5 +256,8 @@
       "minutes": {"type": "int"}
     }
   },
-  "settingsDefaultAlarmSoundLabel": "Alarm sound"
+  "settingsDefaultAlarmSoundLabel": "Alarm sound",
+  "settingsLanguageLabel": "Language",
+  "settingsLanguageSystem": "Follow system",
+  "settingsLanguageDialogTitle": "Select language"
 }

@@ -41,18 +41,6 @@ import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
 
-/// Compile-time feature flag for experimental locales (zh-Hans / zh-Hant /
-/// ko). The public release ships with Japanese + English only; the other
-/// locales' ARB files exist for internal development and are reachable
-/// from a debug build with `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`.
-///
-/// Phase 11 (settings screen) will likely flip this to a runtime
-/// preference; for now the compile-time gate keeps test surface small.
-const bool kEnableExperimentalLocales = bool.fromEnvironment(
-  'ENABLE_EXPERIMENTAL_LOCALES',
-  defaultValue: false,
-);
-
 const List<Locale> _publicSupportedLocales = <Locale>[
   Locale('ja'),
   Locale('en'),
@@ -112,14 +100,19 @@ Locale resolveSupportedLocale(Locale? deviceLocale, List<Locale> supported) {
 /// `_TimerUtilityAppState.didChangeLocales` whenever the OS reports a
 /// locale change — so a JA→EN switch updates pending banners after a
 /// `rescheduleAllRunning()` follow-up.
-Future<NotificationStrings> _resolveNotificationStrings() async {
-  final List<Locale> systemLocales =
-      WidgetsBinding.instance.platformDispatcher.locales;
-  final Locale? deviceLocale = systemLocales.isEmpty
-      ? null
-      : systemLocales.first;
+///
+/// Phase 11 language-toggle: when the user has chosen a manual override
+/// in settings, the caller passes it as [overrideLocale] so notification
+/// strings track the UI language instead of the OS language. A null
+/// override means "follow system" — same path as before.
+Future<NotificationStrings> _resolveNotificationStrings({
+  Locale? overrideLocale,
+}) async {
+  final Locale? sourceLocale =
+      overrideLocale ??
+      WidgetsBinding.instance.platformDispatcher.locales.firstOrNull;
   final Locale resolved = resolveSupportedLocale(
-    deviceLocale,
+    sourceLocale,
     supportedLocales,
   );
   final AppLocalizations l = await AppLocalizations.delegate.load(resolved);
@@ -415,12 +408,17 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
     super.didChangeLocales(locales);
     // Fire-and-forget: re-resolve against the new device locale, push
     // the fresh strings into the provider, and re-schedule running
-    // timers so their pending OS banners switch language too.
+    // timers so their pending OS banners switch language too. When the
+    // user has a manual override active, OS changes don't matter — the
+    // override wins and we keep notification strings on that locale.
     unawaited(_refreshNotificationLocale());
   }
 
   Future<void> _refreshNotificationLocale() async {
-    final NotificationStrings strings = await _resolveNotificationStrings();
+    final Locale? override = ref.read(settingsNotifierProvider).localeOverride;
+    final NotificationStrings strings = await _resolveNotificationStrings(
+      overrideLocale: override,
+    );
     if (!mounted) return;
     ref.read(notificationStringsNotifierProvider.notifier).set(strings);
     ref.read(timerCollectionNotifierProvider.notifier).rescheduleAllRunning();
@@ -428,9 +426,26 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
 
   @override
   Widget build(BuildContext context) {
+    // Watch both theme and locale override. Pass `locale` through to
+    // MaterialApp — when null, `localeResolutionCallback` continues to
+    // run against the device locale (F-9 behaviour preserved); when set,
+    // MaterialApp uses the override but still routes it through the
+    // callback so unsupported tags fall back to en the same way.
     final ThemeMode themeMode = ref.watch(
       settingsNotifierProvider.select((SettingsState s) => s.themeMode),
     );
+    final Locale? localeOverride = ref.watch(
+      settingsNotifierProvider.select((SettingsState s) => s.localeOverride),
+    );
+    // Refresh pending notification banners whenever the user flips the
+    // manual override. The OS-locale path is handled by didChangeLocales;
+    // this listener covers the in-app toggle that doesn't trigger an OS
+    // event.
+    ref.listen<SettingsState>(settingsNotifierProvider, (prev, next) {
+      if (prev?.localeOverride != next.localeOverride) {
+        unawaited(_refreshNotificationLocale());
+      }
+    });
     return MaterialApp.router(
       title: 'TimerUtility',
       theme: ThemeData(
@@ -443,6 +458,7 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
         ),
       ),
       themeMode: themeMode,
+      locale: localeOverride,
       routerConfig: widget.router,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: supportedLocales,

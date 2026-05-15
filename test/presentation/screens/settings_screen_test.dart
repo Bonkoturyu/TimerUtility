@@ -163,5 +163,118 @@ void main() {
 
       expect(find.byKey(const Key('licenses_stub')), findsOneWidget);
     });
+
+    testWidgets('言語 ListTile が表示され副題はデフォルトで「システムに合わせる」', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings_language_tile')), findsOneWidget);
+      // 副題は ARB の settingsLanguageSystem (ja)。タイトルの「言語」と区別する
+      // ため subtitle 上の Text を直接探す。
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('settings_language_tile')),
+          matching: find.text('システムに合わせる'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('言語 ListTile タップで BottomSheet に system + ja + en の 3 件が表示される', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('settings_language_tile')));
+      await tester.pumpAndSettle();
+
+      // 3 件のラジオオプション。
+      expect(
+        find.byKey(const Key('settings_language_option_system')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('settings_language_option_ja')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('settings_language_option_en')),
+        findsOneWidget,
+      );
+      // experimental フラグ false (defaultValue) のとき zh / zh-Hant / ko は出ない。
+      expect(
+        find.byKey(const Key('settings_language_option_zh')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('settings_language_option_zh-Hant')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('settings_language_option_ko')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('英語を選択すると state.localeOverride が Locale("en") になる', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      final BuildContext ctx = tester.element(
+        find.byKey(const Key('settings_language_tile')),
+      );
+      final ProviderContainer container = ProviderScope.containerOf(ctx);
+
+      await tester.tap(find.byKey(const Key('settings_language_tile')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('settings_language_option_en')));
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('en'),
+      );
+      // シートは閉じている。
+      expect(
+        find.byKey(const Key('settings_language_option_en')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('「システムに合わせる」を選ぶと localeOverride が null になる', (
+      WidgetTester tester,
+    ) async {
+      final prefs = _MemoryUserPrefs();
+      // 初期値として ja を入れておき、システムを選択して null に戻ることを確認。
+      await prefs.setString(UserPreferenceKeys.localeTag, 'ja');
+      await tester.pumpWidget(_harness(prefs: prefs));
+      await tester.pumpAndSettle();
+
+      final BuildContext ctx = tester.element(
+        find.byKey(const Key('settings_language_tile')),
+      );
+      final ProviderContainer container = ProviderScope.containerOf(ctx);
+
+      // restore が走った直後は Locale("ja") のはず。
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('ja'),
+      );
+
+      await tester.tap(find.byKey(const Key('settings_language_tile')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('settings_language_option_system')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(container.read(settingsNotifierProvider).localeOverride, isNull);
+    });
   });
 }
