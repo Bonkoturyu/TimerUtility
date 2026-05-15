@@ -3,6 +3,7 @@ import 'dart:convert' show utf8;
 import 'dart:io';
 
 import 'package:clock/clock.dart';
+import 'package:path/path.dart' as p;
 
 import '../../domain/diagnostics/diagnostic_event.dart';
 import '../../domain/ports/diagnostic_sink.dart';
@@ -68,20 +69,29 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
 
   Future<void> _writeLine(String line) async {
     final String dateKey = _dateKey(clock.now());
+    bool rotated = false;
     if (_sink == null || _currentDateKey != dateKey) {
       await _openOrRollDate(dateKey);
+      rotated = true;
     } else if (_currentFile != null &&
         await rotator.shouldRotateCurrentFile(_currentFile!)) {
       await _closeCurrent();
       await rotator.rotateCurrentFile(_currentFile!);
       await _openCurrent(dateKey);
+      rotated = true;
     }
     _sink!.add(utf8.encode(line));
     if (!_prunedOnce) {
       _prunedOnce = true;
       // Fire-and-forget prune so the first write isn't blocked on disk
       // traversal. Errors inside pruneOldFiles are swallowed there.
-      unawaited(_runFirstWritePrune());
+      unawaited(_runPrune());
+    } else if (rotated) {
+      // PR #50 review #3246543121: long-running sessions that never
+      // restart (e.g. a multi-day timer test) need prune to run after
+      // each rotation too, otherwise the 50 MB / 14 days budget can
+      // be exceeded until the next cold start.
+      unawaited(_runPrune());
     }
   }
 
@@ -95,7 +105,9 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
-    final File file = File('${dir.path}/diagnostic_$dateKey.log');
+    // PR #50 review #3246519112: use `p.join` so path separators are
+    // platform-correct (forward-looking; Android already uses '/').
+    final File file = File(p.join(dir.path, 'diagnostic_$dateKey.log'));
     _currentFile = file;
     _currentDateKey = dateKey;
     _sink = file.openWrite(mode: FileMode.append);
@@ -118,7 +130,7 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
     }
   }
 
-  Future<void> _runFirstWritePrune() async {
+  Future<void> _runPrune() async {
     try {
       final Directory dir = await rootDirProvider();
       await rotator.pruneOldFiles(dir);

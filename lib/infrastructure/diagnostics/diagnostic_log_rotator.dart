@@ -61,10 +61,20 @@ class DiagnosticLogRotator {
   /// retention` are also dropped if they push us over [maxBytes].
   ///
   /// Non-file entries and unreadable files are skipped silently — log
-  /// pruning must not crash the app.
+  /// pruning must not crash the app. PR #50 review #3246543152: the
+  /// directory traversal itself can also throw (permission revoked
+  /// mid-call, directory removed between `exists()` and `list()`),
+  /// so we wrap the listing in a try/catch too.
   Future<void> pruneOldFiles(Directory dir) async {
     if (!await dir.exists()) return;
-    final List<FileSystemEntity> entries = await dir.list().toList();
+    final List<FileSystemEntity> entries;
+    try {
+      entries = await dir.list().toList();
+    } catch (_) {
+      // Directory disappeared / unreadable. Skip this prune attempt;
+      // the next opportunistic invocation may succeed.
+      return;
+    }
     final List<_FileInfo> infos = <_FileInfo>[];
     for (final FileSystemEntity e in entries) {
       if (e is! File) continue;

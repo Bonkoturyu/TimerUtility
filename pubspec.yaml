@@ -35,6 +35,10 @@ dependencies:
   # getApplicationSupportDirectory() を解決する。drift 経由で 2.1.5 が既に
   # transitive に入っているのを direct dependency として昇格する。
   path_provider: ^2.1.5
+  # Phase D-2 (PR #50 review fix): path.join でプラットフォーム別の
+  # path separator を吸収する。flutter_localizations / drift 経由で
+  # transitive に入っているので `any` で SDK 整合を取る。
+  path: any
 
 dev_dependencies:
   flutter_test:
