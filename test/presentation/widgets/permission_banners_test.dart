@@ -260,6 +260,64 @@ void main() {
       },
     );
 
+    testWidgets('F-10: 兄弟 Text と並べても Semantics ノードが合流せず独立した label を保つ', (
+      WidgetTester tester,
+    ) async {
+      final delegate = _MockPermissionNotifier();
+      when(() => delegate.requestNotification()).thenAnswer((_) async {});
+      final SemanticsHandle handle = tester.ensureSemantics();
+
+      // 実画面 (TimerListPage) では PermissionBanners の直下に
+      // 「タイマーがありません。...」等の兄弟 Text が並ぶ。outer
+      // Semantics が container: false だと props が祖先ノードへ合流
+      // し、兄弟 Text と同じノードに吸収される (TalkBack のフォーカス
+      // 枠が画面全体に広がる) ため、container: true で独立ノードを
+      // 維持していることを検証する。
+      const String siblingText = 'タイマーがありません。右下の「＋」ボタンから追加できます。';
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: <Override>[
+            permissionNotifierProvider.overrideWith(
+              _notifierBuilder(
+                state: _granted.copyWith(
+                  postNotifications: DomainPermissionStatus.denied,
+                ),
+                delegate: delegate,
+              ),
+            ),
+          ],
+          child: const MaterialApp(
+            locale: Locale('ja'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: <Locale>[Locale('ja'), Locale('en')],
+            home: Scaffold(
+              body: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  children: <Widget>[PermissionBanners(), Text(siblingText)],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final SemanticsNode semantics = tester.getSemantics(
+        find.byKey(const Key('banner_post_notifications')),
+      );
+      expect(
+        semantics.label,
+        isNot(contains(siblingText)),
+        reason:
+            'バナーの Semantics に兄弟 Text の文言が含まれている = '
+            'container: true が外れて props が祖先ノードへ合流し、'
+            'TalkBack のフォーカス枠が画面全体に広がる症状の再発',
+      );
+      expect(semantics.label, contains('[重要]'));
+
+      handle.dispose();
+    });
+
     testWidgets('F-10: denied 時に hint「タップで権限を変更できます。」が表示される', (
       WidgetTester tester,
     ) async {

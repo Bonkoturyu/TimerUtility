@@ -167,12 +167,17 @@ class _PermissionBanner extends StatelessWidget {
       context,
     ).textTheme.bodySmall?.copyWith(color: onColor.withValues(alpha: 0.85));
 
-    // excludeSemantics: true で descendant の semantics を全遮断し、
+    // container: true で独立した SemanticsNode を確保し (これが無いと
+    // props が祖先ノードへ合流し、兄弟の Text と同じノードに吸収されて
+    // 画面全体が 1 ボタンとして読まれる)、
+    // excludeSemantics: true で descendant の semantics を全遮断し
+    // (Text.rich の TextSpan が「テキスト N」と読まれる回帰防止)、
     // 親 Semantics の label のみを TalkBack に届ける。InkWell も
     // excludeFromSemantics: true で暗黙の button ノード生成を抑止し、
     // 親の button role と競合させない。
     return Semantics(
       button: true,
+      container: true,
       onTap: onAction,
       label: '$severityLabel $title。$description $hint',
       excludeSemantics: true,
