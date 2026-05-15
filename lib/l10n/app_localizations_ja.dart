@@ -187,12 +187,6 @@ class AppLocalizationsJa extends AppLocalizations {
       '権限がない場合は通知バナーで代わりにお知らせします。';
 
   @override
-  String get permissionBannerActionAllow => '許可する';
-
-  @override
-  String get permissionBannerActionOpenSettings => '設定を開く';
-
-  @override
   String get permissionBannerHintTapToAllow => 'タップで権限を変更できます。';
 
   @override

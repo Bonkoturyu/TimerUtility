@@ -160,8 +160,8 @@
 | `permissionBannerExactAlarmDescription` | 省電力モード時にアラームが数分遅れる場合があります。 | Alarms may fire several minutes late while the device is in power-saving mode. | バナー説明 |
 | `permissionBannerFullScreenIntentTitle` | ロック画面でのアラームが無効です | Lock-screen alarms disabled | バナータイトル |
 | `permissionBannerFullScreenIntentDescription` | 権限がない場合は通知バナーで代わりにお知らせします。 | Without this permission, alarms will appear as a heads-up banner instead. | バナー説明 |
-| `permissionBannerActionAllow` | 許可する | Allow | バナー上の許可ボタン |
-| `permissionBannerActionOpenSettings` | 設定を開く | Open settings | バナー上の設定ボタン |
+| `permissionBannerHintTapToAllow` | タップで権限を変更できます。 | Tap anywhere to change this permission. | バナー下部 hint (denied 時、F-10 で TextButton を廃止して全体タップ可能化に移行) |
+| `permissionBannerHintTapToOpenSettings` | タップで設定を開けます。 | Tap anywhere to open settings. | バナー下部 hint (permanentlyDenied / `[補助]` バナー時) |
 
 ## 音源カタログ表示名
 

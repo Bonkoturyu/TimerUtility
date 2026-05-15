@@ -89,8 +89,6 @@
   "permissionBannerExactAlarmDescription": "省電力モード時にアラームが数分遅れる場合があります。",
   "permissionBannerFullScreenIntentTitle": "ロック画面でのアラームが無効です",
   "permissionBannerFullScreenIntentDescription": "権限がない場合は通知バナーで代わりにお知らせします。",
-  "permissionBannerActionAllow": "許可する",
-  "permissionBannerActionOpenSettings": "設定を開く",
   "permissionBannerHintTapToAllow": "タップで権限を変更できます。",
   "permissionBannerHintTapToOpenSettings": "タップで設定を開けます。",
   "permissionBannerSeverityCritical": "[重要]",
