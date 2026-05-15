@@ -1616,6 +1616,43 @@ Phase 9.5 / 10 / 10.5 / 11 まで進めても Native → Flutter の能動イベ
 
 ---
 
-最終更新日: 2026-05-13（Phase 6 docs cleanup エントリ追加）
+## F-8 PermissionBanner 折り返し品質改善 実装 (2026-05-15)
 
-過去の更新: 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）
+PR #45 / PR #43 実機検証 (2026-05-15) で再確認された PermissionBanner
+本文の文中改行を解消するため、`_PermissionBanner.build` のレイアウトを
+横並び (`Row(Icon, Column(title, desc), TextButton)`) から縦並び
+(`Row(Icon, Expanded(Column(title, desc, Align(ActionRow))))`) に再構成。
+
+### F-8 変更内容
+
+- `lib/presentation/widgets/permission_banners.dart` L186-228:
+  - TextButton を Row の 3 番目要素から Column 末尾に移動
+  - `Align(alignment: Alignment.centerRight)` でボタンを右寄せ
+  - description と Action の間に `SizedBox(height: 8)` を挿入
+  - Row の `crossAxisAlignment` を `start` に変更 (Icon がタイトル行に揃う)
+  - accent 幅ロジック (8 / 5 / 3 pt)、severity / fontWeight、配色、ARB キーは一切変更なし
+- `test/presentation/widgets/permission_banners_test.dart`:
+  - 新規 1 件追加 (F-8): `tester.getRect` で `TextButton.top >= description.bottom`
+    を assert し、ボタンが description の下に独立配置されていることを担保
+
+### F-8 検証
+
+- `flutter analyze`: No issues found
+- `flutter test test/presentation/widgets/permission_banners_test.dart`: 8/8 緑
+  (既存 7 件 + 新規 F-8 1 件、accent 幅 assert を含めて回帰なし)
+- `flutter test`: 578/578 緑 (1 件は既存 skip)
+
+### F-8 残課題
+
+- Pixel 6a 実機での再検証は本セッションでは未実施 (Auto では行わない方針)。
+  ユーザ側で `git push` → PR 作成 → 実機スクショで「文中改行が解消されたこと」を確認後、
+  本ログに追記する想定。
+
+---
+
+最終更新日: 2026-05-15（F-8 PermissionBanner 折り返し改善エントリ追加）
+
+過去の更新:
+
+- 2026-05-13（Phase 6 docs cleanup エントリ追加）
+- 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）
