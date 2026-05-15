@@ -1,6 +1,8 @@
 import 'dart:async' show unawaited;
+import 'dart:io' show Directory;
 
 import 'package:clock/clock.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'
     show
         LicenseEntry,
@@ -36,7 +38,9 @@ import 'infrastructure/clock/tz_database_timezone_resolver.dart';
 import 'infrastructure/database/drift_clock_entry_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
-import 'infrastructure/diagnostics/in_memory_diagnostic_sink_adapter.dart';
+import 'infrastructure/diagnostics/diagnostic_log_formatter.dart';
+import 'infrastructure/diagnostics/diagnostic_log_rotator.dart';
+import 'infrastructure/diagnostics/file_diagnostic_sink_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
@@ -239,11 +243,11 @@ Future<void> main() async {
   // ──────────────────────────────────────────────────────────────
   // Phase D-1: diagnostic logging bootstrap
   //
-  // Build the in-memory sink *before* doing anything else so the
+  // Build the file-backed sink *before* doing anything else so the
   // FlutterError / PlatformDispatcher uncaught-exception handlers we
-  // register below have a sink to forward into. Phase D-2 swaps this
-  // for the file-backed adapter; the public Provider wiring stays the
-  // same.
+  // register below have a sink to forward into. The Phase D-1
+  // in-memory adapter is no longer reachable from main(); tests still
+  // default to the in-memory one via diagnosticSinkProvider's default.
   //
   // Note (PR #49 review #3246516898 / #3246537710): the error handlers
   // are installed *after* the ProviderContainer is built so they can
@@ -256,8 +260,15 @@ Future<void> main() async {
   // diagnostic sink, which is the intended behaviour when the user
   // has logging disabled.
   // ──────────────────────────────────────────────────────────────
-  final InMemoryDiagnosticSinkAdapter diagnosticSink =
-      InMemoryDiagnosticSinkAdapter();
+  final FileDiagnosticSinkAdapter diagnosticSink = FileDiagnosticSinkAdapter(
+    rootDirProvider: () async {
+      final Directory base = await getApplicationSupportDirectory();
+      return Directory('${base.path}/diagnostic_logs');
+    },
+    formatter: const DiagnosticLogFormatter(),
+    rotator: const DiagnosticLogRotator(clock: Clock()),
+    clock: const Clock(),
+  );
   // Default-enabled in debug builds, off in release builds. The
   // notifier reads `defaultEnabled` from the field below at build()
   // time. A persisted user toggle (if any) overrides this.
@@ -274,7 +285,12 @@ Future<void> main() async {
   final DriftClockEntryRepository clockRepo = DriftClockEntryRepository(
     database,
   );
-  final LocationDetectorAdapter detector = LocationDetectorAdapter();
+  // Phase D-2: forward GPS / TZ-resolution failures to the diagnostic
+  // sink so testers can see them in the exported zip. The same sink
+  // also powers FlutterError / PlatformDispatcher captures above.
+  final LocationDetectorAdapter detector = LocationDetectorAdapter(
+    sink: diagnosticSink,
+  );
   final TzDatabaseTimezoneResolver timezoneResolver =
       TzDatabaseTimezoneResolver();
   final SharedPreferencesUserPreferences userPrefs =
