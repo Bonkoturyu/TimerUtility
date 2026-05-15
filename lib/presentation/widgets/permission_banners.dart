@@ -179,7 +179,11 @@ class _PermissionBanner extends StatelessWidget {
       button: true,
       container: true,
       onTap: onAction,
-      label: '$severityLabel $title。$description $hint',
+      // セパレータは半角スペースのみ。日本語の句点「。」をハードコードすると
+      // 英語ロケールで「Notifications disabled。Timer-end...」のように
+      // ロケール非依存の記号が読み上げに混入するため、区切りはスペースで
+      // 統一し、句読点は description / hint の ARB 訳側に任せる。
+      label: '$severityLabel $title $description $hint',
       excludeSemantics: true,
       child: Material(
         color: color,

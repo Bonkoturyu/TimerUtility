@@ -220,43 +220,48 @@ void main() {
       (WidgetTester tester) async {
         final delegate = _MockPermissionNotifier();
         when(() => delegate.requestNotification()).thenAnswer((_) async {});
+        // expect 失敗時にも確実に SemanticsHandle を解放するため try/finally
+        // で囲む (addTearDown は flutter_test 側の
+        // _verifySemanticsHandlesWereDisposed より後に実行されるため
+        // ハンドル解放には使えない)。
         final SemanticsHandle handle = tester.ensureSemantics();
-
-        await tester.pumpWidget(
-          _harness(
-            state: _granted.copyWith(
-              postNotifications: DomainPermissionStatus.denied,
+        try {
+          await tester.pumpWidget(
+            _harness(
+              state: _granted.copyWith(
+                postNotifications: DomainPermissionStatus.denied,
+              ),
+              delegate: delegate,
             ),
-            delegate: delegate,
-          ),
-        );
+          );
 
-        final SemanticsNode semantics = tester.getSemantics(
-          find.byKey(const Key('banner_post_notifications')),
-        );
-        expect(semantics.flagsCollection.isButton, isTrue);
-        expect(
-          semantics.getSemanticsData().hasAction(SemanticsAction.tap),
-          isTrue,
-        );
-        // TalkBack に「ラベルなし」と読まれる回帰を防ぐため、
-        // 親 Semantics の label が severity / title / description /
-        // hint をすべて含むこと、かつ descendant の Text 群が独立した
-        // 子 Semantics ノードとして残っていないこと (excludeSemantics
-        // が効いていること) を検証する。
-        expect(semantics.label, contains('[重要]'));
-        expect(semantics.label, contains('通知が無効です'));
-        expect(semantics.label, contains('タイマーが終了したときに通知が表示されません。'));
-        expect(semantics.label, contains('タップで権限を変更できます。'));
-        expect(
-          semantics.childrenCount,
-          0,
-          reason:
-              'excludeSemantics: true により子 Semantics ノードが残ってはならない '
-              '(残っていると TalkBack が「ラベルなし テキスト N」と読み上げる)',
-        );
-
-        handle.dispose();
+          final SemanticsNode semantics = tester.getSemantics(
+            find.byKey(const Key('banner_post_notifications')),
+          );
+          expect(semantics.flagsCollection.isButton, isTrue);
+          expect(
+            semantics.getSemanticsData().hasAction(SemanticsAction.tap),
+            isTrue,
+          );
+          // TalkBack に「ラベルなし」と読まれる回帰を防ぐため、
+          // 親 Semantics の label が severity / title / description /
+          // hint をすべて含むこと、かつ descendant の Text 群が独立した
+          // 子 Semantics ノードとして残っていないこと (excludeSemantics
+          // が効いていること) を検証する。
+          expect(semantics.label, contains('[重要]'));
+          expect(semantics.label, contains('通知が無効です'));
+          expect(semantics.label, contains('タイマーが終了したときに通知が表示されません。'));
+          expect(semantics.label, contains('タップで権限を変更できます。'));
+          expect(
+            semantics.childrenCount,
+            0,
+            reason:
+                'excludeSemantics: true により子 Semantics ノードが残ってはならない '
+                '(残っていると TalkBack が「ラベルなし テキスト N」と読み上げる)',
+          );
+        } finally {
+          handle.dispose();
+        }
       },
     );
 
@@ -266,56 +271,57 @@ void main() {
       final delegate = _MockPermissionNotifier();
       when(() => delegate.requestNotification()).thenAnswer((_) async {});
       final SemanticsHandle handle = tester.ensureSemantics();
-
-      // 実画面 (TimerListPage) では PermissionBanners の直下に
-      // 「タイマーがありません。...」等の兄弟 Text が並ぶ。outer
-      // Semantics が container: false だと props が祖先ノードへ合流
-      // し、兄弟 Text と同じノードに吸収される (TalkBack のフォーカス
-      // 枠が画面全体に広がる) ため、container: true で独立ノードを
-      // 維持していることを検証する。
-      const String siblingText = 'タイマーがありません。右下の「＋」ボタンから追加できます。';
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: <Override>[
-            permissionNotifierProvider.overrideWith(
-              _notifierBuilder(
-                state: _granted.copyWith(
-                  postNotifications: DomainPermissionStatus.denied,
+      try {
+        // 実画面 (TimerListPage) では PermissionBanners の直下に
+        // 「タイマーがありません。...」等の兄弟 Text が並ぶ。outer
+        // Semantics が container: false だと props が祖先ノードへ合流
+        // し、兄弟 Text と同じノードに吸収される (TalkBack のフォーカス
+        // 枠が画面全体に広がる) ため、container: true で独立ノードを
+        // 維持していることを検証する。
+        const String siblingText = 'タイマーがありません。右下の「＋」ボタンから追加できます。';
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: <Override>[
+              permissionNotifierProvider.overrideWith(
+                _notifierBuilder(
+                  state: _granted.copyWith(
+                    postNotifications: DomainPermissionStatus.denied,
+                  ),
+                  delegate: delegate,
                 ),
-                delegate: delegate,
               ),
-            ),
-          ],
-          child: const MaterialApp(
-            locale: Locale('ja'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: <Locale>[Locale('ja'), Locale('en')],
-            home: Scaffold(
-              body: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: <Widget>[PermissionBanners(), Text(siblingText)],
+            ],
+            child: const MaterialApp(
+              locale: Locale('ja'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: <Locale>[Locale('ja'), Locale('en')],
+              home: Scaffold(
+                body: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: <Widget>[PermissionBanners(), Text(siblingText)],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      final SemanticsNode semantics = tester.getSemantics(
-        find.byKey(const Key('banner_post_notifications')),
-      );
-      expect(
-        semantics.label,
-        isNot(contains(siblingText)),
-        reason:
-            'バナーの Semantics に兄弟 Text の文言が含まれている = '
-            'container: true が外れて props が祖先ノードへ合流し、'
-            'TalkBack のフォーカス枠が画面全体に広がる症状の再発',
-      );
-      expect(semantics.label, contains('[重要]'));
-
-      handle.dispose();
+        final SemanticsNode semantics = tester.getSemantics(
+          find.byKey(const Key('banner_post_notifications')),
+        );
+        expect(
+          semantics.label,
+          isNot(contains(siblingText)),
+          reason:
+              'バナーの Semantics に兄弟 Text の文言が含まれている = '
+              'container: true が外れて props が祖先ノードへ合流し、'
+              'TalkBack のフォーカス枠が画面全体に広がる症状の再発',
+        );
+        expect(semantics.label, contains('[重要]'));
+      } finally {
+        handle.dispose();
+      }
     });
 
     testWidgets('F-10: denied 時に hint「タップで権限を変更できます。」が表示される', (
