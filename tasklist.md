@@ -48,45 +48,62 @@
 
 ---
 
-### F-8. `PermissionBanner` の本文折り返し品質改善 (PR #39 実機検証で発見)
+### F-10. `PermissionBanner` 縦サイズ縮小 (バナー全体タップ可能化 + TalkBack 維持) (PR #47 実機検証で発見)
 
-**経緯**: PR #39 (Phase 11 CVD banner labels、2026-05-13 main マージ) の
-Pixel 6a 実機検証で、`[重要]` バナーの本文が「許可する」ボタンの
-幅を避けて折り返すため、文の途中で改行が発生することを確認:
+**経緯**: PR #47 (F-8 文中改行解消、2026-05-15 main マージ) の Pixel 6a 実機検証で、
+縦並び化により本来の文中改行は解消されたが、TextButton (`[許可する]`) が
+description 下段に独立配置された結果、バナー全体の縦サイズが約 48dp 増加して
+「だいぶでかい」とユーザ判断。ユーザ提案で **バナー全体をタップ可能化し
+TextButton を削除する** 方針が確定 (2026-05-15)。
 
-```text
-タイマーが終了したときに通知が表    [許可する]
-示されません。
-```
-
-[`lib/presentation/widgets/permission_banners.dart`](lib/presentation/widgets/permission_banners.dart)
-の `_PermissionBanner.build` が `Row(Icon → Column(title + description)
-→ TextButton)` 構造で、`Expanded` の本文がボタン幅を確保した残りで
-折り返すため。**PR #39 以前から存在する既存挙動**で、CVD 改修
-スコープでは触っていない。機能影響なし、視覚品質のみの課題。
+**スクショ**: 2026-05-15 Pixel 6a 実機 (debug ビルド)。`[重要] 通知が無効です`
+バナーが画面上部の約 1/4 を占有。文中改行は解消済みだが、空白行 +
+ボタン領域で縦が冗長。
 
 **修正内容** (TODO):
 
-- [x] 本文を縦並び (`Column(title + description + ActionRow)`) に再構成し、
-  「許可する」/「設定を開く」ボタンを下段独立配置にする案を検討
-  → 2026-05-15 採用 (`feat/f-8-permissionbanner-wrap`, commit 待ち)
-- [ ] あるいは Wrap 化 (title + button を 1 行 → 溢れたら折り返し) も検討
-  → 縦並び案で確定したため見送り
-- [ ] 画面サイズ分岐 (タブレット / 横画面では現状 Row が自然)
-  → 親 Plan で「画面サイズ分岐は不要」とユーザ確定、見送り
-- [x] Widget Test を追加: 長文タイトルでも文中改行が起きないことを assert
-  → `tester.getRect` で TextButton.top >= description.bottom を assert する形で追加
+- [ ] `_PermissionBanner` ルートを `InkWell` (or `Material(... + InkWell)`) で
+      ラップし、`onTap: onAction` でバナー全体をタップ可能化
+- [ ] `TextButton` (および `Align(centerRight)` ラッパ) を削除
+- [ ] description 末尾に「タップで権限を変更できます。」相当の案内を追加
+      (ARB 編集)。`actionLabel` が `permissionBannerActionAllow` /
+      `permissionBannerActionOpenSettings` で分岐する点との文言整合を
+      取ること (例: denied → 「タップで権限を変更できます」、
+      permanentlyDenied → 「タップで設定を開けます」のような分岐 ARB を新設)
+- [ ] **TalkBack 維持**: `Semantics(button: true, onTap: onAction, label: ...)`
+      で button role を明示的に保持。`InkWell` の自動 semantics に任せず、
+      明示的に指定して読み上げを保証する。`Icon` / accent 帯は
+      `ExcludeSemantics` で読み上げから除外
+- [ ] 既存タップ動作テスト 2 件 (`許可する` / `設定を開く` を `find.text(...)`
+      で取得 → タップ) を、各バナーの既存 Key (`banner_post_notifications` /
+      `banner_exact_alarm` / `banner_full_screen_intent`) を使って
+      `find.byKey(const Key('banner_*'))` で対象を一意特定し、`tester.tap()`
+      で発火させる形に書き換え。`find.byType(InkWell)` は同時 3 バナー表示で
+      Ambiguous lookup になるため使わない
+- [ ] F-8 で追加した「TextButton.top >= description.bottom」 assert は
+      TextButton ごと削除されるため、テスト自体を削除 (F-10 で「ボタンが無い」状態に変わる)
+- [ ] 新規テスト追加: `tester.getSemantics(find.byKey(...))` で
+      `SemanticsFlag.isButton` が立っていること、`SemanticsAction.tap` が
+      ある ことを assert
+- [ ] 実機検証 (Pixel 6a / Android 16, TalkBack ON / OFF 両方):
+  - TalkBack OFF: バナータップで権限ダイアログ / 設定画面が開く
+  - TalkBack ON: 「\[重要\] 通知が無効です。タイマーが終了したときに通知が
+    表示されません。タップで権限を変更できます。 ボタン」 と読まれる
+  - バナー全体の縦サイズが PR #47 比で縮小していること
 
-**トリガ**: PermissionBanner の他の UI 改修 PR でまとめる、または
-「本文表示品質」テーマで単独 PR を切る。実機検証で UX 影響が
-許容できないとユーザ判断された場合は単独 PR に格上げ。
+**トリガ**: 単独 PR。F-10 として実装する。
 
-**優先度**: 低 (cosmetic、CVD 識別性自体は損なわれていない、機能影響なし)。
-本文折り返しがあっても重大度ラベル `[重要]` / `[補助]` は先頭にあるため
-読み始めは保たれている。
+**優先度**: 中 (UX 影響あり、F-8 解消後の副次課題)。
 
-**再現確認**: 2026-05-15 PR #45 実機検証時に同現象を再スクショ取得済み。
-状態に変化なし、実装案は本タスクの「修正内容 (TODO)」のまま。
+**スコープ外** (触らない):
+
+- accent 幅ロジック (8 / 5 / 3 pt)、severity / fontWeight、配色
+- 重大度ラベル (`[重要]` / `[推奨]` / `[補助]`) の表示位置・文言
+- 他バナー (CVD バナー等) のレイアウト
+
+**親 Plan / Auto 指示文**: 別途作成予定 (本タスク着手時に
+`f-10-permissionbanner-fullbanner-tap-*.md` 相当のファイル名で、ユーザ環境の
+Plans 保存場所に用意)。リポジトリ管理外のため絶対パスはここに記載しない。
 
 ---
 
