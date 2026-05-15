@@ -185,6 +185,7 @@ class _PermissionBanner extends StatelessWidget {
                     child: IconTheme.merge(
                       data: IconThemeData(color: onColor),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Icon(icon),
                           const SizedBox(width: 12),
@@ -202,15 +203,19 @@ class _PermissionBanner extends StatelessWidget {
                                   ),
                                 ),
                                 Text(description),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: onAction,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: onColor,
+                                    ),
+                                    child: Text(actionLabel),
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                          TextButton(
-                            onPressed: onAction,
-                            style: TextButton.styleFrom(
-                              foregroundColor: onColor,
-                            ),
-                            child: Text(actionLabel),
                           ),
                         ],
                       ),

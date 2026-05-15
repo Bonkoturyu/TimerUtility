@@ -67,11 +67,15 @@ Pixel 6a 実機検証で、`[重要]` バナーの本文が「許可する」ボ
 
 **修正内容** (TODO):
 
-- [ ] 本文を縦並び (`Column(title + description + ActionRow)`) に再構成し、
+- [x] 本文を縦並び (`Column(title + description + ActionRow)`) に再構成し、
   「許可する」/「設定を開く」ボタンを下段独立配置にする案を検討
+  → 2026-05-15 採用 (`feat/f-8-permissionbanner-wrap`, commit 待ち)
 - [ ] あるいは Wrap 化 (title + button を 1 行 → 溢れたら折り返し) も検討
+  → 縦並び案で確定したため見送り
 - [ ] 画面サイズ分岐 (タブレット / 横画面では現状 Row が自然)
-- [ ] Widget Test を追加: 長文タイトルでも文中改行が起きないことを assert
+  → 親 Plan で「画面サイズ分岐は不要」とユーザ確定、見送り
+- [x] Widget Test を追加: 長文タイトルでも文中改行が起きないことを assert
+  → `tester.getRect` で TextButton.top >= description.bottom を assert する形で追加
 
 **トリガ**: PermissionBanner の他の UI 改修 PR でまとめる、または
 「本文表示品質」テーマで単独 PR を切る。実機検証で UX 影響が
