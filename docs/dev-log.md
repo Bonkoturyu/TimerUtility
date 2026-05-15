@@ -17,6 +17,100 @@
 
 ---
 
+## Phase D (Diagnostic Logging) 完了 + Pixel 6a 実機検証完了 (2026-05-15)
+
+ベータテスター / 開発者向けに「アプリの動作ログを zip にまとめて OS Share Sheet で
+送れる」観測機構を Domain → Application → Infrastructure → Presentation の
+4 層に分けて 3 PR で実装。PR #49 (D-1) / PR #52 (D-2、当初 PR #50 が D-1 マージ後
+auto-close したため再作成) / PR #51 (D-3) すべて main にマージ済。
+
+### Phase 分割と各 PR の責務
+
+| Phase | PR | コミット | 内容 |
+| --- | --- | --- | --- |
+| D-1 | #49 | `2416910` | Domain (`DiagnosticEvent` sealed class + `DiagnosticLogger` + `DiagnosticSink` port) + Application (`diagnosticSettingsNotifierProvider` / `diagnosticSinkProvider` / `diagnosticLoggerProvider` / `diagnosticExportControllerProvider`) + `UserPreferenceKeys.diagnosticLogEnabled` 永続化キー追加。Sink 実装は `InMemoryDiagnosticSinkAdapter` のみ (Infrastructure は D-2 で差し替え) |
+| D-2 | #52 | `84da021` | Infrastructure (`FileDiagnosticSinkAdapter` JSON Lines 形式 + `DiagnosticLogRotator` retention 14 日 / 累計 50 MB / 1 ファイル 1 MB で分割) + `path_provider` 経由で `getApplicationSupportDirectory()/diagnostic_logs/` 配下に永続化。`LocationDetectorAdapter` に `loggerLookup` thunk を注入し、GPS / `FlutterTimezone` 解決失敗時に `DiagnosticEvent.uncaughtException` を記録 (`permissionTransition` / `notificationFired` / `timerAction` 系イベントは Application 層の `permission_notifier.dart` / `*_collection_notifier.dart` / `*_ringing_notifier.dart` / `stopwatch_notifier.dart` から発火)。`main.dart` で `ProviderContainer` 先行構築 → `FlutterError.onError` / `PlatformDispatcher.instance.onError` を `diagnosticLoggerProvider` 経由に配線し isEnabled ゲートを尊重 |
+| D-3 | #51 | `46d593d` | Infrastructure (`ZipDiagnosticLogExporterAdapter` + `archive` 3.6.1 で zip 化、`share_plus` 10.x で OS Share Sheet 起動) + Presentation (`SettingsScreen` 末尾に「診断ログ」セクション、`_DiagnosticToggleTile` (SwitchListTile) + `_DiagnosticShareTile` (ListTile、SnackBar フィードバック) を追加)。zip ファイル名は `timer_utility_diagnostic_YYYYMMDD_HHmmss.zip`、件名は localizable (`settingsDiagnosticShareLogsSubject`) |
+
+### 主な設計判断
+
+- **Domain は Pure Dart 維持**: `DiagnosticEvent` は freezed を使わず手書き sealed class
+  (`alarm_repeat.dart` 流儀)。factory redirect の引数名は subclass コンストラクタと一致
+  させる必要があるため、`DiagnosticPermissionTransition` のフィールドを `kind`
+  (親 `String get kind` ゲッタと衝突) から `permissionKind` にリネーム
+- **PII 排除を Domain で担保**: factory は `timerId` / UUID / enum 値のみ受け取り、
+  timer label / 緯度経度 / 任意文字列は受け取れない型設計。`DiagnosticEvent.digestStackTrace`
+  は 3 フレームまで stack trace を要約 (PII セーフ)
+- **isEnabled ゲートは Application 層で集中管理**: `DiagnosticLogger.log()` 内で
+  `isEnabled()` と severity threshold をチェック。`FlutterError.onError` も
+  直 `sink.write()` ではなく `diagnosticLoggerProvider.log(...)` 経由に統一
+- **`DiagnosticSettingsNotifier._userMutated` フラグ** (PR #49 review fix): `_restore`
+  非同期完了がユーザのトグル操作より遅れて上書きする race を防止
+- **`DiagnosticExportController` re-entrancy guard** (PR #49 review fix): `inProgress`
+  状態中の重複 export 呼び出しを早期 return で抑止
+- **`p.join` でパス組み立て** (PR #50 review fix): プラットフォーム別の path separator
+  差を吸収するため `pubspec.yaml` の `path: any` を direct dependency に昇格
+- **`pruneOldFiles` の dir.list() try-catch** (PR #50 review fix): ディレクトリ未作成
+  状態でも失敗しない
+- **`ZipFileEncoder.addFile` / `close` の await**: archive 3.6.1 の
+  `lib/src/io/zip_file_encoder.dart:209,235` で両 API とも `Future<void> async` で
+  あることをソース確認し、Gemini code-assist の「await 不要」指摘を却下リプライで反論
+
+### 設計判断の経緯メモ
+
+- **PR #52 (D-2 再作成)**: PR #50 (D-1 base) は D-1 が squash merge された時点で
+  base branch が消失し GitHub 側で auto-close された。同一内容を main rebase した
+  上で PR #52 として再起こし
+- **PR #51 (D-3) の rebase**: `git rebase --onto origin/main bf0c3d3 feature/diagnostic-log-phase-d3`
+  で D-1/D-2 の squash 吸収済みコミットをスキップ。`main.dart` (UncontrolledProviderScope 構造 +
+  `diagnosticLogExporterProvider` override 追加) と `pubspec.yaml` (archive / share_plus / path
+  をすべて維持) で発生したコンフリクトを手動解決
+
+### Pixel 6a 実機検証 (2026-05-15)
+
+| # | シナリオ | 結果 |
+| --- | --- | --- |
+| ① | 設定 > 診断ログトグル ON → タイマー操作 → アプリ専有ディレクトリに `diagnostic_YYYY-MM-DD.log` が生成 | OK |
+| ② | ログ内に PII (`label` / `latitude` / `longitude` / timer label 文字列) が混入していない | OK (端末側 `adb shell run-as ... cat ... \| grep -iE "..."` で確認) |
+| ③ | トグル OFF → アプリ再起動 → トグル OFF 復元、ON → 再起動 → ON 復元 | OK |
+| ④ | 「ログを共有」タップ → OS Share Sheet (subject = `TimerUtility 診断ログ`) → Gmail で自分宛送信 → 受信した zip を解凍して中身が JSON Lines であることを確認 | OK |
+
+実機ログのサンプル (一部抜粋、PII 観点クリーン確認済):
+
+```jsonl
+{"t":"2026-05-15T08:49:47.193577Z","sev":"info","kind":"permissionTransition","permissionKind":"postNotifications","before":"unknown","after":"permanentlyDenied"}
+{"t":"2026-05-15T08:49:47.196386Z","sev":"info","kind":"permissionTransition","permissionKind":"scheduleExactAlarm","before":"unknown","after":"granted"}
+{"t":"2026-05-15T08:50:09.499960Z","sev":"debug","kind":"timerAction","timerId":"stopwatch","action":"start"}
+{"t":"2026-05-15T08:50:23.042028Z","sev":"info","kind":"notificationFired","payloadId":"68ee0548-302f-41d1-8d4b-ac6fbbd1cec9","fireKind":"timerFired"}
+{"t":"2026-05-15T08:57:04.667257Z","sev":"info","kind":"notificationFired","payloadId":"a0fab8b2-9465-42c2-84e9-54da803f806f","fireKind":"missedAlarmReconcile"}
+```
+
+`timerId` は UUID または `stopwatch` 固定値のみ、`permissionKind` / `fireKind` は enum
+値のみ、`before` / `after` は enum 値のみ。仕様通り「ラベル文字列・座標」は payload に
+乗らないことを実機ログで再確認した。
+
+### 既知の運用上の注意
+
+- **Windows での PII 検証**: `git grep` 系コマンドは PowerShell に `grep` が無いため
+  動かない。① 端末側で grep する (`adb shell "run-as ... cat ... | grep -iE '(label|latitude|longitude|location)'"`)
+  か、② Windows 側で `Select-String` / `findstr` を使う必要がある
+- **share_plus の Manifest 自動マージ**: `<provider>` 宣言は share_plus 10.x の
+  `manifest auto-merge` で自動付与されるため、`AndroidManifest.xml` を手動編集する
+  必要は無かった (実機で FileProvider エラーなく Share Sheet が起動することを確認済)
+- **`adb run-as` の到達範囲**: アプリ専有ディレクトリ (`/data/data/com.bonkotu.timer.timer_utility/files/`)
+  のみアクセス可能。`getApplicationSupportDirectory()` がこの配下を返す前提
+
+### 検証 DoD 達成
+
+- [x] D-1: `DiagnosticEvent` sealed class + factory API、PII セーフ型設計、Pure Dart
+- [x] D-2: ファイルローテーション (7 日 / 5 MB)、JSON Lines 形式、`LocationDetectorAdapter`
+  経由のイベント発火、isEnabled ゲート遵守
+- [x] D-3: zip 圧縮 + OS Share Sheet 起動、Settings UI 配線、Pixel 6a 4 シナリオ実機検証
+- [x] 全 3 PR の review コメント完全クローズ (CI 緑 + AI 指摘の裏取り却下 1 件含む)
+- [x] `flutter analyze` / `flutter test` 緑 (main マージ後の本流でも追加退行なし)
+
+---
+
 ## Phase 11 言語切替 + F-9 Pixel 6a 実機検証完了 (2026-05-15)
 
 PR #45 (Phase 11 言語手動切替 UI) および PR #43 (F-9 未対応 locale → en フォールバック) の
