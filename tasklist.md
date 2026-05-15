@@ -75,8 +75,11 @@ TextButton を削除する** 方針が確定 (2026-05-15)。
       明示的に指定して読み上げを保証する。`Icon` / accent 帯は
       `ExcludeSemantics` で読み上げから除外
 - [ ] 既存タップ動作テスト 2 件 (`許可する` / `設定を開く` を `find.text(...)`
-      で取得 → タップ) を InkWell ベースに更新。`find.byType(InkWell)` で
-      バナーを取得し、`tester.tap()` で発火させる形に書き換え
+      で取得 → タップ) を、各バナーの既存 Key (`banner_post_notifications` /
+      `banner_exact_alarm` / `banner_full_screen_intent`) を使って
+      `find.byKey(const Key('banner_*'))` で対象を一意特定し、`tester.tap()`
+      で発火させる形に書き換え。`find.byType(InkWell)` は同時 3 バナー表示で
+      Ambiguous lookup になるため使わない
 - [ ] F-8 で追加した「TextButton.top >= description.bottom」 assert は
       TextButton ごと削除されるため、テスト自体を削除 (F-10 で「ボタンが無い」状態に変わる)
 - [ ] 新規テスト追加: `tester.getSemantics(find.byKey(...))` で
@@ -99,7 +102,8 @@ TextButton を削除する** 方針が確定 (2026-05-15)。
 - 他バナー (CVD バナー等) のレイアウト
 
 **親 Plan / Auto 指示文**: 別途作成予定 (本タスク着手時に
-`C:\Users\bonko\.claude\plans\f-10-permissionbanner-fullbanner-tap-*.md` として用意)。
+`f-10-permissionbanner-fullbanner-tap-*.md` 相当のファイル名で、ユーザ環境の
+Plans 保存場所に用意)。リポジトリ管理外のため絶対パスはここに記載しない。
 
 ---
 
