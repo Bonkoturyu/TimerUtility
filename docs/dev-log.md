@@ -17,6 +17,84 @@
 
 ---
 
+## F-10 PermissionBanner 縦サイズ縮小 完了 + Pixel 6a 実機検証完了 (2026-05-15)
+
+PR #47 (F-8 文中改行解消) 後の Pixel 6a 実機検証で「`[許可する]` TextButton を
+description 下段に縦並びにした結果、バナー縦サイズが約 48dp 増加して『だいぶでかい』」
+とユーザ判断。ユーザ提案で「バナー全体をタップ可能化し TextButton を削除する」方針が
+確定し、F-10 として単独 PR #56 で実装。closeout (旧 ARB キー削除 + dev-log 移管)
+は別 PR で対応。
+
+### 実装 PR と commit 構成
+
+| commit | 内容 |
+| --- | --- |
+| `7860bd7` | 初版: `_PermissionBanner` の root を `Semantics(button: true, container: true, onTap, label) + Material + InkWell` 構造に変更、`TextButton` + `Align(centerRight)` 削除、ARB `permissionBannerHintTapToAllow` / `permissionBannerHintTapToOpenSettings` 新設、accent / Icon / 本文 Column を `ExcludeSemantics` 配下に。F-8 座標 assert テスト削除 + Semantics 新規テスト 4 件追加 |
+| `938f7fe` | TalkBack「ラベルなし 検出 テキスト4 有効にするにはダブルタップします」回帰修正: `InkWell` の暗黙 Semantics と外側 `Semantics` が競合し、`Text.rich` の TextSpan (severity + title) + description + hint = 4 ノードが descendant として残存していた。外側 `Semantics(excludeSemantics: true)` + `InkWell.excludeFromSemantics: true` で対処 (この時点で誤って `container: true` を削除) |
+| `a427334` | 兄弟 Text 合流回帰修正: `container: false` に戻したことで props が祖先ノードへ合流し、`timerListEmptyHint` Text と同じノードに吸収されて画面全体が 1 ボタンとして読み上げられる症状を再発。`container: true` を復元し、兄弟 Text と並べた状態で `semantics.label` に兄弟文言が含まれないことを assert する回帰テストを追加 |
+| `e45c87b` | PR レビュー反映: Semantics label の句点ハードコード (`'$severityLabel $title。$description $hint'`) を半角スペースに置換 (英語ロケールで `Notifications disabled。Timer-end...` のような非ローカライズ記号混入を回避)。`SemanticsHandle` 解放を `addTearDown` → `try/finally` に変更 (flutter_test の `_verifySemanticsHandlesWereDisposed` が `addTearDown` より前に走るため `addTearDown` は使用不可、`test/presentation/screens/home/home_screen_test.dart:709` の既存パターンと統一) |
+
+### 主な設計判断と試行錯誤
+
+- **Semantics 三点セット** (a427334 確立): 全体タップ可能 + TalkBack 単一ノード読み上げを
+  両立するには以下 3 つすべてが必須:
+  1. 外側 `Semantics(container: true)` — 独立した SemanticsNode を確保。`false` だと
+     props が祖先ノードへ合流し、兄弟 widget と同じノードに吸収される
+  2. 外側 `Semantics(excludeSemantics: true)` — descendant の SemanticsNode を全遮断。
+     `Text.rich` の `TextSpan` は個別の semantics ノードを生成するため、
+     個別の `ExcludeSemantics` ラップでは合流抑止が不十分
+  3. `InkWell(excludeFromSemantics: true)` — InkWell がデフォルトで生成する暗黙の
+     `Semantics(button: true)` を抑止。外側 Semantics の `button: true` + label と
+     競合させない (競合すると TalkBack は内側 = ラベルなしノードにフォーカス)
+- **Semantics label の組み立て**: `'$severityLabel $title $description $hint'`。
+  区切りは半角スペースのみ。句読点は `description` / `hint` の ARB 訳側に委ねる
+  (英語ロケールで日本語句点が混入しないように、`Tap anywhere to change this permission.`
+  のように訳文末尾に英語句点を持たせる)
+- **個別 `ExcludeSemantics` ラップは撤去** (a427334): 外側 `excludeSemantics: true` で
+  descendant がすべて遮断されるため、accent Container / Icon / 本文 Column に個別の
+  `ExcludeSemantics` を被せる必要は無い。代わりに `container: true` を確実に保つ
+- **`SemanticsHandle.dispose()` は `try/finally` 限定**: `addTearDown(handle.dispose)`
+  は機能しない。flutter_test は `_endOfTestVerifications` 内で
+  `_verifySemanticsHandlesWereDisposed` を `addTearDown` コールバックより前に走らせる
+  ため、ハンドル未解放と判定されてテストが fail する
+
+### Pixel 6a / Android 16 実機検証 (2026-05-15)
+
+| # | シナリオ | 結果 |
+| --- | --- | --- |
+| ① | TalkBack OFF: `[重要]` バナー (POST_NOTIFICATIONS denied) の全体タップで権限ダイアログが開く | OK |
+| ② | TalkBack OFF: `[補助]` バナー (USE_FULL_SCREEN_INTENT denied) の全体タップで設定画面が開く | OK |
+| ③ | TalkBack ON: `[重要]` バナーが「\[重要\] 通知が無効です タイマーが終了したときに通知が表示されません。 タップで権限を変更できます。 ボタン」と一つのノードとして読み上げられる | OK (a427334 までで「ラベルなし テキスト4」と画面全体合流の両方を解消) |
+| ④ | TalkBack ON: バナーにフォーカスを当てた時、フォーカス枠がバナー部のみに収まる (画面全体に広がらない) | OK (`container: true` の効果) |
+| ⑤ | TalkBack ON: ダブルタップで権限ダイアログが開く | OK |
+| ⑥ | バナー縦サイズが PR #47 比で約 48dp 縮小 (TextButton + 余白分) | OK |
+| ⑦ | permanentlyDenied 状態 (2 回拒否) で hint が「タップで設定を開けます。」に切り替わる | OK |
+
+> `[推奨]` バナー (SCHEDULE_EXACT_ALARM denied) は USE_EXACT_ALARM 自動 grant のため
+> Manifest 編集なしでは実機再現不可 (既知制約、tasklist.md F-7 参照)。本 F-10 では
+> `[重要]` (POST_NOTIFICATIONS) と `[補助]` (USE_FULL_SCREEN_INTENT) で代替検証。
+
+### PR レビュー対応 (Gemini + Copilot 計 4 件)
+
+| Reviewer | 指摘 | 対応 |
+| --- | --- | --- |
+| Gemini | Semantics label に句点 `。` ハードコード | 半角スペース区切りに変更 (`e45c87b`) |
+| Gemini | `InkWell.excludeFromSemantics: true` 推奨 | 実機検証で同じ結論に到達済み、`a427334` 時点で適用 (リプライで経緯説明) |
+| Copilot | 句点ハードコード (Gemini と同内容) | 同 fix で対応 |
+| Copilot | `ensureSemantics()` 解放は `try/finally` / `addTearDown` で | `try/finally` で対応 (`addTearDown` は使用不可と確認、リプライで根拠説明) |
+
+### F-10 closeout (本 PR)
+
+- 旧 ARB キー `permissionBannerActionAllow` / `permissionBannerActionOpenSettings` 削除
+  (runtime 参照ゼロを `grep` で確認済)。生成物 `app_localizations*.dart` から該当
+  getter も消去 (`flutter gen-l10n` 再実行)
+- `docs/translations.md` の権限バナーセクションを更新 (旧 2 キー削除 + 新 2 キー
+  `permissionBannerHintTapToAllow` / `permissionBannerHintTapToOpenSettings` 追加)
+- `tasklist.md` から F-10 セクションを削除し、本 dev-log へ移管 (規約: 完了タスク
+  詳細は本ファイルに集約、tasklist は現在進行中のみ)
+
+---
+
 ## Phase D (Diagnostic Logging) 完了 + Pixel 6a 実機検証完了 (2026-05-15)
 
 ベータテスター / 開発者向けに「アプリの動作ログを zip にまとめて OS Share Sheet で

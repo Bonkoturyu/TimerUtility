@@ -101,8 +101,6 @@
   "permissionBannerExactAlarmDescription": "Alarms may fire several minutes late while the device is in power-saving mode.",
   "permissionBannerFullScreenIntentTitle": "Lock-screen alarms disabled",
   "permissionBannerFullScreenIntentDescription": "Without this permission, alarms will appear as a heads-up banner instead.",
-  "permissionBannerActionAllow": "Allow",
-  "permissionBannerActionOpenSettings": "Open settings",
   "permissionBannerHintTapToAllow": "Tap anywhere to change this permission.",
   "permissionBannerHintTapToOpenSettings": "Tap anywhere to open settings.",
   "permissionBannerSeverityCritical": "[Critical]",
