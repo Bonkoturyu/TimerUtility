@@ -81,6 +81,9 @@ Pixel 6a 実機検証で、`[重要]` バナーの本文が「許可する」ボ
 本文折り返しがあっても重大度ラベル `[重要]` / `[補助]` は先頭にあるため
 読み始めは保たれている。
 
+**再現確認**: 2026-05-15 PR #45 実機検証時に同現象を再スクショ取得済み。
+状態に変化なし、実装案は本タスクの「修正内容 (TODO)」のまま。
+
 ---
 
 ## ブロック中
@@ -98,7 +101,9 @@ Pixel 6a 実機検証で、`[重要]` バナーの本文が「許可する」ボ
 
 ---
 
-最終更新日: 2026-05-14（Phase 11 言語手動切替 UI 完了 — 設定画面に「言語」項目を追加、`UserPreferenceKeys.localeTag` 永続化 + `SettingsState.localeOverride: Locale?` で MaterialApp.locale を駆動。`null` 選択時は F-9 の localeResolutionCallback に委譲。Public 版は ja / en、experimental ビルドで zh / zh-Hant / ko も追加表示。Notifier 6 件 + Widget 4 件のテストを追加、合計 577 テスト緑 (1 skipped)）
+最終更新日: 2026-05-15（Phase 11 言語切替 + F-9 Pixel 6a 実機検証完了 — PR #45 / #43 の合計 5 シナリオ (A-1〜A-4 / B) すべて OK。F-8 PermissionBanner 文中改行はスクショで再現確認、状態据置。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-14（Phase 11 言語手動切替 UI 完了 — 設定画面に「言語」項目を追加、`UserPreferenceKeys.localeTag` 永続化 + `SettingsState.localeOverride: Locale?` で MaterialApp.locale を駆動。`null` 選択時は F-9 の localeResolutionCallback に委譲。Public 版は ja / en、experimental ビルドで zh / zh-Hant / ko も追加表示。Notifier 6 件 + Widget 4 件のテストを追加、合計 577 テスト緑 (1 skipped)）
 
 過去の更新: 2026-05-14（F-9 完了 - localeResolutionCallback 追加で未対応 locale が en にフォールバックするよう修正、unit test 9 シナリオ追加、PR #43）
 
