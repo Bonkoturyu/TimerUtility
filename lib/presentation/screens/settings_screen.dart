@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/diagnostic_export_controller.dart';
+import '../../application/diagnostic_settings_notifier.dart';
 import '../../application/settings_notifier.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart' show soundDisplayName;
@@ -127,6 +129,12 @@ class SettingsScreen extends ConsumerWidget {
               title: Text(l.licenseMenuOverflow),
               onTap: () => context.push(LicensesScreen.routeLocation),
             ),
+            // Diagnostics は開発者向けセクションなので末尾に置く。Phase D-3
+            // で追加。既存テストが期待する「情報 / ライセンス」の表示順を
+            // 維持するため About の後にした。
+            _SectionHeader(label: l.settingsSectionDiagnostics),
+            const _DiagnosticToggleTile(),
+            const _DiagnosticShareTile(),
           ],
         ),
       ),
@@ -259,6 +267,97 @@ class _LanguageOptionTile extends StatelessWidget {
       ),
       title: Text(label),
       onTap: () => Navigator.of(context).pop(value),
+    );
+  }
+}
+
+/// Toggle for the diagnostic logging master switch. Mirrors the
+/// [SwitchListTile] pattern used elsewhere in the project.
+class _DiagnosticToggleTile extends ConsumerWidget {
+  const _DiagnosticToggleTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final bool enabled = ref.watch(
+      diagnosticSettingsNotifierProvider.select(
+        (DiagnosticSettingsState s) => s.enabled,
+      ),
+    );
+    return SwitchListTile(
+      key: const Key('settings_diagnostic_toggle'),
+      secondary: const Icon(Icons.bug_report_outlined),
+      title: Text(l.settingsDiagnosticLogToggle),
+      subtitle: Text(l.settingsDiagnosticLogToggleDescription),
+      isThreeLine: true,
+      value: enabled,
+      onChanged: (bool v) =>
+          ref.read(diagnosticSettingsNotifierProvider.notifier).setEnabled(v),
+    );
+  }
+}
+
+/// "Share logs" action. Watches [diagnosticExportControllerProvider]
+/// for progress / success / error, surfaces a SnackBar accordingly, and
+/// disables the tile while an export is already in flight so a double
+/// tap doesn't kick off a second zip build.
+class _DiagnosticShareTile extends ConsumerWidget {
+  const _DiagnosticShareTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    // listen for state transitions so the SnackBar fires once per
+    // outcome rather than once per rebuild.
+    ref.listen<DiagnosticExportState>(diagnosticExportControllerProvider, (
+      DiagnosticExportState? prev,
+      DiagnosticExportState next,
+    ) {
+      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+      if (next is DiagnosticExportDone && prev is! DiagnosticExportDone) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.settingsDiagnosticShareLogsSuccess)),
+        );
+        // Reset to idle so a subsequent tap behaves as a fresh export.
+        ref.read(diagnosticExportControllerProvider.notifier).reset();
+      } else if (next is DiagnosticExportError &&
+          prev is! DiagnosticExportError) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(l.settingsDiagnosticShareLogsError(next.message)),
+          ),
+        );
+        ref.read(diagnosticExportControllerProvider.notifier).reset();
+      }
+    });
+    final DiagnosticExportState state = ref.watch(
+      diagnosticExportControllerProvider,
+    );
+    final bool inProgress = state is DiagnosticExportInProgress;
+    return ListTile(
+      key: const Key('settings_diagnostic_share_tile'),
+      leading: const Icon(Icons.ios_share_outlined),
+      title: Text(l.settingsDiagnosticShareLogs),
+      subtitle: Text(
+        inProgress
+            ? l.settingsDiagnosticShareLogsInProgress
+            : l.settingsDiagnosticShareLogsDescription,
+      ),
+      trailing: inProgress
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.chevron_right),
+      // Disable the tile while an export is already running. The
+      // notifier itself also re-entrancy-guards in `export()` (PR #51
+      // review #3246688302), so even a same-frame double-tap can't
+      // kick off a second archive build.
+      enabled: !inProgress,
+      onTap: () => ref
+          .read(diagnosticExportControllerProvider.notifier)
+          .export(shareSubject: l.settingsDiagnosticShareLogsSubject),
     );
   }
 }

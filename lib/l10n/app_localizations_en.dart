@@ -567,4 +567,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageDialogTitle => 'Select language';
+
+  @override
+  String get settingsSectionDiagnostics => 'Diagnostic logs';
+
+  @override
+  String get settingsDiagnosticLogToggle => 'Enable diagnostic logging';
+
+  @override
+  String get settingsDiagnosticLogToggleDescription =>
+      'Record timer actions, permission changes, notification fires, and exceptions to on-device files. No personal data (labels / location) is captured.';
+
+  @override
+  String get settingsDiagnosticShareLogs => 'Share logs';
+
+  @override
+  String get settingsDiagnosticShareLogsSubject =>
+      'TimerUtility diagnostic logs';
+
+  @override
+  String get settingsDiagnosticShareLogsDescription =>
+      'Bundle stored logs into a zip and open the share sheet.';
+
+  @override
+  String get settingsDiagnosticShareLogsInProgress => 'Preparing logs…';
+
+  @override
+  String get settingsDiagnosticShareLogsSuccess => 'Share sheet opened';
+
+  @override
+  String settingsDiagnosticShareLogsError(String message) {
+    return 'Failed to share logs: $message';
+  }
 }
