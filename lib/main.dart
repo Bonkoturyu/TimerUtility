@@ -41,18 +41,6 @@ import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
 
-/// Compile-time feature flag for experimental locales (zh-Hans / zh-Hant /
-/// ko). The public release ships with Japanese + English only; the other
-/// locales' ARB files exist for internal development and are reachable
-/// from a debug build with `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`.
-///
-/// Phase 11 (settings screen) will likely flip this to a runtime
-/// preference; for now the compile-time gate keeps test surface small.
-const bool kEnableExperimentalLocales = bool.fromEnvironment(
-  'ENABLE_EXPERIMENTAL_LOCALES',
-  defaultValue: false,
-);
-
 const List<Locale> _publicSupportedLocales = <Locale>[
   Locale('ja'),
   Locale('en'),
@@ -120,14 +108,9 @@ Locale resolveSupportedLocale(Locale? deviceLocale, List<Locale> supported) {
 Future<NotificationStrings> _resolveNotificationStrings({
   Locale? overrideLocale,
 }) async {
-  final Locale? sourceLocale;
-  if (overrideLocale != null) {
-    sourceLocale = overrideLocale;
-  } else {
-    final List<Locale> systemLocales =
-        WidgetsBinding.instance.platformDispatcher.locales;
-    sourceLocale = systemLocales.isEmpty ? null : systemLocales.first;
-  }
+  final Locale? sourceLocale =
+      overrideLocale ??
+      WidgetsBinding.instance.platformDispatcher.locales.firstOrNull;
   final Locale resolved = resolveSupportedLocale(
     sourceLocale,
     supportedLocales,

@@ -320,7 +320,7 @@ void main() {
       expect(prefs.hasLocaleTag(), isFalse);
     });
 
-    test('setLocaleOverride(Locale("en")) は "en" を setString で永続化', () async {
+    test('setLocaleOverride("en") は "en" を setString で永続化', () async {
       final prefs = _MemoryUserPrefs();
       final container = _makeContainer(prefs);
       container.read(settingsNotifierProvider);
@@ -328,7 +328,7 @@ void main() {
 
       await container
           .read(settingsNotifierProvider.notifier)
-          .setLocaleOverride(const Locale('en'));
+          .setLocaleOverride('en');
 
       expect(
         container.read(settingsNotifierProvider).localeOverride,
@@ -349,7 +349,7 @@ void main() {
 
         await container
             .read(settingsNotifierProvider.notifier)
-            .setLocaleOverride(const Locale('xx'));
+            .setLocaleOverride('xx');
 
         expect(container.read(settingsNotifierProvider).localeOverride, isNull);
         expect(prefs.hasLocaleTag(), isFalse);

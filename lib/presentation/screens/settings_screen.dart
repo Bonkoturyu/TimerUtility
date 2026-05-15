@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/settings_notifier.dart';
 import '../../l10n/app_localizations.dart';
-import '../../main.dart' show kEnableExperimentalLocales;
 import '../widgets/duration_picker.dart' show soundDisplayName;
 import '../widgets/sound_select_sheet.dart';
 import 'licenses_screen.dart';
@@ -161,15 +160,10 @@ class SettingsScreen extends ConsumerWidget {
     // 「システムに合わせる」を選んだ場合は本シート内で sentinel を渡してから
     // pop している (`_followSystemSentinel`)。null 戻り = 変更なし。
     if (picked == null) return;
-    final Locale? newLocale = picked == _followSystemSentinel
-        ? null
-        : Locale.fromSubtags(
-            languageCode: picked.split('-')[0],
-            scriptCode: picked.contains('-') ? picked.split('-')[1] : null,
-          );
+    final String? pickedTag = picked == _followSystemSentinel ? null : picked;
     await ref
         .read(settingsNotifierProvider.notifier)
-        .setLocaleOverride(newLocale);
+        .setLocaleOverride(pickedTag);
   }
 
   Future<void> _onSoundTap(
