@@ -25,6 +25,8 @@ import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/preset_repository.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/application/diagnostic_sink_provider.dart';
+import 'package:timer_utility/infrastructure/diagnostics/in_memory_diagnostic_sink_adapter.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/main.dart';
@@ -197,6 +199,12 @@ void main() {
         GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
       ],
     );
+    // Share a single sink between the Provider override and the
+    // TimerUtilityApp constructor argument so the lifecycle `flush()`
+    // and any Notifier writes target the same instance — mirrors the
+    // main() wiring (PR #49 review #3246537779).
+    final InMemoryDiagnosticSinkAdapter testSink =
+        InMemoryDiagnosticSinkAdapter();
     await tester.pumpWidget(
       ProviderScope(
         overrides: <Override>[
@@ -213,8 +221,9 @@ void main() {
           permissionNotifierProvider.overrideWith(
             () => _GrantedPermissionNotifier(),
           ),
+          diagnosticSinkProvider.overrideWithValue(testSink),
         ],
-        child: TimerUtilityApp(router: router),
+        child: TimerUtilityApp(router: router, diagnosticSink: testSink),
       ),
     );
     await tester.pumpAndSettle();

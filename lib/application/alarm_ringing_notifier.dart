@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/timer/alarm_sound.dart';
 import 'alarm_sound_player_provider.dart';
+import 'clock_provider.dart';
+import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
@@ -93,6 +96,20 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
       currentSoundId: sound.id,
       currentSource: source,
     );
+    // Plan の確定仕様: 通知発火ログは AlarmRingingNotifier.start で出す
+    // (Infrastructure 層を触らずに済む経路)。`source` を見て timer 由来か
+    // alarm 由来かを区別する。
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.notificationFired(
+            occurredAt: ref.read(clockProvider).now(),
+            payloadId: timerId,
+            fireKind: source == AlarmSource.alarm
+                ? NotificationFireKind.alarmFired
+                : NotificationFireKind.timerFired,
+          ),
+        );
     // Sequencing matters: cancel the OS notification first, wait briefly
     // so Pixel / Android 16 actually releases the alarm-stream tone (the
     // banner disappears immediately but the tone keeps going on its own

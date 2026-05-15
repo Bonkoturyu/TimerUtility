@@ -6,7 +6,7 @@ part of 'settings_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsNotifierHash() => r'7be41fa332c0f16481238df3289e8dcfac802b20';
+String _$settingsNotifierHash() => r'51e1c861e246945872e381169c8cca732437751f';
 
 /// Phase 11 settings notifier.
 ///
@@ -22,9 +22,12 @@ String _$settingsNotifierHash() => r'7be41fa332c0f16481238df3289e8dcfac802b20';
 /// only ever passes values from the curated lists, so these are
 /// programmer-error paths. `setThemeMode` takes a typed `ThemeMode` so
 /// no validation is needed at the call site. `setLocaleOverride` takes
-/// a nullable `Locale` (null = follow system) and silently drops tags
-/// outside [supportedLocaleTags] (defence in depth — the UI already
-/// hides experimental options on public builds).
+/// a nullable BCP-47 tag string (null = follow system) and silently
+/// drops tags outside [supportedLocaleTags] (defence in depth — the UI
+/// already hides experimental options on public builds). Tag-in /
+/// `Locale`-out keeps the BCP-47 parsing single-sourced inside
+/// [parseLocaleTag] so call sites can't re-invent the `zh-Hant`
+/// script/region disambiguation.
 ///
 /// Copied from [SettingsNotifier].
 @ProviderFor(SettingsNotifier)

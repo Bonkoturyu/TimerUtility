@@ -7,11 +7,13 @@ import '../domain/alarm/alarm_entity.dart';
 import '../domain/alarm/alarm_repeat.dart';
 import '../domain/alarm/exceptions.dart';
 import '../domain/alarm/time_of_day_value.dart';
+import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/permission_manager.dart';
 import '../domain/timer/notification_id_generator.dart';
 import 'alarm_repository_provider.dart';
 import 'alarm_service_provider.dart';
 import 'clock_provider.dart';
+import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
 import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
@@ -139,6 +141,29 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
             payload: 'alarm:${alarm.id}',
           ),
     );
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.notificationFired(
+            occurredAt: ref.read(clockProvider).now(),
+            payloadId: alarm.id,
+            fireKind: NotificationFireKind.missedAlarmReconcile,
+          ),
+        );
+  }
+
+  /// Diagnostic helper: records an alarm-action breadcrumb with the
+  /// current clock. No-op when logging is disabled in settings.
+  void _logAction(String alarmId, TimerActionKind action) {
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.timerAction(
+            occurredAt: ref.read(clockProvider).now(),
+            timerId: alarmId,
+            action: action,
+          ),
+        );
   }
 
   /// 新規アラームを作成して永続化、`enabled = true` なら schedule する。
@@ -176,6 +201,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     state = List<AlarmEntity>.unmodifiable(<AlarmEntity>[...state, entity]);
     _persist(entity);
     if (entity.enabled) _scheduleAlarm(entity);
+    _logAction(entity.id, TimerActionKind.alarmCreate);
     return entity;
   }
 
@@ -204,6 +230,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     _persist(merged);
     _cancel(merged.notificationId);
     if (merged.enabled) _scheduleAlarm(merged);
+    _logAction(merged.id, TimerActionKind.alarmUpdate);
   }
 
   /// 既存アラームの `enabled` を反転する (一覧の ON/OFF トグル用途)。
@@ -223,6 +250,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     } else {
       _cancel(next.notificationId);
     }
+    _logAction(next.id, TimerActionKind.alarmToggle);
   }
 
   /// 既存アラームを削除し、保留中の予約も取り消す。
@@ -235,6 +263,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     state = List<AlarmEntity>.unmodifiable(next);
     _cancel(removed.notificationId);
     unawaited(ref.read(alarmRepositoryProvider).delete(id));
+    _logAction(id, TimerActionKind.alarmDelete);
   }
 
   /// 鳴動 → 停止イベント。`AlarmService.advanceAfterFire` で once は
@@ -258,6 +287,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
       // once: enabled を落としたので schedule 不要、保留中があれば cancel。
       _cancel(advanced.notificationId);
     }
+    _logAction(advanced.id, TimerActionKind.alarmFiredStop);
   }
 
   /// 鳴動 → スヌーズイベント。`AlarmService.snoozeUntil(now + N 分)` を
@@ -268,6 +298,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     final AlarmEntity alarm = state[index];
     final DateTime fireAt = ref.read(alarmServiceProvider).snoozeUntil(alarm);
     _scheduleAt(alarm: alarm, fireAt: fireAt);
+    _logAction(alarm.id, TimerActionKind.alarmFiredSnooze);
   }
 
   /// `AlarmCollectionNotifier` の状態を初期化済アラームで上書きする。
