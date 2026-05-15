@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'設定を開く'**
   String get permissionBannerActionOpenSettings;
 
+  /// No description provided for @permissionBannerHintTapToAllow.
+  ///
+  /// In ja, this message translates to:
+  /// **'タップで権限を変更できます。'**
+  String get permissionBannerHintTapToAllow;
+
+  /// No description provided for @permissionBannerHintTapToOpenSettings.
+  ///
+  /// In ja, this message translates to:
+  /// **'タップで設定を開けます。'**
+  String get permissionBannerHintTapToOpenSettings;
+
   /// No description provided for @permissionBannerSeverityCritical.
   ///
   /// In ja, this message translates to:

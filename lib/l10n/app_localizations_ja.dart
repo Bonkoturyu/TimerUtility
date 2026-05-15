@@ -193,6 +193,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get permissionBannerActionOpenSettings => '設定を開く';
 
   @override
+  String get permissionBannerHintTapToAllow => 'タップで権限を変更できます。';
+
+  @override
+  String get permissionBannerHintTapToOpenSettings => 'タップで設定を開けます。';
+
+  @override
   String get permissionBannerSeverityCritical => '[重要]';
 
   @override
