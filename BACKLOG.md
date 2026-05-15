@@ -235,7 +235,8 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
     に委譲)、明示選択時は MaterialApp.locale に渡す。`ref.listen` で手動
     切替時も通知文言を即時更新。Public 版は ja / en の 2 言語、experimental
     フラグ true でビルドした場合のみ zh / zh-Hant / ko も選択肢に出る。
-    18 + 9 件のテストを追加、577 テスト緑 (1 skipped)
+    18 + 9 件のテストを追加、577 テスト緑 (1 skipped)。Pixel 6a 5 シナリオ
+    OK (2026-05-15、詳細は [dev-log](docs/dev-log.md))
 - [ ] Play Store 提出準備（プライバシーポリシー、スクリーンショット）
 
 **DoD**: 公開可能な品質に到達

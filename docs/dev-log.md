@@ -17,6 +17,49 @@
 
 ---
 
+## Phase 11 言語切替 + F-9 Pixel 6a 実機検証完了 (2026-05-15)
+
+PR #45 (Phase 11 言語手動切替 UI) および PR #43 (F-9 未対応 locale → en フォールバック) の
+Pixel 6a / Android 16 (API 36) 実機検証を完了。
+
+### 検証範囲と結果
+
+| # | シナリオ | ビルド | 結果 |
+| --- | --- | --- | --- |
+| A-1 | 設定 > 言語 > English で全画面が即時英語化、再起動後も英語維持 | public | OK |
+| A-2 | 「システムに合わせる」で端末ロケール (ja) に追従、`localeTag` remove | public | OK |
+| A-3 | experimental ビルドで zh / zh-Hant / ko の 3 件が選択肢に追加表示 | `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` | OK |
+| A-4 | 走行中タイマーの通知バナーが手動 EN 切替直後に即時英語化 | public | OK (`ref.listen` → `_refreshNotificationLocale` → `rescheduleAllRunning`) |
+| B | 端末言語 = 繁體中文 (台灣) / 한국어 で en にフォールバック (F-9) | public | OK |
+
+A-4 は `lib/main.dart` の `ref.listen<SettingsState>` で `localeOverride` 変化を検知 →
+`_refreshNotificationLocale()` 内で `NotificationStringsNotifier.set()` +
+`timerCollectionNotifierProvider.notifier.rescheduleAllRunning()` を呼び、通知 OS 側へ
+予約済みのペンディング banner も再投入される仕組みが期待通り動作することを確認。
+
+### 副次確認: F-8 (PermissionBanner 折り返し品質) の再現確認
+
+C-1: 設定 > アプリ > TimerUtility > 通知 を拒否すると `[重要] タイマーが終了したときに
+通知が表示されません` バナーが表示され、本文が「通知が表」「示されません」と文中改行
+する現象を実機スクリーンショットで再現確認。tasklist.md の F-8 (cosmetic) の記述通りで、
+PR #45 起因ではない既存挙動。状態に変化なし、実装案 (縦並び化 / Wrap 化) は別 PR で対応する方針を維持。
+
+### 検証 DoD 達成
+
+- [x] 手動言語切替が即時 / 再起動後の両方で正しく動作
+- [x] experimental flag で zh / zh-Hant / ko が出る (public ビルドでは出ない)
+- [x] 走行中タイマーの通知文言が手動切替に追従
+- [x] F-9 未対応 locale が en にフォールバック (繁体中文 / 韓国語)
+
+### 残課題
+
+- [推奨] バナー (SCHEDULE_EXACT_ALARM denied) は引き続き実機再現不可 (Manifest の
+  `USE_EXACT_ALARM` install permission のため、Phase 11 CVD 検証時と同じ理由)。
+  Widget Test 7 件で代替担保済み (2026-05-13 セクション参照)
+- F-8 PermissionBanner 折り返し品質改善は別 PR で対応 (tasklist.md L51-82)
+
+---
+
 ## Phase 11 CVD banner labels 実機検証完了 (2026-05-13)
 
 PR #39 (Phase 11 CVD banner labels) の Pixel 6a / Android 16 (API 36) 実機検証を完了。
