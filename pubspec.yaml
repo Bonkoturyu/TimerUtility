@@ -31,6 +31,10 @@ dependencies:
   shared_preferences: ^2.5.5
   geolocator: ^14.0.2
   geocoding: ^4.0.0
+  # Phase D-2: diagnostic ログをアプリ専有ディレクトリに永続化するため、
+  # getApplicationSupportDirectory() を解決する。drift 経由で 2.1.5 が既に
+  # transitive に入っているのを direct dependency として昇格する。
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
