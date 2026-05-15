@@ -86,4 +86,10 @@ class UserPreferenceKeys {
   /// stays null so the `localeResolutionCallback` (F-9) keeps deciding.
   /// Unsupported / malformed tags also fall back to null on restore.
   static const String localeTag = 'localeTag';
+
+  /// Diagnostic logging master switch (Phase D-1, F-10 follow-up). Debug
+  /// builds default to `true` and Release builds default to `false`
+  /// (resolved in `main.dart`); an explicit user toggle persists here
+  /// and overrides the default on subsequent launches.
+  static const String diagnosticLogEnabled = 'diagnostic_log_enabled';
 }

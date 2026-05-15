@@ -1,7 +1,13 @@
 import 'dart:async' show unawaited;
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart'
-    show LicenseEntry, LicenseParagraph, LicenseRegistry;
+    show
+        LicenseEntry,
+        LicenseParagraph,
+        LicenseRegistry,
+        PlatformDispatcher,
+        kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +15,8 @@ import 'package:go_router/go_router.dart';
 
 import 'application/alarm_repository_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
+import 'application/diagnostic_settings_notifier.dart';
+import 'application/diagnostic_sink_provider.dart';
 import 'application/location_detector_provider.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
@@ -18,6 +26,8 @@ import 'application/timer_collection_notifier.dart';
 import 'application/timer_repository_provider.dart';
 import 'application/timezone_resolver_provider.dart';
 import 'application/user_preferences_provider.dart';
+import 'domain/diagnostics/diagnostic_event.dart';
+import 'domain/ports/diagnostic_sink.dart';
 import 'domain/ports/user_preferences.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_alarm_repository.dart';
@@ -25,6 +35,7 @@ import 'infrastructure/clock/tz_database_timezone_resolver.dart';
 import 'infrastructure/database/drift_clock_entry_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
+import 'infrastructure/diagnostics/in_memory_diagnostic_sink_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
@@ -207,8 +218,74 @@ class _BundledSoundLicenseEntry extends LicenseEntry {
       lines.map((String line) => LicenseParagraph(line, 0));
 }
 
+/// First few frames of a stack trace, joined by `\n`. Keeps the
+/// diagnostic payload small and avoids leaking long internal frame
+/// strings that occasionally embed file paths. 3 frames is enough to
+/// localize most errors to the relevant Notifier / Adapter.
+String _digestStackTrace(StackTrace? trace) {
+  if (trace == null) return '';
+  final List<String> lines = trace.toString().split('\n');
+  final List<String> top = lines
+      .where((String l) => l.trim().isNotEmpty)
+      .take(3)
+      .toList();
+  return top.join('\n');
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ──────────────────────────────────────────────────────────────
+  // Phase D-1: diagnostic logging bootstrap
+  //
+  // Build the in-memory sink *before* doing anything else so the
+  // FlutterError / PlatformDispatcher uncaught-exception handlers we
+  // register below have a sink to forward into. Phase D-2 swaps this
+  // for the file-backed adapter; the public Provider wiring stays the
+  // same.
+  // ──────────────────────────────────────────────────────────────
+  final InMemoryDiagnosticSinkAdapter diagnosticSink =
+      InMemoryDiagnosticSinkAdapter();
+  // Default-enabled in debug builds, off in release builds. The
+  // notifier reads `defaultEnabled` from the field below at build()
+  // time. A persisted user toggle (if any) overrides this.
+  const bool diagnosticDefaultEnabled = !kReleaseMode;
+
+  // Funnel both the Flutter framework's caught errors (build / layout /
+  // render) and asynchronous PlatformDispatcher errors into the sink.
+  // We keep Flutter's default presentation (red screen / console dump)
+  // by delegating to `FlutterError.presentError` after recording, so
+  // existing development feedback is preserved.
+  final void Function(FlutterErrorDetails)? previousOnError =
+      FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    diagnosticSink.write(
+      DiagnosticEvent.uncaughtException(
+        occurredAt: clock.now(),
+        exceptionType: details.exception.runtimeType.toString(),
+        stackTraceDigest: _digestStackTrace(details.stack),
+      ),
+    );
+    if (previousOnError != null) {
+      previousOnError(details);
+    } else {
+      FlutterError.presentError(details);
+    }
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    diagnosticSink.write(
+      DiagnosticEvent.uncaughtException(
+        occurredAt: clock.now(),
+        exceptionType: error.runtimeType.toString(),
+        stackTraceDigest: _digestStackTrace(stack),
+      ),
+    );
+    // Returning `false` lets the engine continue its default handling
+    // (logging to stderr in debug, crashing in release). We only want
+    // to *observe*, not swallow.
+    return false;
+  };
+
   _registerBundledSoundsLicense();
   final NotificationStrings notificationStrings =
       await _resolveNotificationStrings();
@@ -368,8 +445,14 @@ Future<void> main() async {
         locationDetectorProvider.overrideWithValue(detector),
         timezoneResolverProvider.overrideWithValue(timezoneResolver),
         userPreferencesProvider.overrideWithValue(userPrefs),
+        diagnosticSinkProvider.overrideWithValue(diagnosticSink),
+        diagnosticSettingsNotifierProvider.overrideWith(
+          () =>
+              DiagnosticSettingsNotifier()
+                ..defaultEnabled = diagnosticDefaultEnabled,
+        ),
       ],
-      child: TimerUtilityApp(router: router),
+      child: TimerUtilityApp(router: router, diagnosticSink: diagnosticSink),
     ),
   );
 }
@@ -381,9 +464,19 @@ Future<void> main() async {
 /// running timers fire in the new language. Without this, the strings
 /// stay locked to the locale active at process start.
 class TimerUtilityApp extends ConsumerStatefulWidget {
-  const TimerUtilityApp({super.key, required this.router});
+  const TimerUtilityApp({
+    super.key,
+    required this.router,
+    required this.diagnosticSink,
+  });
 
   final GoRouter router;
+
+  /// Reference to the same sink we override the Provider with in
+  /// `main()`. Held here (rather than read back from the Provider) so
+  /// the lifecycle hook can call `flush()` even while the Provider
+  /// container is being torn down on `detached`.
+  final DiagnosticSink diagnosticSink;
 
   @override
   ConsumerState<TimerUtilityApp> createState() => _TimerUtilityAppState();
@@ -401,6 +494,18 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.detached ||
+        state == AppLifecycleState.paused) {
+      // Phase D-2 will swap the in-memory sink for the file adapter
+      // whose flush() drains the IOSink to disk. The Phase D-1
+      // in-memory adapter no-ops, so this is harmless until then.
+      unawaited(widget.diagnosticSink.flush());
+    }
   }
 
   @override

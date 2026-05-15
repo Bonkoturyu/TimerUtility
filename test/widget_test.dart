@@ -25,6 +25,7 @@ import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/preset_repository.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/infrastructure/diagnostics/in_memory_diagnostic_sink_adapter.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/main.dart';
@@ -214,7 +215,10 @@ void main() {
             () => _GrantedPermissionNotifier(),
           ),
         ],
-        child: TimerUtilityApp(router: router),
+        child: TimerUtilityApp(
+          router: router,
+          diagnosticSink: InMemoryDiagnosticSinkAdapter(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
