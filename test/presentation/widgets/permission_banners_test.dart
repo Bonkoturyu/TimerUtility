@@ -214,6 +214,40 @@ void main() {
       },
     );
 
+    testWidgets('F-8: description は TextButton の上段に独立配置され、文中改行が起きない', (
+      WidgetTester tester,
+    ) async {
+      final delegate = _MockPermissionNotifier();
+      await tester.pumpWidget(
+        _harness(
+          state: _granted.copyWith(
+            postNotifications: DomainPermissionStatus.denied,
+          ),
+          delegate: delegate,
+        ),
+      );
+
+      // description の Text と TextButton の座標を取得し、ボタンが
+      // description より下にあることを assert。これにより description が
+      // ボタン領域を避けて折り返す現象が起きないことを担保する。
+      final Finder descriptionFinder = find.text('タイマーが終了したときに通知が表示されません。');
+      expect(descriptionFinder, findsOneWidget);
+      final Finder buttonFinder = find.byType(TextButton);
+      expect(buttonFinder, findsOneWidget);
+
+      final Rect descriptionRect = tester.getRect(descriptionFinder);
+      final Rect buttonRect = tester.getRect(buttonFinder);
+
+      // TextButton の top が description の bottom 以上なら、ボタンは
+      // description の真下にあり、同一行で領域を奪い合っていない。
+      expect(
+        buttonRect.top,
+        greaterThanOrEqualTo(descriptionRect.bottom),
+        reason:
+            'TextButton must sit below the description (buttonTop=${buttonRect.top}, descriptionBottom=${descriptionRect.bottom})',
+      );
+    });
+
     testWidgets('3 種 denied 同時表示で accent 幅が severity 順 (8 / 5 / 3) で差別化される', (
       WidgetTester tester,
     ) async {
