@@ -247,5 +247,20 @@
   "settingsDefaultAlarmSoundLabel": "アラーム音源",
   "settingsLanguageLabel": "言語",
   "settingsLanguageSystem": "システムに合わせる",
-  "settingsLanguageDialogTitle": "言語を選択"
+  "settingsLanguageDialogTitle": "言語を選択",
+
+  "settingsSectionDiagnostics": "診断ログ",
+  "settingsDiagnosticLogToggle": "診断ログを有効化",
+  "settingsDiagnosticLogToggleDescription": "タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。",
+  "settingsDiagnosticShareLogs": "ログを共有",
+  "settingsDiagnosticShareLogsSubject": "TimerUtility 診断ログ",
+  "settingsDiagnosticShareLogsDescription": "保存済みログを zip にまとめて共有メニューを開きます。",
+  "settingsDiagnosticShareLogsInProgress": "ログを準備しています…",
+  "settingsDiagnosticShareLogsSuccess": "共有メニューを開きました",
+  "settingsDiagnosticShareLogsError": "ログの共有に失敗しました: {message}",
+  "@settingsDiagnosticShareLogsError": {
+    "placeholders": {
+      "message": {"type": "String"}
+    }
+  }
 }

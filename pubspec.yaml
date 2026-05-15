@@ -39,6 +39,11 @@ dependencies:
   # path separator を吸収する。flutter_localizations / drift 経由で
   # transitive に入っているので `any` で SDK 整合を取る。
   path: any
+  # Phase D-3: diagnostic ログを zip にまとめて OS Share Sheet に渡す。
+  # archive は Pure Dart (Native plugin 不要)、share_plus は manifest
+  # auto-merge で FileProvider を自動宣言する。
+  archive: ^3.6.1
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:
