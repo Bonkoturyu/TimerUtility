@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/permission_manager.dart';
 import '../domain/timer/timer_collection.dart';
 import '../domain/timer/timer_entity.dart';
 import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
 import 'clock_provider.dart';
+import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
 import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
@@ -115,6 +117,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
         .createIdle(label: label, duration: duration, soundId: soundId);
     state = state.add(created);
     _persist(created);
+    _logAction(created.id, TimerActionKind.create);
     return created;
   }
 
@@ -125,6 +128,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _startTicker();
     _scheduleNotification(next);
     _persist(next);
+    _logAction(id, TimerActionKind.start);
   }
 
   void pause(String id) {
@@ -134,6 +138,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _cancelNotification(current.notificationId);
     _maybeStopTicker();
     _persist(next);
+    _logAction(id, TimerActionKind.pause);
   }
 
   void resume(String id) {
@@ -143,6 +148,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _startTicker();
     _scheduleNotification(next);
     _persist(next);
+    _logAction(id, TimerActionKind.resume);
   }
 
   void cancel(String id) {
@@ -152,6 +158,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _cancelNotification(current.notificationId);
     _maybeStopTicker();
     _persist(next);
+    _logAction(id, TimerActionKind.cancel);
   }
 
   void reset(String id) {
@@ -160,6 +167,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     state = state.update(next);
     _cancelNotification(current.notificationId);
     _persist(next);
+    _logAction(id, TimerActionKind.reset);
   }
 
   /// Re-arm a `ringing` timer for [snoozeMinutes] more minutes.
@@ -172,6 +180,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _startTicker();
     _scheduleNotification(next);
     _persist(next);
+    _logAction(id, TimerActionKind.snooze);
   }
 
   /// Replace a timer's `soundId` (Phase 9). The mutation is purely a
@@ -183,6 +192,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     final TimerEntity next = current.copyWith(soundId: soundId);
     state = state.update(next);
     _persist(next);
+    _logAction(id, TimerActionKind.changeSound);
   }
 
   /// Permanently remove a timer from the collection (and DB).
@@ -193,6 +203,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
     _cancelNotification(current.notificationId);
     _maybeStopTicker();
     unawaited(ref.read(timerRepositoryProvider).delete(id));
+    _logAction(id, TimerActionKind.delete);
   }
 
   /// Returns the first timer currently in [TimerStatus.ringing], or
@@ -279,6 +290,29 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier {
             payload: 'timer:${entity.id}',
           ),
     );
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.notificationFired(
+            occurredAt: ref.read(clockProvider).now(),
+            payloadId: entity.id,
+            fireKind: NotificationFireKind.restoredCompletion,
+          ),
+        );
+  }
+
+  /// Diagnostic helper: records a timer-action breadcrumb with the
+  /// current clock. No-op when the logger is disabled in settings.
+  void _logAction(String timerId, TimerActionKind action) {
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.timerAction(
+            occurredAt: ref.read(clockProvider).now(),
+            timerId: timerId,
+            action: action,
+          ),
+        );
   }
 
   void _startTicker() {

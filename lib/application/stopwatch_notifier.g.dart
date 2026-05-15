@@ -25,7 +25,7 @@ final stopwatchServiceProvider = Provider<StopwatchService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef StopwatchServiceRef = ProviderRef<StopwatchService>;
-String _$stopwatchNotifierHash() => r'0f839bb01f965ee07e816b245a8e33419ccffb24';
+String _$stopwatchNotifierHash() => r'17cf585de872f760182b126bcb43db63fd976780';
 
 /// Stopwatch state holder.
 ///
