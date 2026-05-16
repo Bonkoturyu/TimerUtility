@@ -25,16 +25,10 @@
 
 ## Follow-up タスク（未着手）
 
-- [ ] **A-3 実機検証** (Pixel 6a、experimental ビルド): zh / zh_Hant / ko の
-  表示崩れ目視確認。`flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-  でビルドした APK を Pixel 6a にインストールし、設定 → 言語 から各 locale
-  を選び、Home / Stopwatch / TimerList / AlarmList / Settings / DurationPicker /
-  PermissionBanner / 通知バー / OS の Notifications 設定画面まで一通り確認する。
-  詳細手順は PR #61 の最終応答 / dev-log close out PR で展開
 - [ ] **docs/translations.md 一括同期** (Phase 11 close out PR): clock 系 /
   通知 channel 系 / `presetSheetManageButton` / `alarmStop` / Phase 9.5 以降の
-  追加キーで本書未収録のもの。A-3 では `homeOpen*` / `*EmptyHint` のみ部分同期。
-  CI で diff チェックする方向は別途検討
+  追加キーで本書未収録のもの。A-3 (PR #61) では `homeOpen*` / `*EmptyHint`
+  のみ部分同期。CI で diff チェックする方向は別途検討
 
 ---
 
@@ -53,19 +47,9 @@
 
 ---
 
-最終更新日: 2026-05-16（A-3 — 中国語簡体字 / 繁体字 / 韓国語の ARB 本格翻訳完了。
-[lib/l10n/app_zh.arb](lib/l10n/app_zh.arb) /
-[lib/l10n/app_zh_Hant.arb](lib/l10n/app_zh_Hant.arb) /
-[lib/l10n/app_ko.arb](lib/l10n/app_ko.arb) を新規作成 (各 172 翻訳キー、
-ja / en と完全同一キー集合)。`flutter gen-l10n` で
-`AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
-生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
-`flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-すべて成功。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。
-[docs/translations.md](docs/translations.md) は ja / en 2 列維持 + 3 言語は
-ARB 直接参照に運用切替 (5 列ミラー不採用)。本 PR の commit に dev-log
-記載はせず、マージ後の close out PR で記載予定。実機での見た目確認は次
-セッションでユーザ手動 (Pixel 6a、experimental ビルド)）
+最終更新日: 2026-05-16（A-3 (中韓 ARB 本格翻訳) 完了 — PR #61 main マージ済、Pixel 6a 実機検証完了。Phase 11 ローカライズ残作業はこれで全件クローズ、残るは Phase 11 全体の「アプリアイコン・スプラッシュ」「Play Store 提出準備」のみ。Copilot レビュー 2 round で重要 bug 2 件発見・修正 (i. zh_Hant の `Locale('zh', 'Hant')` countryCode 形式が gen-l10n の `scriptCode` 期待値と不整合で繁体字が Simplified にフォールバックする bug、`Locale.fromSubtags` に修正、ii. flag 依存テストが実質未検証だった点を `@visibleForTesting debugExperimentalSupportedLocales` で flag 非依存に書き直し)。実機検証で韓国語空表示 wrap (`다.` 単独行漏れ) と中文 SnackBar `一个星期` 曖昧性も追加発見・修正。642 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-16（A-3 — 中国語簡体字 / 繁体字 / 韓国語の ARB 本格翻訳本体。`app_zh.arb` / `app_zh_Hant.arb` / `app_ko.arb` を新規作成 (各 172 翻訳キー、ja / en と完全同一キー集合)。`flutter gen-l10n` で `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo` 生成。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。`docs/translations.md` は ja / en 2 列維持 + 3 言語は ARB 直接参照運用へ切替 (方針 a)）
 
 過去の更新: 2026-05-16（A-2 (通知 channel 名 i18n) + F-7 (Manifest 整形) 完了 — PR #59 main マージ済、Pixel 6a 5 シナリオ実機検証完了。`NotificationStrings` を `lib/domain/notifications/` に移動 (依存方向修正) + `NotificationScheduler.updateChannelNames` port 追加で、locale 切替時に同 id `createNotificationChannel` 再呼び出しにより OS 設定画面の channel 名が即時追従。F-7 は `AndroidManifest.xml` line 2 整形 (PR #20 持ち越し) を同梱。641 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
 
