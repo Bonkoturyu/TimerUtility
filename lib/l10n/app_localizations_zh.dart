@@ -192,7 +192,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get permissionBannerFullScreenIntentDescription =>
-      '未授予此权限时,闹钟将改为以悬浮通知的形式提示。';
+      '未授予此权限时，闹钟将改为以悬浮通知的形式提示。';
 
   @override
   String get permissionBannerHintTapToAllow => '点击此处即可更改权限。';
@@ -240,7 +240,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationTimerAlarmChannelDescription => '定时器结束时的闹钟通知';
 
   @override
-  String get notificationTimerCompletedChannelName => '定时器完成(后台)';
+  String get notificationTimerCompletedChannelName => '定时器完成（后台）';
 
   @override
   String get notificationTimerCompletedChannelDescription => '应用在后台时定时器结束的无声通知';
@@ -261,7 +261,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetManageMenuOverflow => '预设管理';
 
   @override
-  String get presetManageEmptyHint => '暂无预设。\n点击 + 按钮添加,或从模板中替换。';
+  String get presetManageEmptyHint => '暂无预设。\n点击 + 按钮添加，或从模板中替换。';
 
   @override
   String get presetManageReplaceTemplate => '从模板替换';
@@ -273,7 +273,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetEditTitleEdit => '编辑预设';
 
   @override
-  String get presetEditLabelHint => '标签(可选)';
+  String get presetEditLabelHint => '标签（可选）';
 
   @override
   String get presetEditDurationLabel => '时长';
@@ -288,7 +288,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetEditSave => '保存';
 
   @override
-  String get presetDeleteConfirmTitle => '确定删除此预设吗?';
+  String get presetDeleteConfirmTitle => '确定删除此预设吗？';
 
   @override
   String get presetDeleteConfirmDontAsk => '下次不再询问';
@@ -312,7 +312,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetTemplateReplaceProfilePomodoro => '番茄钟';
 
   @override
-  String get presetTemplateReplaceMode => '已存在预设,要如何处理?';
+  String get presetTemplateReplaceMode => '已存在预设，要如何处理？';
 
   @override
   String get presetTemplateReplaceModeOverwrite => '覆盖';
@@ -328,7 +328,7 @@ class AppLocalizationsZh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       discarded,
       locale: localeName,
-      other: '因超过预设数量上限,有 $discarded 项未被添加',
+      other: '因超过预设数量上限，有 $discarded 项未被添加',
       zero: '',
     );
     return '$_temp0';
@@ -404,7 +404,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmEditWeekdaysLabel => '响铃日';
 
   @override
-  String get alarmEditLabelHint => '标签(可选)';
+  String get alarmEditLabelHint => '标签（可选）';
 
   @override
   String get alarmEditSoundLabel => '音源';
@@ -441,7 +441,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmEditNotFound => '未找到对应的闹钟';
 
   @override
-  String get alarmDeleteConfirmTitle => '确定删除此闹钟吗?';
+  String get alarmDeleteConfirmTitle => '确定删除此闹钟吗？';
 
   @override
   String get alarmDeleteConfirmDontAsk => '下次不再询问';
@@ -489,11 +489,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clockDesignSegmentCompact => '紧凑';
 
   @override
-  String get clockEntryEditAppBarTitle => '添加・编辑时钟';
+  String get clockEntryEditAppBarTitle => '添加/编辑时钟';
 
   @override
   String clockEntryEditSectionPinned(int count, int max) {
-    return '已添加 ($count/$max)';
+    return '已添加（$count/$max）';
   }
 
   @override
@@ -504,7 +504,7 @@ class AppLocalizationsZh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '已达到上限 $count 个,请先删除后再添加',
+      other: '已达到上限 $count 个，请先删除后再添加',
     );
     return '$_temp0';
   }
@@ -570,7 +570,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDiagnosticLogToggleDescription =>
-      '将定时器操作、权限变更、通知触发与异常记录到设备本地文件。不会记录个人信息(标签 / 位置)。';
+      '将定时器操作、权限变更、通知触发与异常记录到设备本地文件。不会记录个人信息（标签/位置）。';
 
   @override
   String get settingsDiagnosticShareLogs => '共享日志';
@@ -590,7 +590,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String settingsDiagnosticShareLogsError(String message) {
-    return '共享日志失败:$message';
+    return '共享日志失败：$message';
   }
 }
 
@@ -669,7 +669,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get timerCardTimesUp => '時間到!';
+  String get timerCardTimesUp => '時間到！';
 
   @override
   String get timerCardActionStart => '開始';
@@ -723,7 +723,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get alarmAppBarTitle => '鬧鐘';
 
   @override
-  String get alarmTimesUp => '時間到!';
+  String get alarmTimesUp => '時間到！';
 
   @override
   String get alarmStop => '停止';
@@ -775,14 +775,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get permissionBannerExactAlarmTitle => '精確鬧鐘已停用';
 
   @override
-  String get permissionBannerExactAlarmDescription => '在省電模式下,鬧鐘可能會延遲數分鐘才響起。';
+  String get permissionBannerExactAlarmDescription => '在省電模式下，鬧鐘可能會延遲數分鐘才響起。';
 
   @override
   String get permissionBannerFullScreenIntentTitle => '鎖定畫面鬧鐘已停用';
 
   @override
   String get permissionBannerFullScreenIntentDescription =>
-      '未授予此權限時,鬧鐘將改以橫幅通知顯示。';
+      '未授予此權限時，鬧鐘將改以橫幅通知顯示。';
 
   @override
   String get permissionBannerHintTapToAllow => '點選任意處即可變更權限。';
@@ -815,7 +815,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get notificationTimerEndedBody => '時間到了。';
 
   @override
-  String get notificationTimerCompletedBackgroundBody => '應用程式在背景執行時,計時器已結束。';
+  String get notificationTimerCompletedBackgroundBody => '應用程式在背景執行時，計時器已結束。';
 
   @override
   String get notificationAlarmRingingTitle => '鬧鐘';
@@ -830,7 +830,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get notificationTimerAlarmChannelDescription => '計時器結束時的鬧鐘通知';
 
   @override
-  String get notificationTimerCompletedChannelName => '計時器完成(背景)';
+  String get notificationTimerCompletedChannelName => '計時器完成（背景）';
 
   @override
   String get notificationTimerCompletedChannelDescription =>
@@ -852,7 +852,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get presetManageMenuOverflow => '預設管理';
 
   @override
-  String get presetManageEmptyHint => '目前沒有預設。\n點選 + 按鈕新增,或從範本中替換。';
+  String get presetManageEmptyHint => '目前沒有預設。\n點選 + 按鈕新增，或從範本中替換。';
 
   @override
   String get presetManageReplaceTemplate => '從範本替換';
@@ -864,7 +864,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get presetEditTitleEdit => '編輯預設';
 
   @override
-  String get presetEditLabelHint => '標籤(選填)';
+  String get presetEditLabelHint => '標籤（選填）';
 
   @override
   String get presetEditDurationLabel => '時間';
@@ -879,7 +879,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get presetEditSave => '儲存';
 
   @override
-  String get presetDeleteConfirmTitle => '要刪除此預設嗎?';
+  String get presetDeleteConfirmTitle => '要刪除此預設嗎？';
 
   @override
   String get presetDeleteConfirmDontAsk => '下次不再詢問';
@@ -903,7 +903,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get presetTemplateReplaceProfilePomodoro => '番茄鐘';
 
   @override
-  String get presetTemplateReplaceMode => '已有預設,要如何處理?';
+  String get presetTemplateReplaceMode => '已有預設，要如何處理？';
 
   @override
   String get presetTemplateReplaceModeOverwrite => '覆寫';
@@ -919,7 +919,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
     String _temp0 = intl.Intl.pluralLogic(
       discarded,
       locale: localeName,
-      other: '因超過預設數量上限,有 $discarded 項未被加入',
+      other: '因超過預設數量上限，有 $discarded 項未被加入',
       zero: '',
     );
     return '$_temp0';
@@ -995,7 +995,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get alarmEditWeekdaysLabel => '響鈴日';
 
   @override
-  String get alarmEditLabelHint => '標籤(選填)';
+  String get alarmEditLabelHint => '標籤（選填）';
 
   @override
   String get alarmEditSoundLabel => '音效';
@@ -1032,7 +1032,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get alarmEditNotFound => '找不到對應的鬧鐘';
 
   @override
-  String get alarmDeleteConfirmTitle => '要刪除此鬧鐘嗎?';
+  String get alarmDeleteConfirmTitle => '要刪除此鬧鐘嗎？';
 
   @override
   String get alarmDeleteConfirmDontAsk => '下次不再詢問';
@@ -1080,11 +1080,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get clockDesignSegmentCompact => '精簡';
 
   @override
-  String get clockEntryEditAppBarTitle => '新增・編輯時鐘';
+  String get clockEntryEditAppBarTitle => '新增/編輯時鐘';
 
   @override
   String clockEntryEditSectionPinned(int count, int max) {
-    return '已新增 ($count/$max)';
+    return '已新增（$count/$max）';
   }
 
   @override
@@ -1095,7 +1095,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '已達上限 $count 個,請先刪除後再新增',
+      other: '已達上限 $count 個，請先刪除後再新增',
     );
     return '$_temp0';
   }
@@ -1161,7 +1161,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsDiagnosticLogToggleDescription =>
-      '將計時器操作、權限變更、通知觸發與例外狀況記錄到裝置內檔案。不會記錄個人資訊(標籤 / 位置)。';
+      '將計時器操作、權限變更、通知觸發與例外狀況記錄到裝置內檔案。不會記錄個人資訊（標籤/位置）。';
 
   @override
   String get settingsDiagnosticShareLogs => '分享紀錄';
@@ -1181,6 +1181,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String settingsDiagnosticShareLogsError(String message) {
-    return '分享紀錄失敗:$message';
+    return '分享紀錄失敗：$message';
   }
 }

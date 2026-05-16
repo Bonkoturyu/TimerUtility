@@ -25,7 +25,16 @@
 
 ## Follow-up タスク（未着手）
 
-なし。
+- [ ] **A-3 実機検証** (Pixel 6a、experimental ビルド): zh / zh_Hant / ko の
+  表示崩れ目視確認。`flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
+  でビルドした APK を Pixel 6a にインストールし、設定 → 言語 から各 locale
+  を選び、Home / Stopwatch / TimerList / AlarmList / Settings / DurationPicker /
+  PermissionBanner / 通知バー / OS の Notifications 設定画面まで一通り確認する。
+  詳細手順は PR #61 の最終応答 / dev-log close out PR で展開
+- [ ] **docs/translations.md 一括同期** (Phase 11 close out PR): clock 系 /
+  通知 channel 系 / `presetSheetManageButton` / `alarmStop` / Phase 9.5 以降の
+  追加キーで本書未収録のもの。A-3 では `homeOpen*` / `*EmptyHint` のみ部分同期。
+  CI で diff チェックする方向は別途検討
 
 ---
 

@@ -48,7 +48,7 @@
   "alarmStop": "정지",
   "alarmSnooze": "다시 알림",
   "alarmSnoozePickerTitle": "다시 알림 시간을 선택",
-  "alarmSnoozeMinutes": "{minutes, plural, other{{minutes} 분}}",
+  "alarmSnoozeMinutes": "{minutes, plural, other{{minutes}분}}",
   "alarmSnoozeCancel": "취소",
 
   "durationPickerTitle": "사용자 지정 시간 선택",
@@ -181,7 +181,7 @@
   "settingsThemeLight": "라이트",
   "settingsThemeDark": "다크",
   "settingsDefaultSnoozeLabel": "다시 알림 분",
-  "settingsDefaultSnoozeOption": "{minutes} 분",
+  "settingsDefaultSnoozeOption": "{minutes}분",
   "settingsDefaultAlarmSoundLabel": "알람 사운드",
   "settingsLanguageLabel": "언어",
   "settingsLanguageSystem": "시스템 설정 따르기",

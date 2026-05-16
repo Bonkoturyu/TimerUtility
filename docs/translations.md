@@ -15,6 +15,11 @@
   [lib/l10n/app_ko.arb](../lib/l10n/app_ko.arb)) を直接参照する**。
   5 列ミラー化は横幅が肥大化してレビュー性が下がるため不採用 (A-3 / 2026-05-16)。
   ja / en 列は引き続き本書で対訳一覧として保守する。
+- **既知の差分**: 本ファイルの ja / en 表は Phase 11 以前の語彙が一部残っており、
+  最新の ARB と完全には同期していない。A-3 (2026-05-16) で
+  `homeOpen*` / `timerListEmptyHint` / `alarmListEmptyHint` の 3 グループを
+  同期したが、Phase 9.5 以降に追加された一部キー (clock 系 / 通知 channel 系 /
+  presetSheetManageButton 等) は未収録。Phase 11 close out PR で一括同期予定
 
 最終更新日: 2026-05-16（A-3 — zh / zh_Hant / ko の本格翻訳完了に伴い、3 言語は ARB 直接参照運用へ切替）
 
@@ -25,9 +30,10 @@
 | key | ja | en | 用途 |
 | --- | --- | --- | --- |
 | `appTitle` | TimerUtility | TimerUtility | アプリ名（固有名詞） |
-| `homeOpenStopwatch` | ストップウォッチを開く | Open Stopwatch | ホームのナビゲーションボタン |
-| `homeOpenTimer` | タイマーを開く | Open Timer | ホームのナビゲーションボタン |
-| `homeOpenAlarm` | アラームを開く | Open Alarms | ホームのナビゲーションボタン |
+| `homeOpenStopwatch` | ストップウォッチ | Stopwatch | Phase 11: HomeScreen PageView の前後タブヒント (`PageNavigationHint`) |
+| `homeOpenTimer` | タイマー | Timer | 同上 |
+| `homeOpenAlarm` | アラーム | Alarm | 同上 |
+| `homeOpenClock` | 世界時計 | World Clock | 同上 |
 
 ## ストップウォッチ
 
@@ -50,7 +56,7 @@
 | --- | --- | --- | --- |
 | `timerListAppBarTitle` | タイマー | Timers | AppBar |
 | `timerListAddFab` | タイマーを追加 | Add Timer | FloatingActionButton |
-| `timerListEmptyHint` | タイマーがありません。\n右下の「タイマーを追加」から追加できます。 | No timers yet.\nTap "Add Timer" at the bottom-right to create one. | 空表示ヒント |
+| `timerListEmptyHint` | タイマーがありません。\n右下の「＋」ボタンから追加できます。 | No timers yet.\nTap + at the bottom-right to add one. | 空表示ヒント |
 | `timerListLimitReached` | 上限 {count} 件に達しています | {count, plural, =1{Limit reached: 1 item} other{Limit reached: {count} items}} | SnackBar（ja は plural 不使用、en は ICU plural、preset/timer/alarm の 3 画面で共用するため `items` で汎用化） |
 
 ## タイマーカード
@@ -95,7 +101,7 @@
 | --- | --- | --- | --- |
 | `alarmListAppBarTitle` | アラーム | Alarms | AppBar |
 | `alarmListAddFab` | アラームを追加 | Add Alarm | FloatingActionButton |
-| `alarmListEmptyHint` | アラームがありません。\n右下の「アラームを追加」から追加できます。 | No alarms yet.\nTap “Add Alarm” at the bottom-right to create one. | 空表示ヒント |
+| `alarmListEmptyHint` | アラームがありません。\n右下の「＋」ボタンから追加できます。 | No alarms yet.\nTap + at the bottom-right to add one. | 空表示ヒント |
 | `alarmListRepeatEveryday` | 毎日 | Every day | 全曜日選択時のサブタイトル省略表示 |
 
 ## アラーム編集画面（Phase 9.5）

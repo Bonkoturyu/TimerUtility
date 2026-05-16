@@ -226,7 +226,7 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
 
 - [ ] アプリアイコン・スプラッシュ
 - [~] ローカライズ残作業
-  - [x] 中国語簡体字 / 繁体字 / 韓国語の本格翻訳 (A-3 / 2026-05-16):
+  - [x] 中国語簡体字 / 繁体字 / 韓国語の本格翻訳 (A-3 / 2026-05-16, PR #61):
     [lib/l10n/app_zh.arb](lib/l10n/app_zh.arb) /
     [lib/l10n/app_zh_Hant.arb](lib/l10n/app_zh_Hant.arb) /
     [lib/l10n/app_ko.arb](lib/l10n/app_ko.arb) を新規作成 (各 172 翻訳キー、
@@ -234,10 +234,15 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
     `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
     を生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
     `flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-    すべて成功。zh / ko は CLDR plural rule で `other` のみ。
+    すべて成功。zh / ko は CLDR plural rule で `other` のみ。Copilot レビュー
+    指摘で `lib/main.dart` の `_experimentalSupportedLocales` を
+    `Locale.fromSubtags(scriptCode: 'Hant')` に修正 (countryCode 形式だと
+    繁体字選択が簡体字にフォールバックするバグ)。
     [docs/translations.md](docs/translations.md) は ja / en 2 列維持 + 3 言語は
-    ARB 直接参照に運用切替 (5 列ミラー不採用)。実機での見た目確認は次セッションで
-    ユーザ手動 (Pixel 6a、experimental ビルド)
+    ARB 直接参照に運用切替 (5 列ミラー不採用、homeOpen* / *EmptyHint の stale
+    行は同期、残りは Phase 11 close out PR で一括同期予定)
+  - [ ] **A-3 実機検証** (Pixel 6a、experimental ビルド): zh / zh_Hant / ko の
+    表示崩れ目視確認。tasklist.md の Follow-up に手順を集約
   - [x] 通知 channel 名の i18n (2026-05-16, PR #59): `NotificationStrings` を
     `lib/domain/notifications/` に移動 (`infrastructure → application` 依存方向
     違反を回避) + `NotificationScheduler.updateChannelNames(NotificationStrings)`

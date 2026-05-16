@@ -67,7 +67,7 @@ const List<Locale> _publicSupportedLocales = <Locale>[
 
 const List<Locale> _experimentalSupportedLocales = <Locale>[
   Locale('zh'),
-  Locale('zh', 'Hant'),
+  Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   Locale('ko'),
 ];
 

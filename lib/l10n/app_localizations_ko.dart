@@ -149,7 +149,7 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       minutes,
       locale: localeName,
-      other: '$minutes 분',
+      other: '$minutes분',
     );
     return '$_temp0';
   }
@@ -551,7 +551,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String settingsDefaultSnoozeOption(int minutes) {
-    return '$minutes 분';
+    return '$minutes분';
   }
 
   @override
