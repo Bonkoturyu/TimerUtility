@@ -15,13 +15,12 @@
   [lib/l10n/app_ko.arb](../lib/l10n/app_ko.arb)) を直接参照する**。
   5 列ミラー化は横幅が肥大化してレビュー性が下がるため不採用 (A-3 / 2026-05-16)。
   ja / en 列は引き続き本書で対訳一覧として保守する。
-- **既知の差分**: 本ファイルの ja / en 表は Phase 11 以前の語彙が一部残っており、
-  最新の ARB と完全には同期していない。A-3 (2026-05-16) で
-  `homeOpen*` / `timerListEmptyHint` / `alarmListEmptyHint` の 3 グループを
-  同期したが、Phase 9.5 以降に追加された一部キー (clock 系 / 通知 channel 系 /
-  presetSheetManageButton 等) は未収録。Phase 11 close out PR で一括同期予定
+- **同期状態**: Phase 11 close out PR (2026-05-16) で ARB との一括同期を完了。
+  Phase 9.5 以降に追加された clock 系 / 通知 channel 系 / `presetSheetManageButton` /
+  permission severity / 言語切替 / 診断ログの計 33 キーをすべて収録。以後 ARB を変更したら
+  本書も同じ commit で同期する (上記「更新ルール」参照)。
 
-最終更新日: 2026-05-16（A-3 — zh / zh_Hant / ko の本格翻訳完了に伴い、3 言語は ARB 直接参照運用へ切替）
+最終更新日: 2026-05-16（Phase 11 close out — ARB との一括同期完了、未収録 33 キーを追加 + 末尾の旧 zh/ko 列ロードマップ記述を削除）
 
 ---
 
@@ -151,6 +150,27 @@
 | `weekdaySat` | 土 | Sat | 土曜 |
 | `weekdaySun` | 日 | Sun | 日曜 |
 
+## 世界時計（Phase 10.5）
+
+`ClockScreen` (`/clock` ルート、ホームの `ClockPage` から開く) /
+`ClockEntryEditScreen` (`/clock/edit`) / `TimezoneCatalog` 由来。最大 6 都市の
+現在時刻を 3 デザイン (Analog / Digital / Compact) で表示する HomeScreen の
+4 番目のタブ。
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `clockAppBarTitle` | 世界時計 | World Clock | AppBar |
+| `clockListAddFab` | 時計を追加 | Add clock | FloatingActionButton |
+| `clockDesignSegmentAnalog` | アナログ | Analog | デザイン切替 SegmentedButton |
+| `clockDesignSegmentDigital` | デジタル | Digital | デザイン切替 SegmentedButton |
+| `clockDesignSegmentCompact` | コンパクト | Compact | デザイン切替 SegmentedButton |
+| `clockEntryEditAppBarTitle` | 時計を追加・編集 | Add or edit clocks | 編集画面 AppBar |
+| `clockEntryEditSectionPinned` | 登録済み ({count}/{max}) | Pinned ({count}/{max}) | 登録済みセクション見出し ({count}/{max} = int) |
+| `clockEntryEditSectionAvailable` | 追加できる都市 | Available cities | 追加可能セクション見出し |
+| `clockEntryEditLimitReached` | 上限 {count} 件に達しています。削除してから追加してください | {count, plural, =1{Maximum of 1 city reached. Remove it to add another.} other{Maximum of {count} cities reached. Remove one to add another.}} | 上限到達時の SnackBar（ja は plural 不使用、en は ICU plural） |
+| `clockEntryEditCatalogEmpty` | すべての都市が登録済みです | All available cities are already pinned | 追加可能セクションが空の表示 |
+| `clockEmptyHint` | 時計が登録されていません。\n右下の「＋」ボタンから追加できます。 | No clocks yet.\nTap + at the bottom-right to add one. | 空表示ヒント |
+
 ## DurationPicker
 
 | key | ja | en | 用途 |
@@ -164,6 +184,11 @@
 
 ## 権限バナー
 
+CVD (色覚多様性) 対応として **方針 (a) 冗長表示** を採用 (Phase 11 / PR #39)。
+3 種バナーに重大度ラベル `[重要]` / `[推奨]` / `[補助]` を全ユーザ向けに併記し、
+`FontWeight` 段階差と左端色帯幅で形状差も併用することで、配色だけに依存しない
+識別性を確保している。
+
 | key | ja | en | 用途 |
 | --- | --- | --- | --- |
 | `permissionBannerNotificationsTitle` | 通知が無効です | Notifications disabled | バナータイトル |
@@ -174,6 +199,9 @@
 | `permissionBannerFullScreenIntentDescription` | 権限がない場合は通知バナーで代わりにお知らせします。 | Without this permission, alarms will appear as a heads-up banner instead. | バナー説明 |
 | `permissionBannerHintTapToAllow` | タップで権限を変更できます。 | Tap anywhere to change this permission. | バナー下部 hint (denied 時、F-10 で TextButton を廃止して全体タップ可能化に移行) |
 | `permissionBannerHintTapToOpenSettings` | タップで設定を開けます。 | Tap anywhere to open settings. | バナー下部 hint (permanentlyDenied / `[補助]` バナー時) |
+| `permissionBannerSeverityCritical` | [重要] | [Critical] | CVD 冗長表示の重大度ラベル (Notifications denied 時に併記) |
+| `permissionBannerSeverityRecommended` | [推奨] | [Recommended] | CVD 冗長表示の重大度ラベル (ExactAlarm denied 時に併記) |
+| `permissionBannerSeveritySupplementary` | [補助] | [Supplementary] | CVD 冗長表示の重大度ラベル (FullScreenIntent denied 時に併記) |
 
 ## 音源カタログ表示名
 
@@ -194,6 +222,24 @@
 | `notificationTimerEndedBody` | 時間になりました。 | Time is up. | 通知本文 |
 | `notificationTimerCompletedBackgroundBody` | アプリのバックグラウンド中にタイマーが終了しました。 | Timer ended while the app was in the background. | バックグラウンド完了通知 |
 
+## 通知 channel（Phase 11 A-2）
+
+A-2 (PR #59) で i18n 化した OS 設定画面の通知 channel 名 / 説明、および
+AlarmEntity 起動時の通知タイトル / 本文。`NotificationStrings` (Pure Dart) を
+`lib/domain/notifications/` に配置し、locale 切替リスナーから
+`NotificationScheduler.updateChannelNames` を呼び出すと、同 id `createNotificationChannel`
+再呼び出しで OS 設定画面の channel 名 / 説明が即時追従する
+（importance / sound / vibration は Android 仕様で保護され不変）。
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `notificationAlarmRingingTitle` | アラーム | Alarm | アラーム起動時の通知タイトル (Phase 9.5 由来、A-2 で i18n 化) |
+| `notificationAlarmRingingBody` | アラームの時刻になりました。 | It's time for your alarm. | アラーム起動時の通知本文 |
+| `notificationTimerAlarmChannelName` | タイマーアラーム | Timer Alarm | OS 設定画面の channel 名 (タイマー / アラーム鳴動用、共通 channel) |
+| `notificationTimerAlarmChannelDescription` | タイマー終了時のアラーム通知 | Alarm notification when a timer ends | 同上の channel 説明 |
+| `notificationTimerCompletedChannelName` | タイマー完了（バックグラウンド） | Timer Completed (Background) | OS 設定画面の channel 名 (起動時復元時の無音 show 通知用) |
+| `notificationTimerCompletedChannelDescription` | バックグラウンド中にタイマーが終了したことを知らせる無音通知 | Silent notification when a timer ends while the app is in the background | 同上の channel 説明 |
+
 ## ライセンス画面
 
 | key | ja | en | 用途 |
@@ -208,6 +254,7 @@
 | --- | --- | --- | --- |
 | `presetSheetTitle` | プリセットから選択 | Choose preset | bottom sheet タイトル |
 | `presetSheetCustomButton` | カスタム時間で作成 | Create with custom time | プリセット未使用時のフォールバック |
+| `presetSheetManageButton` | プリセットを管理... | Manage presets... | シート末尾のエントリ。プリセット管理画面への導線 (発見性改善 / PR #35) |
 
 ## プリセット管理画面
 
@@ -288,6 +335,36 @@ AppBar 両方で再利用。
 | `settingsDefaultSnoozeLabel` | スヌーズ分 | Snooze minutes | ListTile title |
 | `settingsDefaultSnoozeOption` | {minutes} 分 | {minutes} min | SegmentedButton ラベル (5/10/15) |
 | `settingsDefaultAlarmSoundLabel` | アラーム音源 | Alarm sound | ListTile title |
+| `settingsLanguageLabel` | 言語 | Language | ListTile title (言語手動切替) |
+| `settingsLanguageSystem` | システムに合わせる | Follow system | 言語選択ダイアログの先頭オプション (`localeOverride = null`、F-9 の `localeResolutionCallback` に委譲) |
+| `settingsLanguageDialogTitle` | 言語を選択 | Select language | 言語選択ダイアログタイトル |
+
+> 個別言語のラベル (日本語 / English / 简体中文 / 繁體中文 / 한국어) は ARB
+> には個別キーを持たず、`SettingsScreen` 内の const Map `_languageDisplayNames`
+> でハードコード保持している (実装は
+> [lib/presentation/screens/settings_screen.dart](../lib/presentation/screens/settings_screen.dart)
+> L17-23)。各言語名は **そのロケール自身の表記** で出すのが多言語アプリの慣習で、
+> 現在の UI ロケールに依存させないため。Public ビルドでは ja / en の 2 件、
+> `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` ビルドで zh / zh-Hant / ko も
+> 表示される (公開順序は `_publicLanguageTagOrder` / `_experimentalLanguageTagOrder`)。
+
+### 診断ログ（Phase D）
+
+`SettingsScreen` の「診断ログ」セクション。`DiagnosticLogger` の有効化トグルと
+zip + Share Sheet 経由でのログ共有導線。詳細は
+[docs/dev-log.md](dev-log.md) 「Phase D (Diagnostic Logging) 完了」セクション参照。
+
+| key | ja | en | 用途 |
+| --- | --- | --- | --- |
+| `settingsSectionDiagnostics` | 診断ログ | Diagnostic logs | セクション見出し |
+| `settingsDiagnosticLogToggle` | 診断ログを有効化 | Enable diagnostic logging | トグル ListTile title |
+| `settingsDiagnosticLogToggleDescription` | タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。 | Record timer actions, permission changes, notification fires, and exceptions to on-device files. No personal data (labels / location) is captured. | トグル ListTile subtitle |
+| `settingsDiagnosticShareLogs` | ログを共有 | Share logs | 共有 ListTile title |
+| `settingsDiagnosticShareLogsSubject` | TimerUtility 診断ログ | TimerUtility diagnostic logs | Share Sheet の subject |
+| `settingsDiagnosticShareLogsDescription` | 保存済みログを zip にまとめて共有メニューを開きます。 | Bundle stored logs into a zip and open the share sheet. | 共有 ListTile subtitle |
+| `settingsDiagnosticShareLogsInProgress` | ログを準備しています… | Preparing logs… | zip 生成中の SnackBar |
+| `settingsDiagnosticShareLogsSuccess` | 共有メニューを開きました | Share sheet opened | 成功時の SnackBar |
+| `settingsDiagnosticShareLogsError` | ログの共有に失敗しました: {message} | Failed to share logs: {message} | 失敗時の SnackBar ({message} = String) |
 
 ---
 
@@ -295,5 +372,5 @@ AppBar 両方で再利用。
 
 - ARB を変更したら `flutter gen-l10n` を実行 → `lib/l10n/app_localizations.dart` 系の生成物が更新される
 - 本書の表は「key 単位の対訳が探しやすいこと」を優先しているので、ja / en 両方のセル幅が極端に違っても気にしない
-- 中国語 / 韓国語の experimental flag が立った段階で `zh` / `ko` 列を追加する（Phase 8.5 ロードマップ）
+- zh / zh_Hant / ko は本書に載せない (5 列ミラー不採用 / A-3 2026-05-16) — 翻訳本体は ARB ファイルを直接参照する
 - 既存翻訳の自然さに違和感を感じたら、まず「該当 key の用途列」を読んで文脈を把握する

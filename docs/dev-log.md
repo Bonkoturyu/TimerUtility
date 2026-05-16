@@ -17,6 +17,59 @@
 
 ---
 
+## docs/translations.md Phase 11 close out 一括同期 (2026-05-16)
+
+Phase 11 ローカライズ系の最後の追従作業として、ARB と `docs/translations.md` の
+差分を解消。tasklist.md の Follow-up エントリ「docs/translations.md 一括同期」を
+クローズ。
+
+### 経緯と目的
+
+- A-3 (PR #61) で zh / zh_Hant / ko ARB の本格翻訳を完了した際、
+  `docs/translations.md` は ja / en 2 列ミラーを据置きで運用切替 (方針 a) し、
+  当時の close out 時点で `homeOpen*` / `timerListEmptyHint` / `alarmListEmptyHint`
+  の 3 グループのみ部分同期を完了。残る Phase 9.5 以降追加キー (clock 系 /
+  通知 channel 系 / `presetSheetManageButton` / permission severity / 言語切替 /
+  診断ログ) は「Phase 11 close out PR で一括同期予定」として持ち越していた
+- 本セッションで残 33 キー (138 → 171 / ja arb 総キー数と完全一致) を一括追加し、
+  冒頭「既知の差分」段落と末尾「中国語 / 韓国語の experimental flag が立った
+  段階で `zh` / `ko` 列を追加する」記述 (5 列ミラー不採用方針 a と矛盾) を解消
+
+### 追加内容
+
+| 種別 | セクション | 追加キー数 | 出典 |
+| --- | --- | --- | --- |
+| 既存セクション拡張 | 権限バナー | 3 (`permissionBannerSeverity{Critical,Recommended,Supplementary}`) | Phase 11 CVD / PR #39 |
+| 既存セクション拡張 | プリセット選択シート | 1 (`presetSheetManageButton`) | プリセット管理発見性改善 / PR #35 |
+| 既存セクション拡張 | 設定画面 (Phase 11) | 12 (`settingsLanguage{Label,System,DialogTitle}` + `settingsSectionDiagnostics` + `settingsDiagnostic{LogToggle,LogToggleDescription,ShareLogs,ShareLogsSubject,ShareLogsDescription,ShareLogsInProgress,ShareLogsSuccess,ShareLogsError}`) | Phase 11 言語切替 (PR #45) + Phase D 診断ログ (PR #49 / #52 / #51) |
+| 新セクション | 世界時計（Phase 10.5） | 11 (`clockAppBarTitle` / `clockListAddFab` / `clockDesignSegment{Analog,Digital,Compact}` / `clockEntryEditAppBarTitle` / `clockEntryEditSection{Pinned,Available}` / `clockEntryEditLimitReached` / `clockEntryEditCatalogEmpty` / `clockEmptyHint`) | Phase 10.5 世界時計 |
+| 新セクション | 通知 channel（Phase 11 A-2） | 6 (`notificationAlarmRinging{Title,Body}` / `notificationTimerAlarmChannel{Name,Description}` / `notificationTimerCompletedChannel{Name,Description}`) | A-2 (PR #59) の通知 channel i18n |
+
+### 整合修正
+
+- 冒頭 L18-22「既知の差分」段落を「同期状態」段落に書き換え (一括同期完了の旨)
+- 末尾「中国語 / 韓国語の experimental flag が立った段階で `zh` / `ko` 列を追加する
+  （Phase 8.5 ロードマップ）」を「zh / zh_Hant / ko は本書に載せない (5 列ミラー
+  不採用 / A-3 2026-05-16) — 翻訳本体は ARB ファイルを直接参照する」に置換
+- 権限バナーセクションに「CVD 対応として方針 (a) 冗長表示を採用 (Phase 11 / PR #39)」の
+  説明段落を補記
+- 通知 channel 新セクションに `NotificationStrings` の locale 切替メカニズムを補記
+
+### 検証
+
+- `Compare-Object` で ARB ja キーと translations.md 内コードフェンス済キー名の集合一致を確認:
+  ARB 171 キー / Doc 171 キー、差分なし
+- `flutter analyze` / `flutter test` で既存 642 テスト緑 (1 skipped) を維持
+
+### 残作業
+
+- CI で diff チェック自動化は **本タスクのスコープ外**。tasklist.md の
+  「CI で diff チェックする方向は別途検討」記述は据置
+- Phase 11 残作業はこれで「アプリアイコン・スプラッシュ」「Play Store 提出準備」の
+  2 件のみ。Phase 11 ローカライズ系は **全件クローズ**
+
+---
+
 ## A-3 zh / zh_Hant / ko ARB 本格翻訳 完了 + Pixel 6a 実機検証完了 (2026-05-16)
 
 Phase 11 ローカライズ残作業の最後の山「中国語簡体字 / 繁体字 / 韓国語の本格翻訳」を
