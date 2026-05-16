@@ -17,6 +17,187 @@
 
 ---
 
+## A-3 zh / zh_Hant / ko ARB 本格翻訳 完了 + Pixel 6a 実機検証完了 (2026-05-16)
+
+Phase 11 ローカライズ残作業の最後の山「中国語簡体字 / 繁体字 / 韓国語の本格翻訳」を
+PR #61 で実装・マージ。Phase 11 のローカライズ系サブタスクはこれで全件クローズし、
+残るは「アプリアイコン・スプラッシュ」と「Play Store 提出準備」のみ。
+
+### 経緯と目的
+
+- Phase 11 言語切替 UI (PR #45) と F-9 (`localeResolutionCallback` で en
+  フォールバック) で UI 基盤は整っており、A-2 (PR #59) で通知 channel 名の
+  i18n 経路も完成。zh / zh_Hant / ko の ARB ファイル自体は未作成で、
+  experimental flag を立てても en にフォールバックしてしまう状態だった
+- Auto セッションを別途立ち上げ、PR #61 で 3 言語 × 172 翻訳キー = 516 翻訳を
+  一括投入。本格翻訳に踏み込むため、Auto 指示書
+  (`auto-prompt-a3-zh-ko-translation.md`、ユーザのローカル `c:\tmp\` 配下、
+  リポジトリ未追跡) を事前にユーザ作成し、翻訳指針 (用語選定、全角句読点、
+  CLDR plural rule、`docs/translations.md` の 5 列ミラー不採用方針 a など)
+  を凍結してから着手
+
+### 採用方針
+
+- `lib/l10n/app_ja.arb` (`l10n.yaml` の `template-arb-file`) を唯一の
+  メタ情報ソースに据えて、新規 ARB は翻訳テキストのみ持つ薄い構造
+- ICU plural は CLDR plural rule に従い、zh / zh_Hant / ko ともに
+  `other` 1 分岐のみ (`presetTemplateReplaceLimitWarning` の `=0{}` 空分岐
+  は呼び出し側互換のため維持)
+- `permissionBannerSeverity*` の `[重要]` / `[推奨]` / `[補助]` 角括弧
+  ラベルは ARB で翻訳、Dart 側 prefix 機構 (F-10) はそのまま動作
+- 用語: zh = `闹钟 / 定时器 / 秒表 / 稍后提醒 / 预设` (Android 標準寄り) /
+  zh_Hant = `鬧鐘 / 計時器 / 碼錶 / 貪睡 / 預設` (台湾標準寄り) /
+  ko = `알람 / 타이머 / 스톱워치 / 다시 알림 / 프리셋` (대한민국 표준어)
+- `docs/translations.md` は ja / en 2 列ミラー据置 + 3 言語は ARB 直接参照
+  への運用切替 (方針 a)。5 列ミラー化はレビュー性低下で不採用
+
+### 実装 PR と commit 構成
+
+| commit | 内容 |
+| --- | --- |
+| `423feff` | 初版: `app_zh.arb` / `app_zh_Hant.arb` / `app_ko.arb` 3 ファイル新規作成 (各 172 翻訳キー)、`flutter gen-l10n` で `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo` を生成 (`app_localizations.dart` の `supportedLocales` / `lookupAppLocalizations` も自動更新)、`BACKLOG.md` / `tasklist.md` / `docs/translations.md` を方針 a で更新 |
+| `652d236` | review round 1 対応: **重要 bug fix** — `lib/main.dart` の `_experimentalSupportedLocales` を `Locale('zh', 'Hant')` (countryCode 形式) から `Locale.fromSubtags(scriptCode: 'Hant')` に修正。`test/locale_resolution_test.dart` に「production list が scriptCode 形式で zh_Hant を宣言」する unit test を追加。Gemini 指摘 10 件 (韓国語スペース整合、中文の半角句読点 → 全角、`・` → `/`、半角括弧 → 全角、半角コロン → 全角) を全件適用。`docs/translations.md` の stale 行 (`homeOpen*` / `*EmptyHint`) を部分同期、残 stale は Phase 11 close out PR に持ち越し |
+| `65896b8` | 実機検証 (ko) 由来: 韓国語空表示の wrap 問題修正。`추가할 수 있습니다` (declarative、ja 「追加できます」直訳) → `추가하세요` (imperative、en `Tap + ... to add one.` 同じ voice) に短縮、`timerListEmptyHint` / `alarmListEmptyHint` / `clockEmptyHint` の 3 キーで `다.` 文字単独行漏れを解消 |
+| `ae593bc` | review round 2 対応: **真の指摘 2 件** — (i) round 1 で追加したテストが `kEnableExperimentalLocales=false` (CI 既定) で `zhHant.isEmpty → return` になり実質未検証だった点を、`lib/main.dart` に `@visibleForTesting const debugExperimentalSupportedLocales` を expose して flag 非依存にリライト。(ii) zh / zh_Hant の `alarmEditValidationWeekdaysEmpty` の `一个星期` / `一個星期` が「1 週間」と読める曖昧性を `请至少选择一天` / `請至少選擇一天` に修正。BACKLOG.md / tasklist.md の plural rule 説明文を `zh / ko` → `zh / zh_Hant / ko` に揃え、PR description 冒頭に「ユーザ確認の経緯」セクション追加 (`gh pr edit`) |
+
+### 主な設計判断
+
+- **`Locale('zh', 'Hant')` vs `Locale.fromSubtags(scriptCode: 'Hant')`**:
+  `Locale` constructor の第 2 引数は countryCode のため、前者は
+  `countryCode='Hant' / scriptCode=null` になる。gen-l10n の
+  `lookupAppLocalizations` は `switch (locale.scriptCode) case 'Hant'` で
+  振り分け、`settings_notifier.dart` の `parseLocaleTag('zh-Hant')` も
+  `Locale.fromSubtags(scriptCode: 'Hant')` を返す。形式不一致だと
+  繁體中文選択時に `basicLocaleListResolution` で `Locale('zh')` に
+  フォールバックされ AppLocalizationsZh (Simplified) が選ばれてしまう。
+  Copilot round 1 #11 で発見、`652d236` で修正。`Locale` ドキュメントの
+  positional 引数仕様を読まないと埋もれやすいタイプの bug
+- **`@visibleForTesting` で `_experimentalSupportedLocales` を expose**:
+  最初は `supportedLocales` (public getter、experimental flag で制御) を
+  テストから参照する形で書いたが、`flutter test` / CI の既定では flag が
+  false になり `zhHant.isEmpty → return` で検証 0 件になっていた
+  (Copilot round 2 #2)。`const debugExperimentalSupportedLocales =
+  _experimentalSupportedLocales;` を expose してテスト側はそちらを
+  直接見る形にリライト。CI workflow を experimental 用に分岐させる案も
+  検討したが、テスト対象が「production const list の構造的不変条件」
+  だけなので flag 非依存の直接参照で十分
+- **韓国語空表示の voice 変更**: 当初 `추가할 수 있습니다` (declarative、
+  ja の「追加できます」を直訳) で書いたが、Pixel 6a で wrap して `다.` が
+  3 行目に追い出される問題が発生。imperative `추가하세요` に短縮することで
+  1 行に収まり、modern Android UI で広く使われている voice と合致
+- **中文の `一个星期` 曖昧性**: alarm 編集画面で「曜日を 1 つ以上選んで
+  ください」を `请至少选择一个星期` と訳出していたが、中文では `一个星期`
+  が「1 週間 (七日間)」とも読める。`一个星期几` (一つの曜日) が直訳に
+  近いが SnackBar には冗長で、modern Android repeat-day picker で広く
+  使われる `一天` (一日) を採用。zh / zh_Hant とも揃えた
+- **`docs/translations.md` の 5 列ミラー不採用**: 既存 ja / en 2 列を
+  そのまま維持し、zh / zh_Hant / ko は冒頭注記で「ARB 直接参照」とする
+  運用に切替。`gen-l10n` 以前の翻訳粒度では表形式ミラーが有効だったが、
+  3 言語追加で列が肥大化 + ARB 自体が一次ソースの中、ミラー維持コストの
+  ほうが大きいと判断
+- **partial sync of `homeOpen*` / `*EmptyHint`**: PR #45 (Phase 11) で
+  homeOpen* が短縮版になっていたが translations.md は旧表記 (`Open
+  Stopwatch` 等) が残存。PR #61 では自分が追加した「ja / en 列は維持する」
+  注記の信頼性を保つ最低限の 4 グループだけ同期、clock 系 / 通知 channel
+  系 / `presetSheetManageButton` / `alarmStop` 等の他 stale 行は
+  Phase 11 close out PR に持ち越し (本 close out PR の Follow-up 引継ぎ
+  対象)
+
+### PR レビュー対応 (Gemini + Copilot × 2 round)
+
+| comment id | reviewer | 指摘 | 分類 | 対応 |
+| --- | --- | --- | --- | --- |
+| 3251938011 | Gemini | 韓国語 `{minutes} 분` のスペース不整合 | (a) 自明な fix | スペース削除 |
+| 3251938012 | Gemini | `settingsDefaultSnoozeOption` 同上 | (a) 自明な fix | 同期 |
+| 3251938013 | Gemini | zh 半角カンマ → 全角 `，` | (a) 自明な fix | 5 箇所統一、半角 `?` / `!` も全角化 |
+| 3251938014 | Gemini | zh `添加・编辑时钟` の中黒 → `/` | (a) 自明な fix | `/` に置換 |
+| 3251938015 | Gemini | zh 半角括弧 → 全角 `（）` | (a) 自明な fix | 5 箇所統一、スラッシュ前後スペースも除去 |
+| 3251938016 | Gemini | zh 半角コロン → 全角 `：` | (a) 自明な fix | 統一 |
+| 3251938017 | Gemini | zh_Hant 半角カンマ → 全角 | (a) 自明な fix | 7 箇所統一 |
+| 3251938018 | Gemini | zh_Hant 中黒 → `/` | (a) 自明な fix | 同期 |
+| 3251938019 | Gemini | zh_Hant 半角括弧 → 全角 | (a) 自明な fix | 同期 |
+| 3251938020 | Gemini | zh_Hant 半角コロン → 全角 | (a) 自明な fix | 同期 |
+| 3251954491 | Copilot | **zh_Hant の `Locale` 形式不整合 bug** | (b) 真の指摘 | `Locale.fromSubtags(scriptCode: 'Hant')` に修正 + 回帰防止 test 追加 |
+| 3251954507 | Copilot | docs 編集 PR にユーザ確認経緯記載要請 | (b) 規約準拠 | round 2 で PR description 冒頭追記、本対応漏れも round 2 で挽回 |
+| 3251954523 | Copilot | tasklist.md Follow-up なしと矛盾 | (a) 自明な fix | A-3 実機検証を Follow-up 追加 |
+| 3251954533 | Copilot | translations.md の ja/en が既存 stale | (b) 真の指摘 (部分対応) | `homeOpen*` / `*EmptyHint` を同期、残は Phase 11 close out PR |
+| 3251954545 | Copilot | BACKLOG.md 親 `[~]` と子 `[x]` 不整合 | (a) 自明な fix | `[ ] A-3 実機検証` 子追加で整合 |
+| 3252095050 | Copilot (r2) | docs ユーザ確認経緯記載 (再指摘) | (b) 規約準拠 | PR description に「ユーザ確認の経緯」セクション追加 |
+| 3252095053 | Copilot (r2) | **新規 test が flag false で実質未検証** | (b) 真の指摘 / 致命 | `@visibleForTesting` で `_experimentalSupportedLocales` expose、flag 非依存に書き直し |
+| 3252095058 | Copilot (r2) | BACKLOG.md plural rule 説明文に zh_Hant 抜け | (a) 自明な fix | `zh / zh_Hant / ko` に揃える |
+| 3252095063 | Copilot (r2) | tasklist.md 同上 | (a) 自明な fix | 同期 |
+| 3252095068 | Copilot (r2) | **zh `一个星期` が「1週間」と読める** | (b) 真の指摘 | `请至少选择一天` に修正 |
+| 3252095073 | Copilot (r2) | zh_Hant 同上 | (b) 真の指摘 | `請至少選擇一天` に修正 |
+
+却下 0 件、ユーザ判断委譲 0 件。全 21 件 (round 1: 15 件 + round 2: 6 件)
+feature branch に commit + push、`--input tmp.json` 経由でリプライ済。
+
+### Pixel 6a 実機検証 (2026-05-16)
+
+ユーザ手動でアプリ内言語切替を ja / en / zh / zh_Hant / ko の 5 通り
+試行 + 主要画面の目視確認。1.5 ラウンドで挙動を確定:
+
+1. **言語切替 (Phase 11 既存挙動の regression なし)**: 設定 → 言語 で
+   各 locale を選択 → AppBar / バナー / 空表示 / 通知文言などその場で
+   切り替わる。ja / en は PR #61 で挙動変化なし
+2. **zh_Hant が Simplified にフォールバックしない (round 1 bug fix の
+   regression test)**: 繁體中文を選択した際に AppBar が `碼錶` / `計時器` /
+   `鬧鐘` / `世界時鐘` (zh_Hant の用語) で表示されること。`Locale` 形式
+   修正前は `秒表` / `定时器` 等の Simplified 用語にフォールバックして
+   いた可能性がある (PR #61 では production で再現確認はしていないが、
+   修正後の APK で繁体字用語が正しく表示)
+3. **韓国語空表示 wrap**: round 1.5 で発見 → `65896b8` で修正。修正後の
+   APK で `오른쪽 아래의 "+" 버튼으로 추가하세요.` が 1 行に収まり、
+   `다.` 文字単独行が解消したことを確認
+4. **中文 SnackBar `请至少选择一天` / `請至少選擇一天`**: round 2 で
+   修正。アラーム編集画面で全曜日 OFF のまま保存 → SnackBar が
+   `一天` 表記で表示され、「1 週間を選べ」の誤読が解消
+5. **その他 (DurationPicker / Stopwatch / Preset bottom sheet /
+   PermissionBanner / 通知本文)**: 表示崩れ・違和感なし。韓国語の
+   `5분 / 10분 / 15분` (スペースなし、modern UI 標準) も SegmentedButton
+   に詰まりすぎず読みやすい範囲
+
+### 関連ファイル
+
+- `lib/l10n/app_zh.arb` (新規、Simplified Chinese)
+- `lib/l10n/app_zh_Hant.arb` (新規、Traditional Chinese)
+- `lib/l10n/app_ko.arb` (新規、Korean)
+- `lib/l10n/app_localizations_zh.dart` (gen-l10n 出力、zh + zh_Hant)
+- `lib/l10n/app_localizations_ko.dart` (gen-l10n 出力)
+- `lib/l10n/app_localizations.dart` (`supportedLocales` / `lookupAppLocalizations` 自動更新)
+- `lib/main.dart` (`_experimentalSupportedLocales` zh_Hant エントリ修正 +
+  `@visibleForTesting debugExperimentalSupportedLocales` const expose)
+- `test/locale_resolution_test.dart` (locale-form 回帰防止 test 1 件追加、
+  round 2 で flag 非依存に書き直し)
+- `BACKLOG.md` / `tasklist.md` / `docs/translations.md` (Phase 11
+  ローカライズ残作業の進捗反映 + ja/en 列の部分 stale 同期)
+
+642 tests pass / 1 skipped / `flutter analyze` clean / experimental APK
+build success:
+
+```powershell
+flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true
+```
+
+### 持ち越しタスク
+
+- **`docs/translations.md` 一括同期**: PR #61 では `homeOpen*` /
+  `*EmptyHint` の 4 行のみ部分同期。clock 系 (`clockAppBarTitle` /
+  `clockListAddFab` / `clockDesignSegment*` / `clockEntryEditAppBarTitle` /
+  `clockEntryEditSectionPinned` / `clockEntryEditSectionAvailable` /
+  `clockEntryEditLimitReached` / `clockEntryEditCatalogEmpty` /
+  `clockEmptyHint`) と通知 channel 系 (`notificationAlarmRingingTitle` /
+  `notificationAlarmRingingBody` / `notificationTimerAlarmChannelName` /
+  `notificationTimerAlarmChannelDescription` /
+  `notificationTimerCompletedChannelName` /
+  `notificationTimerCompletedChannelDescription`)、`presetSheetManageButton` /
+  `alarmStop`、Phase 9.5 以降に追加された他キーを Phase 11 close out PR
+  でまとめて同期予定。CI で diff チェックを入れる方向は別途検討
+- **アプリアイコン・スプラッシュ / Play Store 提出準備**: Phase 11 残
+  タスク (`BACKLOG.md` Phase 11 残タスク参照)。PR #61 スコープ外
+
+---
+
 ## A-2 通知 channel 名 i18n + F-7 Manifest 整形 完了 + Pixel 6a 実機検証完了 (2026-05-16)
 
 Phase 11 仕上げの「通知 channel 名の i18n (A-2)」と PR #20 から持ち越しの
