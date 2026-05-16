@@ -44,7 +44,21 @@
 
 ---
 
-最終更新日: 2026-05-16（A-2 (通知 channel 名 i18n) + F-7 (Manifest 整形) 完了 — PR #59 main マージ済、Pixel 6a 5 シナリオ実機検証完了。`NotificationStrings` を `lib/domain/notifications/` に移動 (依存方向修正) + `NotificationScheduler.updateChannelNames` port 追加で、locale 切替時に同 id `createNotificationChannel` 再呼び出しにより OS 設定画面の channel 名が即時追従。F-7 は `AndroidManifest.xml` line 2 整形 (PR #20 持ち越し) を同梱。641 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
+最終更新日: 2026-05-16（A-3 — 中国語簡体字 / 繁体字 / 韓国語の ARB 本格翻訳完了。
+[lib/l10n/app_zh.arb](lib/l10n/app_zh.arb) /
+[lib/l10n/app_zh_Hant.arb](lib/l10n/app_zh_Hant.arb) /
+[lib/l10n/app_ko.arb](lib/l10n/app_ko.arb) を新規作成 (各 172 翻訳キー、
+ja / en と完全同一キー集合)。`flutter gen-l10n` で
+`AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
+生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
+`flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
+すべて成功。zh / ko は CLDR plural rule で `other` のみ。
+[docs/translations.md](docs/translations.md) は ja / en 2 列維持 + 3 言語は
+ARB 直接参照に運用切替 (5 列ミラー不採用)。本 PR の commit に dev-log
+記載はせず、マージ後の close out PR で記載予定。実機での見た目確認は次
+セッションでユーザ手動 (Pixel 6a、experimental ビルド)）
+
+過去の更新: 2026-05-16（A-2 (通知 channel 名 i18n) + F-7 (Manifest 整形) 完了 — PR #59 main マージ済、Pixel 6a 5 シナリオ実機検証完了。`NotificationStrings` を `lib/domain/notifications/` に移動 (依存方向修正) + `NotificationScheduler.updateChannelNames` port 追加で、locale 切替時に同 id `createNotificationChannel` 再呼び出しにより OS 設定画面の channel 名が即時追従。F-7 は `AndroidManifest.xml` line 2 整形 (PR #20 持ち越し) を同梱。641 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
 
 過去の更新: 2026-05-16（F-10 (PermissionBanner 縦サイズ縮小 / バナー全体タップ可能化 + TalkBack Semantics 維持) 完了 — PR #56 main マージ済、Pixel 6a 実機 TalkBack ON/OFF 両検証 OK。実装は 4 commit に分割 (初版 + TalkBack「ラベルなし テキスト4」修正 + 兄弟 Text 合流修正 + PR レビュー反映) で、Semantics 三点セット (`container: true` + `excludeSemantics: true` + `InkWell.excludeFromSemantics: true`) を確立。F-10 closeout PR で旧 `permissionBannerActionAllow` / `permissionBannerActionOpenSettings` キーも削除。詳細は [dev-log](docs/dev-log.md)）
 

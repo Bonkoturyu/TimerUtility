@@ -9,8 +9,14 @@
 - プレースホルダ表記（`{count}`, `{minutes}` 等）はそのまま記載する
 - ICU plural 構文（`{count, plural, ...}`）は `ja` / `en` で形式が異なるので注釈欄に明記する
 - 既存翻訳の文言調整は ARB 側を直し、本書を同じ commit で更新する
+- **zh / zh_Hant / ko の翻訳は本書には載せず、ARB ファイル
+  ([lib/l10n/app_zh.arb](../lib/l10n/app_zh.arb) /
+  [lib/l10n/app_zh_Hant.arb](../lib/l10n/app_zh_Hant.arb) /
+  [lib/l10n/app_ko.arb](../lib/l10n/app_ko.arb)) を直接参照する**。
+  5 列ミラー化は横幅が肥大化してレビュー性が下がるため不採用 (A-3 / 2026-05-16)。
+  ja / en 列は引き続き本書で対訳一覧として保守する。
 
-最終更新日: 2026-05-12（Phase 11 設定画面: homeMenuSettings / settings* を追記）
+最終更新日: 2026-05-16（A-3 — zh / zh_Hant / ko の本格翻訳完了に伴い、3 言語は ARB 直接参照運用へ切替）
 
 ---
 
