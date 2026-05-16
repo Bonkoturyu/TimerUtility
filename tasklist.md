@@ -19,7 +19,15 @@
 
 ## 進行中
 
-なし。
+- [~] **Phase 11.8 OSS 公開準備** (branch `phase-11.8-oss-prep`、2026-05-16〜):
+  T1〜T9 (README 再構成 / `THIRD_PARTY_NOTICES.md` / `CONTRIBUTING.md` /
+  `CODE_OF_CONDUCT.md` / `.github/ISSUE_TEMPLATE` + `PULL_REQUEST_TEMPLATE.md` /
+  `pubspec.yaml` メタフィールド / 秘密情報 grep / BACKLOG/dev-log 反映) 完了、
+  642 テスト緑。残: **T8.5 (GitHub Privacy team `privacy@github.com` メール直送、
+  orphan commit `f2e46e3` 経由の `docs/opus-startup-prompt.md` 旧版 cache 削除
+  申請)** → T8.6 (`gh api .../contents/docs/opus-startup-prompt.md?ref=f2e46e3`
+  が 404 を返すか確認) → T10 (GitHub Settings → Visibility = Public)。
+  計画書: [docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md)
 
 ---
 
@@ -47,7 +55,9 @@
 
 ---
 
-最終更新日: 2026-05-16（Phase 11 close out — `docs/translations.md` 一括同期完了。tasklist.md の Follow-up エントリをクローズ。ARB と translations.md のキー集合を `Compare-Object` で確認 (ARB 171 / Doc 171 / 差分なし)。冒頭「既知の差分」段落と末尾の旧 zh/ko 列ロードマップ記述 (5 列ミラー不採用方針と矛盾) を整合化。33 キーを既存 4 セクション拡張 + 新規 2 セクション (「世界時計 (Phase 10.5)」「通知 channel (Phase 11 A-2)」) に振り分け。Phase 11 残作業は「アプリアイコン・スプラッシュ」「Play Store 提出準備」の 2 件のみ。詳細は [dev-log](docs/dev-log.md)）
+最終更新日: 2026-05-16（Phase 11.8 OSS 公開準備の T1〜T9 着手 — branch `phase-11.8-oss-prep` で実装。計画書 [docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md) (PR #66 承認済) の Claude 単独実行可能タスクを一括着手: README 再構成 (Build & Run / Architecture / fork ガイド / "What's special" 日本語+英語) / `THIRD_PARTY_NOTICES.md` 新規 / `CONTRIBUTING.md` 新規 / `CODE_OF_CONDUCT.md` 新規 (Contributor Covenant 2.1) / `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md` + `PULL_REQUEST_TEMPLATE.md` 新規 / `pubspec.yaml` に `homepage` / `repository` / `issue_tracker` 追加 / 秘密情報 grep + commit author 全件確認 (hit 0、author は GitHub 提供 noreply 1 件のみ) / BACKLOG.md + tasklist.md + docs/dev-log.md 反映。`dart format` (254 ファイル、変更 0) / `flutter analyze --fatal-infos` / `flutter test` (642 緑 / 1 skipped) / `dart run tool/check_translations_doc.dart` (ARB 171 / Doc 171 一致) すべて緑。残: **T8.5 (GitHub Privacy team `privacy@github.com` メール直送、orphan commit `f2e46e3` 経由の `docs/opus-startup-prompt.md` 旧版 cache 削除申請、本人がリポジトリから自身の個人情報を削除するケースのため [Privacy contact form](https://github.com/contact/privacy) → `Other` 経由)** + T8.6 (404 確認) + T10 (GitHub Public 化) はユーザ作業のため本セッション外。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-16（Phase 11 close out — `docs/translations.md` 一括同期完了。tasklist.md の Follow-up エントリをクローズ。ARB と translations.md のキー集合を `Compare-Object` で確認 (ARB 171 / Doc 171 / 差分なし)。冒頭「既知の差分」段落と末尾の旧 zh/ko 列ロードマップ記述 (5 列ミラー不採用方針と矛盾) を整合化。33 キーを既存 4 セクション拡張 + 新規 2 セクション (「世界時計 (Phase 10.5)」「通知 channel (Phase 11 A-2)」) に振り分け。Phase 11 残作業は「アプリアイコン・スプラッシュ」「Play Store 提出準備」の 2 件のみ。詳細は [dev-log](docs/dev-log.md)）
 
 過去の更新: 2026-05-16（A-3 (中韓 ARB 本格翻訳) 完了 — PR #61 main マージ済、Pixel 6a 実機検証完了。Phase 11 ローカライズ残作業はこれで全件クローズ、残るは Phase 11 全体の「アプリアイコン・スプラッシュ」「Play Store 提出準備」のみ。Copilot レビュー 2 ラウンドで重要 bug 2 件発見・修正 (i. zh_Hant の `Locale('zh', 'Hant')` countryCode 形式が gen-l10n の `scriptCode` 期待値と不整合で繁体字が Simplified にフォールバックする bug、`Locale.fromSubtags` に修正、ii. flag 依存テストが実質未検証だった点を `@visibleForTesting debugExperimentalSupportedLocales` で flag 非依存に書き直し)。実機検証で韓国語空表示 wrap (`다.` 単独行漏れ) と中文 SnackBar `一个星期` 曖昧性も追加発見・修正。642 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
 
