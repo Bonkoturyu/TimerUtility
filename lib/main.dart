@@ -141,6 +141,11 @@ Future<NotificationStrings> _resolveNotificationStrings({
     timerCompletedBackgroundBody: l.notificationTimerCompletedBackgroundBody,
     alarmRingingTitle: l.notificationAlarmRingingTitle,
     alarmRingingBody: l.notificationAlarmRingingBody,
+    timerAlarmChannelName: l.notificationTimerAlarmChannelName,
+    timerAlarmChannelDescription: l.notificationTimerAlarmChannelDescription,
+    timerCompletedChannelName: l.notificationTimerCompletedChannelName,
+    timerCompletedChannelDescription:
+        l.notificationTimerCompletedChannelDescription,
   );
 }
 
@@ -325,6 +330,7 @@ Future<void> main() async {
   // that's only constructed after we know the cold-launch payload below.
   late final GoRouter router;
   await adapter.initialize(
+    strings: notificationStrings,
     onNotificationTap: (String? payload) {
       // Warm-launch path (app already running): navigate to the alarm
       // screen. payload は ADR 0005 で定めた `timer:<id>` / `alarm:<id>`
@@ -596,6 +602,14 @@ class _TimerUtilityAppState extends ConsumerState<TimerUtilityApp>
     );
     if (!mounted) return;
     ref.read(notificationStringsNotifierProvider.notifier).set(strings);
+    // Re-push the OS notification channel labels so Settings → Apps →
+    // TimerUtility → Notifications follows the new language. The
+    // channel id is unchanged so this only updates name/description;
+    // importance / sound / vibration stay locked at their original
+    // values (the OS protects user-overridable settings).
+    unawaited(
+      ref.read(notificationSchedulerProvider).updateChannelNames(strings),
+    );
     ref.read(timerCollectionNotifierProvider.notifier).rescheduleAllRunning();
   }
 

@@ -104,6 +104,10 @@
   "notificationTimerCompletedBackgroundBody": "アプリのバックグラウンド中にタイマーが終了しました。",
   "notificationAlarmRingingTitle": "アラーム",
   "notificationAlarmRingingBody": "アラームの時刻になりました。",
+  "notificationTimerAlarmChannelName": "タイマーアラーム",
+  "notificationTimerAlarmChannelDescription": "タイマー終了時のアラーム通知",
+  "notificationTimerCompletedChannelName": "タイマー完了（バックグラウンド）",
+  "notificationTimerCompletedChannelDescription": "バックグラウンド中にタイマーが終了したことを知らせる無音通知",
 
   "presetSheetTitle": "プリセットから選択",
   "presetSheetCustomButton": "カスタム時間で作成",
