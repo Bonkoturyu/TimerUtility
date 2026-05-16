@@ -28,7 +28,7 @@
 なし。
 
 > `docs/translations.md` 一括同期は Phase 11 close out PR (2026-05-16) で完了。
-> CI で diff チェックする自動化は引き続き別途検討 (今のところ手動同期で運用)。
+> CI 自動 diff チェックも `tool/check_translations_doc.dart` で実装済 (2026-05-16)。
 
 ---
 
