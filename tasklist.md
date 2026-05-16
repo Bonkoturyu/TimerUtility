@@ -25,26 +25,7 @@
 
 ## Follow-up タスク（未着手）
 
-### F-7. `AndroidManifest.xml` の `uses-permission` 整形統一 (PR #20 持ち越し)
-
-**経緯**: PR #20 Copilot レビュー (comment id 3213290903) で
-[`android/app/src/main/AndroidManifest.xml` line 2](android/app/src/main/AndroidManifest.xml#L2)
-の `<uses-permission ... />` の `/>` 前にスペースが無く、line 3-9 (`" />`) と
-書式が不一致との指摘あり。cosmetic で機能影響はゼロだが、`AndroidManifest.xml`
-は CLAUDE.md「編集時にユーザー確認が必要なファイル」のため、レビュー fix の
-スコープでは触らず、次回 Native (Kotlin / Manifest) 編集 PR にまとめる方針で
-却下リプライ済。
-
-**修正内容** (TODO):
-
-- [ ] line 2 の `ACCESS_COARSE_LOCATION` を他行と同じ `..." />` 書式に揃える
-- [ ] (この機会に) Manifest 全体の `/>` 前空白を一括スキャンし、揺れがあれば
-  まとめて統一する
-
-**トリガ**: 次に Native 側 (Kotlin / Manifest 権限追加 / receiver 追加 等) の
-編集が発生する PR で着手。単独 PR は切らない。
-
-**優先度**: 低 (差分ノイズ低減目的、機能影響なし)。
+なし。
 
 ---
 
@@ -63,7 +44,9 @@
 
 ---
 
-最終更新日: 2026-05-16（F-10 (PermissionBanner 縦サイズ縮小 / バナー全体タップ可能化 + TalkBack Semantics 維持) 完了 — PR #56 main マージ済、Pixel 6a 実機 TalkBack ON/OFF 両検証 OK。実装は 4 commit に分割 (初版 + TalkBack「ラベルなし テキスト4」修正 + 兄弟 Text 合流修正 + PR レビュー反映) で、Semantics 三点セット (`container: true` + `excludeSemantics: true` + `InkWell.excludeFromSemantics: true`) を確立。F-10 closeout PR で旧 `permissionBannerActionAllow` / `permissionBannerActionOpenSettings` キーも削除。詳細は [dev-log](docs/dev-log.md)）
+最終更新日: 2026-05-16（A-2 (通知 channel 名 i18n) + F-7 (Manifest 整形) 完了 — PR #59 main マージ済、Pixel 6a 5 シナリオ実機検証完了。`NotificationStrings` を `lib/domain/notifications/` に移動 (依存方向修正) + `NotificationScheduler.updateChannelNames` port 追加で、locale 切替時に同 id `createNotificationChannel` 再呼び出しにより OS 設定画面の channel 名が即時追従。F-7 は `AndroidManifest.xml` line 2 整形 (PR #20 持ち越し) を同梱。641 テスト緑 (1 skipped)。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-16（F-10 (PermissionBanner 縦サイズ縮小 / バナー全体タップ可能化 + TalkBack Semantics 維持) 完了 — PR #56 main マージ済、Pixel 6a 実機 TalkBack ON/OFF 両検証 OK。実装は 4 commit に分割 (初版 + TalkBack「ラベルなし テキスト4」修正 + 兄弟 Text 合流修正 + PR レビュー反映) で、Semantics 三点セット (`container: true` + `excludeSemantics: true` + `InkWell.excludeFromSemantics: true`) を確立。F-10 closeout PR で旧 `permissionBannerActionAllow` / `permissionBannerActionOpenSettings` キーも削除。詳細は [dev-log](docs/dev-log.md)）
 
 過去の更新: 2026-05-15（Phase D (Diagnostic Logging) 完了 — D-1 (PR #49) / D-2 (PR #52) / D-3 (PR #51) すべて main マージ済、Pixel 6a 4 シナリオ実機検証 (ファイル生成 / PII 排除 / トグル永続化 / Share Sheet) すべて OK）
 

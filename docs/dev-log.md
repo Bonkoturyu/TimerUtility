@@ -17,6 +17,120 @@
 
 ---
 
+## A-2 通知 channel 名 i18n + F-7 Manifest 整形 完了 + Pixel 6a 実機検証完了 (2026-05-16)
+
+Phase 11 仕上げの「通知 channel 名の i18n (A-2)」と PR #20 から持ち越しの
+「`AndroidManifest.xml` の `<uses-permission>` 整形統一 (F-7)」を 1 本の
+Native 編集 PR (PR #59) にまとめて実装・マージ。
+
+### 経緯と目的
+
+- **A-2**: OS 設定 (Settings → Apps → TimerUtility → Notifications) の
+  channel 一覧に表示される `name` / `description` が、ja モードでも英語
+  ハードコード (`Timer Alarm`) と日英混在 (`タイマー終了時のアラーム通知`)
+  のまま放置されていた。Phase 11 言語切替 UI (2026-05-14) で UI 側は
+  完全 i18n 化されたが、OS 設定画面で「アプリ言語と通知設定画面で言語が
+  乖離する」体験が残っていた
+- **F-7**: PR #20 Copilot レビューで指摘されていた `AndroidManifest.xml`
+  line 2 (`ACCESS_COARSE_LOCATION`) のみ `..."/>` で line 3-9 と書式不一致。
+  cosmetic だが Manifest 編集が要ユーザー確認ファイルなので、次回 Native
+  編集 PR の「おまけ」として保留中だった
+
+### 採用方針
+
+既存の `NotificationStrings` / `NotificationStringsNotifier` パターンを
+再利用し、channel meta 4 文字列を value object に統合。`createNotificationChannel`
+を同 id で再呼び出しすると name/description を上書きできるが
+importance / sound / vibration は保護される Android 仕様を活用し、locale
+切替時に adapter から `_recreateChannels` を再実行。
+
+### 実装 PR と commit 構成
+
+| commit | 内容 |
+| --- | --- |
+| `385504e` | 初版: ARB ja/en に 4 キー追加、`NotificationStrings` を `lib/domain/notifications/` 新設して domain に切り出し (application → domain 依存方向修正)、`NotificationScheduler` port に `updateChannelNames(NotificationStrings)` メソッド追加、`FlutterLocalNotificationAdapter` の const top-level (`timerAlarmChannelName` 等) 削除 → `late _strings` フィールド + `_recreateChannels()` ヘルパに分離、`main.dart` の `_refreshNotificationLocale` に `unawaited(scheduler.updateChannelNames(strings))` 配線、`AndroidManifest.xml` line 2 を `..." />` に統一 (F-7) |
+| `e7910d0` | Copilot review 対応: en ARB の `Silent notification when a timer ended while the app was in the background` を `... ends ... is ...` に時制統一 + test helper stub も同期、`test/infrastructure/notification/flutter_local_notification_adapter_test.dart` を mocktail ベースで新規追加 (3 ケース: 再作成 / locale 切替 / importance 保持) |
+
+### 主な設計判断
+
+- **`NotificationStrings` の domain 移動**: Plan 段階では application 層
+  据置を想定していたが、実装で adapter (infrastructure) が application を
+  import するのは CLAUDE.md「絶対遵守の依存方向
+  (`Presentation → Application → Domain ← Infrastructure`)」違反と判明。
+  前例として `lib/domain/diagnostics/` があるため `lib/domain/notifications/`
+  新設、`application/notification_strings_provider.dart` は re-export で
+  API 互換を維持
+- **port シグネチャに primitives 4 string ではなく `NotificationStrings`
+  を渡す**: 4 個の named String args は冗長で読みづらい。`NotificationStrings`
+  全体が domain に移ったので依存方向 OK
+- **`schedule()` / `show()` 内の `AndroidNotificationDetails` も `_strings`
+  経由に変更**: const top-level 削除した以上、参照箇所もすべて動的フィールド
+  参照に変更。flutter_local_notifications 仕様では「channel id が同じなら
+  2 回目以降このフィールドは OS に無視される」のでロジック影響はないが、
+  コードベース内の name/description の唯一の出処が `_strings` に統一される
+  副次効果
+- **experimental locale (zh / zh_Hant / ko) の ARB 追加は本 PR で未実施**:
+  ARB ファイル自体が未作成 (`app_zh.arb` 等は存在しない)。Flutter delegate
+  は ARB 無しなら en にフォールバックする既存挙動を踏襲。本格翻訳は
+  Phase 11 A-3 で別途
+- **adapter unit test 追加 (Copilot review 対応)**: 当初「Phase 4 adapter
+  unit test 前例なしを理由に省略」と判断したが、CLAUDE.md「新規ロジック
+  追加時は必ず Unit Test を同時作成」に反するレビュー指摘を受けて方針変更。
+  mocktail で `FlutterLocalNotificationsPlugin` + `AndroidFlutterLocalNotificationsPlugin`
+  を mock、3 ケース (再作成 / locale 切替で最新 strings 勝ち /
+  importance/sound/vibration 保持) で回帰ガード
+
+### PR レビュー対応 (Copilot)
+
+| comment id | 指摘 | 分類 | 対応 |
+| --- | --- | --- | --- |
+| 3249615550 | en ARB の `notificationTimerCompletedChannelDescription` の時制不統一 (`ended` / `was`) | (a) 自明な fix | `ends` / `is` に統一、ja は据置 (idiomatic) |
+| 3249615588 | test helper stub も上記と同期 | (a) 自明な fix | 同期済 |
+| 3249615619 | `updateChannelNames` / `_recreateChannels` の unit test 追加 | (a) 正当な指摘 (CLAUDE.md 整合) | mocktail ベース 3 ケースで新規追加 |
+
+却下 0 件、ユーザー判断委譲 0 件。全件 feature branch に commit + push、
+リプライ済。
+
+### Pixel 6a 実機検証 (2026-05-16)
+
+PR description 検証手順 5 項目すべて ✅ 完了:
+
+1. **ja モードでの channel 名表示**: 「タイマーアラーム」(説明: 「タイマー
+   終了時のアラーム通知」) / 「タイマー完了（バックグラウンド）」(説明:
+   「バックグラウンド中にタイマーが終了したことを知らせる無音通知」) が
+   OS 設定画面の通知 channel 一覧に正しく表示
+2. **言語切替で channel 名が即時追従**: アプリ内 設定 → 言語 → English
+   に切替後、OS 設定画面の channel 名が「Timer Alarm」「Timer Completed
+   (Background)」に追従。アプリ再起動不要 (`updateChannelNames` の即時
+   反映を確認)
+3. **言語切替後の通知 body の regression なし**: 英語モードで 10 秒タイマー
+   → `Timer` / `Time is up.` 通知、日本語モードで再実行 → `タイマー` /
+   `時間になりました。` 通知。Phase 11 既存挙動を保持
+4. **F-7 整形後の APK build**: `flutter build apk --debug` 通過 (Manifest
+   パース OK の代理確認)
+5. **アラーム発火経路 (Phase 6 FullScreenIntent) の regression なし**:
+   1 分後のアラーム作成 → 画面ロック → 1 分後にフルスクリーンで
+   AlarmRingingScreen が表示、バンドル音源 + バイブ動作、停止後の channel
+   設定 (importance: 緊急 / サウンド: 有効 / バイブ: 有効) が保持されている
+   ことを確認
+
+### 関連ファイル
+
+- `lib/domain/notifications/notification_strings.dart` (新規)
+- `lib/domain/ports/notification_scheduler.dart` (port メソッド追加)
+- `lib/infrastructure/notification/flutter_local_notification_adapter.dart` (locale-aware 化)
+- `lib/application/notification_strings_provider.dart` (class → re-export に簡素化)
+- `lib/main.dart` (`adapter.initialize(strings: ...)` + locale listener 配線)
+- `lib/l10n/app_ja.arb` / `app_en.arb` (4 キー追加)
+- `lib/l10n/app_localizations*.dart` (自動再生成)
+- `test/helpers/test_notification_strings.dart` (channel meta stub 4 値追加)
+- `test/infrastructure/notification/flutter_local_notification_adapter_test.dart` (新規、mocktail テスト 3 件)
+- `android/app/src/main/AndroidManifest.xml` (line 2 整形)
+
+641 tests pass / 1 skipped / `flutter analyze` clean。
+
+---
+
 ## F-10 PermissionBanner 縦サイズ縮小 完了 + Pixel 6a 実機検証完了 (2026-05-15)
 
 PR #47 (F-8 文中改行解消) 後の Pixel 6a 実機検証で「`[許可する]` TextButton を
