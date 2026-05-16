@@ -234,7 +234,7 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
     `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
     を生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
     `flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-    すべて成功。zh / ko は CLDR plural rule で `other` のみ。Copilot レビュー
+    すべて成功。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。Copilot レビュー
     指摘で `lib/main.dart` の `_experimentalSupportedLocales` を
     `Locale.fromSubtags(scriptCode: 'Hant')` に修正 (countryCode 形式だと
     繁体字選択が簡体字にフォールバックするバグ)。

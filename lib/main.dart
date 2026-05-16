@@ -71,6 +71,15 @@ const List<Locale> _experimentalSupportedLocales = <Locale>[
   Locale('ko'),
 ];
 
+/// Exposed for tests so the locale-form invariant for `zh_Hant`
+/// (scriptCode form, not countryCode form — see PR #61 / Copilot review)
+/// can be verified independently of the `kEnableExperimentalLocales`
+/// compile-time flag, which would otherwise hide the list from the
+/// default `flutter test` run.
+@visibleForTesting
+const List<Locale> debugExperimentalSupportedLocales =
+    _experimentalSupportedLocales;
+
 List<Locale> get supportedLocales => <Locale>[
   ..._publicSupportedLocales,
   if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,

@@ -61,7 +61,7 @@ ja / en と完全同一キー集合)。`flutter gen-l10n` で
 `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
 生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
 `flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-すべて成功。zh / ko は CLDR plural rule で `other` のみ。
+すべて成功。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。
 [docs/translations.md](docs/translations.md) は ja / en 2 列維持 + 3 言語は
 ARB 直接参照に運用切替 (5 列ミラー不採用)。本 PR の commit に dev-log
 記載はせず、マージ後の close out PR で記載予定。実機での見た目確認は次

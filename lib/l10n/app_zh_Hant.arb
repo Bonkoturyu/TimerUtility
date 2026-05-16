@@ -142,7 +142,7 @@
   "alarmEditCancel": "取消",
   "alarmEditSave": "儲存",
   "alarmEditDelete": "刪除",
-  "alarmEditValidationWeekdaysEmpty": "請至少選擇一個星期",
+  "alarmEditValidationWeekdaysEmpty": "請至少選擇一天",
   "alarmEditLoading": "正在載入鬧鐘…",
   "alarmEditNotFound": "找不到對應的鬧鐘",
 

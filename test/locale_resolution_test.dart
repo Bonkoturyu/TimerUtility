@@ -85,21 +85,28 @@ void main() {
       },
     );
 
-    // Production list (`supportedLocales` getter in main.dart) must declare
-    // zh-Hant via `Locale.fromSubtags(scriptCode: 'Hant')` — not
-    // `Locale('zh', 'Hant')` — so the manual-override path
-    // (parseLocaleTag → MaterialApp.locale) and the gen-l10n
-    // `lookupAppLocalizations` script-code switch line up. Locked in to
-    // catch regressions introduced by future edits to main.dart.
+    // Production list (`_experimentalSupportedLocales` in main.dart) must
+    // declare zh-Hant via `Locale.fromSubtags(scriptCode: 'Hant')` — not
+    // `Locale('zh', 'Hant')` (countryCode form) — so the manual-override
+    // path (parseLocaleTag → MaterialApp.locale) and the gen-l10n
+    // `lookupAppLocalizations` script-code switch line up.
+    //
+    // Tested via the @visibleForTesting `debugExperimentalSupportedLocales`
+    // export so the assertion runs unconditionally — the public
+    // `supportedLocales` getter is gated on the `kEnableExperimentalLocales`
+    // compile-time flag (default false in `flutter test` and CI), which
+    // would otherwise let a regression slip through silently.
     test(
-      'experimental supportedLocales list uses scriptCode form for zh_Hant',
+      'debugExperimentalSupportedLocales declares zh_Hant in scriptCode form',
       () {
-        final Iterable<Locale> zhHant = supportedLocales.where(
+        final Iterable<Locale> zhHant = debugExperimentalSupportedLocales.where(
           (Locale l) => l.languageCode == 'zh' && l != const Locale('zh'),
         );
-        // Skipped on public builds where experimental locales are absent.
-        if (zhHant.isEmpty) return;
-        expect(zhHant.length, 1);
+        expect(
+          zhHant.length,
+          1,
+          reason: 'expected exactly one zh variant beyond Locale("zh")',
+        );
         final Locale entry = zhHant.first;
         expect(entry.scriptCode, 'Hant');
         expect(entry.countryCode, isNull);

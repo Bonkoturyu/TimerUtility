@@ -432,7 +432,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmEditDelete => '删除';
 
   @override
-  String get alarmEditValidationWeekdaysEmpty => '请至少选择一个星期';
+  String get alarmEditValidationWeekdaysEmpty => '请至少选择一天';
 
   @override
   String get alarmEditLoading => '正在加载闹钟…';
@@ -1023,7 +1023,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get alarmEditDelete => '刪除';
 
   @override
-  String get alarmEditValidationWeekdaysEmpty => '請至少選擇一個星期';
+  String get alarmEditValidationWeekdaysEmpty => '請至少選擇一天';
 
   @override
   String get alarmEditLoading => '正在載入鬧鐘…';
