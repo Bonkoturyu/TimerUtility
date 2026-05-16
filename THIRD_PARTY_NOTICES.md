@@ -34,7 +34,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 | `geocoding` | MIT | https://pub.dev/packages/geocoding |
 | `path_provider` | BSD-3-Clause | https://pub.dev/packages/path_provider |
 | `path` | BSD-3-Clause | dart.dev 公式 |
-| `archive` | MIT (Apache 2.0 互換) | https://pub.dev/packages/archive |
+| `archive` | MIT | https://pub.dev/packages/archive |
 | `share_plus` | BSD-3-Clause | https://pub.dev/packages/share_plus |
 
 ---

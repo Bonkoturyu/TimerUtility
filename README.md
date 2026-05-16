@@ -100,7 +100,10 @@ unlock, check the **"Phase 6 implementation retrospective"** notes in
 
 ### 前提
 
-- Flutter SDK `^3.11.5` (`flutter --version` で `Flutter 3.11.x` 系を確認)
+- Dart SDK `^3.11.5` (`pubspec.yaml` の `environment.sdk` 制約)。`dart --version`
+  または `flutter --version` の `Tools • Dart x.y.z` 行で 3.11.5 以上を確認。
+  CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は Flutter `3.41.8`
+  (Dart 3.11.x 同梱) を使用
 - Android SDK Platform 36 (Android 16) + build-tools
 - JDK 17
 
@@ -205,8 +208,13 @@ Phase 別タスク管理:
 | ファイル | 該当箇所 |
 | --- | --- |
 | [android/app/build.gradle.kts](android/app/build.gradle.kts) | `namespace` / `applicationId` |
-| [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml) | `<receiver android:name="...ScheduledNotificationBootReceiver">` 等の Kotlin クラス参照 |
 | [android/app/src/main/kotlin/](android/app/src/main/kotlin/) | `MainActivity.kt` の `package` 宣言、ディレクトリ階層 |
+
+[android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml)
+の `<activity android:name=".MainActivity">` や `${applicationName}` プレースホルダは
+`build.gradle.kts` の `namespace` 変更で自動追従するため、Manifest 側は基本的に編集
+不要 (receiver 宣言はすべて `flutter_local_notifications` のサードパーティクラスを
+参照しているので fork 側で書き換える対象ではない)。
 
 自前 `MethodChannel` のチャネル名 `com.bonkotu.timer/permission` も `com.<your-domain>/permission`
 に置換することを推奨 (衝突防止)。詳細は [docs/platform-channels.md](docs/platform-channels.md)。
