@@ -17,6 +17,75 @@
 
 ---
 
+## Phase 11.8 OSS 公開準備 (T1〜T9 着手、2026-05-16)
+
+Phase 11.8 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)
+(PR #66 で承認済) の残タスクのうち、Claude 単独で完結可能な T1〜T9 を一括着手。
+branch `phase-11.8-oss-prep` で実装。T8.5 (GitHub Privacy team へのメール直送) /
+T8.6 (申請完了後の 404 確認) / T10 (GitHub Public 化) はユーザ作業のため本セッション
+外で実施。
+
+### 着手内容
+
+| # | タスク | 成果物 |
+| --- | --- | --- |
+| T1+T2 | README 再構成: Screenshots プレースホルダ / Build & Run / Architecture 概要 + docs リンク表 / fork 時 applicationId 書換ガイド / "What's special about this project?" (日本語要約 4 行 + 英語本文 / [docs/oss-publishing-notes.md:225-242](oss-publishing-notes.md#L225-L242) 草案を流用) | [README.md](../README.md) |
+| T3 | `THIRD_PARTY_NOTICES.md` 新規 (production / dev / Native / 同梱アセットの 4 セクション + LICENSES.md リンク) | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) |
+| T4 | `CONTRIBUTING.md` 新規 (CLAUDE.md の禁止事項 / テストポリシー / メンテナ承認必須ファイル / コミット規約 / ソース信用原則 を OSS 投稿者向けに要約) | [CONTRIBUTING.md](../CONTRIBUTING.md) |
+| T5 | `CODE_OF_CONDUCT.md` 新規 (Contributor Covenant 2.1 を [www.contributor-covenant.org](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) から WebFetch、Enforcement の連絡窓口は `@Bonkoturyu` GitHub Issues 経由) | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) |
+| T6 | `.github/ISSUE_TEMPLATE/bug_report.md` + `feature_request.md` + `.github/PULL_REQUEST_TEMPLATE.md` 新規 | [.github/](../.github/) 配下 |
+| T7 | `pubspec.yaml` に `homepage` / `repository` / `issue_tracker` フィールド追加 (`publish_to: 'none'` は維持) | [pubspec.yaml](../pubspec.yaml) |
+| T8 | 秘密情報 grep + commit author 全件確認 (read-only) | hit 0 / author `BON <43852430+Bonkoturyu@users.noreply.github.com>` 1 件のみ (GitHub 提供 noreply email、公開可) |
+| T9 | BACKLOG.md / tasklist.md / 本ファイルに完了記録追記 | 本セッションの編集 |
+
+### 採用方針 / 決定事項
+
+- **CoC の連絡窓口**: 個人 email (`bonkoturyu@gmail.com`) を CoC に直接記載せず、
+  `@Bonkoturyu` GitHub Issues 経由 + GitHub プロフィール contact の二段案内とした。
+  個人 email 公開を避けつつ、報告経路は確保
+- **applicationId**: README の fork ガイドは現状値 `com.bonkotu.timer.timer_utility`
+  を記載し、Phase 11.9-T0 で `io.github.bonkoturyu.timer_utility` 移行後に
+  追従更新 (Phase 11.9-T16 で計上済)
+- **Screenshots**: Phase 11.9-T11 で Pixel 6a 実機撮影予定のため、本 Phase では
+  プレースホルダ表示のみ
+- **markdownlint MD013 (line-length >80)**: README で 8 件警告が出たが、既存
+  docs (CLAUDE.md / BACKLOG.md) も超過行多数 + markdownlint は CI 非強制のため、
+  リンク密度の高い行のみ最低限の折返しで対応し、表行は据置
+
+### 検証
+
+- `dart format --set-exit-if-changed .` → 254 ファイル、変更 0
+- `flutter analyze --fatal-infos` → No issues found
+- `flutter test` → 642 件緑 (1 skipped、Phase 11 ローカライズ後の維持値と一致)
+- `dart run tool/check_translations_doc.dart` → ARB (ja=171, en=171) と
+  `docs/translations.md` (171) のキー集合一致確認 OK
+
+### 残作業 (本セッション外)
+
+- **T8.5**: GitHub Privacy team (`privacy@github.com`) へメール直送で、merged
+  PR #57 が orphan commit `f2e46e3` 経由で `docs/opus-startup-prompt.md` 旧版を
+  cache に残している件の削除申請。本人が自分のリポジトリから自身の個人情報を
+  削除するケースのため [Private Information Removal Policy](https://docs.github.com/en/site-policy/content-removal-policies/github-private-information-removal-policy)
+  経由、[Privacy contact form](https://github.com/contact/privacy) で `Other`
+  を選ぶと `privacy@github.com` メール直送案内に分岐する。GitHub 登録メール
+  (`bonkoturyu@gmail.com`) から送信、リポジトリ名 `Bonkoturyu/TimerUtility`
+  (Private) / 影響 PR 1 件 (#57) / First Changed Commit `f2e46e3` / 対象
+  `docs/opus-startup-prompt.md` / LFS なし を本文に明記。**Public 化 (T10) 前に
+  完了必須**
+- **T8.6**: T8.5 申請完了後、
+  `gh api repos/Bonkoturyu/TimerUtility/contents/docs/opus-startup-prompt.md?ref=f2e46e3`
+  が 404 を返すことを確認
+- **T10**: GitHub Settings → Visibility を Public に変更 + Description / Topics
+  設定。T8.6 完了が前提
+
+### 次の Phase 11.8 着手単位
+
+T8.5 のメール送信〜T8.6 確認はユーザ手元の作業。完了後、別 PR (or 同 PR の
+本 commit 追加) で T10 を実施し Phase 11.8 完全クローズに進む。
+GitHub Community Standards 100% の最終確認は T10 後に Insights タブで実施。
+
+---
+
 ## docs/translations.md Phase 11 close out 一括同期 (2026-05-16)
 
 Phase 11 ローカライズ系の最後の追従作業として、ARB と `docs/translations.md` の
