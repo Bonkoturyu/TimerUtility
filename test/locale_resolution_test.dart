@@ -60,28 +60,56 @@ void main() {
       );
     });
 
-    // Resolver-only contract: this test verifies that when a caller
-    // includes zh-Hant in `supported`, the resolver returns it
-    // unchanged. It does NOT assert that `AppLocalizations.delegate`
-    // can load zh-Hant — at the time of this PR (F-9), only en/ja ARB
-    // files are generated under `lib/l10n/`. Loading zh-Hant is the
-    // responsibility of the upcoming zh/ko translation task tracked in
-    // BACKLOG.md L694, not of this resolver's unit tests.
+    // Resolver-only contract: when a caller includes zh-Hant in `supported`,
+    // the resolver returns it unchanged. A-3 (PR #61) updated the production
+    // list to `Locale.fromSubtags(scriptCode: 'Hant')` so it matches both
+    // gen-l10n's lookup (`switch (locale.scriptCode) case 'Hant'`) and
+    // `parseLocaleTag('zh-Hant')` in `settings_notifier.dart`. The pre-A-3
+    // form `Locale('zh', 'Hant')` set countryCode='Hant' / scriptCode=null,
+    // which silently fell back to Simplified Chinese on manual selection.
     test(
-      'zh-Hant resolves to itself when listed in supported (experimental)',
+      'zh-Hant (scriptCode form) resolves to itself when listed in supported',
       () {
-        const List<Locale> experimentalSupported = <Locale>[
-          Locale('ja'),
-          Locale('en'),
-          Locale('zh', 'Hant'),
+        final List<Locale> experimentalSupported = <Locale>[
+          const Locale('ja'),
+          const Locale('en'),
+          const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
         ];
         expect(
           resolveSupportedLocale(
-            const Locale('zh', 'Hant'),
+            const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
             experimentalSupported,
           ),
-          const Locale('zh', 'Hant'),
+          const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
         );
+      },
+    );
+
+    // Production list (`_experimentalSupportedLocales` in main.dart) must
+    // declare zh-Hant via `Locale.fromSubtags(scriptCode: 'Hant')` — not
+    // `Locale('zh', 'Hant')` (countryCode form) — so the manual-override
+    // path (parseLocaleTag → MaterialApp.locale) and the gen-l10n
+    // `lookupAppLocalizations` script-code switch line up.
+    //
+    // Tested via the @visibleForTesting `debugExperimentalSupportedLocales`
+    // export so the assertion runs unconditionally — the public
+    // `supportedLocales` getter is gated on the `kEnableExperimentalLocales`
+    // compile-time flag (default false in `flutter test` and CI), which
+    // would otherwise let a regression slip through silently.
+    test(
+      'debugExperimentalSupportedLocales declares zh_Hant in scriptCode form',
+      () {
+        final Iterable<Locale> zhHant = debugExperimentalSupportedLocales.where(
+          (Locale l) => l.languageCode == 'zh' && l != const Locale('zh'),
+        );
+        expect(
+          zhHant.length,
+          1,
+          reason: 'expected exactly one zh variant beyond Locale("zh")',
+        );
+        final Locale entry = zhHant.first;
+        expect(entry.scriptCode, 'Hant');
+        expect(entry.countryCode, isNull);
       },
     );
   });
