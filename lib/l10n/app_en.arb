@@ -119,7 +119,7 @@
   "notificationTimerAlarmChannelName": "Timer Alarm",
   "notificationTimerAlarmChannelDescription": "Alarm notification when a timer ends",
   "notificationTimerCompletedChannelName": "Timer Completed (Background)",
-  "notificationTimerCompletedChannelDescription": "Silent notification when a timer ended while the app was in the background",
+  "notificationTimerCompletedChannelDescription": "Silent notification when a timer ends while the app is in the background",
 
   "presetSheetTitle": "Choose preset",
   "presetSheetCustomButton": "Create with custom time",

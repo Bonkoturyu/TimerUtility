@@ -15,7 +15,7 @@ const NotificationStrings testNotificationStrings = NotificationStrings(
   timerAlarmChannelDescription: 'Alarm notification when a timer ends',
   timerCompletedChannelName: 'Timer Completed (Background)',
   timerCompletedChannelDescription:
-      'Silent notification when a timer ended while the app was in the background',
+      'Silent notification when a timer ends while the app is in the background',
 );
 
 /// Notifier override target — `notificationStringsNotifierProvider` was

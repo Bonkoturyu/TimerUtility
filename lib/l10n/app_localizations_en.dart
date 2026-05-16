@@ -256,7 +256,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationTimerCompletedChannelDescription =>
-      'Silent notification when a timer ended while the app was in the background';
+      'Silent notification when a timer ends while the app is in the background';
 
   @override
   String get presetSheetTitle => 'Choose preset';
