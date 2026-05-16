@@ -66,7 +66,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timerListAddFab => '타이머 추가';
 
   @override
-  String get timerListEmptyHint => '타이머가 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가할 수 있습니다.';
+  String get timerListEmptyHint => '타이머가 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가하세요.';
 
   @override
   String timerListLimitReached(int count) {
@@ -124,7 +124,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get alarmListAddFab => '알람 추가';
 
   @override
-  String get alarmListEmptyHint => '알람이 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가할 수 있습니다.';
+  String get alarmListEmptyHint => '알람이 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가하세요.';
 
   @override
   String get alarmListRepeatEveryday => '매일';
@@ -517,7 +517,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clockEntryEditCatalogEmpty => '모든 도시가 이미 등록되어 있습니다';
 
   @override
-  String get clockEmptyHint => '등록된 시계가 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가할 수 있습니다.';
+  String get clockEmptyHint => '등록된 시계가 없습니다.\n오른쪽 아래의 “+” 버튼으로 추가하세요.';
 
   @override
   String get homeMenuSettings => '설정';
