@@ -4,16 +4,24 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../domain/notifications/notification_strings.dart';
 import '../../domain/ports/notification_scheduler.dart';
 import '../platform/permission_channel.dart';
 
-/// Channel constants. Centralised here so callers don't repeat them.
+/// Channel id constants. Centralised here so callers don't repeat them.
 ///
 /// Channel id bumps (`_v2`, `_v3`, …) are intentional: Android does not let
 /// an app re-configure an existing channel's importance / sound / vibration
 /// after it's been created. Each id bump bundles a delete + recreate so the
 /// new settings actually take effect on devices that already had an older
 /// channel.
+///
+/// Channel **name** and **description** are no longer constants — they
+/// are locale-aware and supplied via [NotificationStrings] (passed into
+/// [FlutterLocalNotificationAdapter.initialize] and refreshed via
+/// [FlutterLocalNotificationAdapter.updateChannelNames]). Re-calling
+/// `createNotificationChannel` with the same id is the documented way
+/// to update name/description after a language switch.
 const List<String> _legacyTimerAlarmChannelIds = <String>[
   'timer_alarm',
   'timer_alarm_v2',
@@ -22,19 +30,14 @@ const List<String> _legacyTimerAlarmChannelIds = <String>[
   'timer_alarm_v5',
 ];
 const String timerAlarmChannelId = 'timer_alarm_v6';
-const String timerAlarmChannelName = 'Timer Alarm';
-const String timerAlarmChannelDescription = 'タイマー終了時のアラーム通知';
 
-/// Silent channel used by [show] for the Phase 8 background-restore
-/// notification path. The alarm channel above plays the bundled tone
-/// at alarm-stream volume — that is wrong for "you missed the timer
-/// while away", which should be a low-key heads-up only. We keep this
-/// channel on a separate id so the user can also toggle it
-/// independently in OS settings.
+/// Silent channel used by [FlutterLocalNotificationAdapter.show] for the
+/// Phase 8 background-restore notification path. The alarm channel above
+/// plays the bundled tone at alarm-stream volume — that is wrong for
+/// "you missed the timer while away", which should be a low-key
+/// heads-up only. We keep this channel on a separate id so the user can
+/// also toggle it independently in OS settings.
 const String timerCompletedChannelId = 'timer_completed_v1';
-const String timerCompletedChannelName = 'Timer Completed (Background)';
-const String timerCompletedChannelDescription =
-    'バックグラウンド中にタイマーが終了したことを知らせる無音通知';
 
 /// Resource id of the default alarm sound bundled at
 /// `android/app/src/main/res/raw/alarm_default.mp3`. This is what the
@@ -89,18 +92,36 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
   final FlutterLocalNotificationsPlugin _plugin;
   final PermissionChannel _permissionChannel;
 
+  /// Locale-resolved channel name/description. Set by [initialize] and
+  /// refreshed via [updateChannelNames] when the user switches language.
+  /// Held as a field (rather than read from `notificationStringsNotifierProvider`
+  /// on each call) because adapter calls happen from contexts without a
+  /// `ProviderContainer` (Phase 4 design: pure-Dart Port impl). Channel
+  /// names also feed into `schedule()` / `show()` per-notification
+  /// `AndroidNotificationDetails`, where same-id channels make the OS
+  /// ignore the values — but we still pass the live ones so logs /
+  /// debugger inspection stays consistent.
+  late NotificationStrings _strings;
+
   /// Initialise the plugin and create the timer alarm channel.
   ///
   /// Must be called before any `schedule()` call. Typically invoked from
   /// `main()` after `WidgetsFlutterBinding.ensureInitialized()`.
+  ///
+  /// [strings] supplies the locale-aware channel name/description used
+  /// on the OS settings UI. Call [updateChannelNames] after a language
+  /// switch to re-push the values without re-running the rest of
+  /// initialisation.
   ///
   /// [onNotificationTap] is invoked with the notification's payload (the
   /// timer id encoded as String) when the user taps a notification.
   /// Used by the deep-link handler to navigate to the alarm ringing
   /// screen.
   Future<void> initialize({
+    required NotificationStrings strings,
     void Function(String? payload)? onNotificationTap,
   }) async {
+    _strings = strings;
     tz_data.initializeTimeZones();
     // `zonedSchedule` requires `tz.local` to be set to the device's actual
     // timezone; without this the AlarmManager bridge can fail to fire on
@@ -134,26 +155,54 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     for (final String legacyId in _legacyTimerAlarmChannelIds) {
       await android?.deleteNotificationChannel(legacyId);
     }
+    await _recreateChannels(android);
+  }
+
+  /// Re-push the channel name and description after a locale change.
+  ///
+  /// Android's documented behaviour: calling `createNotificationChannel`
+  /// with an existing id updates the user-facing `name` and
+  /// `description` while leaving importance / sound / vibration locked
+  /// (the OS protects those because the user can override them in
+  /// Settings). That's exactly what we want — the OS-settings label
+  /// tracks the current language while audio behaviour stays stable.
+  ///
+  /// Idempotent: safe to call multiple times. No-op on non-Android
+  /// platforms because `resolvePlatformSpecificImplementation` returns
+  /// null there.
+  @override
+  Future<void> updateChannelNames(NotificationStrings strings) async {
+    _strings = strings;
+    final AndroidFlutterLocalNotificationsPlugin? android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    await _recreateChannels(android);
+  }
+
+  Future<void> _recreateChannels(
+    AndroidFlutterLocalNotificationsPlugin? android,
+  ) async {
     await android?.createNotificationChannel(
-      const AndroidNotificationChannel(
+      AndroidNotificationChannel(
         timerAlarmChannelId,
-        timerAlarmChannelName,
-        description: timerAlarmChannelDescription,
+        _strings.timerAlarmChannelName,
+        description: _strings.timerAlarmChannelDescription,
         importance: Importance.max,
         enableVibration: true,
         showBadge: false,
         playSound: true,
         // Bundled tone, alarm stream. Required so heads-up paths (FSI
         // not granted by Android) still produce sound. See class doc.
-        sound: RawResourceAndroidNotificationSound(_alarmRawResource),
+        sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
     await android?.createNotificationChannel(
-      const AndroidNotificationChannel(
+      AndroidNotificationChannel(
         timerCompletedChannelId,
-        timerCompletedChannelName,
-        description: timerCompletedChannelDescription,
+        _strings.timerCompletedChannelName,
+        description: _strings.timerCompletedChannelDescription,
         importance: Importance.high,
         enableVibration: false,
         showBadge: false,
@@ -189,8 +238,8 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
       NotificationDetails(
         android: AndroidNotificationDetails(
           timerAlarmChannelId,
-          timerAlarmChannelName,
-          channelDescription: timerAlarmChannelDescription,
+          _strings.timerAlarmChannelName,
+          channelDescription: _strings.timerAlarmChannelDescription,
           importance: Importance.max,
           priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
@@ -235,11 +284,11 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
       notificationId,
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           timerCompletedChannelId,
-          timerCompletedChannelName,
-          channelDescription: timerCompletedChannelDescription,
+          _strings.timerCompletedChannelName,
+          channelDescription: _strings.timerCompletedChannelDescription,
           importance: Importance.high,
           priority: Priority.high,
           category: AndroidNotificationCategory.reminder,

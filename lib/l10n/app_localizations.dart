@@ -506,6 +506,30 @@ abstract class AppLocalizations {
   /// **'アラームの時刻になりました。'**
   String get notificationAlarmRingingBody;
 
+  /// No description provided for @notificationTimerAlarmChannelName.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマーアラーム'**
+  String get notificationTimerAlarmChannelName;
+
+  /// No description provided for @notificationTimerAlarmChannelDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマー終了時のアラーム通知'**
+  String get notificationTimerAlarmChannelDescription;
+
+  /// No description provided for @notificationTimerCompletedChannelName.
+  ///
+  /// In ja, this message translates to:
+  /// **'タイマー完了（バックグラウンド）'**
+  String get notificationTimerCompletedChannelName;
+
+  /// No description provided for @notificationTimerCompletedChannelDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'バックグラウンド中にタイマーが終了したことを知らせる無音通知'**
+  String get notificationTimerCompletedChannelDescription;
+
   /// No description provided for @presetSheetTitle.
   ///
   /// In ja, this message translates to:
