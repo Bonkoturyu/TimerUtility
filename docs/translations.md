@@ -152,7 +152,8 @@
 
 ## 世界時計（Phase 10.5）
 
-`ClockListScreen` / `ClockEntryEditSheet` / `TimezonePicker` 由来。最大 6 都市の
+`ClockScreen` (`/clock` ルート、ホームの `ClockPage` から開く) /
+`ClockEntryEditScreen` (`/clock/edit`) / `TimezoneCatalog` 由来。最大 6 都市の
 現在時刻を 3 デザイン (Analog / Digital / Compact) で表示する HomeScreen の
 4 番目のタブ。
 
@@ -338,11 +339,14 @@ AppBar 両方で再利用。
 | `settingsLanguageSystem` | システムに合わせる | Follow system | 言語選択ダイアログの先頭オプション (`localeOverride = null`、F-9 の `localeResolutionCallback` に委譲) |
 | `settingsLanguageDialogTitle` | 言語を選択 | Select language | 言語選択ダイアログタイトル |
 
-> 個別言語のラベル (日本語 / English / 简体中文 / 繁體中文 / 한국어) は各 locale の
-> `Locale.toString()` から `DisplayNamesService` 経由で自前生成しているため、ARB
-> には個別キーを持たない (実装は `lib/presentation/settings/language_picker_dialog.dart`)。
-> Public ビルドでは ja / en の 2 件、`--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-> ビルドで zh / zh-Hant / ko も表示される。
+> 個別言語のラベル (日本語 / English / 简体中文 / 繁體中文 / 한국어) は ARB
+> には個別キーを持たず、`SettingsScreen` 内の const Map `_languageDisplayNames`
+> でハードコード保持している (実装は
+> [lib/presentation/screens/settings_screen.dart](../lib/presentation/screens/settings_screen.dart)
+> L17-23)。各言語名は **そのロケール自身の表記** で出すのが多言語アプリの慣習で、
+> 現在の UI ロケールに依存させないため。Public ビルドでは ja / en の 2 件、
+> `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` ビルドで zh / zh-Hant / ko も
+> 表示される (公開順序は `_publicLanguageTagOrder` / `_experimentalLanguageTagOrder`)。
 
 ### 診断ログ（Phase D）
 
