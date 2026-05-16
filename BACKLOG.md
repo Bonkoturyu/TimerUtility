@@ -225,24 +225,28 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
 ### 残タスク
 
 - [ ] アプリアイコン・スプラッシュ
-- [~] ローカライズ残作業
+- [x] ローカライズ残作業 (2026-05-16): 配下 3 項目すべて完了。Phase 11
+  全体としては「アプリアイコン・スプラッシュ」「Play Store 提出準備」が残作業
   - [x] 中国語簡体字 / 繁体字 / 韓国語の本格翻訳 (A-3 / 2026-05-16, PR #61):
     [lib/l10n/app_zh.arb](lib/l10n/app_zh.arb) /
     [lib/l10n/app_zh_Hant.arb](lib/l10n/app_zh_Hant.arb) /
     [lib/l10n/app_ko.arb](lib/l10n/app_ko.arb) を新規作成 (各 172 翻訳キー、
     ja / en と完全同一キー集合)。`flutter gen-l10n` で
     `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo`
-    を生成、`flutter analyze` / `flutter test` (641 緑 / 1 skip) /
+    を生成、`flutter analyze` / `flutter test` (642 緑 / 1 skip) /
     `flutter build apk --debug --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`
-    すべて成功。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。Copilot レビュー
-    指摘で `lib/main.dart` の `_experimentalSupportedLocales` を
-    `Locale.fromSubtags(scriptCode: 'Hant')` に修正 (countryCode 形式だと
-    繁体字選択が簡体字にフォールバックするバグ)。
-    [docs/translations.md](docs/translations.md) は ja / en 2 列維持 + 3 言語は
-    ARB 直接参照に運用切替 (5 列ミラー不採用、homeOpen* / *EmptyHint の stale
-    行は同期、残りは Phase 11 close out PR で一括同期予定)
-  - [ ] **A-3 実機検証** (Pixel 6a、experimental ビルド): zh / zh_Hant / ko の
-    表示崩れ目視確認。tasklist.md の Follow-up に手順を集約
+    すべて成功。zh / zh_Hant / ko は CLDR plural rule で `other` のみ。
+    Copilot レビューで重要 bug 2 件修正: (i) `lib/main.dart` の
+    `_experimentalSupportedLocales` を `Locale.fromSubtags(scriptCode: 'Hant')`
+    に修正 (countryCode 形式だと繁体字選択が Simplified にフォールバックする
+    バグ)、(ii) flag 依存テストが実質未検証だった点を
+    `@visibleForTesting debugExperimentalSupportedLocales` で flag 非依存化。
+    Pixel 6a 実機検証で韓国語空表示 wrap (`다.` 単独行漏れ → imperative
+    `추가하세요` に短縮) と中文 SnackBar `一个星期` 曖昧性 (→ `一天` に修正)
+    も追加発見・対応。[docs/translations.md](docs/translations.md) は
+    ja / en 2 列維持 + 3 言語は ARB 直接参照に運用切替 (5 列ミラー不採用、
+    `homeOpen*` / `*EmptyHint` の stale 行は同期、残りは Phase 11 close out
+    PR で一括同期予定)。詳細は [dev-log](docs/dev-log.md)
   - [x] 通知 channel 名の i18n (2026-05-16, PR #59): `NotificationStrings` を
     `lib/domain/notifications/` に移動 (`infrastructure → application` 依存方向
     違反を回避) + `NotificationScheduler.updateChannelNames(NotificationStrings)`
