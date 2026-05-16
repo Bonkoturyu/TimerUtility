@@ -5,7 +5,8 @@
 
 更新ルール:
 
-- ARB を編集したら本書も同期する（CI で diff チェック予定 / 当面は手動）
+- ARB を編集したら本書も同期する（CI の `dart run tool/check_translations_doc.dart` で
+  ja / en ARB と本書のキー集合 diff を自動検証している。ローカルでも同コマンドで確認可能）
 - プレースホルダ表記（`{count}`, `{minutes}` 等）はそのまま記載する
 - ICU plural 構文（`{count, plural, ...}`）は `ja` / `en` で形式が異なるので注釈欄に明記する
 - 既存翻訳の文言調整は ARB 側を直し、本書を同じ commit で更新する
