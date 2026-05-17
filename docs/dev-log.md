@@ -17,6 +17,87 @@
 
 ---
 
+## Phase 11.9 事前検討 + 実アーティファクト草稿 (2026-05-17)
+
+Phase 11.8 T8.5 GitHub Privacy team 申請 (2026-05-17 ユーザ送信済) の返信待ち期間を
+活用し、Phase 11.9 (Play 提出準備) で必要になる事前判断項目と実アーティファクトを
+branch `phase-11.9-prep` で先行作成。Native / pubspec.yaml は触らずに `docs/` 配下の
+新規 md 5 件のみで完結。
+
+### 経緯と目的
+
+- Phase 11.8 PR #67 main マージ後、T8.5 (Privacy contact form → `Other` 経由で
+  `privacy@github.com` メール直送) はユーザが実行済だが、Privacy team の返信は
+  数営業日かかる想定。T8.6 (`gh api repos/.../contents/docs/opus-startup-prompt.md?ref=f2e46e3`
+  が 404 を返すかの確認) は 2026-05-17 時点で 200 OK 継続 (sha `838c0fa...` /
+  size 7311 bytes)、cache 削除未処理
+- 待機期間中に Phase 11.9 を機械的に進めるための地ならしを完了させ、返信到着 →
+  T10 (Public 化) 直後にすぐ Phase 11.9-T0 へ移行できる状態を作る
+- 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md) Phase
+  11.9 セクションの T0〜T18 のうち、Native / pubspec.yaml を触らない範囲を
+  すべて先行
+
+### 作成物
+
+| ファイル | 役割 | 寿命 |
+| --- | --- | --- |
+| [docs/phase-11.9-prep-notes.md](phase-11.9-prep-notes.md) | 事前検討 4 件 (A 依存版数 / B applicationId 影響範囲 grep / C 5 言語アプリ名 / G アイコン仕様) + サブ PR α/β/γ 分割案 + 残論点 4 件を集約 | Phase 11.9 全件完了時点で削除予定 (内容は実タスクに消化) |
+| [docs/privacy-policy.md](privacy-policy.md) | プライバシーポリシー (日本語) — 8 権限の利用根拠 / GPS 一時利用方針 / 診断ログ取扱い / Data Safety 申告と整合 | 永続。Phase 11.9-T9 で GitHub Pages 公開 |
+| [docs/privacy-policy.en.md](privacy-policy.en.md) | プライバシーポリシー英語版 | 永続 |
+| [docs/play-store-listing.md](play-store-listing.md) | Play Console 提出素材集約 — 短い説明 80 字 / 長い説明 4000 字 / What's new 500 字 / Data Safety 申告内容 / Content Rating 自己評価 / 8 権限 Play Console 用説明文 / スクリーンショット 7 シナリオ / 連絡先 | Phase 11.10 提出後も維持 (継続更新) |
+| [docs/release-signing.md](release-signing.md) | upload keystore 生成 / `key.properties` 配置 / `build.gradle.kts` 配線 / Play App Signing 加入 / CI 自動署名 / セキュリティ注意 | 永続。Phase 11.10-T2 で公式仕様裏取り後に未確定項目を確定 |
+
+### 採用方針 / 確定事項
+
+- **B applicationId 影響範囲**: `git grep "com\.bonkotu\.timer"` 結果から、Native
+  3 ファイル (`build.gradle.kts` 2 行 / `MainActivity.kt` package + Kotlin
+  ディレクトリ移動) + ライブドキュメント追従 (`README.md` / `BACKLOG.md` /
+  `docs/architecture.md` / `docs/android-constraints.md` / `docs/permissions.md` /
+  `docs/platform-channels.md`) の影響範囲を確定。`AndroidManifest.xml` は編集不要
+  (PR #67 レビューで確認済)、Dart 側は MethodChannel 名移行を採用するか次第で
+  `permission_channel.dart` + `alarm_ringing_screen.dart` の 2 ファイルが影響、
+  test/`pubspec.yaml` の Dart パッケージ名 `timer_utility` は applicationId と
+  独立で変更不要
+- **C 5 言語アプリ名**: 全 5 言語 (ja / en / zh / zh_Hant / ko) で `TimerUtility`
+  統一案を確定。既存 ARB の `appTitle` キーが全言語 `TimerUtility` で揃っており、
+  OS 上のアイコン名 = アプリ内表示名のブランド統一を維持
+- **G アイコン仕様**: 知識ベースで Adaptive Icon (108×108 dp、安全ゾーン 72×72 dp、
+  1024×1024 PNG 推奨) / Themed Icon (monochrome、知識カットオフ時点では任意) /
+  Play Store 512×512 を草稿。WebFetch で developer.android.com / m3.material.io
+  の対象 URL がすべて 404 を返したため、ソース信用原則に従い「Phase 11.10-T2 で
+  再裏取り必須」と明示
+- **CoC / privacy-policy の連絡窓口**: Phase 11.8 で確立した `@Bonkoturyu`
+  GitHub Issues + GitHub プロフィール contact の二段案内に統一
+- **Data Safety 申告**: `docs/privacy-policy.md` §2-6 に基づき「No data collected」
+  「No data shared」両方申告 (Phase 11.10-T2 で Play Console の 2026 年現行フォーム
+  構成と突合せて確定)
+- **release.yml CI 自動署名**: Phase 11.10-T9 で実装、`UPLOAD_KEYSTORE_BASE64` +
+  3 パスワード Secret 構成は `docs/release-signing.md` §6 に記録
+
+### 残論点 (Phase 11.9 着手前にユーザ判断必要、`phase-11.9-prep-notes.md` §I)
+
+1. B.2 MethodChannel 名 (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`)
+   移行を T0 と同 PR で実施するか、別 PR にするか (機能影響なし、fork ガイド一貫性の問題)
+2. G.2 monochrome layer の必須化状況 (Phase 11.10-T2 で確定)
+3. C.2 アプリ名ローカライズ案 (全 5 言語 TimerUtility 統一で確定で良いか)
+4. H サブ PR 分割案 (α: T0 / β: T1-T7 / γ: T8-T18) で進めるか
+
+### 検証
+
+- `dart format --set-exit-if-changed .` — 254 ファイル / 変更 0
+- `flutter analyze --fatal-infos` — No issues found
+- `dart run tool/check_translations_doc.dart` — ARB (ja=171, en=171) / docs (171) 一致
+- `flutter test` は doc-only のため CI 任せ (PR #67 で 642 緑 / 1 skipped を確認済)
+
+### 次の Phase 11.8 / 11.9 着手単位
+
+1. Privacy team 返信受領 → T8.6 で `gh api .../ref=f2e46e3` が 404 化を確認
+2. T10 (GitHub Settings → Visibility = Public) 実施 → Phase 11.8 完全クローズ
+3. キックオフで `phase-11.9-prep-notes.md` §I 残論点 4 件確定
+4. Phase 11.9-T0 (applicationId 変更 + Pixel 6a 実機検証) からサブ PR α 着手
+
+---
+
 ## Phase 11.8 OSS 公開準備 (T1〜T9 着手、2026-05-16)
 
 Phase 11.8 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)
