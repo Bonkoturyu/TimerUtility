@@ -74,13 +74,31 @@ branch `phase-11.9-prep` で先行作成。Native / pubspec.yaml は触らずに
 - **release.yml CI 自動署名**: Phase 11.10-T9 で実装、`UPLOAD_KEYSTORE_BASE64` +
   3 パスワード Secret 構成は `docs/release-signing.md` §6 に記録
 
-### 残論点 (Phase 11.9 着手前にユーザ判断必要、`phase-11.9-prep-notes.md` §I)
+### キックオフ判断 4 件 (2026-05-17 ユーザ承認済、`phase-11.9-prep-notes.md` §I)
 
-1. B.2 MethodChannel 名 (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`)
-   移行を T0 と同 PR で実施するか、別 PR にするか (機能影響なし、fork ガイド一貫性の問題)
-2. G.2 monochrome layer の必須化状況 (Phase 11.10-T2 で確定)
-3. C.2 アプリ名ローカライズ案 (全 5 言語 TimerUtility 統一で確定で良いか)
-4. H サブ PR 分割案 (α: T0 / β: T1-T7 / γ: T8-T18) で進めるか
+本セッション (2026-05-17) のキックオフ判断で、`phase-11.9-prep-notes.md` §I に
+当初「残論点」として置いていた 4 件を、ユーザ承認のもと全件推奨案 A で確定:
+
+1. **B.2 MethodChannel 名移行 = T0 同 PR**: `com.bonkotu.timer/permission` →
+   `io.github.bonkoturyu.timer_utility/permission` をサブ PR α (T0 と同 PR) で
+   移行。`alarm_ringing_screen.dart` のハードコードを `PermissionChannel.channelName`
+   定数参照に refactor も同梱。理由: 純粋リネーム + 1 定数化で済む低リスク作業、
+   中途半端な期間 (新 applicationId + 旧 Channel prefix) を作らない、fork
+   ガイドが一本道
+2. **G.2 monochrome layer = 常に作る**: Phase 11.9-T1 (アイコン素材作成) で
+   foreground + background + monochrome layer の 3 層セットを設計。理由:
+   monochrome 素材 1 件追加コスト (時計シルエット VectorDrawable) は低い、
+   Android 13+ themed icon ランチャー UX 改善、Play Store 必須化の保険
+3. **C.2 アプリ名 = 全 5 言語 `TimerUtility` 統一**: 既存 ARB の `appTitle` が
+   5 言語すべて `TimerUtility` 統一済の運用と整合。`TimerUtility` は造語の固有
+   ブランドで現地表記の機械翻訳は不自然になりがち、Play Store 検索ノイズ回避、
+   後戻り可能 (将来 strings.xml に現地表記を追加すれば良い)
+4. **H サブ PR 分割 = α/β/γ 3 PR 案**: 計画書 §H 提示案そのまま。α (T0 +
+   MethodChannel + live docs) / β (T1-T7 アイコン+Splash+strings.xml+Pixel 6a
+   検証) / γ (T8-T18 privacy-policy GitHub Pages + listing + signing + aab)
+   の 3 段。理由: 各 PR が独立 concern、Pixel 6a 実機検証を α 後 + β 後の 2 回
+   に分散して問題発見早期化、γ は signing / Play Console 連携を α/β 安定後に
+   着手
 
 ### 検証
 

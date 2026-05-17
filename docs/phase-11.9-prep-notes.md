@@ -237,8 +237,8 @@ design/
 
 計画書 T0〜T18 を、ユーザ確認必須ファイルの密度で 3 サブ PR にまとめる案:
 
-1. **Sub-PR α**: T0 (applicationId 変更、Native 一式 + Pixel 6a 実機検証)
-   + B.2 MethodChannel 名移行 (採用する場合) + B.3 ライブドキュメント追従
+1. **Sub-PR α**: T0 (applicationId 変更、Native 一式 + Pixel 6a 実機検証)、
+   B.2 MethodChannel 名移行 (採用する場合)、B.3 ライブドキュメント追従
 2. **Sub-PR β**: T1 / T2 / T3 (アイコン素材 + `flutter_launcher_icons`) +
    T5 / T6 (`flutter_native_splash`) + T4 (Manifest `@string/app_name` 化 +
    strings.xml 5 言語) + T7 (Pixel 6a 実機 4 パターン確認)
@@ -252,14 +252,58 @@ design/
 
 ---
 
-## I. 残論点 (Phase 11.9 着手前にユーザ判断必要)
+## I. 確定事項 (キックオフ判断、2026-05-17 ユーザ承認済)
 
-1. **B.2 MethodChannel 名移行**: T0 と同 PR で実施するか、別 PR にするか
-   (アプリ機能には影響しないが fork ガイド一貫性に影響)
-2. **G.2 monochrome layer**: 知識ベース時点では任意。Phase 11.10-T2 で必須化
-   状況を確認した上で素材作成順を決める
-3. **C.2 アプリ名ローカライズ**: 全 5 言語 `TimerUtility` 統一案で確定で良いか、
-   日本語/中国語/韓国語だけ現地表記にするか
-4. **H サブ PR 分割案**: 提示の α / β / γ 分割で進めるか、より細分化するか
+本セクションは当初「残論点」として 4 件を列挙していたが、本セッション
+(2026-05-17) のキックオフ判断でユーザが推奨案をすべて承認、確定。Phase 11.9
+着手時はこの 4 決定をベースに進める。
 
-これらは Phase 11.8 完了 → 11.9 着手前のキックオフで確認する。
+### I.1 MethodChannel 名は T0 と同 PR で移行 (B.2、案 A)
+
+- 採用: `com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`
+  を Phase 11.9-T0 のサブ PR α 内で同時実施
+- 理由: 純粋リネーム + 1 つの定数化 refactor (alarm_ringing_screen の
+  ハードコード解消) で済む。中途半端な期間 (新 applicationId + 旧 Channel prefix)
+  を作らない。fork ガイドが一本道
+- サブ PR α の影響範囲に以下を追加:
+  - `MainActivity.kt:23` の `PERMISSION_CHANNEL` 定数
+  - `lib/infrastructure/platform/permission_channel.dart:11` の `channelName`
+  - `lib/presentation/screens/alarm_ringing_screen.dart:23` の hardcode →
+    `PermissionChannel.channelName` 定数参照に refactor
+  - `docs/platform-channels.md` / `docs/permissions.md` / `docs/android-constraints.md`
+    の live references
+
+### I.2 monochrome layer は常に作る (G.2、案 A)
+
+- 採用: Phase 11.9-T1 (アイコン素材作成) で foreground + background +
+  **monochrome layer** の 3 層をセットで設計・作成
+- 理由: monochrome 素材 1 件追加コスト (時計シルエットの monochrome SVG / PNG)
+  は低い。Android 13+ ユーザの themed icon ランチャー体験が改善、将来 Play Store
+  が必須化した場合の保険にもなる
+- 形式: VectorDrawable XML 優先 (任意で 32-bit alpha-only PNG)。色は本来の
+  アイコンに依存せず、白 + 透過のみ意味を持つ抽象シルエットとして設計
+
+### I.3 アプリ名は全 5 言語で `TimerUtility` 統一 (C.2、案 A)
+
+- 採用: `res/values{,-ja,-zh,-b+zh+Hant,-ko}/strings.xml` の `app_name` を全 5
+  ロケールで `TimerUtility` に統一
+- 理由: 既に `lib/l10n/app_*.arb` の `appTitle` キーが 5 言語すべて
+  `TimerUtility` で揃っており、OS 表示もこれに合わせてブランド一貫性を維持。
+  `TimerUtility` は造語の固有ブランドで、現地表記の機械翻訳は不自然になる傾向。
+  Play Store 検索ノイズも回避
+- 将来的にローカライズ要望が出た場合は strings.xml への現地表記追加で対応可能
+  (後戻り可能)
+
+### I.4 サブ PR α/β/γ 3 PR 分割で進める (H、案 A)
+
+- 採用: 計画書 §H の α/β/γ 分割案そのまま
+  - **α**: T0 (applicationId 変更、Native 一式) + I.1 (MethodChannel 名移行) +
+    ライブドキュメント追従
+  - **β**: T1〜T3 (アイコン素材 + flutter_launcher_icons) + T5〜T6
+    (flutter_native_splash) + T4 (Manifest `@string/app_name` + strings.xml 5
+    言語) + T7 (Pixel 6a 4 パターン検証)
+  - **γ**: T8〜T18 (privacy-policy GitHub Pages 公開 + play-store-listing 確定 +
+    スクショ + signing 配線 + versionCode bump + README 追従 + aab ビルド + 反映)
+- 理由: 各 PR が独立した concern (Native 移行 / 視覚的変更 / 公開準備) を扱い、
+  Pixel 6a 実機検証を α 後と β 後の 2 回に分散して問題発見が早期化する。γ は
+  signing / Play Console 連携のため α/β 安定後に着手する方が安全

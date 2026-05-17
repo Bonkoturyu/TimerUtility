@@ -32,8 +32,11 @@
   実アーティファクト 3 件 ([docs/privacy-policy.md](docs/privacy-policy.md) /
   [docs/privacy-policy.en.md](docs/privacy-policy.en.md) /
   [docs/play-store-listing.md](docs/play-store-listing.md) /
-  [docs/release-signing.md](docs/release-signing.md)) を作成。残: Phase 11.8 完了 →
-  キックオフで `phase-11.9-prep-notes.md` の §I 残論点 4 件を確定 → 11.9-T0 着手
+  [docs/release-signing.md](docs/release-signing.md)) を作成。`phase-11.9-prep-notes.md`
+  §I のキックオフ判断 4 件はユーザ承認済 (推奨案 A をすべて採用: MethodChannel
+  名 T0 同 PR 移行 / monochrome layer 常時作成 / アプリ名 5 言語 `TimerUtility`
+  統一 / α・β・γ 3 PR 分割)。残: Phase 11.8 完了 (T8.5 返信 → T8.6 → T10) →
+  Phase 11.9 サブ PR α (T0 + MethodChannel rename + live docs 追従) 着手
 
 ---
 
@@ -61,7 +64,9 @@
 
 ---
 
-最終更新日: 2026-05-17（Phase 11.9 事前検討 4 件 (A 依存版数 / B applicationId 影響範囲 grep / C 5 言語アプリ名 / G アイコン仕様) + 実アーティファクト 4 件 (privacy-policy ja/en、play-store-listing、release-signing) を branch `phase-11.9-prep` で先行作成。Phase 11.8 T8.5 GitHub Privacy team 申請返信待ち期間の活用。Phase 11.9 着手前にユーザ判断必要な残論点 4 件 (MethodChannel 名移行を T0 と同 PR にするか / monochrome layer 必須化対応 / アプリ名ローカライズ統一案で良いか / サブ PR α/β/γ 分割案) を `docs/phase-11.9-prep-notes.md` §I に集約。`dart format` / `flutter analyze` / ARB diff チェックすべて緑、doc-only のため `flutter test` は CI 任せ。Phase 11.8 残: **T8.5 返信待ち (2026-05-17 時点で `gh api .../contents/docs/opus-startup-prompt.md?ref=f2e46e3` は 200 OK 継続、cache 削除未処理)** → T8.6 → T10。詳細は [dev-log](docs/dev-log.md)）
+最終更新日: 2026-05-17（Phase 11.9 事前検討 §I キックオフ判断 4 件確定 — branch `phase-11.9-prep` の PR #68 に追加 commit。推奨案 A を全件採用: (1) MethodChannel 名 (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) を T0 同 PR で移行 + alarm_ringing_screen.dart のハードコード解消、(2) アイコン素材は monochrome layer も含む 3 層セットで T1 から作成、(3) アプリ名は全 5 言語 `TimerUtility` 統一、(4) サブ PR α/β/γ 3 分割で進行。`phase-11.9-prep-notes.md` §I を「残論点」→「確定事項」に書き換え + BACKLOG.md / tasklist.md 追従。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-17（Phase 11.9 事前検討 4 件 (A 依存版数 / B applicationId 影響範囲 grep / C 5 言語アプリ名 / G アイコン仕様) + 実アーティファクト 4 件 (privacy-policy ja/en、play-store-listing、release-signing) を branch `phase-11.9-prep` で先行作成。Phase 11.8 T8.5 GitHub Privacy team 申請返信待ち期間の活用。Phase 11.9 着手前にユーザ判断必要な残論点 4 件 (MethodChannel 名移行を T0 と同 PR にするか / monochrome layer 必須化対応 / アプリ名ローカライズ統一案で良いか / サブ PR α/β/γ 分割案) を `docs/phase-11.9-prep-notes.md` §I に集約。`dart format` / `flutter analyze` / ARB diff チェックすべて緑、doc-only のため `flutter test` は CI 任せ。Phase 11.8 残: **T8.5 返信待ち (2026-05-17 時点で `gh api .../contents/docs/opus-startup-prompt.md?ref=f2e46e3` は 200 OK 継続、cache 削除未処理)** → T8.6 → T10。詳細は [dev-log](docs/dev-log.md)）
 
 過去の更新: 2026-05-16（Phase 11.8 OSS 公開準備の T1〜T9 着手 — branch `phase-11.8-oss-prep` で実装。計画書 [docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md) (PR #66 承認済) の Claude 単独実行可能タスクを一括着手: README 再構成 (Build & Run / Architecture / fork ガイド / "What's special" 日本語+英語) / `THIRD_PARTY_NOTICES.md` 新規 / `CONTRIBUTING.md` 新規 / `CODE_OF_CONDUCT.md` 新規 (Contributor Covenant 2.1) / `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md` + `PULL_REQUEST_TEMPLATE.md` 新規 / `pubspec.yaml` に `homepage` / `repository` / `issue_tracker` 追加 / 秘密情報 grep + commit author 全件確認 (hit 0、author は GitHub 提供 noreply 1 件のみ) / BACKLOG.md + tasklist.md + docs/dev-log.md 反映。`dart format` (254 ファイル、変更 0) / `flutter analyze --fatal-infos` / `flutter test` (642 緑 / 1 skipped) / `dart run tool/check_translations_doc.dart` (ARB 171 / Doc 171 一致) すべて緑。残: **T8.5 (GitHub Privacy team `privacy@github.com` メール直送、orphan commit `f2e46e3` 経由の `docs/opus-startup-prompt.md` 旧版 cache 削除申請、本人がリポジトリから自身の個人情報を削除するケースのため [Privacy contact form](https://github.com/contact/privacy) → `Other` 経由)** + T8.6 (404 確認) + T10 (GitHub Public 化) はユーザ作業のため本セッション外。詳細は [dev-log](docs/dev-log.md)）
 
