@@ -111,6 +111,50 @@ branch: `phase-11.9-alpha` (ベース: `phase-11.8-close-out` → Phase 11.8 完
 
 `pubspec.yaml` 編集 + `flutter pub add` を含むため、ユーザ確認必須ファイル該当。
 
+### PR #72 レビュー対応 (2026-05-27)
+
+実装 push 後、Copilot + gemini-code-assist から計 4 件 + suppressed 1 件のレビュー
+指摘。CLAUDE.md「PR レビュー対応プロトコル」に従い分類・適用。
+
+| # | 出典 | 場所 | 分類 | 対応 |
+| --- | --- | --- | --- | --- |
+| 1 | gemini | docs/platform-channels.md L222 | (a) 自明な fix | apply: 行番号 22-24 → 23-25 + 文字列リテラル → `PermissionChannel.channelName` 定数参照 |
+| 2 | Copilot | alarm_ringing_screen.dart L16 | (c) 設計判断 | **scope 外、follow-up [issue #73](https://github.com/Bonkoturyu/TimerUtility/issues/73) で扱う** (ユーザ判断 = B、2026-05-27) |
+| 3 | Copilot | docs/platform-channels.md L223 | (a) 自明な fix | Comment 1 と同趣旨、一括 apply |
+| 4 | Copilot | README.md L221 | (a) 自明な fix | apply: `<your-domain>/permission` → `<reverse-domain>/permission` (例: `com.example.timer_utility/permission`) で形式明確化、`applicationId` と同じ reverse-domain prefix を使う旨を補足 |
+| - | Copilot (suppressed) | docs/architecture.md L203 | (a) 自明な fix | apply: ツリー図から実在しない `BootReceiver.kt` / `alarm/AlarmReceiver.kt` を削除、`MainActivity.kt` のみに整理 + 「BootReceiver / AlarmReceiver は flutter_local_notifications で代替、独自実装なし」をコメントで明示 |
+
+### Comment 2 (依存方向違反) の判断根拠
+
+[docs/platform-channels.md:225-232](platform-channels.md#L225-L232) で「例外（技術的
+負債）」として明記されている既存負債の延長。PR #72 でハードコード解消した結果、
+`lib/infrastructure/platform/permission_channel.dart` を Presentation から明示的に
+import する形になったが、機能変更はなし (むしろ定数化で文字列散在は解消)。
+
+本 PR の scope (rename + ハードコード解消) を維持するため、依存方向解消は
+follow-up [issue #73](https://github.com/Bonkoturyu/TimerUtility/issues/73) に
+切り出し (ユーザ判断 B、2026-05-27)。Phase 11.9 完了後の整理 PR で扱う。
+
+候補方針 (issue #73 内に詳述):
+
+- 案 A: `lib/application/permission/permission_service.dart` (Riverpod Provider)
+  新設 → `AlarmRingingScreen` は Provider 経由で Service を取得
+- 案 B: `clearShowWhenLocked` を `AlarmRingingNotifier` に統合 →
+  `AlarmRingingScreen._leaveAlarmScreen` は Notifier method を呼ぶ
+- (案 C: channelName を Domain 層に切り出し、は「OS 通信識別子は Infrastructure
+  detail」のため不採用候補)
+
+### rebase + force push
+
+PR #71 (Phase 11.8 完全クローズ) が main に squash merge された結果、PR #72 が
+CONFLICTING 状態になった (元 commit `2d2508e` と main の squash commit `712f997`
+が file content level では equivalent だが、commit hash level で重複認識)。
+
+`git rebase origin/main` で main の squash commit と統合し、PR #72 の diff から
+Phase 11.8 close-out 重複分を取り除いた上で本レビュー対応 fix を追加 commit。
+force push で remote 更新。review コメントの行番号は force push で outdated 表示
+になるが、reply 自体は普通に投げられる。
+
 ---
 
 ## Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)

@@ -218,8 +218,8 @@ flutter_local_notifications パッケージ内蔵の `ScheduledNotificationBootR
    内部で `final PermissionChannel _permissionChannel` として保持し、
    `_safeCanUseFullScreenIntent()` 経由で `schedule()` から FSI 可否を
    再問い合わせ（OS 設定がいつでも変わる可能性があるためキャッシュしない）
-3. [alarm_ringing_screen.dart:22-24](../lib/presentation/screens/alarm_ringing_screen.dart#L22-L24)
-   で `const MethodChannel('io.github.bonkoturyu.timer_utility/permission')` を直接生成し、
+3. [alarm_ringing_screen.dart:23-25](../lib/presentation/screens/alarm_ringing_screen.dart#L23-L25)
+   で `const MethodChannel(PermissionChannel.channelName)` を生成し、
    `clearShowWhenLocked` のみ単発呼び出し（ラッパクラスを介さない）
 
 3 の Presentation 層 (`AlarmRingingScreen`) から Infrastructure 詳細
