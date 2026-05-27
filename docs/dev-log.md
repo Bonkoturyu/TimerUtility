@@ -17,6 +17,105 @@
 
 ---
 
+## Phase 11.8 T8.5 / T8.6 omit 決定 — Public 化のブロック解除 (2026-05-27)
+
+Phase 11.8 残作業の T8.5 (GitHub Privacy team へのメール直送による orphan commit
+`f2e46e3` の cache 削除申請) / T8.6 (申請完了後の 404 確認) を **omit** することを
+ユーザー判断で確定。T10 (GitHub Settings → Visibility = Public) を T8.6 非依存に
+変更して進行解除する。
+
+### 経緯
+
+- 2026-05-16: PR #66 (リリース計画策定) の T8.5 指示に従い、ユーザーが GitHub
+  登録メール (`bonkoturyu@gmail.com`) から `privacy@github.com` 宛に削除申請
+  メールを直送
+- 2026-05-17: 同日に T8.6 検証 (`gh api repos/Bonkoturyu/TimerUtility/contents/docs/opus-startup-prompt.md?ref=f2e46e3`)
+  で 200 OK (sha `838c0fa45841c94c6887170fcfe1c1a923402e99` / size 7311 bytes)
+  確認、cache 削除未処理を確認
+- 2026-05-17 〜 2026-05-27 (本日): 11 日経過するも `privacy@github.com` から
+  **auto-ack / ticket 番号 / bounce 通知すべてゼロ**。Gmail spam / promotions /
+  all-mail / mailer-daemon すべて検索 hit ゼロ (ユーザー側確認済)。送信済み
+  フォルダで宛先・本文ともに正常送信を確認
+- 2026-05-27: ユーザー判断で orphan commit `f2e46e3` の実物内容を再確認。
+  典型 PII ゼロを確定、T8.5/T8.6 omit を決定
+
+### orphan commit f2e46e3 残留内容の実物確認結果
+
+`gh api repos/Bonkoturyu/TimerUtility/contents/docs/opus-startup-prompt.md?ref=f2e46e3 --jq '.content' | base64 -d`
+で取得した本文 76 行を sanitization 後 (commit `5734ad0`) との diff で比較した
+結果、orphan commit 側だけに残っている個人プロファイル情報は **§2「ユーザーの
+前提スキル」セクション** のみ。具体的内容:
+
+| カテゴリ | 露出していた内容 |
+| --- | --- |
+| 属性 | 「C/C++/C# で 5 年以上の実務経験を持つ現役エンジニア」 |
+| 使用言語 | C/C++/C#、Dart/Flutter、TypeScript/JavaScript、Python、GDScript |
+| Web 開発スタック | Next.js (App Router) / React / NextAuth.js、Google OAuth 2.0 + JWT、Google Drive REST API 連携 |
+| ゲーム/VR/3D | Unity (VRChat / lilToon / AudioLink shader)、Godot、UE5、Blender、SteamVR オーバーレイ、OpenVR Skeletal Input、DXGI Desktop Duplication |
+| 自宅 PC 構成 | Ryzen + マルチ GPU、`CUDA_VISIBLE_DEVICES` UUID 指定で GPU 分離、`OLLAMA_HOST=0.0.0.0` で LAN 経由 LLM サービング、Windows/Linux 両方のコマンドライン |
+| AI/ML スタック | Ollama、Continue.dev (config.yaml v1 + secrets.yaml)、ASR (faster-whisper + Silero VAD)、OCR (PaddleOCR + ONNX Runtime)、機械翻訳 (OPUS-MT / madlad400 / DeepL / Google / Azure / MyMemory BYOK)、OSS ライセンス判定 (NLLB-200 CC-BY-NC-4.0)、Claude Code (Opus/Sonnet)、GitHub Copilot、Gemini Flash routing/quota、GAS + Gemini マルチモーダル |
+
+**含まれていなかった情報** (= 安全側):
+
+- 実名 / 住所 / 電話番号 / メールアドレス
+- API キー / トークン / パスワード / 認証情報
+- 写真 / 顔識別情報
+- 給与 / 雇用先 / 学歴
+- ファイナンシャル情報
+
+### リスク評価
+
+| 観点 | 評価 |
+| --- | --- |
+| 個人特定性 | **低** (氏名・連絡先がないため `@Bonkoturyu` 本人と特定不可) |
+| 悪用可能性 | **低** (API キー・認証情報ゼロのため、なりすまし / 侵入リスクなし) |
+| 識別子結合リスク | **中** (`@Bonkoturyu` GitHub プロフィールと紐付けたとき、自宅 PC 構成 + 使用 SaaS の組合せはユニーク性高め。ただし GitHub プロフィール / 公開リポジトリで既に推測可能な範囲) |
+| 到達難度 | **やや低** (`?ref=f2e46e3` という SHA を知らないと API で取得不可、orphan commit は通常の web crawler では辿りにくい) |
+| Privacy team 挙動 | 11 日無反応 = GitHub 視点でも緊急性が低い判定の傍証 |
+
+### 決定とその影響
+
+- **T8.5 omit**: Privacy team 申請の完了は **待たない**。申請メール自体は
+  既送信のまま放置 (削除されたら儲け、されなくても問題ない)
+- **T8.6 omit**: 404 確認は本 Phase の DoD から外す。今後 Privacy team が
+  事後処理で 404 化する可能性はあるが、blocking 条件ではない
+- **T10 unblock**: 「T8.6 の確認が取れていることが前提」を撤回し、T10 を
+  T8.6 非依存に変更。T1〜T9 main マージ済 + T9 完了 (本コミット) のみが
+  T10 の前提
+
+### 文書更新
+
+- `docs/oss-and-play-release-plan.md` Phase 11.8 セクション:
+  - T8.5 / T8.6 行を打消し線で omit 化、判断根拠を本 dev-log への参照付きで明記
+  - T10 行の「T8.6 の確認が取れていることが前提」記述を撤回し、T9 完了 +
+    Phase 11.8 PR (T1-T9) main マージ済のみを前提とする旨に書換
+  - DoD / 検証セクションの T8.5/T8.6 関連項目も打消し線付きで撤回
+- `BACKLOG.md` / `tasklist.md`: Phase 11.8 進行中エントリを「T10 待ち」状態に更新
+- memory [`feedback_filter_branch_github_cache.md`](../../.claude/projects/c--AllUsersData-Github-TimerUtility/memory/feedback_filter_branch_github_cache.md):
+  「コスト・ベネフィット例外」セクションを末尾追加。Privacy team 長期無反応 +
+  典型 PII ゼロのとき omit する判定手順を将来再利用可能な形で固定化
+
+### 将来再利用ポイント (memory に固定化)
+
+- Privacy team 申請から 48-72h 経過しても auto-ack すらない場合、まず orphan
+  commit 残留 content の実物確認 (`gh api .../contents/<path>?ref=<sha>`) を行う
+- 典型 PII (氏名 / 連絡先 / 住所 / financial / credentials / API キー / 写真) が
+  **ゼロ** であれば、ユーザー本人のリスク許容と組み合わせて「申請放置 + Public 化
+  先行」を合理的選択肢として持つ
+- それ以外 (技術スキル / 自宅 PC 構成 / 使用 SaaS / 個人ブログ程度の粒度) のみで
+  ユニーク性のみが残るケースは、GitHub プロフィールから推測可能な範囲かで併せて
+  評価
+- 並行して Privacy team へのフォローアップは送る (削除されたら儲け、されなく
+  ても blocking なし)
+
+### 次の Phase 11.8 着手単位
+
+T10 (GitHub Settings → Visibility = Public + Description / Topics 設定) はユーザー
+作業 (不可逆)。完了で Phase 11.8 クローズ、サブ PR α (Phase 11.9-T0 +
+MethodChannel rename + live docs 追従) 着手。
+
+---
+
 ## Phase 11.9 事前検討 + 実アーティファクト草稿 (2026-05-17)
 
 Phase 11.8 T8.5 GitHub Privacy team 申請 (2026-05-17 ユーザ送信済) の返信待ち期間を
