@@ -19,13 +19,14 @@
 
 ## 進行中
 
-- [~] **Phase 11.8 OSS 公開準備** (T1〜T9 は PR #67 で 2026-05-16 main マージ済):
-  残: **T8.5 (GitHub Privacy team `privacy@github.com` メール直送、orphan commit
-  `f2e46e3` 経由の `docs/opus-startup-prompt.md` 旧版 cache 削除申請)** はユーザ
-  送信済、返信待ち (2026-05-17 時点) → T8.6 (`gh api
-  .../contents/docs/opus-startup-prompt.md?ref=f2e46e3` が 404 を返すか確認、
-  2026-05-17 時点は 200 OK 継続) → T10 (GitHub Settings → Visibility = Public)。
-  計画書: [docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md)
+- [~] **Phase 11.8 OSS 公開準備** (T1〜T9 は PR #67 で 2026-05-16 main マージ済、
+  T8.5/T8.6 は 2026-05-27 omit 決定): Privacy team は 2026-05-16 送信から
+  11 日経過しても auto-ack / ticket / bounce すべてゼロで処理されていない。
+  orphan commit `f2e46e3` 残留内容を実物確認したところ典型 PII (氏名 / 連絡先 /
+  credentials / API キー) ゼロ、技術プロファイルと自宅 PC 構成のみで悪用可能性
+  低と評価。ユーザー判断で T8.5/T8.6 omit + T10 を T8.6 非依存に変更。
+  残: **T10 (GitHub Settings → Visibility = Public + Description / Topics 設定)**
+  はユーザ作業 (不可逆)。計画書: [docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md)
 - [~] **Phase 11.9 事前検討** (branch `phase-11.9-prep`、2026-05-17〜): Privacy
   team 返信待ちの待機期間を活用して、Phase 11.9 着手前に判断確定すべき項目を
   集約した [docs/phase-11.9-prep-notes.md](docs/phase-11.9-prep-notes.md) と、
@@ -64,7 +65,9 @@
 
 ---
 
-最終更新日: 2026-05-17（Phase 11.9 事前検討 §I キックオフ判断 4 件確定 — branch `phase-11.9-prep` の PR #68 に追加 commit。推奨案 A を全件採用: (1) MethodChannel 名 (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) を T0 同 PR で移行 + alarm_ringing_screen.dart のハードコード解消、(2) アイコン素材は monochrome layer も含む 3 層セットで T1 から作成、(3) アプリ名は全 5 言語 `TimerUtility` 統一、(4) サブ PR α/β/γ 3 分割で進行。`phase-11.9-prep-notes.md` §I を「残論点」→「確定事項」に書き換え + BACKLOG.md / tasklist.md 追従。詳細は [dev-log](docs/dev-log.md)）
+最終更新日: 2026-05-27（Phase 11.8 T8.5 / T8.6 omit 決定 — branch `phase-11.8-t10-unblock` で計画文書更新。2026-05-16 に `privacy@github.com` 宛で送信した個人情報削除申請が 11 日経過しても auto-ack / ticket / bounce すべてゼロで処理されている形跡なし。並行して orphan commit `f2e46e3` の `docs/opus-startup-prompt.md` 旧版を `gh api .../contents/...?ref=f2e46e3` で実物確認 → 露出内容は技術スキル列挙 (C/C++/C# 等) + Web/VR/3D ツール列挙 + 自宅 PC 構成 (Ryzen + マルチ GPU + OLLAMA 構成) + 使用 SaaS (Claude Code / Copilot / Gemini 等) のみで典型 PII (氏名 / 連絡先 / 住所 / financial / credentials / API キー / 写真) ゼロ。GitHub アカウント `@Bonkoturyu` プロフィール程度の独自性、悪用可能性低と評価。ユーザー判断で T8.5 / T8.6 omit + T10 (Public 化) を T8.6 非依存に変更し進行解除。`docs/oss-and-play-release-plan.md` Phase 11.8 セクションのタスク表 / DoD / 検証を打消し線付きで撤回、memory `feedback_filter_branch_github_cache.md` に「コスト・ベネフィット例外」セクション追記 (Privacy team 長期無反応 + 典型 PII ゼロのとき omit する判定手順)。残: **T10 (GitHub Settings → Visibility = Public + Description / Topics 設定)** はユーザ作業 (不可逆)。詳細は [dev-log](docs/dev-log.md)）
+
+過去の更新: 2026-05-17（Phase 11.9 事前検討 §I キックオフ判断 4 件確定 — branch `phase-11.9-prep` の PR #68 に追加 commit。推奨案 A を全件採用: (1) MethodChannel 名 (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) を T0 同 PR で移行 + alarm_ringing_screen.dart のハードコード解消、(2) アイコン素材は monochrome layer も含む 3 層セットで T1 から作成、(3) アプリ名は全 5 言語 `TimerUtility` 統一、(4) サブ PR α/β/γ 3 分割で進行。`phase-11.9-prep-notes.md` §I を「残論点」→「確定事項」に書き換え + BACKLOG.md / tasklist.md 追従。詳細は [dev-log](docs/dev-log.md)）
 
 過去の更新: 2026-05-17（Phase 11.9 事前検討 4 件 (A 依存版数 / B applicationId 影響範囲 grep / C 5 言語アプリ名 / G アイコン仕様) + 実アーティファクト 4 件 (privacy-policy ja/en、play-store-listing、release-signing) を branch `phase-11.9-prep` で先行作成。Phase 11.8 T8.5 GitHub Privacy team 申請返信待ち期間の活用。Phase 11.9 着手前にユーザ判断必要な残論点 4 件 (MethodChannel 名移行を T0 と同 PR にするか / monochrome layer 必須化対応 / アプリ名ローカライズ統一案で良いか / サブ PR α/β/γ 分割案) を `docs/phase-11.9-prep-notes.md` §I に集約。`dart format` / `flutter analyze` / ARB diff チェックすべて緑、doc-only のため `flutter test` は CI 任せ。Phase 11.8 残: **T8.5 返信待ち (2026-05-17 時点で `gh api .../contents/docs/opus-startup-prompt.md?ref=f2e46e3` は 200 OK 継続、cache 削除未処理)** → T8.6 → T10。詳細は [dev-log](docs/dev-log.md)）
 
