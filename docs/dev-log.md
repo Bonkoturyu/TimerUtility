@@ -17,6 +17,102 @@
 
 ---
 
+## Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)
+
+Phase 11.9 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)
+の T0 (applicationId 変更) と事前検討メモ
+[docs/phase-11.9-prep-notes.md](phase-11.9-prep-notes.md) §I.1 (MethodChannel
+名移行) を 1 PR にまとめて実施。事前検討で確定した推奨案 A (T0 と同 PR で
+MethodChannel rename + alarm_ringing_screen ハードコード解消) に従い、Native +
+Dart + live docs を atomic に切替。
+
+branch: `phase-11.9-alpha` (ベース: `phase-11.8-close-out` → Phase 11.8 完全
+クローズ commit を含む)
+
+### 変更内容
+
+#### Native (Kotlin + Gradle)
+
+- Kotlin ディレクトリ移動: `android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/`
+  → `android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/`
+  (`git mv` で rename 検出、旧 `com/` 階層は空のため `rm -rf` で削除)
+- `MainActivity.kt:1` package 宣言を `io.github.bonkoturyu.timer_utility` に
+- `MainActivity.kt:23` `PERMISSION_CHANNEL` 定数を
+  `io.github.bonkoturyu.timer_utility/permission` に
+- `build.gradle.kts:9` `namespace` を `io.github.bonkoturyu.timer_utility` に
+- `build.gradle.kts:25` `applicationId` を同じ値に
+- `AndroidManifest.xml` は **触らず** (`.MainActivity` 相対参照 +
+  `${applicationName}` プレースホルダ + flutter_local_notifications の
+  third-party receiver は変更不要、事前検討メモ §B.1 で確認済)
+
+#### Dart (MethodChannel 名 + refactor)
+
+- `lib/infrastructure/platform/permission_channel.dart:11` `channelName` を新名に、
+  dartdoc も追従
+- `lib/presentation/screens/alarm_ringing_screen.dart:22-24` ハードコード
+  `MethodChannel('com.bonkotu.timer/permission')` を
+  `MethodChannel(PermissionChannel.channelName)` に refactor + import 追加
+  (事前検討メモ §I.1 で確定した「ハードコード解消も同時実施」方針)
+- `lib/infrastructure/permission/permission_handler_adapter.dart:9` dartdoc を新名に
+
+#### Live docs (実装と乖離させたくない docs、事前検討メモ §B.3)
+
+- `README.md` 3 箇所 (L88 Channel 名 / L205 applicationId 説明 / L219 fork
+  ガイド Channel 名 + 推奨案) + Phase 11.9 移行予告ブロック削除 (移行完了したため)
+- `docs/architecture.md:199` Kotlin ディレクトリ図の namespace 部分
+- `docs/android-constraints.md` 2 箇所 (L362 / L421、`replace_all`)
+- `docs/permissions.md:426` Channel 名 (`replace_all`)
+- `docs/platform-channels.md` 約 22 箇所 (ベース名前空間 + 各 Channel 名 +
+  Kotlin path 参照、`replace_all` 2 回で機械的に置換)
+
+### 履歴 docs は据置 (事前検討メモ §B.4)
+
+- `docs/dev-log.md` の Phase 1〜11 実装ログ内の旧 applicationId / Channel 名言及
+- `docs/oss-publishing-notes.md` (L88 / L257) — 監査時点の記述
+- `docs/oss-and-play-release-plan.md` — 移行計画自体で旧/新併記
+- `docs/phase-11.9-prep-notes.md` — Phase 11.9 全件完了時点で削除予定
+- `BACKLOG.md` Phase 6 ヘッダ要約 (歴史記述) + 過去の更新エントリ
+- `tasklist.md` 過去の更新エントリ
+
+### 検証
+
+| 項目 | 結果 |
+| --- | --- |
+| `flutter analyze --fatal-infos` | ✅ No issues found! (9.4s) |
+| `flutter test` | ✅ 642 passed / 1 skipped |
+| `dart run tool/check_translations_doc.dart` | ✅ ARB 171 / Doc 171 aligned |
+| Grep `com\.bonkotu\.timer` (live files) | ✅ hit 0 (履歴 docs のみ残存、§B.4 据置対象) |
+| Grep `com/bonkotu/timer` (Kotlin path) | ✅ hit 0 (`phase-11.9-prep-notes.md` のみ、§B.4 据置) |
+
+### Pixel 6a 実機検証待ち (ユーザ実施、事前検討メモ §B.6)
+
+- [ ] `adb uninstall com.bonkotu.timer.timer_utility` で旧版削除
+  (Drift DB / SharedPreferences は新 ID 下で再生成、テストデータ消える前提)
+- [ ] `flutter run -d <device>` で新 ID build cold start
+- [ ] Phase 6 FullScreenIntent 3 パターン回帰 (Doze / ロック / 通常)
+- [ ] Phase 8.5 follow-up アラーム単音化回帰
+- [ ] 通知 + アラーム + DB 動作確認
+
+実機検証 OK → main マージはユーザ判断。
+
+### 次の着手単位
+
+**Phase 11.9 サブ PR β** (`phase-11.9-beta` 新規 branch):
+
+- T1〜T3: アイコン素材作成 (1024×1024 + adaptive foreground/background +
+  monochrome、事前検討メモ §I.2 で 3 層常時作成方針) + `flutter_launcher_icons`
+  追加 (`^0.14.4`、事前検討メモ §A)
+- T5〜T6: `flutter_native_splash` 追加 (`^2.4.7`) + `flutter pub run
+  flutter_native_splash:create`
+- T4: AndroidManifest `android:label` を `@string/app_name` 参照に +
+  `res/values*/strings.xml` 5 言語作成 (`appTitle` と整合する `TimerUtility`
+  統一、事前検討メモ §I.3)
+- T7: Pixel 6a 実機 4 パターン確認 (cold / warm / light / dark)
+
+`pubspec.yaml` 編集 + `flutter pub add` を含むため、ユーザ確認必須ファイル該当。
+
+---
+
 ## Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)
 
 同日午前に T8.5/T8.6 omit 判断で T10 を unblock した後、ユーザが GitHub Settings

@@ -19,27 +19,23 @@
 
 ## 進行中
 
-- [~] **Phase 11.9 サブ PR α 着手準備完了** (branch `phase-11.9-prep`、2026-05-17〜
-  Phase 11.8 完全クローズ 2026-05-27): Phase 11.8 OSS 公開準備は T1〜T9 PR #67 +
-  T8.5/T8.6 omit PR #69 + T10 (Public 化、ユーザ実施) で完全クローズ
-  (詳細は [docs/dev-log.md](docs/dev-log.md) 「Phase 11.8 完全クローズ — T10
-  (Public 化) 完了 (2026-05-27)」セクション)。Phase 11.9 事前検討フェーズで
-  作成した [docs/phase-11.9-prep-notes.md](docs/phase-11.9-prep-notes.md) と
-  実アーティファクト 4 件 ([docs/privacy-policy.md](docs/privacy-policy.md) /
-  [docs/privacy-policy.en.md](docs/privacy-policy.en.md) /
-  [docs/play-store-listing.md](docs/play-store-listing.md) /
-  [docs/release-signing.md](docs/release-signing.md)) は PR #68 で main マージ済。
-  `phase-11.9-prep-notes.md` §I のキックオフ判断 4 件はユーザ承認済 (推奨案 A
-  をすべて採用: MethodChannel 名 T0 同 PR 移行 / monochrome layer 常時作成 /
-  アプリ名 5 言語 `TimerUtility` 統一 / α・β・γ 3 PR 分割)。
-  **次の着手単位: サブ PR α** (T0 applicationId 変更
-  `com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility` +
-  MethodChannel `com.bonkotu.timer/permission` →
-  `io.github.bonkoturyu.timer_utility/permission` rename + alarm_ringing_screen.dart
-  ハードコード解消 + live docs 追従)。Native (Kotlin / AndroidManifest) +
-  pubspec.yaml + build.gradle.kts の編集を含むため、CLAUDE.md「編集時にユーザー
-  確認が必要なファイル」に該当 → タスク単位で承認 → 編集 → commit の細かい
-  ループで進行
+- [~] **Phase 11.9 サブ PR α 実装完了 (Pixel 6a 実機検証待ち)**
+  (branch `phase-11.9-alpha`、2026-05-27、ベース `phase-11.8-close-out`):
+  T0 applicationId rename (`com.bonkotu.timer.timer_utility` →
+  `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename
+  (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`)
+  および alarm_ringing_screen.dart ハードコード解消
+  (`PermissionChannel.channelName` 定数参照に refactor)、live docs 5 ファイル
+  追従 (README / architecture /
+  android-constraints / permissions / platform-channels)。`flutter analyze
+  --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) /
+  `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、
+  PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility`
+  → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) は
+  ユーザ実施。検証 OK → main マージはユーザ判断 (memory「git の main 反映は PR
+  ごとに明示許可」)。詳細は [docs/dev-log.md](docs/dev-log.md)
+  「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」
+  セクション
 
 ---
 
@@ -67,7 +63,9 @@
 
 ---
 
-最終更新日: 2026-05-27（Phase 11.8 完全クローズ — T10 (GitHub Settings → Visibility = Public + Description + Topics 設定) を本日ユーザ実施で完了し Phase 11.8 を完全クローズ。branch `phase-11.8-close-out` で `docs/dev-log.md` / `docs/oss-and-play-release-plan.md` / BACKLOG.md / tasklist.md の 4 ファイルに完了記録を反映。T10 実施結果: `gh repo view --json` で Visibility=PUBLIC、Description=「Multi-timer / alarm / world-clock for Android 16. Reference implementation of Flutter Clean Architecture + Android alarm constraints handling.」、Topics 9 件 (`alarm` / `android` / `claude-code` / `clean-architecture` / `dart` / `drift` / `flutter` / `riverpod` / `timer`)。`gh api .../community/profile` で `health_percentage: 100`、シークレットウィンドウで Public URL 表示確認済 (ユーザ実施)。Phase 11.8 進行中エントリを削除、Phase 11.9 エントリを「サブ PR α 着手準備完了」状態に更新。次の着手単位: Phase 11.9 サブ PR α (T0 applicationId 変更 + MethodChannel rename + live docs 追従)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)」セクション）
+最終更新日: 2026-05-27（Phase 11.9 サブ PR α 実装完了 — branch `phase-11.9-alpha` (ベース `phase-11.8-close-out`) で T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) + alarm_ringing_screen.dart ハードコード解消 (`PermissionChannel.channelName` 定数参照) + live docs 5 ファイル追従 (README / architecture / android-constraints / permissions / platform-channels) を atomic に切替。`AndroidManifest.xml` は触らず (`.MainActivity` 相対参照 + `${applicationName}` プレースホルダ + flutter_local_notifications の third-party receiver は変更不要、事前検討メモ §B.1 で確認済)。`flutter analyze --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) / `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、grep `com\.bonkotu\.timer` で live files 残存 0 (履歴 docs のみ、§B.4 据置対象)。PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility` → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) はユーザ実施。検証 OK → main マージはユーザ判断。次の着手単位: Phase 11.9 サブ PR β (アイコン素材 + flutter_launcher_icons + flutter_native_splash + strings.xml 5 言語 + Pixel 6a 4 パターン確認)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」セクション）
+
+過去の更新: 2026-05-27（Phase 11.8 完全クローズ — T10 (GitHub Settings → Visibility = Public + Description + Topics 設定) を本日ユーザ実施で完了し Phase 11.8 を完全クローズ。branch `phase-11.8-close-out` で `docs/dev-log.md` / `docs/oss-and-play-release-plan.md` / BACKLOG.md / tasklist.md の 4 ファイルに完了記録を反映。T10 実施結果: `gh repo view --json` で Visibility=PUBLIC、Description=「Multi-timer / alarm / world-clock for Android 16. Reference implementation of Flutter Clean Architecture + Android alarm constraints handling.」、Topics 9 件 (`alarm` / `android` / `claude-code` / `clean-architecture` / `dart` / `drift` / `flutter` / `riverpod` / `timer`)。`gh api .../community/profile` で `health_percentage: 100`、シークレットウィンドウで Public URL 表示確認済 (ユーザ実施)。Phase 11.8 進行中エントリを削除、Phase 11.9 エントリを「サブ PR α 着手準備完了」状態に更新。次の着手単位: Phase 11.9 サブ PR α (T0 applicationId 変更 + MethodChannel rename + live docs 追従)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)」セクション）
 
 過去の更新: 2026-05-27（Phase 11.8 T8.5 / T8.6 omit 決定 — branch `phase-11.8-t10-unblock` で計画文書更新。2026-05-16 に `privacy@github.com` 宛で送信した個人情報削除申請が 11 日経過しても auto-ack / ticket / bounce すべてゼロで処理されている形跡なし。並行して orphan commit `f2e46e3` の `docs/opus-startup-prompt.md` 旧版を `gh api .../contents/...?ref=f2e46e3` で実物確認 → 露出内容は技術スキル列挙 (C/C++/C# 等) + Web/VR/3D ツール列挙 + 自宅 PC 構成 (Ryzen + マルチ GPU + OLLAMA 構成) + 使用 SaaS (Claude Code / Copilot / Gemini 等) のみで典型 PII (氏名 / 連絡先 / 住所 / financial / credentials / API キー / 写真) ゼロ。GitHub アカウント `@Bonkoturyu` プロフィール程度の独自性、悪用可能性低と評価。ユーザー判断で T8.5 / T8.6 omit + T10 (Public 化) を T8.6 非依存に変更し進行解除。`docs/oss-and-play-release-plan.md` Phase 11.8 セクションのタスク表 / DoD / 検証を打消し線付きで撤回、memory `feedback_filter_branch_github_cache.md` に「コスト・ベネフィット例外」セクション追記 (Privacy team 長期無反応 + 典型 PII ゼロのとき omit する判定手順)。残: **T10 (GitHub Settings → Visibility = Public + Description / Topics 設定)** はユーザ作業 (不可逆)。詳細は [dev-log](docs/dev-log.md)）
 

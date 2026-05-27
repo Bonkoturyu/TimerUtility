@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-/// Wraps the `com.bonkotu.timer/permission` MethodChannel.
+/// Wraps the `io.github.bonkoturyu.timer_utility/permission` MethodChannel.
 ///
 /// Used for permissions that `permission_handler` does not cover, currently
 /// `USE_FULL_SCREEN_INTENT`. Channel spec: docs/platform-channels.md
@@ -8,7 +8,8 @@ class PermissionChannel {
   PermissionChannel({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(channelName);
 
-  static const String channelName = 'com.bonkotu.timer/permission';
+  static const String channelName =
+      'io.github.bonkoturyu.timer_utility/permission';
 
   final MethodChannel _channel;
 

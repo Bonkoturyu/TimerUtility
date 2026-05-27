@@ -359,7 +359,7 @@ dependencies {
 ### フルスクリーン Intent（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30）
 - [x] 権限あり: ロック画面上にアラーム画面が出る（MainActivity.onCreate で `setShowWhenLocked(true)` / `setTurnScreenOn(true)` をランタイム呼び出し）
 - [x] 権限なし: ヘッドアップ通知で代替動作（adapter で `canUseFullScreenIntent()` を毎 schedule 検査して `fullScreenIntent` フラグを動的に切り替える）
-- [x] 設定画面誘導が機能する（`com.bonkotu.timer/permission` Channel の `openFullScreenIntentSettings`）
+- [x] 設定画面誘導が機能する（`io.github.bonkoturyu.timer_utility/permission` Channel の `openFullScreenIntentSettings`）
 
 ### Phase 6 実機検証で見つかって修正した問題（再発防止メモ）
 
@@ -418,7 +418,7 @@ dependencies {
   両ライフサイクルからヘルパーを呼ぶ必要がある
 - アラーム発火後に AlarmRingingScreen から離れた後も recents が消えたまま
   → `setShowWhenLocked(true)` は明示的に false に戻さないと残り続ける。
-  `com.bonkotu.timer/permission` Channel に `clearShowWhenLocked` を追加
+  `io.github.bonkoturyu.timer_utility/permission` Channel に `clearShowWhenLocked` を追加
   し、`AlarmRingingScreen._leaveAlarmScreen` から呼んで Stop / Snooze 時に
   確実に解除する
 
