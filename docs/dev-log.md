@@ -17,6 +17,86 @@
 
 ---
 
+## Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)
+
+同日午前に T8.5/T8.6 omit 判断で T10 を unblock した後、ユーザが GitHub Settings
+で T10 (Visibility = Public + Description + Topics 設定) を実施。Phase 11.8 完全
+クローズ。Phase 11.9 サブ PR α (T0 + MethodChannel rename + live docs 追従) 着手
+可能状態に到達。
+
+### T10 実施結果 (gh api スナップショット)
+
+`gh repo view --json visibility,description,repositoryTopics,url,isPrivate` 出力:
+
+| 項目 | 値 |
+| --- | --- |
+| Visibility | **PUBLIC** (`isPrivate: false`) |
+| URL | <https://github.com/Bonkoturyu/TimerUtility> |
+| Description | "Multi-timer / alarm / world-clock for Android 16. Reference implementation of Flutter Clean Architecture + Android alarm constraints handling." |
+| Topics (9 件) | `alarm` / `android` / `claude-code` / `clean-architecture` / `dart` / `drift` / `flutter` / `riverpod` / `timer` |
+
+Description は Phase 11.8 計画書の想定 (Flutter Clean Architecture + Android alarm
+constraints のリファレンス実装) と整合。Topics 9 件は discoverability 向けに
+言語 / プラットフォーム / 機能 / アーキテクチャ / 由来の各カテゴリをカバー。
+
+### 検証結果
+
+| 項目 | 結果 | 確認方法 |
+| --- | --- | --- |
+| Public 化 | ✅ | `gh repo view --json visibility` → `"PUBLIC"` |
+| Community Standards | ✅ **100%** | `gh api repos/Bonkoturyu/TimerUtility/community/profile` → `"health_percentage": 100` |
+| 同梱 community files | ✅ | LICENSE (MIT) / README / CODE_OF_CONDUCT / CONTRIBUTING / PULL_REQUEST_TEMPLATE すべて検出 |
+| シークレットウィンドウで Public URL アクセス | ✅ | ユーザ確認済 (本日、正しく表示確認) |
+| `flutter analyze` / `flutter test` 回帰 | (doc-only のため未実行) | T1〜T9 PR #67 時点で 642 緑 / 1 skipped |
+
+`community/profile` API 上 `issue_template: null` と表示されるが、これは API が
+単一ファイル `.github/ISSUE_TEMPLATE.md` 形式のみを issue_template として認識する
+仕様であり、ディレクトリ形式 `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`
+(PR #67 で配置済) は別経路で OK 判定されるため、health_percentage は 100% に到達。
+GitHub Issues 画面でテンプレート選択 UI が正しく表示されることでも間接確認可能。
+
+### Phase 11.8 全タスク最終状況
+
+| # | タスク | 状態 |
+| --- | --- | --- |
+| T1〜T7 | README 再構成 / community files / pubspec metadata | ✅ PR #67 (2026-05-16) |
+| T8 | 秘密情報 grep + commit author 全件確認 | ✅ PR #67 (hit 0) |
+| T8.5 | GitHub Privacy team メール直送 (orphan commit cache 削除) | ⊘ **omit** (2026-05-27、11 日無反応 + 典型 PII ゼロ確認) |
+| T8.6 | 申請完了後 404 確認 | ⊘ **omit** (T8.5 連動) |
+| T9 | BACKLOG / tasklist / dev-log 反映 | ✅ PR #67 (T1-T8 範囲) + 本コミット (T10 完了反映) |
+| T10 | GitHub Settings → Visibility = Public + Description / Topics | ✅ **完了 (2026-05-27)** |
+
+### 文書更新 (本コミット)
+
+- `docs/dev-log.md` (本ファイル): 本セクションを冒頭に追加
+- `docs/oss-and-play-release-plan.md`: Phase 11.8 ヘッダに「完了 (2026-05-27)」
+  マーカー追加、T10 行に達成内容 (Description / Topics 実値) 注記、DoD 各項目に
+  達成チェック (T8.5/T8.6 omit 関連は前回コミット d18150b で打消し済)
+- `BACKLOG.md`: 進捗サマリの Phase 11.8 行を「完了 (2026-05-27)」に書換、
+  最終更新エントリを T10 完了内容で更新
+- `tasklist.md`: Phase 11.8 進行中エントリを削除 (残作業ゼロ)、Phase 11.9
+  エントリを「Phase 11.8 完了 → サブ PR α 着手可能」状態に更新、最終更新
+  エントリを T10 完了内容で書換
+
+### 次の着手単位
+
+**Phase 11.9 サブ PR α** (`phase-11.9-prep` branch ベースで新規 branch):
+
+- T0: applicationId `com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`
+  への変更 (Native build.gradle.kts + AndroidManifest.xml + MainActivity.kt の
+  package 移動 + Kotlin ディレクトリ移動)
+- 同 PR で MethodChannel 名 `com.bonkotu.timer/permission` →
+  `io.github.bonkoturyu.timer_utility/permission` を rename
+  (alarm_ringing_screen.dart のハードコード解消含む)
+- live docs (CLAUDE.md / docs/platform-channels.md 等で MethodChannel 名 / package
+  名を参照している箇所) を新 ID に追従
+
+Native (Kotlin / AndroidManifest) + pubspec.yaml + build.gradle.kts の編集を
+含むため、CLAUDE.md「編集時にユーザー確認が必要なファイル」に該当。タスク
+単位で承認 → 編集 → commit の細かいループで進行。
+
+---
+
 ## Phase 11.8 T8.5 / T8.6 omit 決定 — Public 化のブロック解除 (2026-05-27)
 
 Phase 11.8 残作業の T8.5 (GitHub Privacy team へのメール直送による orphan commit
