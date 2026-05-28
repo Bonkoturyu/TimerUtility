@@ -19,23 +19,21 @@
 
 ## 進行中
 
-- [~] **Phase 11.9 サブ PR α 実装完了 (Pixel 6a 実機検証待ち)**
-  (branch `phase-11.9-alpha`、2026-05-27、ベース `phase-11.8-close-out`):
+- [~] **Phase 11.9 サブ PR α 実機検証完了 (main merge 待ち)**
+  (branch `phase-11.9-alpha`、2026-05-27 実装 + レビュー対応、2026-05-28 実機検証完了):
   T0 applicationId rename (`com.bonkotu.timer.timer_utility` →
-  `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename
-  (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`)
-  および alarm_ringing_screen.dart ハードコード解消
-  (`PermissionChannel.channelName` 定数参照に refactor)、live docs 5 ファイル
-  追従 (README / architecture /
-  android-constraints / permissions / platform-channels)。`flutter analyze
-  --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) /
-  `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、
-  PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility`
-  → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) は
-  ユーザ実施。検証 OK → main マージはユーザ判断 (memory「git の main 反映は PR
-  ごとに明示許可」)。詳細は [docs/dev-log.md](docs/dev-log.md)
-  「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」
-  セクション
+  `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename + alarm_ringing_screen.dart
+  ハードコード解消 + live docs 5 ファイル追従。**Pixel 6a 8 シナリオすべて OK**
+  (A 新 ID build / B-1〜B-3 FSI 3 パターン + recents 復活 + Doze + Snooze 再鳴動 /
+  C 単音化 / D-1 起動時復元 / D-2 時刻アラーム / D-3 ロック画面アラーム)。
+  **検証で発見した既知問題 (本 PR scope 外、follow-up 化)**:
+  (1) Lock screen FSI cold-launch で二重音 (rename と無関係、Foreground/Home/warm-launch
+  は単音 → Phase 8.5 fix の 500ms delay 不足) → [issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74)、
+  (2) 新規 install 直後に POST_NOTIFICATIONS 初回ダイアログが出ず PermissionBanner
+  も非表示で進んでしまう問題 (将来 follow-up 候補)。
+  残: **main merge はユーザ明示許可後** (memory「PR ごとに明示許可」)。
+  詳細は [docs/dev-log.md](docs/dev-log.md) 「Pixel 6a 実機検証 (2026-05-28、完了)」
+  サブセクション
 
 ---
 

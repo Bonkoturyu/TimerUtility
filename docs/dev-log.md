@@ -84,16 +84,52 @@ branch: `phase-11.9-alpha` (ベース: `phase-11.8-close-out` → Phase 11.8 完
 | Grep `com\.bonkotu\.timer` (live files) | ✅ hit 0 (履歴 docs のみ残存、§B.4 据置対象) |
 | Grep `com/bonkotu/timer` (Kotlin path) | ✅ hit 0 (`phase-11.9-prep-notes.md` のみ、§B.4 据置) |
 
-### Pixel 6a 実機検証待ち (ユーザ実施、事前検討メモ §B.6)
+### Pixel 6a 実機検証 (2026-05-28、完了)
 
-- [ ] `adb uninstall com.bonkotu.timer.timer_utility` で旧版削除
-  (Drift DB / SharedPreferences は新 ID 下で再生成、テストデータ消える前提)
-- [ ] `flutter run -d <device>` で新 ID build cold start
-- [ ] Phase 6 FullScreenIntent 3 パターン回帰 (Doze / ロック / 通常)
-- [ ] Phase 8.5 follow-up アラーム単音化回帰
-- [ ] 通知 + アラーム + DB 動作確認
+事前検討メモ §B.6 に従って 8 シナリオ実機検証。
 
-実機検証 OK → main マージはユーザ判断。
+| Phase | 結果 | 備考 |
+| --- | --- | --- |
+| A. 新 ID build + cold start | ✅ OK | `adb uninstall` 旧 ID → `flutter run` で新 ID build → HomeScreen 4 タブ表示 + 新規 DB / SharedPreferences 再生成確認 |
+| B-1. 通常 FSI (画面 ON、unlock) | ✅ OK | 30 秒タイマー → 通知 + バイブ + AlarmRingingScreen + Stop / Snooze 動作 |
+| B-2. ロック画面 FSI + recents 復活 | ✅ OK | 画面自動 ON + ロック画面上に AlarmRingingScreen + Stop 後の recents (■) ボタン復活 (MethodChannel `io.github.bonkoturyu.timer_utility/permission` の `clearShowWhenLocked` 正常動作確認) |
+| B-3. Doze + Snooze 再鳴動 | ✅ OK | Doze 中 FSI 発火 + Snooze 3 分後の再鳴動も予約通り |
+| C. アラーム単音化 (Foreground / Home) | ✅ OK | 連発スヌーズで前面 / Home 経路は単音化維持 |
+| D-1. 起動時復元 | ✅ OK | 3 件タイマー → kill → 再起動で全件復元 |
+| D-2. 時刻アラーム + Snooze | ✅ OK | Once アラーム + Snooze 5 分 + enabled=false 化 |
+| D-3. ロック画面アラーム | ✅ OK | ロック画面上に表示 + Stop / Snooze 動作 |
+
+### 検証で発見した既知問題 (本 PR scope 外、follow-up 化)
+
+**Lock screen FSI cold-launch 経路で二重音発生** (B-2 / B-3 最初の鳴動 / D-3 で再現):
+
+- アプリ kill 状態から FSI cold-launch すると、Notification Channel sound と
+  AlarmSoundPlayer が同時鳴動
+- Snooze 後の warm-launch (アプリ process 生存) では単音化される (B-3 観察)
+- applicationId rename とは無関係 (rename 起因なら全 case で再現するはず、
+  Foreground / Home / Snooze 後 warm-launch は単音)
+- 原因仮説: Phase 8.5 fix
+  ([alarm_ringing_notifier.dart L122-L124](../lib/application/alarm_ringing_notifier.dart#L122-L124))
+  の 500ms delay が Pixel / Android 16 の現在挙動では不足
+- **follow-up [issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74)**
+  で別 PR 対応 (推奨案: `getNotificationAppLaunchDetails()` で cold-launch を判定
+  → そのとき限定で delay を 1500-2000ms に伸ばす)
+
+### 検証時の permission 落とし穴 (バナー不表示問題)
+
+A-3 初期状態確認時に **新規 install 直後で POST_NOTIFICATIONS 要求ダイアログが出ず、
+PermissionBanner `[重要] 通知許可` も非表示** で進んでしまい、B-2 で「通知も音も
+画面 ON も何も起きない」状態に陥った。`adb shell appops get` で確認すると:
+
+- `POST_NOTIFICATION: ignore` (1 回拒否 = permanent deny 相当)
+- `USE_FULL_SCREEN_INTENT: default; rejectTime=+5m ago` (OS が reject 記録あり)
+
+`adb shell appops set ... allow` + `adb shell pm grant ... POST_NOTIFICATIONS` で
+一括 grant して検証続行。permission flow の初回ダイアログ発火 + Banner 表示が
+新規 install で動作していない別問題は本 PR scope 外として記録 (将来 follow-up
+issue 候補)。
+
+実機検証 OK + 既知問題は follow-up issue 化済 → main マージ可能状態。
 
 ### 次の着手単位
 
