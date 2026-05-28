@@ -373,19 +373,16 @@ Future<void> main() async {
   // `onNotificationTap` が発火しないので、プラグインに直接問い合わせて
   // 初期ロケーションを `/alarm-ringing?payload=...` に切り替える。
   //
-  // Issue #74 fix (2026-05-28): cold-launch 経路には `cold=1` も載せて
-  // `AlarmRingingScreen` 経由で `AlarmRingingNotifier.start(isColdLaunch:
-  // true)` に伝達する。Lock screen FSI cold-launch では OS Channel
-  // sound 解放まで 500 ms では足りず、audioplayers と二重音になる。
-  // warm-launch (push) 経路は既存どおり `cold=0` 相当 (= 既定 500 ms)。
+  // Issue #74 fix (2026-05-28、案 A 補正): cold/warm-launch 判定では
+  // 不十分 (warm-launch FSI snooze 再鳴動も Lock 画面状態なら二重音発生)
+  // → `AlarmRingingNotifier.start` 内部で
+  // `KeyguardManager.isKeyguardLocked()` を Native から読んで delay 分岐
+  // する設計に変更。main.dart は経路情報を伝達しない (cold=1 クエリ廃止)。
   final String? coldLaunchPayload = await adapter.coldLaunchPayload();
   final String initialLocation = coldLaunchPayload != null
       ? Uri(
           path: '/alarm-ringing',
-          queryParameters: <String, String>{
-            'payload': coldLaunchPayload,
-            'cold': '1',
-          },
+          queryParameters: <String, String>{'payload': coldLaunchPayload},
         ).toString()
       : '/';
 
@@ -410,10 +407,7 @@ Future<void> main() async {
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
-            AlarmRingingScreen(
-              payload: state.uri.queryParameters['payload'],
-              coldLaunch: state.uri.queryParameters['cold'] == '1',
-            ),
+            AlarmRingingScreen(payload: state.uri.queryParameters['payload']),
       ),
       GoRoute(
         path: '/presets',

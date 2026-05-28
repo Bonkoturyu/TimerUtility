@@ -7,8 +7,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/screen_lock_query_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 
@@ -41,8 +43,19 @@ class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
 
+/// Stub [ScreenLockQuery] for tests. Issue #74 fix: `AlarmRingingNotifier.start`
+/// reads this to pick the cancel→play delay (500 ms unlocked / 1800 ms locked).
+class _StubScreenLockQuery implements ScreenLockQuery {
+  _StubScreenLockQuery({this.locked = false});
+
+  final bool locked;
+
+  @override
+  Future<bool> isScreenLocked() async => locked;
+}
+
 ({ProviderContainer container, _MockNotificationScheduler scheduler})
-_container(_StubAlarmSoundPlayer player) {
+_container(_StubAlarmSoundPlayer player, {bool screenLocked = false}) {
   final scheduler = _MockNotificationScheduler();
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
   when(() => scheduler.cancelAll()).thenAnswer((_) async {});
@@ -61,6 +74,9 @@ _container(_StubAlarmSoundPlayer player) {
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       notificationSchedulerProvider.overrideWithValue(scheduler),
+      screenLockQueryProvider.overrideWithValue(
+        _StubScreenLockQuery(locked: screenLocked),
+      ),
     ],
   );
   addTearDown(c.dispose);
@@ -142,10 +158,10 @@ void main() {
     });
 
     test(
-      'default path: cancel→play delay is ~500ms (Phase 8.5 sweet spot)',
+      'unlocked path: cancel→play delay is ~500ms (Phase 8.5 sweet spot)',
       () {
-        // foreground / Home / warm-launch FSI 経路を想定 (isColdLaunch
-        // 既定 = false)。500 ms 経過直後に audioplayers.play() が走る。
+        // foreground / Home (unlock 済) を想定。
+        // ScreenLockQuery.isScreenLocked() = false → 500 ms 経過で play。
         fakeAsync((FakeAsync async) {
           final player = _StubAlarmSoundPlayer();
           final h = _container(player);
@@ -154,12 +170,13 @@ void main() {
             h.container
                 .read(alarmRingingNotifierProvider.notifier)
                 .start(
-                  timerId: 't-default',
+                  timerId: 't-unlocked',
                   sound: AlarmSoundCatalog.defaultSound,
                   notificationId: 100,
                 ),
           );
-          // cancel() 完了 → 500 ms 待機開始までの microtask を流す。
+          // cancel() + isScreenLocked() 完了 → 500 ms 待機開始までの
+          // microtask を流す。
           async.flushMicrotasks();
           expect(player.playCalls, 0, reason: 'play は delay 中はまだ走らない');
 
@@ -176,46 +193,49 @@ void main() {
       },
     );
 
-    test('cold-launch path: cancel→play delay is ~1800ms (Issue #74 fix)', () {
-      // Lock screen FSI cold-launch を想定。500 ms ではまだ OS Channel
-      // sound が release されないため、1800 ms に伸ばす。
-      fakeAsync((FakeAsync async) {
-        final player = _StubAlarmSoundPlayer();
-        final h = _container(player);
+    test(
+      'locked path: cancel→play delay is ~1800ms (Issue #74 fix, lock-screen)',
+      () {
+        // Lock 画面表示中 (cold-launch FSI / warm-launch FSI snooze 再鳴動
+        // など) を想定。ScreenLockQuery.isScreenLocked() = true →
+        // 1800 ms 経過で play。
+        fakeAsync((FakeAsync async) {
+          final player = _StubAlarmSoundPlayer();
+          final h = _container(player, screenLocked: true);
 
-        unawaited(
-          h.container
-              .read(alarmRingingNotifierProvider.notifier)
-              .start(
-                timerId: 't-cold',
-                sound: AlarmSoundCatalog.defaultSound,
-                notificationId: 101,
-                isColdLaunch: true,
-              ),
-        );
-        async.flushMicrotasks();
-        expect(player.playCalls, 0);
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .start(
+                  timerId: 't-locked',
+                  sound: AlarmSoundCatalog.defaultSound,
+                  notificationId: 101,
+                ),
+          );
+          async.flushMicrotasks();
+          expect(player.playCalls, 0);
 
-        // 500 ms 経過時点ではまだ play されない (既定 delay より長い)。
-        async.elapse(const Duration(milliseconds: 500));
-        async.flushMicrotasks();
-        expect(
-          player.playCalls,
-          0,
-          reason: 'cold-launch では 500 ms では足りない (二重音 fix)',
-        );
+          // 500 ms 経過時点ではまだ play されない (既定 delay より長い)。
+          async.elapse(const Duration(milliseconds: 500));
+          async.flushMicrotasks();
+          expect(
+            player.playCalls,
+            0,
+            reason: 'Lock 画面では 500 ms では足りない (二重音 fix)',
+          );
 
-        // 1799 ms ではまだ。
-        async.elapse(const Duration(milliseconds: 1299));
-        async.flushMicrotasks();
-        expect(player.playCalls, 0);
+          // 1799 ms ではまだ。
+          async.elapse(const Duration(milliseconds: 1299));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0);
 
-        // 1800 ms 経過で play()。
-        async.elapse(const Duration(milliseconds: 1));
-        async.flushMicrotasks();
-        expect(player.playCalls, 1);
-      });
-    });
+          // 1800 ms 経過で play()。
+          async.elapse(const Duration(milliseconds: 1));
+          async.flushMicrotasks();
+          expect(player.playCalls, 1);
+        });
+      },
+    );
 
     test('snoozeRequested flips the flag and stops audio', () async {
       final player = _StubAlarmSoundPlayer();

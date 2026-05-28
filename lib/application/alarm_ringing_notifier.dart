@@ -9,6 +9,7 @@ import 'alarm_sound_player_provider.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
+import 'screen_lock_query_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
@@ -77,16 +78,18 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// 省略時は `AlarmSource.timer` (Phase 8 までの既存挙動を維持し、
   /// 既存呼び出し側 / テストとの後方互換を保つ)。
   ///
-  /// Issue #74 fix (2026-05-28): [isColdLaunch] = true のときは
-  /// Channel sound 釈放までの delay を伸ばす ([_coldLaunchCancelDelay])。
-  /// Lock screen FSI cold-launch では OS の alarm-stream tone 解放まで
-  /// 既定の 500 ms では足りず、audioplayers と重なって二重音になる。
+  /// Issue #74 fix (2026-05-28、Pixel 6a 4 シナリオ検証で補正):
+  /// cancel→play 間の delay は `screenLockQueryProvider` で「keyguard が
+  /// 上がっているか」を判定して切り替える。上がっていれば
+  /// [_lockedScreenCancelDelay] = 1800 ms、それ以外は
+  /// [_defaultCancelDelay] = 500 ms。Pixel / Android 16 では Lock 画面
+  /// 表示中 (cold-launch / warm-launch 問わず) のみ OS の alarm-stream
+  /// tone 解放が遅く、audioplayers と重なって二重音になるため。
   Future<void> start({
     required String timerId,
     required AlarmSound sound,
     required int notificationId,
     AlarmSource source = AlarmSource.timer,
-    bool isColdLaunch = false,
   }) async {
     // Idempotent: AlarmRingingScreen self-bootstraps on mount, and
     // TimerNotifier._onTick also calls start when the foreground ticker
@@ -122,30 +125,35 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // lifecycle for a few seconds), then start the audioplayers loop.
     // Without the delay the user hears a double tone on the snooze-fired
     // / heads-up-tap paths (#2 verification, 2026-05-02). 500 ms is the
-    // empirical sweet spot — long enough for the OS tone to drop, short
-    // enough that the foreground path (where cancel is a no-op) is not
-    // perceptibly slower.
+    // empirical sweet spot for the unlocked path — long enough for the
+    // OS tone to drop, short enough that the foreground path (where
+    // cancel is a no-op) is not perceptibly slower.
     //
-    // Issue #74 (2026-05-28): Lock screen FSI cold-launch 経路では 500 ms
-    // が不足し OS tone がまだ鳴っている状態で audioplayers が重なる
-    // (Pixel 6a 実機、Phase 11.9 サブ PR α B-2 検証で発覚)。warm-launch
-    // FSI (Snooze 再鳴動) / foreground / Home 経路は 500 ms で問題なし
-    // (B-3 検証)。cold-launch のみ [_coldLaunchCancelDelay] = 1800 ms に
-    // 伸ばす。
+    // Issue #74 (2026-05-28、Pixel 6a 4 シナリオ検証で補正): Lock 画面
+    // 表示中の経路 (cold-launch FSI / warm-launch FSI snooze 再鳴動など)
+    // では OS の alarm-stream tone 解放が遅く、500 ms では audioplayers
+    // と重なって二重音になる。`KeyguardManager.isKeyguardLocked()` を
+    // Native MethodChannel 経由で読み、ロック中のみ
+    // [_lockedScreenCancelDelay] = 1800 ms に伸ばす。foreground / Home
+    // (unlock 済) は [_defaultCancelDelay] = 500 ms 据置 (体感遅延なし)。
     await ref.read(notificationSchedulerProvider).cancel(notificationId);
+    final bool isLocked = await ref
+        .read(screenLockQueryProvider)
+        .isScreenLocked();
     await Future<void>.delayed(
-      isColdLaunch ? _coldLaunchCancelDelay : _defaultCancelDelay,
+      isLocked ? _lockedScreenCancelDelay : _defaultCancelDelay,
     );
     await ref.read(alarmSoundPlayerProvider).play(sound);
   }
 
-  /// Foreground / Home / warm-launch FSI 経路で OS Channel sound が
-  /// release されるまでの empirical delay (Phase 8.5、2026-05-02)。
+  /// Foreground / Home (unlock 済) で OS Channel sound が release される
+  /// までの empirical delay (Phase 8.5、2026-05-02)。
   static const Duration _defaultCancelDelay = Duration(milliseconds: 500);
 
-  /// Lock screen FSI cold-launch 経路で OS Channel sound が release
-  /// されるまでの empirical delay (Issue #74、2026-05-28)。
-  static const Duration _coldLaunchCancelDelay = Duration(milliseconds: 1800);
+  /// Lock 画面表示中 (cold-launch FSI / warm-launch FSI snooze 再鳴動)
+  /// で OS Channel sound が release されるまでの empirical delay
+  /// (Issue #74、2026-05-28)。
+  static const Duration _lockedScreenCancelDelay = Duration(milliseconds: 1800);
 
   /// Stop the ringing alarm and reset state to idle.
   Future<void> stop() async {

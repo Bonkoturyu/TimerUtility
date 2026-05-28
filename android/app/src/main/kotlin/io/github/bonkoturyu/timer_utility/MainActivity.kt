@@ -73,6 +73,7 @@ class MainActivity : FlutterActivity() {
                         clearShowWhenLockedInternal()
                         result.success(null)
                     }
+                    "isScreenLocked" -> result.success(isScreenLockedInternal())
                     else -> result.notImplemented()
                 }
             }
@@ -90,6 +91,23 @@ class MainActivity : FlutterActivity() {
             setShowWhenLocked(false)
             setTurnScreenOn(false)
         }
+    }
+
+    /**
+     * Returns true when the device is currently showing the keyguard
+     * (lock screen), regardless of whether it is secure. Used by the
+     * Dart side to pick the cancel→play delay when the alarm starts
+     * ringing — Pixel / Android 16 releases the alarm-stream tone of a
+     * channel-bundled notification more slowly while the keyguard is up,
+     * so the longer delay only fires on those paths and the foreground /
+     * unlocked-home paths stay snappy. See Issue #74.
+     *
+     * `KeyguardManager.isKeyguardLocked()` is available since API 16, so
+     * no SDK_INT gate is needed.
+     */
+    private fun isScreenLockedInternal(): Boolean {
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        return km.isKeyguardLocked
     }
 
     /**

@@ -19,18 +19,24 @@
 
 ## 進行中
 
-- [~] **Issue #74 fix — Lock screen FSI cold-launch 二重音**
-  (branch `fix/issue-74-fsi-cold-launch-double-sound`、2026-05-28 実装完了):
-  Phase 11.9 サブ PR α の B-2/B-3/D-3 検証で発覚した cold-launch 限定二重音を
-  fix。`AlarmRingingNotifier.start()` に `isColdLaunch` param 追加、cold-launch
-  経路のみ cancel→play の delay を 500ms → 1800ms に伸ばす。判定は
-  `main.dart` の `coldLaunchPayload != null` 経路に `cold=1` クエリを追加して
-  `AlarmRingingScreen.coldLaunch` → `start(isColdLaunch:)` に伝播。warm-launch /
-  foreground / Home は 500ms 据置 (体感遅延ゼロ)。`flutter analyze` 0 issues /
-  `flutter test` 646 passed (1 skipped)。残: **Pixel 6a 実機検証 3 経路
-  (foreground / Home / Lock screen FSI cold-launch)** はユーザ実施。検証 OK →
-  main merge はユーザ判断。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue
-  #74 fix — Lock screen FSI cold-launch 二重音」セクション
+- [~] **Issue #74 fix — Lock 画面表示中の FSI 二重音**
+  (branch `fix/issue-74-fsi-cold-launch-double-sound`、2026-05-28 実装完了、
+  Pixel 6a 4 シナリオ検証で原因仮説 2 段階補正): Phase 11.9 サブ PR α の
+  B-2/B-3/D-3 で発覚した二重音は当初「cold-launch FSI 限定」と推定したが
+  (中間 commit `9aba774`)、シナリオ 4 (warm-launch FSI Snooze 再鳴動 + Lock
+  画面) でも二重音再現が確認されたため、判定軸を **「Lock 画面表示中か」**
+  に補正 (Issue#74 案 A 採用)。`MainActivity.kt` の PERMISSION_CHANNEL に
+  `isScreenLocked` MethodChannel handler 追加 (`KeyguardManager.isKeyguardLocked()`)、
+  `ScreenLockQuery` Domain port + `MethodChannelScreenLockQuery` adapter +
+  `screenLockQueryProvider` 新規追加、`AlarmRingingNotifier.start()` 内部で
+  Provider 経由で読んで delay 分岐 (unlock 500ms / Lock 画面 1800ms)。中間
+  commit の `isColdLaunch` / `cold=1` クエリ / `coldLaunch` field は revert。
+  `flutter analyze` 0 issues / `flutter test` 651 passed (1 skipped)。残:
+  **Pixel 6a 実機 4 シナリオ再検証 (foreground / Home / Lock cold-launch /
+  Lock warm-launch Snooze 再鳴動)** はユーザ実施。検証 OK → main merge は
+  ユーザ判断。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue #74 fix —
+  Lock 画面表示中の FSI 二重音」セクション + [docs/platform-channels.md](docs/platform-channels.md)
+  `isScreenLocked` 仕様
 
 - [~] **Phase 11.9 サブ PR α 実機検証完了 (main merge 待ち)**
   (branch `phase-11.9-alpha`、2026-05-27 実装 + レビュー対応、2026-05-28 実機検証完了):
