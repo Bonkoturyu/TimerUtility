@@ -17,6 +17,101 @@
 
 ---
 
+## Issue #74 fix — Lock screen FSI cold-launch 二重音 (2026-05-28)
+
+Phase 11.9 サブ PR α (PR #72) の Pixel 6a 実機検証 B-2 / B-3 / D-3 で
+発覚した「Lock screen FSI cold-launch 経路でアラーム二重音」(本ドキュメント
+[Phase 11.9 サブ PR α 検証セクション](#検証で発見した既知問題-本-pr-scope-外follow-up-化))
+を [issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74) として
+follow-up 化、本 PR で fix。
+
+branch: `fix/issue-74-fsi-cold-launch-double-sound` (ベース: `main`)
+
+### 原因の絞り込み
+
+Issue#74 コメント追補 (2026-05-28) で「warm-launch FSI (Snooze 後の再鳴動、
+アプリ process 生存) は単音化されるが、cold-launch FSI (アプリ kill 状態
+からの初回鳴動) のみ二重音」と確認:
+
+| 経路 | Phase 8.5 fix 500 ms delay |
+| --- | --- |
+| foreground / Home (background) | ✅ 単音 |
+| warm-launch FSI (Snooze 再鳴動、tick path が cancel を間に合わせる) | ✅ 単音 |
+| **Lock screen FSI cold-launch** | ❌ **二重音** |
+
+→ Pixel / Android 16 では cold-launch 経路だけ OS の alarm-stream tone
+release が遅く、500 ms では audioplayers と重なる。warm-launch は tick path
+の事前 cancel が間に合うため単音化されている。
+
+### 採用方針 (Issue#74 案 B を絞り込み)
+
+Issue#74 案 B「`isFromFsi` で経路判別」を **cold-launch 限定** に絞り込む。
+判定シグナルは既存資産を流用:
+
+- [flutter_local_notification_adapter.dart](../lib/infrastructure/notification/flutter_local_notification_adapter.dart#L314-L321)
+  の `coldLaunchPayload()` が `getNotificationAppLaunchDetails()` で
+  cold-launch を判定済 (Phase 6c)
+- [main.dart](../lib/main.dart#L375-L384) は `coldLaunchPayload != null` で
+  `initialLocation: /alarm-ringing?payload=...` を組み立てているので、
+  ここに `cold=1` クエリを追加するだけで `AlarmRingingScreen` に伝わる
+
+案 A (一律 delay 増) を採らない理由: foreground / Home / warm-launch では
+500 ms で十分なので、不要な 1.3 秒の体感遅延を全経路に押し付ける必要は
+ない。案 C (Channel sound + AlarmSoundPlayer 統一の根本再設計) は影響範囲
+が大きく、Phase 11.9 β/γ のスケジュールを圧迫するため見送り。
+
+### 変更内容
+
+#### Dart
+
+- [lib/application/alarm_ringing_notifier.dart](../lib/application/alarm_ringing_notifier.dart)
+  - `start()` に `bool isColdLaunch = false` パラメータ追加
+  - `_defaultCancelDelay = 500 ms` (Phase 8.5 既定) /
+    `_coldLaunchCancelDelay = 1800 ms` (Issue#74 新規) を定数化
+  - cancel → delay → play の delay を `isColdLaunch ? coldLaunch : default` で分岐
+  - 経緯コメントに Phase 8.5 sweet spot + Issue#74 cold-launch 例外を併記
+- [lib/main.dart](../lib/main.dart)
+  - cold-launch 経路の `initialLocation` クエリに `'cold': '1'` を追加
+  - `/alarm-ringing` GoRoute で `state.uri.queryParameters['cold'] == '1'` を
+    `AlarmRingingScreen.coldLaunch` に渡す
+- [lib/presentation/screens/alarm_ringing_screen.dart](../lib/presentation/screens/alarm_ringing_screen.dart)
+  - `coldLaunch: bool = false` field 追加 (既定 false で後方互換)
+  - `_bootstrapTimer` / `_bootstrapAlarm` の `start()` 呼び出しに
+    `isColdLaunch: widget.coldLaunch` を伝播
+
+#### Test
+
+- [test/application/alarm_ringing_notifier_test.dart](../test/application/alarm_ringing_notifier_test.dart)
+  - `default path: cancel→play delay is ~500ms` (既定経路の retention テスト、
+    fake_async で 499 ms / 500 ms 境界を確認)
+  - `cold-launch path: cancel→play delay is ~1800ms` (Issue#74 fix の動作確認、
+    fake_async で 500 ms / 1799 ms / 1800 ms 境界を確認)
+- [test/presentation/screens/alarm_ringing_screen_test.dart](../test/presentation/screens/alarm_ringing_screen_test.dart)
+  - `_harness` に `coldLaunch: bool` param 追加
+  - `coldLaunch=true defers play until ~1800ms` (Screen → Notifier への
+    伝播を間接確認、600 ms 時点で playCalls=0、1900 ms 時点で playCalls=1)
+  - `coldLaunch=false (default) plays at ~500ms` (既存経路リグレッション防止)
+
+### 検証
+
+| 項目 | 結果 |
+| --- | --- |
+| `flutter analyze --fatal-infos` | 0 issues |
+| `flutter test` | 646 passed (1 skipped) — Phase 11.9 α 時点 642 + 新規 4 件 |
+| `dart format` (本 PR の編集ファイル 5 件) | 適用済 |
+
+### 残: Pixel 6a 実機検証
+
+ユーザ実施 (Plan 段階で「PR 出した後にユーザ検証して merge 判断」確定):
+
+1. Foreground / Home (background) — 単音 + delay 体感なし (500 ms 据置)
+2. **Lock screen FSI cold-launch** — **単音** (1800 ms delay 適用)
+3. warm-launch FSI (Snooze 再鳴動、アプリ process 生存) — 単音 + delay 体感なし
+
+検証 OK → main マージはユーザ判断。
+
+---
+
 ## Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)
 
 Phase 11.9 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)

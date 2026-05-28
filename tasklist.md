@@ -19,6 +19,19 @@
 
 ## 進行中
 
+- [~] **Issue #74 fix — Lock screen FSI cold-launch 二重音**
+  (branch `fix/issue-74-fsi-cold-launch-double-sound`、2026-05-28 実装完了):
+  Phase 11.9 サブ PR α の B-2/B-3/D-3 検証で発覚した cold-launch 限定二重音を
+  fix。`AlarmRingingNotifier.start()` に `isColdLaunch` param 追加、cold-launch
+  経路のみ cancel→play の delay を 500ms → 1800ms に伸ばす。判定は
+  `main.dart` の `coldLaunchPayload != null` 経路に `cold=1` クエリを追加して
+  `AlarmRingingScreen.coldLaunch` → `start(isColdLaunch:)` に伝播。warm-launch /
+  foreground / Home は 500ms 据置 (体感遅延ゼロ)。`flutter analyze` 0 issues /
+  `flutter test` 646 passed (1 skipped)。残: **Pixel 6a 実機検証 3 経路
+  (foreground / Home / Lock screen FSI cold-launch)** はユーザ実施。検証 OK →
+  main merge はユーザ判断。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue
+  #74 fix — Lock screen FSI cold-launch 二重音」セクション
+
 - [~] **Phase 11.9 サブ PR α 実機検証完了 (main merge 待ち)**
   (branch `phase-11.9-alpha`、2026-05-27 実装 + レビュー対応、2026-05-28 実機検証完了):
   T0 applicationId rename (`com.bonkotu.timer.timer_utility` →

@@ -100,6 +100,7 @@ Widget _harness(
   _StubAlarmSoundPlayer player, {
   DateTime? now,
   TimerEntity? seedRinging,
+  bool coldLaunch = false,
 }) {
   final NotificationScheduler scheduler = _stubScheduler();
   final _InMemoryTimerRepository repo = _InMemoryTimerRepository();
@@ -123,7 +124,7 @@ Widget _harness(
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
-            const AlarmRingingScreen(),
+            AlarmRingingScreen(coldLaunch: coldLaunch),
       ),
     ],
   );
@@ -346,6 +347,47 @@ void main() {
         expect(entity.endAt, isNotNull);
         expect(find.text('home-stub'), findsOneWidget);
         expect(find.byType(AlarmRingingScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'coldLaunch=true defers play until ~1800ms (Issue #74 cold-launch fix)',
+      (WidgetTester tester) async {
+        // Lock screen FSI cold-launch シナリオ。`AlarmRingingScreen` が
+        // `coldLaunch: true` で構築されたとき、`AlarmRingingNotifier.start`
+        // に `isColdLaunch: true` が伝播し、cancel → play の delay が
+        // 既定 500 ms ではなく 1800 ms に伸びることを間接的に検証する。
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player, coldLaunch: true));
+        await tester.pumpAndSettle();
+
+        // 600 ms 経過時点では既定経路なら play 済だが、cold-launch なら
+        // まだ delay 中なので playCalls == 0。
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(
+          player.playCalls,
+          0,
+          reason: 'cold-launch 経路では 500 ms 後もまだ delay 中',
+        );
+
+        // 合計 1800 ms 経過させる (600 + 1300 = 1900 ms)。play 完了。
+        await tester.pump(const Duration(milliseconds: 1300));
+        expect(player.playCalls, 1);
+      },
+    );
+
+    testWidgets(
+      'coldLaunch=false (default) plays at ~500ms (Phase 8.5 fast path)',
+      (WidgetTester tester) async {
+        // foreground / Home / warm-launch FSI 経路を想定。既定の 500 ms
+        // delay で play されることを確認 (cold-launch fix のリグレッション
+        // 防止)。
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player));
+        await tester.pumpAndSettle();
+
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(player.playCalls, 1);
       },
     );
 

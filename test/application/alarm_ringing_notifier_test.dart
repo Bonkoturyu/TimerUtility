@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -136,6 +139,82 @@ void main() {
       expect(state.currentSoundId, isNull);
       expect(state.snoozeRequested, isFalse);
       expect(player.stopCalls, 1);
+    });
+
+    test(
+      'default path: cancel→play delay is ~500ms (Phase 8.5 sweet spot)',
+      () {
+        // foreground / Home / warm-launch FSI 経路を想定 (isColdLaunch
+        // 既定 = false)。500 ms 経過直後に audioplayers.play() が走る。
+        fakeAsync((FakeAsync async) {
+          final player = _StubAlarmSoundPlayer();
+          final h = _container(player);
+
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .start(
+                  timerId: 't-default',
+                  sound: AlarmSoundCatalog.defaultSound,
+                  notificationId: 100,
+                ),
+          );
+          // cancel() 完了 → 500 ms 待機開始までの microtask を流す。
+          async.flushMicrotasks();
+          expect(player.playCalls, 0, reason: 'play は delay 中はまだ走らない');
+
+          // 499 ms ではまだ play されない。
+          async.elapse(const Duration(milliseconds: 499));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0);
+
+          // 残り 1 ms 進めて 500 ms 経過。play() が走る。
+          async.elapse(const Duration(milliseconds: 1));
+          async.flushMicrotasks();
+          expect(player.playCalls, 1);
+        });
+      },
+    );
+
+    test('cold-launch path: cancel→play delay is ~1800ms (Issue #74 fix)', () {
+      // Lock screen FSI cold-launch を想定。500 ms ではまだ OS Channel
+      // sound が release されないため、1800 ms に伸ばす。
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final h = _container(player);
+
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 't-cold',
+                sound: AlarmSoundCatalog.defaultSound,
+                notificationId: 101,
+                isColdLaunch: true,
+              ),
+        );
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
+
+        // 500 ms 経過時点ではまだ play されない (既定 delay より長い)。
+        async.elapse(const Duration(milliseconds: 500));
+        async.flushMicrotasks();
+        expect(
+          player.playCalls,
+          0,
+          reason: 'cold-launch では 500 ms では足りない (二重音 fix)',
+        );
+
+        // 1799 ms ではまだ。
+        async.elapse(const Duration(milliseconds: 1299));
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
+
+        // 1800 ms 経過で play()。
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(player.playCalls, 1);
+      });
     });
 
     test('snoozeRequested flips the flag and stops audio', () async {

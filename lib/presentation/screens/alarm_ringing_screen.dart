@@ -38,7 +38,7 @@ const MethodChannel _permissionChannel = MethodChannel(
 /// audio with a synthetic 'unknown' id so the user is never met with
 /// silence on this screen.
 class AlarmRingingScreen extends ConsumerStatefulWidget {
-  const AlarmRingingScreen({super.key, this.payload});
+  const AlarmRingingScreen({super.key, this.payload, this.coldLaunch = false});
 
   /// 通知タップ時の payload (ADR 0005 で定めた `timer:<id>` /
   /// `alarm:<id>` 形式)。warm-launch / cold-launch 共に
@@ -46,6 +46,16 @@ class AlarmRingingScreen extends ConsumerStatefulWidget {
   /// `null` の場合は app 内 ringing listener 経由 (既存の Timer
   /// path) として扱う。
   final String? payload;
+
+  /// Issue #74 fix (2026-05-28): cold-launch FSI 経路かどうか。
+  /// `main.dart` が `getNotificationAppLaunchDetails` の結果を見て
+  /// `queryParameters['cold']` に `'1'` を載せたときだけ true。
+  /// `AlarmRingingNotifier.start(isColdLaunch:)` に伝播し、cancel →
+  /// play 間の delay を 500 ms → 1800 ms に伸ばす (OS Channel sound
+  /// の release が cold-launch 経路で遅れる Pixel / Android 16 挙動の
+  /// 補正)。warm-launch (`onNotificationTap` 経由 push) / foreground
+  /// / Home は既定 (false) で 500 ms 据置。
+  final bool coldLaunch;
 
   @override
   ConsumerState<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
@@ -148,6 +158,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
           sound: sound,
           notificationId: notificationId,
           source: AlarmSource.timer,
+          isColdLaunch: widget.coldLaunch,
         );
   }
 
@@ -186,6 +197,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
           sound: sound,
           notificationId: notificationId,
           source: AlarmSource.alarm,
+          isColdLaunch: widget.coldLaunch,
         );
   }
 

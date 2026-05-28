@@ -372,11 +372,20 @@ Future<void> main() async {
   // Cold-launch path: プロセスが死んでいた状態で通知をタップされた場合は
   // `onNotificationTap` が発火しないので、プラグインに直接問い合わせて
   // 初期ロケーションを `/alarm-ringing?payload=...` に切り替える。
+  //
+  // Issue #74 fix (2026-05-28): cold-launch 経路には `cold=1` も載せて
+  // `AlarmRingingScreen` 経由で `AlarmRingingNotifier.start(isColdLaunch:
+  // true)` に伝達する。Lock screen FSI cold-launch では OS Channel
+  // sound 解放まで 500 ms では足りず、audioplayers と二重音になる。
+  // warm-launch (push) 経路は既存どおり `cold=0` 相当 (= 既定 500 ms)。
   final String? coldLaunchPayload = await adapter.coldLaunchPayload();
   final String initialLocation = coldLaunchPayload != null
       ? Uri(
           path: '/alarm-ringing',
-          queryParameters: <String, String>{'payload': coldLaunchPayload},
+          queryParameters: <String, String>{
+            'payload': coldLaunchPayload,
+            'cold': '1',
+          },
         ).toString()
       : '/';
 
@@ -401,7 +410,10 @@ Future<void> main() async {
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
-            AlarmRingingScreen(payload: state.uri.queryParameters['payload']),
+            AlarmRingingScreen(
+              payload: state.uri.queryParameters['payload'],
+              coldLaunch: state.uri.queryParameters['cold'] == '1',
+            ),
       ),
       GoRoute(
         path: '/presets',
