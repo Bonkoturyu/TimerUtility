@@ -196,11 +196,10 @@ test/                             # Unit Test + Widget Test
 integration_test/                 # 実機テスト
 
 android/app/src/main/kotlin/      # Native 実装
-└── com/bonkotu/timer/timer_utility/
-    ├── MainActivity.kt
-    ├── BootReceiver.kt
-    └── alarm/
-        └── AlarmReceiver.kt
+└── io/github/bonkoturyu/timer_utility/
+    └── MainActivity.kt           # FSI keyguard override + 自前 permission MethodChannel handler
+                                  # (BootReceiver / AlarmReceiver は flutter_local_notifications
+                                  #  内蔵で代替、独自実装なし。docs/platform-channels.md 参照)
 
 docs/                             # 設計ドキュメント
 └── (本ドキュメント等)

@@ -6,7 +6,7 @@ import '../platform/permission_channel.dart';
 
 /// Concrete [PermissionManager] backed by `permission_handler` and, for
 /// permissions outside its scope (USE_FULL_SCREEN_INTENT), the
-/// `com.bonkotu.timer/permission` MethodChannel.
+/// `io.github.bonkoturyu.timer_utility/permission` MethodChannel.
 class PermissionHandlerAdapter implements PermissionManager {
   PermissionHandlerAdapter({PermissionChannel? channel})
     : _channel = channel ?? PermissionChannel();

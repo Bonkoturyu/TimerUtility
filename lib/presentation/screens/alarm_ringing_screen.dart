@@ -13,6 +13,7 @@ import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/notification_id_generator.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
+import '../../infrastructure/platform/permission_channel.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Native channel used to release the keyguard-override state set by
@@ -20,7 +21,7 @@ import '../../l10n/app_localizations.dart';
 /// the existing permission channel rather than spinning up a second
 /// channel just for one method.
 const MethodChannel _permissionChannel = MethodChannel(
-  'com.bonkotu.timer/permission',
+  PermissionChannel.channelName,
 );
 
 /// Phase 8 ringing screen. Reads the currently ringing timer from

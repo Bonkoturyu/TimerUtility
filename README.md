@@ -85,7 +85,7 @@ unlock, check the **"Phase 6 implementation retrospective"** notes in
   19.x
 - **音声再生**: [`audioplayers`](https://pub.dev/packages/audioplayers) 6.x
 - **権限**: [`permission_handler`](https://pub.dev/packages/permission_handler) 12.x +
-  自前 `MethodChannel` (`com.bonkotu.timer/permission`)
+  自前 `MethodChannel` (`io.github.bonkoturyu.timer_utility/permission`)
 - **時刻**: [`clock`](https://pub.dev/packages/clock) (依存性注入) +
   [`timezone`](https://pub.dev/packages/timezone) +
   [`flutter_timezone`](https://pub.dev/packages/flutter_timezone)
@@ -202,8 +202,8 @@ Phase 別タスク管理:
 
 ## Fork 時の `applicationId` 書換ガイド
 
-本リポジトリの Android `applicationId` は `com.bonkotu.timer.timer_utility` (作者の
-個人リバースドメイン)。fork してビルド・配布する場合は、以下を自分のドメインに置換すること:
+本リポジトリの Android `applicationId` は `io.github.bonkoturyu.timer_utility` (作者の
+GitHub ハンドルベースの reverse-domain)。fork してビルド・配布する場合は、以下を自分のドメインに置換すること:
 
 | ファイル | 該当箇所 |
 | --- | --- |
@@ -216,12 +216,10 @@ Phase 別タスク管理:
 不要 (receiver 宣言はすべて `flutter_local_notifications` のサードパーティクラスを
 参照しているので fork 側で書き換える対象ではない)。
 
-自前 `MethodChannel` のチャネル名 `com.bonkotu.timer/permission` も `com.<your-domain>/permission`
-に置換することを推奨 (衝突防止)。詳細は [docs/platform-channels.md](docs/platform-channels.md)。
-
-> 作者は Phase 11.9 で `io.github.bonkoturyu.timer_utility` へ移行予定
-> ([docs/oss-and-play-release-plan.md](docs/oss-and-play-release-plan.md))。本 README は
-> 完了次第新 ID に追従する。
+自前 `MethodChannel` のチャネル名 `io.github.bonkoturyu.timer_utility/permission` も
+`<reverse-domain>/permission` (例: `com.example.timer_utility/permission`) の形に
+置換することを推奨 (衝突防止、新 `applicationId` と同じ reverse-domain prefix
+を使うのが自然)。詳細は [docs/platform-channels.md](docs/platform-channels.md)。
 
 ---
 

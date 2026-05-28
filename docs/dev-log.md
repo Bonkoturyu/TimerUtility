@@ -17,6 +17,182 @@
 
 ---
 
+## Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)
+
+Phase 11.9 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)
+の T0 (applicationId 変更) と事前検討メモ
+[docs/phase-11.9-prep-notes.md](phase-11.9-prep-notes.md) §I.1 (MethodChannel
+名移行) を 1 PR にまとめて実施。事前検討で確定した推奨案 A (T0 と同 PR で
+MethodChannel rename + alarm_ringing_screen ハードコード解消) に従い、Native +
+Dart + live docs を atomic に切替。
+
+branch: `phase-11.9-alpha` (ベース: `phase-11.8-close-out` → Phase 11.8 完全
+クローズ commit を含む)
+
+### 変更内容
+
+#### Native (Kotlin + Gradle)
+
+- Kotlin ディレクトリ移動: `android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/`
+  → `android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/`
+  (`git mv` で rename 検出、旧 `com/` 階層は空のため `rm -rf` で削除)
+- `MainActivity.kt:1` package 宣言を `io.github.bonkoturyu.timer_utility` に
+- `MainActivity.kt:23` `PERMISSION_CHANNEL` 定数を
+  `io.github.bonkoturyu.timer_utility/permission` に
+- `build.gradle.kts:9` `namespace` を `io.github.bonkoturyu.timer_utility` に
+- `build.gradle.kts:25` `applicationId` を同じ値に
+- `AndroidManifest.xml` は **触らず** (`.MainActivity` 相対参照 +
+  `${applicationName}` プレースホルダ + flutter_local_notifications の
+  third-party receiver は変更不要、事前検討メモ §B.1 で確認済)
+
+#### Dart (MethodChannel 名 + refactor)
+
+- `lib/infrastructure/platform/permission_channel.dart:11` `channelName` を新名に、
+  dartdoc も追従
+- `lib/presentation/screens/alarm_ringing_screen.dart:22-24` ハードコード
+  `MethodChannel('com.bonkotu.timer/permission')` を
+  `MethodChannel(PermissionChannel.channelName)` に refactor + import 追加
+  (事前検討メモ §I.1 で確定した「ハードコード解消も同時実施」方針)
+- `lib/infrastructure/permission/permission_handler_adapter.dart:9` dartdoc を新名に
+
+#### Live docs (実装と乖離させたくない docs、事前検討メモ §B.3)
+
+- `README.md` 3 箇所 (L88 Channel 名 / L205 applicationId 説明 / L219 fork
+  ガイド Channel 名 + 推奨案) + Phase 11.9 移行予告ブロック削除 (移行完了したため)
+- `docs/architecture.md:199` Kotlin ディレクトリ図の namespace 部分
+- `docs/android-constraints.md` 2 箇所 (L362 / L421、`replace_all`)
+- `docs/permissions.md:426` Channel 名 (`replace_all`)
+- `docs/platform-channels.md` 約 22 箇所 (ベース名前空間 + 各 Channel 名 +
+  Kotlin path 参照、`replace_all` 2 回で機械的に置換)
+
+### 履歴 docs は据置 (事前検討メモ §B.4)
+
+- `docs/dev-log.md` の Phase 1〜11 実装ログ内の旧 applicationId / Channel 名言及
+- `docs/oss-publishing-notes.md` (L88 / L257) — 監査時点の記述
+- `docs/oss-and-play-release-plan.md` — 移行計画自体で旧/新併記
+- `docs/phase-11.9-prep-notes.md` — Phase 11.9 全件完了時点で削除予定
+- `BACKLOG.md` Phase 6 ヘッダ要約 (歴史記述) + 過去の更新エントリ
+- `tasklist.md` 過去の更新エントリ
+
+### 検証
+
+| 項目 | 結果 |
+| --- | --- |
+| `flutter analyze --fatal-infos` | ✅ No issues found! (9.4s) |
+| `flutter test` | ✅ 642 passed / 1 skipped |
+| `dart run tool/check_translations_doc.dart` | ✅ ARB 171 / Doc 171 aligned |
+| Grep `com\.bonkotu\.timer` (live files) | ✅ hit 0 (履歴 docs のみ残存、§B.4 据置対象) |
+| Grep `com/bonkotu/timer` (Kotlin path) | ✅ hit 0 (`phase-11.9-prep-notes.md` のみ、§B.4 据置) |
+
+### Pixel 6a 実機検証 (2026-05-28、完了)
+
+事前検討メモ §B.6 に従って 8 シナリオ実機検証。
+
+| Phase | 結果 | 備考 |
+| --- | --- | --- |
+| A. 新 ID build + cold start | ✅ OK | `adb uninstall` 旧 ID → `flutter run` で新 ID build → HomeScreen 4 タブ表示 + 新規 DB / SharedPreferences 再生成確認 |
+| B-1. 通常 FSI (画面 ON、unlock) | ✅ OK | 30 秒タイマー → 通知 + バイブ + AlarmRingingScreen + Stop / Snooze 動作 |
+| B-2. ロック画面 FSI + recents 復活 | ✅ OK | 画面自動 ON + ロック画面上に AlarmRingingScreen + Stop 後の recents (■) ボタン復活 (MethodChannel `io.github.bonkoturyu.timer_utility/permission` の `clearShowWhenLocked` 正常動作確認) |
+| B-3. Doze + Snooze 再鳴動 | ✅ OK | Doze 中 FSI 発火 + Snooze 3 分後の再鳴動も予約通り |
+| C. アラーム単音化 (Foreground / Home) | ✅ OK | 連発スヌーズで前面 / Home 経路は単音化維持 |
+| D-1. 起動時復元 | ✅ OK | 3 件タイマー → kill → 再起動で全件復元 |
+| D-2. 時刻アラーム + Snooze | ✅ OK | Once アラーム + Snooze 5 分 + enabled=false 化 |
+| D-3. ロック画面アラーム | ✅ OK | ロック画面上に表示 + Stop / Snooze 動作 |
+
+### 検証で発見した既知問題 (本 PR scope 外、follow-up 化)
+
+**Lock screen FSI cold-launch 経路で二重音発生** (B-2 / B-3 最初の鳴動 / D-3 で再現):
+
+- アプリ kill 状態から FSI cold-launch すると、Notification Channel sound と
+  AlarmSoundPlayer が同時鳴動
+- Snooze 後の warm-launch (アプリ process 生存) では単音化される (B-3 観察)
+- applicationId rename とは無関係 (rename 起因なら全 case で再現するはず、
+  Foreground / Home / Snooze 後 warm-launch は単音)
+- 原因仮説: Phase 8.5 fix
+  ([alarm_ringing_notifier.dart L122-L124](../lib/application/alarm_ringing_notifier.dart#L122-L124))
+  の 500ms delay が Pixel / Android 16 の現在挙動では不足
+- **follow-up [issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74)**
+  で別 PR 対応 (推奨案: `getNotificationAppLaunchDetails()` で cold-launch を判定
+  → そのとき限定で delay を 1500-2000ms に伸ばす)
+
+### 検証時の permission 落とし穴 (バナー不表示問題)
+
+A-3 初期状態確認時に **新規 install 直後で POST_NOTIFICATIONS 要求ダイアログが出ず、
+PermissionBanner `[重要] 通知許可` も非表示** で進んでしまい、B-2 で「通知も音も
+画面 ON も何も起きない」状態に陥った。`adb shell appops get` で確認すると:
+
+- `POST_NOTIFICATION: ignore` (1 回拒否 = permanent deny 相当)
+- `USE_FULL_SCREEN_INTENT: default; rejectTime=+5m ago` (OS が reject 記録あり)
+
+`adb shell appops set ... allow` + `adb shell pm grant ... POST_NOTIFICATIONS` で
+一括 grant して検証続行。permission flow の初回ダイアログ発火 + Banner 表示が
+新規 install で動作していない別問題は本 PR scope 外として記録 (将来 follow-up
+issue 候補)。
+
+実機検証 OK + 既知問題は follow-up issue 化済 → main マージ可能状態。
+
+### 次の着手単位
+
+**Phase 11.9 サブ PR β** (`phase-11.9-beta` 新規 branch):
+
+- T1〜T3: アイコン素材作成 (1024×1024 + adaptive foreground/background +
+  monochrome、事前検討メモ §I.2 で 3 層常時作成方針) + `flutter_launcher_icons`
+  追加 (`^0.14.4`、事前検討メモ §A)
+- T5〜T6: `flutter_native_splash` 追加 (`^2.4.7`) + `flutter pub run
+  flutter_native_splash:create`
+- T4: AndroidManifest `android:label` を `@string/app_name` 参照に +
+  `res/values*/strings.xml` 5 言語作成 (`appTitle` と整合する `TimerUtility`
+  統一、事前検討メモ §I.3)
+- T7: Pixel 6a 実機 4 パターン確認 (cold / warm / light / dark)
+
+`pubspec.yaml` 編集 + `flutter pub add` を含むため、ユーザ確認必須ファイル該当。
+
+### PR #72 レビュー対応 (2026-05-27)
+
+実装 push 後、Copilot + gemini-code-assist から計 4 件 + suppressed 1 件のレビュー
+指摘。CLAUDE.md「PR レビュー対応プロトコル」に従い分類・適用。
+
+| # | 出典 | 場所 | 分類 | 対応 |
+| --- | --- | --- | --- | --- |
+| 1 | gemini | docs/platform-channels.md L222 | (a) 自明な fix | apply: 行番号 22-24 → 23-25 + 文字列リテラル → `PermissionChannel.channelName` 定数参照 |
+| 2 | Copilot | alarm_ringing_screen.dart L16 | (c) 設計判断 | **scope 外、follow-up [issue #73](https://github.com/Bonkoturyu/TimerUtility/issues/73) で扱う** (ユーザ判断 = B、2026-05-27) |
+| 3 | Copilot | docs/platform-channels.md L223 | (a) 自明な fix | Comment 1 と同趣旨、一括 apply |
+| 4 | Copilot | README.md L221 | (a) 自明な fix | apply: `<your-domain>/permission` → `<reverse-domain>/permission` (例: `com.example.timer_utility/permission`) で形式明確化、`applicationId` と同じ reverse-domain prefix を使う旨を補足 |
+| - | Copilot (suppressed) | docs/architecture.md L203 | (a) 自明な fix | apply: ツリー図から実在しない `BootReceiver.kt` / `alarm/AlarmReceiver.kt` を削除、`MainActivity.kt` のみに整理 + 「BootReceiver / AlarmReceiver は flutter_local_notifications で代替、独自実装なし」をコメントで明示 |
+
+### Comment 2 (依存方向違反) の判断根拠
+
+[docs/platform-channels.md:225-232](platform-channels.md#L225-L232) で「例外（技術的
+負債）」として明記されている既存負債の延長。PR #72 でハードコード解消した結果、
+`lib/infrastructure/platform/permission_channel.dart` を Presentation から明示的に
+import する形になったが、機能変更はなし (むしろ定数化で文字列散在は解消)。
+
+本 PR の scope (rename + ハードコード解消) を維持するため、依存方向解消は
+follow-up [issue #73](https://github.com/Bonkoturyu/TimerUtility/issues/73) に
+切り出し (ユーザ判断 B、2026-05-27)。Phase 11.9 完了後の整理 PR で扱う。
+
+候補方針 (issue #73 内に詳述):
+
+- 案 A: `lib/application/permission/permission_service.dart` (Riverpod Provider)
+  新設 → `AlarmRingingScreen` は Provider 経由で Service を取得
+- 案 B: `clearShowWhenLocked` を `AlarmRingingNotifier` に統合 →
+  `AlarmRingingScreen._leaveAlarmScreen` は Notifier method を呼ぶ
+- (案 C: channelName を Domain 層に切り出し、は「OS 通信識別子は Infrastructure
+  detail」のため不採用候補)
+
+### rebase + force push
+
+PR #71 (Phase 11.8 完全クローズ) が main に squash merge された結果、PR #72 が
+CONFLICTING 状態になった (元 commit `2d2508e` と main の squash commit `712f997`
+が file content level では equivalent だが、commit hash level で重複認識)。
+
+`git rebase origin/main` で main の squash commit と統合し、PR #72 の diff から
+Phase 11.8 close-out 重複分を取り除いた上で本レビュー対応 fix を追加 commit。
+force push で remote 更新。review コメントの行番号は force push で outdated 表示
+になるが、reply 自体は普通に投げられる。
+
+---
+
 ## Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)
 
 同日午前に T8.5/T8.6 omit 判断で T10 を unblock した後、ユーザが GitHub Settings

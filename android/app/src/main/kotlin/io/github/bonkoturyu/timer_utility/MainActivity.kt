@@ -1,4 +1,4 @@
-package com.bonkotu.timer.timer_utility
+package io.github.bonkoturyu.timer_utility
 
 import android.app.KeyguardManager
 import android.app.NotificationManager
@@ -20,7 +20,7 @@ import io.flutter.plugin.common.MethodChannel
  */
 class MainActivity : FlutterActivity() {
     companion object {
-        private const val PERMISSION_CHANNEL = "com.bonkotu.timer/permission"
+        private const val PERMISSION_CHANNEL = "io.github.bonkoturyu.timer_utility/permission"
     }
 
     /**
