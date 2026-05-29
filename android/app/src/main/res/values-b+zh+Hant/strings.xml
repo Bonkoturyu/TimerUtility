@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 繁體中文 (BCP 47 b+zh+Hant; scriptCode form, see §C.3 / §I.3). App name is a
+     coined brand kept identical across all locales. -->
+<resources>
+    <string name="app_name">TimerUtility</string>
+</resources>

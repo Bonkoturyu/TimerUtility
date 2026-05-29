@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 日本語。アプリ名は造語ブランドのため全ロケール共通 (docs/phase-11.9-prep-notes.md §I.3)。 -->
+<resources>
+    <string name="app_name">TimerUtility</string>
+</resources>
