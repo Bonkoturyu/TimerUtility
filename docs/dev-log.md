@@ -140,7 +140,7 @@ logcat instrumentation (一時) で全 6 ログ (初回 3 回 + Snooze 再鳴動
 を前面経路で安定して返すことを客観確認。instrumentation は merge 前に削除。
 
 PR #75 ([fix(issue-74): Lock 画面 FSI 二重音を KeyguardManager 判定で解消](https://github.com/Bonkoturyu/TimerUtility/pull/75))
-で main 反映待ち。検証 OK → main マージはユーザ判断。
+で **main マージ完了 (2026-05-29、squash commit `dcac842`)**。issue #74 クローズ。
 
 ---
 
