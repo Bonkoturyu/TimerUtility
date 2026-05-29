@@ -19,50 +19,41 @@
 
 ## 進行中
 
-- [~] **Issue #74 fix — Lock 画面表示中の FSI 二重音 ([PR #75](https://github.com/Bonkoturyu/TimerUtility/pull/75) main merge 待ち)**
-  (branch `fix/issue-74-fsi-cold-launch-double-sound`、2026-05-28 実装完了、
-  Pixel 6a 4 シナリオ検証で原因仮説 2 段階補正、2026-05-29 PR #75 作成 +
-  Pixel 6a 4 シナリオ実機検証完了 + Gemini/Copilot レビュー対応): Phase 11.9
-  サブ PR α の B-2/B-3/D-3 で発覚した二重音は当初「cold-launch FSI 限定」と
-  推定したが (中間 commit `9aba774`)、シナリオ 4 (warm-launch FSI Snooze
-  再鳴動 + Lock 画面) でも二重音再現が確認されたため、判定軸を **「Lock 画面
-  表示中か」** に補正 (Issue#74 案 A 採用)。`MainActivity.kt` の
-  PERMISSION_CHANNEL に `isScreenLocked` MethodChannel handler 追加
-  (`KeyguardManager.isKeyguardLocked()`)、`ScreenLockQuery` Domain port +
-  `MethodChannelScreenLockQuery` adapter + `screenLockQueryProvider` 新規追加、
-  `AlarmRingingNotifier.start()` 内部で Provider 経由で読んで delay 分岐
-  (unlock 500ms / Lock 画面 1800ms)。中間 commit の `isColdLaunch` / `cold=1`
-  クエリ / `coldLaunch` field は revert。Pixel 6a 実機 4 シナリオすべて OK
-  (シナリオ 4 は × 3 回連続単音化、logcat instrumentation で isLocked=true /
-  1800ms 適用を客観確認)。Gemini/Copilot レビュー対応で MethodChannel
-  adapter の catch-all 例外 fallback、Kotlin safe cast、delay 中 stop/snooze
-  競合ガードを追加 (1 件却下: 既存 Provider パターンと整合のため
-  Application → Infrastructure 直接 import 維持)。残: **main merge はユーザ
-  判断**。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue #74 fix —
-  Lock 画面表示中の FSI 二重音」セクション + [docs/platform-channels.md](docs/platform-channels.md)
-  `isScreenLocked` 仕様
+なし。直近に着手すべき単位は **Phase 11.9 サブ PR β**（下記「次の着手単位」）。
 
-- [~] **Phase 11.9 サブ PR α 実機検証完了 (main merge 待ち)**
-  (branch `phase-11.9-alpha`、2026-05-27 実装 + レビュー対応、2026-05-28 実機検証完了):
-  T0 applicationId rename (`com.bonkotu.timer.timer_utility` →
-  `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename + alarm_ringing_screen.dart
-  ハードコード解消 + live docs 5 ファイル追従。**Pixel 6a 8 シナリオすべて OK**
-  (A 新 ID build / B-1〜B-3 FSI 3 パターン + recents 復活 + Doze + Snooze 再鳴動 /
-  C 単音化 / D-1 起動時復元 / D-2 時刻アラーム / D-3 ロック画面アラーム)。
-  **検証で発見した既知問題 (本 PR scope 外、follow-up 化)**:
-  (1) Lock screen FSI cold-launch で二重音 (rename と無関係、Foreground/Home/warm-launch
-  は単音 → Phase 8.5 fix の 500ms delay 不足) → [issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74)、
-  (2) 新規 install 直後に POST_NOTIFICATIONS 初回ダイアログが出ず PermissionBanner
-  も非表示で進んでしまう問題 (将来 follow-up 候補)。
-  残: **main merge はユーザ明示許可後** (memory「PR ごとに明示許可」)。
-  詳細は [docs/dev-log.md](docs/dev-log.md) 「Pixel 6a 実機検証 (2026-05-28、完了)」
-  サブセクション
+### 次の着手単位: Phase 11.9 サブ PR β
+
+事前検討メモ §I (PR #68) で確定済みのスコープ:
+
+- アイコン素材 (foreground + background + monochrome の 3 層セット) ※素材本体はユーザ準備が前提
+- `flutter_launcher_icons` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）
+- `flutter_native_splash` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）
+- `strings.xml` 5 言語 (ja / en / zh / zh_Hant / ko、アプリ名 `TimerUtility` 統一) ※**Native リソース → 要ユーザ確認**
+- Pixel 6a 4 パターン実機確認
+
+その後にサブ PR γ (privacy-policy GitHub Pages + Play Store listing + release signing + aab ビルド)。
+
+### 直近マージ済み (実態反映、2026-05-29 同期)
+
+- [x] **Phase 11.9 サブ PR α** — `phase-11.9-alpha` / **PR #72 main マージ済 (2026-05-28)**。
+  T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`)、
+  I.1 MethodChannel rename、alarm_ringing_screen.dart ハードコード解消、live docs 5 ファイル追従。
+  Pixel 6a 8 シナリオすべて OK。詳細は [docs/dev-log.md](docs/dev-log.md)
+  「Phase 11.9 サブ PR α」セクション
+- [x] **Issue #74 fix — Lock 画面表示中の FSI 二重音** — `fix/issue-74-fsi-cold-launch-double-sound` /
+  **PR #75 main マージ済 (2026-05-29、squash `dcac842`)**、issue #74 クローズ。
+  判定軸を「Lock 画面表示中か」(KeyguardManager) に補正し unlock 500ms / Lock 1800ms 分岐。
+  Pixel 6a 4 シナリオ OK (シナリオ 4 は ×3 連続単音化)。詳細は
+  [docs/dev-log.md](docs/dev-log.md) 「Issue #74 fix — Lock 画面表示中の FSI 二重音」セクション
 
 ---
 
 ## Follow-up タスク（未着手）
 
-なし。
+- [ ] **新規 install 直後の POST_NOTIFICATIONS 初回ダイアログ非表示問題**
+  (Phase 11.9 α 実機検証で発見、本 PR scope 外)。新規インストール直後に
+  POST_NOTIFICATIONS の初回ダイアログが出ず、PermissionBanner も非表示のまま
+  進んでしまう。優先度低、将来 follow-up 候補。
 
 > `docs/translations.md` 一括同期は Phase 11 close out PR (2026-05-16) で完了。
 > CI 自動 diff チェックも `tool/check_translations_doc.dart` で実装済 (2026-05-16)。
@@ -84,7 +75,9 @@
 
 ---
 
-最終更新日: 2026-05-27（Phase 11.9 サブ PR α 実装完了 — branch `phase-11.9-alpha` (ベース `phase-11.8-close-out`) で T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) + alarm_ringing_screen.dart ハードコード解消 (`PermissionChannel.channelName` 定数参照) + live docs 5 ファイル追従 (README / architecture / android-constraints / permissions / platform-channels) を atomic に切替。`AndroidManifest.xml` は触らず (`.MainActivity` 相対参照 + `${applicationName}` プレースホルダ + flutter_local_notifications の third-party receiver は変更不要、事前検討メモ §B.1 で確認済)。`flutter analyze --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) / `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、grep `com\.bonkotu\.timer` で live files 残存 0 (履歴 docs のみ、§B.4 据置対象)。PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility` → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) はユーザ実施。検証 OK → main マージはユーザ判断。次の着手単位: Phase 11.9 サブ PR β (アイコン素材 + flutter_launcher_icons + flutter_native_splash + strings.xml 5 言語 + Pixel 6a 4 パターン確認)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」セクション）
+最終更新日: 2026-05-29（計画ファイルを実態に同期 — branch `docs/sync-plan-files-after-72-75`。`tasklist.md` / `BACKLOG.md` が 2026-05-27 で停止し、PR #72・#75 を「main merge 待ち」と誤記したままだったため実態反映。`gh pr list` で両者マージ済を確認 (#72 Phase 11.9 サブ PR α 2026-05-28、#75 Issue #74 fix 2026-05-29 squash `dcac842`)。`tasklist.md` の「進行中」2 件を「直近マージ済み」へ移動、次の着手単位 = Phase 11.9 サブ PR β を明記、Follow-up に POST_NOTIFICATIONS 初回ダイアログ非表示問題を追加。`BACKLOG.md` 進捗サマリ表 Phase 11.9 行を「α・#74 fix マージ済 → 次 β」に更新。`docs/dev-log.md` #75 セクション末尾の「main 反映待ち」を「マージ完了」に更新。doc-only、`flutter analyze` / `flutter test` 不要。作業ツリーの 15 生成ファイル modified 表示は LF→CRLF eol 差のみで内容差分ゼロ、コミット対象外）
+
+過去の更新: 2026-05-27（Phase 11.9 サブ PR α 実装完了 — branch `phase-11.9-alpha` (ベース `phase-11.8-close-out`) で T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) + alarm_ringing_screen.dart ハードコード解消 (`PermissionChannel.channelName` 定数参照) + live docs 5 ファイル追従 (README / architecture / android-constraints / permissions / platform-channels) を atomic に切替。`AndroidManifest.xml` は触らず (`.MainActivity` 相対参照 + `${applicationName}` プレースホルダ + flutter_local_notifications の third-party receiver は変更不要、事前検討メモ §B.1 で確認済)。`flutter analyze --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) / `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、grep `com\.bonkotu\.timer` で live files 残存 0 (履歴 docs のみ、§B.4 据置対象)。PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility` → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) はユーザ実施。検証 OK → main マージはユーザ判断。次の着手単位: Phase 11.9 サブ PR β (アイコン素材 + flutter_launcher_icons + flutter_native_splash + strings.xml 5 言語 + Pixel 6a 4 パターン確認)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」セクション）
 
 過去の更新: 2026-05-27（Phase 11.8 完全クローズ — T10 (GitHub Settings → Visibility = Public + Description + Topics 設定) を本日ユーザ実施で完了し Phase 11.8 を完全クローズ。branch `phase-11.8-close-out` で `docs/dev-log.md` / `docs/oss-and-play-release-plan.md` / BACKLOG.md / tasklist.md の 4 ファイルに完了記録を反映。T10 実施結果: `gh repo view --json` で Visibility=PUBLIC、Description=「Multi-timer / alarm / world-clock for Android 16. Reference implementation of Flutter Clean Architecture + Android alarm constraints handling.」、Topics 9 件 (`alarm` / `android` / `claude-code` / `clean-architecture` / `dart` / `drift` / `flutter` / `riverpod` / `timer`)。`gh api .../community/profile` で `health_percentage: 100`、シークレットウィンドウで Public URL 表示確認済 (ユーザ実施)。Phase 11.8 進行中エントリを削除、Phase 11.9 エントリを「サブ PR α 着手準備完了」状態に更新。次の着手単位: Phase 11.9 サブ PR α (T0 applicationId 変更 + MethodChannel rename + live docs 追従)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.8 完全クローズ — T10 (Public 化) 完了 (2026-05-27)」セクション）
 
