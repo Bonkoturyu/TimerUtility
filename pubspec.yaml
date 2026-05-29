@@ -45,7 +45,12 @@ dependencies:
   # Phase D-3: diagnostic ログを zip にまとめて OS Share Sheet に渡す。
   # archive は Pure Dart (Native plugin 不要)、share_plus は manifest
   # auto-merge で FileProvider を自動宣言する。
-  archive: ^3.6.1
+  # Phase 11.9 サブ PR β: flutter_native_splash 2.4.7 が推移的に image 4.5.4 +
+  # archive ^4.0.2 を要求するため、3.6.1 → 4.x にメジャーバンプ (ユーザ判断 2026-05-29)。
+  # 本プロジェクト利用 API (ZipFileEncoder.create[同期]/addFile/close、ZipDecoder.
+  # decodeBytes、ArchiveFile.name/content) は archive 4.0.9 で全て存続を実ソースで
+  # 確認済 → adapter / test とも無改修。全 654 テスト緑で回帰なしを実証。
+  archive: ^4.0.0
   share_plus: ^10.1.4
 
 dev_dependencies:
@@ -62,6 +67,16 @@ dev_dependencies:
   riverpod_lint: any
   freezed: ^2.5.2
 
+  # Phase 11.9 サブ PR β: アイコン / スプラッシュ生成ツール (dev のみ、アプリ
+  # build には含まれない)。版数は docs/phase-11.9-prep-notes.md §A で確定
+  # (2026-05-29 pub.dev 再確認済)。下部の flutter_launcher_icons: /
+  # flutter_native_splash: 設定ブロックを読み、素材到着後に手動で
+  #   dart run flutter_launcher_icons
+  #   dart run flutter_native_splash:create
+  # を実行して mipmap / splash リソースを生成する。
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
+
 # Ecosystem 互換性のための override
 # analyzer_plugin 0.12.0 は analyzer 7.6.0 と非互換でビルドスクリプト
 # コンパイルが失敗するため、新しいバージョンを強制指定する。
@@ -74,3 +89,50 @@ flutter:
   generate: true
   assets:
     - assets/sounds/
+
+# =============================================================================
+# Phase 11.9 サブ PR β — アイコン / スプラッシュ生成設定 (front-load 済み)
+# =============================================================================
+# 素材本体 (design/icon/ 配下の PNG) はユーザ準備待ち。素材を配置すれば、下記
+# パスを変えずに生成コマンドを 1 回ずつ実行するだけで β がほぼ完了する状態。
+#   1. design/icon/ に素材を配置 (下記 image_path 等が指すファイル)
+#   2. dart run flutter_launcher_icons
+#   3. dart run flutter_native_splash:create
+#   4. Pixel 6a 4 パターン実機確認
+# 仕様根拠は docs/phase-11.9-prep-notes.md §G (公式裏取り済 2026-05-29):
+#   - canvas 108dp / safe zone 66dp / 推奨ソース 1024×1024 px
+#   - monochrome は API 33+ themed icon (§I.2 で常に作る決定)
+# 注意 (§G.5 との差分): flutter_launcher_icons の adaptive_icon_monochrome は
+#   画像アセット (alpha のみ意味を持つ PNG) を受け取り <monochrome> を自動生成する。
+#   §G.5 が monochrome.xml (VectorDrawable) と記していたが、本パイプラインでは
+#   monochrome.png を用意する (VectorDrawable 直接指定はしない)。
+
+flutter_launcher_icons:
+  android: true   # 既存 mipmap/ic_launcher を生成アイコンで置換
+  ios: false      # iOS は Phase 12 で対応 (現状 Android 専用)
+  min_sdk_android: 26  # build.gradle.kts の minSdk と一致 (全端末 adaptive 対応)
+  # API 25 以下用フォールバック (minSdk 26 のため実質未使用だが tool が要求)
+  image_path: "design/icon/source-1024.png"
+  # Adaptive Icon (API 26+)。background は画像 or solid color のどちらでも可。
+  # solid color にする場合は adaptive_icon_background: "#RRGGBB" に差し替え。
+  adaptive_icon_background: "design/icon/adaptive-background.png"
+  adaptive_icon_foreground: "design/icon/adaptive-foreground-1024.png"
+  # Themed icon / monochrome (API 33+)。alpha のみ意味を持つ PNG。
+  adaptive_icon_monochrome: "design/icon/monochrome.png"
+
+flutter_native_splash:
+  # 背景色。素材確定時にブランド色へ調整 (現状は light=白 / dark=黒 のニュートラル)。
+  color: "#FFFFFF"
+  color_dark: "#000000"
+  # 中央ロゴ。専用 splash ロゴ、もしくは adaptive-foreground を流用してもよい。
+  image: "design/icon/splash-logo.png"
+  image_dark: "design/icon/splash-logo.png"
+  android: true
+  ios: false
+  web: false
+  # Android 12+ は SplashScreen API 経由 (window background + icon + icon bg)。
+  android_12:
+    image: "design/icon/splash-logo.png"
+    image_dark: "design/icon/splash-logo.png"
+    color: "#FFFFFF"
+    color_dark: "#000000"
