@@ -19,22 +19,26 @@
 
 ## 進行中
 
-- [~] **Issue #74 fix — Lock 画面表示中の FSI 二重音**
+- [~] **Issue #74 fix — Lock 画面表示中の FSI 二重音 ([PR #75](https://github.com/Bonkoturyu/TimerUtility/pull/75) main merge 待ち)**
   (branch `fix/issue-74-fsi-cold-launch-double-sound`、2026-05-28 実装完了、
-  Pixel 6a 4 シナリオ検証で原因仮説 2 段階補正): Phase 11.9 サブ PR α の
-  B-2/B-3/D-3 で発覚した二重音は当初「cold-launch FSI 限定」と推定したが
-  (中間 commit `9aba774`)、シナリオ 4 (warm-launch FSI Snooze 再鳴動 + Lock
-  画面) でも二重音再現が確認されたため、判定軸を **「Lock 画面表示中か」**
-  に補正 (Issue#74 案 A 採用)。`MainActivity.kt` の PERMISSION_CHANNEL に
-  `isScreenLocked` MethodChannel handler 追加 (`KeyguardManager.isKeyguardLocked()`)、
-  `ScreenLockQuery` Domain port + `MethodChannelScreenLockQuery` adapter +
-  `screenLockQueryProvider` 新規追加、`AlarmRingingNotifier.start()` 内部で
-  Provider 経由で読んで delay 分岐 (unlock 500ms / Lock 画面 1800ms)。中間
-  commit の `isColdLaunch` / `cold=1` クエリ / `coldLaunch` field は revert。
-  `flutter analyze` 0 issues / `flutter test` 651 passed (1 skipped)。残:
-  **Pixel 6a 実機 4 シナリオ再検証 (foreground / Home / Lock cold-launch /
-  Lock warm-launch Snooze 再鳴動)** はユーザ実施。検証 OK → main merge は
-  ユーザ判断。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue #74 fix —
+  Pixel 6a 4 シナリオ検証で原因仮説 2 段階補正、2026-05-29 PR #75 作成 +
+  Pixel 6a 4 シナリオ実機検証完了 + Gemini/Copilot レビュー対応): Phase 11.9
+  サブ PR α の B-2/B-3/D-3 で発覚した二重音は当初「cold-launch FSI 限定」と
+  推定したが (中間 commit `9aba774`)、シナリオ 4 (warm-launch FSI Snooze
+  再鳴動 + Lock 画面) でも二重音再現が確認されたため、判定軸を **「Lock 画面
+  表示中か」** に補正 (Issue#74 案 A 採用)。`MainActivity.kt` の
+  PERMISSION_CHANNEL に `isScreenLocked` MethodChannel handler 追加
+  (`KeyguardManager.isKeyguardLocked()`)、`ScreenLockQuery` Domain port +
+  `MethodChannelScreenLockQuery` adapter + `screenLockQueryProvider` 新規追加、
+  `AlarmRingingNotifier.start()` 内部で Provider 経由で読んで delay 分岐
+  (unlock 500ms / Lock 画面 1800ms)。中間 commit の `isColdLaunch` / `cold=1`
+  クエリ / `coldLaunch` field は revert。Pixel 6a 実機 4 シナリオすべて OK
+  (シナリオ 4 は × 3 回連続単音化、logcat instrumentation で isLocked=true /
+  1800ms 適用を客観確認)。Gemini/Copilot レビュー対応で MethodChannel
+  adapter の catch-all 例外 fallback、Kotlin safe cast、delay 中 stop/snooze
+  競合ガードを追加 (1 件却下: 既存 Provider パターンと整合のため
+  Application → Infrastructure 直接 import 維持)。残: **main merge はユーザ
+  判断**。詳細は [docs/dev-log.md](docs/dev-log.md) 「Issue #74 fix —
   Lock 画面表示中の FSI 二重音」セクション + [docs/platform-channels.md](docs/platform-channels.md)
   `isScreenLocked` 仕様
 

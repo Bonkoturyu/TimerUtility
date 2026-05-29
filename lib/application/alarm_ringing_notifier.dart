@@ -143,6 +143,12 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     await Future<void>.delayed(
       isLocked ? _lockedScreenCancelDelay : _defaultCancelDelay,
     );
+    // If the user (or `stop()` / `snoozeRequested()`) flipped the state
+    // back to idle while we were waiting on the cancel→play delay, do
+    // NOT start playback — the user already dismissed the alarm. The
+    // 1800 ms locked-screen branch widens this race window noticeably,
+    // so this guard is load-bearing (PR #75 Copilot review).
+    if (!state.isPlaying) return;
     await ref.read(alarmSoundPlayerProvider).play(sound);
   }
 

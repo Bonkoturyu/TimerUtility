@@ -41,8 +41,13 @@ class MainActivity : FlutterActivity() {
      */
     private fun applyKeyguardOverrideIfLocked() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            if (km.isKeyguardLocked) {
+            // Safe cast (`as?` + null-check) defends against a hypothetical
+            // null return from getSystemService — KEYGUARD_SERVICE has been
+            // available since API 1 so this is mostly belt-and-braces, but
+            // a hard cast crash here would strand the FSI Activity on the
+            // keyguard. See PR #75 Gemini review.
+            val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+            if (km?.isKeyguardLocked == true) {
                 setShowWhenLocked(true)
                 setTurnScreenOn(true)
             }
@@ -106,8 +111,13 @@ class MainActivity : FlutterActivity() {
      * no SDK_INT gate is needed.
      */
     private fun isScreenLockedInternal(): Boolean {
-        val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        return km.isKeyguardLocked
+        // Safe cast defends against a hypothetical null return from
+        // getSystemService — the Dart side (MethodChannelScreenLockQuery)
+        // is on the alarm-ring critical path, and a hard cast crash here
+        // would surface as a PlatformException and silence the alarm.
+        // See PR #75 Gemini review.
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        return km?.isKeyguardLocked == true
     }
 
     /**

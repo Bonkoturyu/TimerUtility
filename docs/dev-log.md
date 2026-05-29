@@ -128,14 +128,19 @@ AlarmRingingNotifier から呼ぶ。
 | `flutter test` | 651 passed (1 skipped) — `9aba774` 時点 646 + 新規 5 件 |
 | `dart format` | 全 lib/ test/ に適用済 |
 
-### 残: Pixel 6a 実機 4 シナリオ再検証
+### Pixel 6a 実機 4 シナリオ再検証 (2026-05-29、完了)
 
-- [ ] シナリオ 1: Foreground — 単音 + delay ~500 ms (リグレッション防止)
-- [ ] シナリオ 2: Home (background) — 単音 + delay ~500 ms (リグレッション防止)
-- [ ] シナリオ 3: Lock cold-launch — **単音** + delay ~1800 ms (★ 本 fix の主目的、`9aba774` で達成済)
-- [ ] シナリオ 4: Lock warm-launch (Snooze 再鳴動) — **単音** + delay ~1800 ms (★ 本 commit の追加対象)
+- [x] シナリオ 1: Foreground — ✅ 単音 + delay ~500 ms (リグレッション防止)
+- [x] シナリオ 2: Home (background、heads-up タップで遷移) — ✅ 単音 + delay ~500 ms (リグレッション防止)
+- [x] シナリオ 3: Lock cold-launch — ✅ **単音** + delay ~1800 ms (★ 本 fix の主目的、`9aba774` で達成済)
+- [x] シナリオ 4: Lock warm-launch (Snooze 再鳴動) × **3 回連続** — ✅ 全部単音 + delay ~1800 ms (★ 本 commit の追加対象)
 
-検証 OK → main マージはユーザ判断。
+logcat instrumentation (一時) で全 6 ログ (初回 3 回 + Snooze 再鳴動 3 回)
+が `isLocked=true delay=1800ms` を Lock 経路で、`isLocked=false delay=500ms`
+を前面経路で安定して返すことを客観確認。instrumentation は merge 前に削除。
+
+PR #75 ([fix(issue-74): Lock 画面 FSI 二重音を KeyguardManager 判定で解消](https://github.com/Bonkoturyu/TimerUtility/pull/75))
+で main 反映待ち。検証 OK → main マージはユーザ判断。
 
 ---
 

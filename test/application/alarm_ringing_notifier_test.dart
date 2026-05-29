@@ -237,6 +237,85 @@ void main() {
       },
     );
 
+    test(
+      'stop() during the cancel→play delay drops the pending play '
+      '(PR #75 Copilot review: race window widened by 1800ms locked branch)',
+      () {
+        // Lock 経路で stop() が delay 中に呼ばれた場合、delay 後の
+        // play() に到達してしまうと「ユーザが止めた直後に音が鳴り始める」
+        // 競合になる。`if (!state.isPlaying) return;` ガードで防ぐ。
+        fakeAsync((FakeAsync async) {
+          final player = _StubAlarmSoundPlayer();
+          final h = _container(player, screenLocked: true);
+
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .start(
+                  timerId: 't-race',
+                  sound: AlarmSoundCatalog.defaultSound,
+                  notificationId: 200,
+                ),
+          );
+          // 1000 ms 経過 (1800 ms delay の途中) で stop() を呼ぶ。
+          async.elapse(const Duration(milliseconds: 1000));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0, reason: '1000ms < 1800ms なのでまだ play 前');
+
+          unawaited(
+            h.container.read(alarmRingingNotifierProvider.notifier).stop(),
+          );
+          async.flushMicrotasks();
+
+          // 残り 1000 ms 進めて 1800 ms delay 完了 → ガードが効いて
+          // play() に到達しないことを確認。
+          async.elapse(const Duration(milliseconds: 1000));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0, reason: 'stop() 後は delay 完了しても play しない');
+          expect(player.stopCalls, 1);
+        });
+      },
+    );
+
+    test(
+      'snoozeRequested() during the cancel→play delay drops the pending play '
+      '(PR #75 Copilot review)',
+      () {
+        // snoozeRequested も state.isPlaying = false に落とすので、
+        // stop と同じガードで play() への到達が阻止されることを確認。
+        fakeAsync((FakeAsync async) {
+          final player = _StubAlarmSoundPlayer();
+          final h = _container(player, screenLocked: true);
+
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .start(
+                  timerId: 't-race-snooze',
+                  sound: AlarmSoundCatalog.defaultSound,
+                  notificationId: 201,
+                ),
+          );
+          async.elapse(const Duration(milliseconds: 1000));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0);
+
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .snoozeRequested(),
+          );
+          async.flushMicrotasks();
+
+          async.elapse(const Duration(milliseconds: 1000));
+          async.flushMicrotasks();
+          expect(player.playCalls, 0);
+          final state = h.container.read(alarmRingingNotifierProvider);
+          expect(state.snoozeRequested, isTrue);
+        });
+      },
+    );
+
     test('snoozeRequested flips the flag and stops audio', () async {
       final player = _StubAlarmSoundPlayer();
       final h = _container(player);

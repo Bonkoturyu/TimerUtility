@@ -81,5 +81,19 @@ void main() {
         expect(result, isFalse);
       },
     );
+
+    test('isScreenLocked falls back to false when native returns a non-bool '
+        '(catch-all defends alarm-ring critical path, PR #75)', () async {
+      // Native handler が誤って bool 以外 (例: int / String) を返した
+      // ときの fallback。`invokeMethod<bool>` の内部 cast で TypeError
+      // になるが、PlatformException / MissingPluginException だけ catch
+      // していると伝播してアラーム無音化につながる
+      // (Gemini + Copilot 指摘、catch (_) で全例外吸収済)。
+      handler = (_) async => 42;
+
+      final bool result = await MethodChannelScreenLockQuery().isScreenLocked();
+
+      expect(result, isFalse);
+    });
   });
 }
