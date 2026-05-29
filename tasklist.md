@@ -19,22 +19,48 @@
 
 ## 進行中
 
-なし。直近に着手すべき単位は **Phase 11.9 サブ PR β**（下記「次の着手単位」）。
+なし。直近に着手すべき単位は **Phase 11.9 サブ PR β（素材投入待ち）**（下記「次の着手単位」）。
 
 ### 次の着手単位: Phase 11.9 サブ PR β
 
-事前検討メモ §I (PR #68) で確定済みのスコープ:
+事前検討メモ §I (PR #68) で確定済みのスコープ。
 
-- アイコン素材 (foreground + background + monochrome の 3 層セット) ※素材本体はユーザ準備が前提
-- `flutter_launcher_icons` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）
-- `flutter_native_splash` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）
-- `strings.xml` 5 言語 (ja / en / zh / zh_Hant / ko、アプリ名 `TimerUtility` 統一) ※**Native リソース → 要ユーザ確認**
-- Pixel 6a 4 パターン実機確認
+**ゴール方針 (2026-05-29 ユーザ合意)**: 素材非依存の準備をすべて front-load 済みにし、
+**アイコン素材を投入すれば β がほぼ完了する**状態を目標にする。素材到着後に残すのは
+「素材投入 → 生成 → Pixel 6a 検証」のみ。
+
+**素材非依存で完了済み (PR #77 main マージ、2026-05-29 squash `0a0509d`)**:
+
+- `strings.xml` 5 言語 (ja / en / zh / zh_Hant / ko、`app_name=TimerUtility` 統一) +
+  `AndroidManifest.xml` の `android:label` → `@string/app_name` 配線 (T4 相当、
+  OS 表示名が `timer_utility` → `TimerUtility` 化)
+- §G アイコン仕様を公式一次ソースで裏取り・確定 (66dp safe zone / Play 角丸 30%+shadow
+  自動適用 / `<monochrome>` 宣言要素 / sRGB)。[docs/phase-11.9-prep-notes.md](docs/phase-11.9-prep-notes.md)
+- §A 依存版数を pub.dev で再確認・確定 (`flutter_launcher_icons 0.14.4` /
+  `flutter_native_splash 2.4.7`、いずれも最新)
+
+**素材投入後に残る β タスク**:
+
+- アイコン素材 (foreground + background + monochrome の 3 層セット) を `design/icon/` に
+  配置 ※素材本体はユーザ準備が前提
+- `flutter_launcher_icons` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）→ アイコン生成
+- `flutter_native_splash` 導入（**`pubspec.yaml` 編集 → 要ユーザ確認**）→ スプラッシュ生成
+- Pixel 6a 4 パターン実機確認（うち 1 つは表示名 `TimerUtility` 反映確認を兼ねる）
+
+> front-load 余地: 上記「残る β タスク」のうち `pubspec.yaml` への
+> `flutter_launcher_icons` / `flutter_native_splash` 設定ブロック追記は素材が無くても
+> 書けるため、ゴール「素材入れたら終わり」を徹底するなら素材到着前に別途実施可
+> （要ユーザ確認。生成コマンドのみ素材到着後）。
 
 その後にサブ PR γ (privacy-policy GitHub Pages + Play Store listing + release signing + aab ビルド)。
 
 ### 直近マージ済み (実態反映、2026-05-29 同期)
 
+- [x] **Phase 11.9 サブ PR β 事前準備** — `phase-11.9-beta-prep` /
+  **PR #77 main マージ済 (2026-05-29、squash `0a0509d`)**。素材非依存の β 準備:
+  strings.xml 5 言語 + Manifest `app_name` 配線 (T4 相当) + §G アイコン仕様の公式裏取り
+  確定 + §A 版数再確認。Gemini の Play 角丸「20%」指摘は公式逐語「30%」(2 箇所明記) で
+  却下。詳細は [docs/phase-11.9-prep-notes.md](docs/phase-11.9-prep-notes.md) §G / §A
 - [x] **Phase 11.9 サブ PR α** — `phase-11.9-alpha` / **PR #72 main マージ済 (2026-05-28)**。
   T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`)、
   I.1 MethodChannel rename、alarm_ringing_screen.dart ハードコード解消、live docs 5 ファイル追従。
@@ -75,7 +101,9 @@
 
 ---
 
-最終更新日: 2026-05-29（計画ファイルを実態に同期 — branch `docs/sync-plan-files-after-72-75`。`tasklist.md` / `BACKLOG.md` が 2026-05-27 で停止し、PR #72・#75 を「main merge 待ち」と誤記したままだったため実態反映。`gh pr list` で両者マージ済を確認 (#72 Phase 11.9 サブ PR α 2026-05-28、#75 Issue #74 fix 2026-05-29 squash `dcac842`)。`tasklist.md` の「進行中」2 件を「直近マージ済み」へ移動、次の着手単位 = Phase 11.9 サブ PR β を明記、Follow-up に POST_NOTIFICATIONS 初回ダイアログ非表示問題を追加。`BACKLOG.md` 進捗サマリ表 Phase 11.9 行を「α・#74 fix マージ済 → 次 β」に更新。`docs/dev-log.md` #75 セクション末尾の「main 反映待ち」を「マージ完了」に更新。doc-only、`flutter analyze` / `flutter test` 不要。作業ツリーの 15 生成ファイル modified 表示は LF→CRLF eol 差のみで内容差分ゼロ、コミット対象外）
+最終更新日: 2026-05-29（β 素材非依存準備の PR #77 マージ後同期 — branch `docs/sync-plan-after-77`。Phase 11.9 サブ PR β の素材非依存タスク (strings.xml 5 言語 + Manifest `android:label` → `@string/app_name` 配線 [T4 相当] + §G アイコン仕様公式裏取り確定 + §A 版数再確認) を PR #77 で main マージ (squash `0a0509d`)。本同期で tasklist「次の着手単位: サブ PR β」を実態反映: ゴール方針「素材を入れたら β がほぼ完了する状態」をユーザ合意として明記し、完了済み (素材非依存) と素材投入後の残タスクを分離。pubspec.yaml への launcher_icons / native_splash 設定ブロックは素材非依存で front-load 可能な旨を注記。「直近マージ済み」に #77 エントリ追加。Gemini code-assist の Play 角丸「20%」指摘は公式ページ逐語「Radius will be equivalent to 30% of icon size.」(Attributes Shape 行 + Corner radius セクションの 2 箇所) で却下済。doc-only、`flutter analyze` / `flutter test` 不要）
+
+過去の更新: 2026-05-29（計画ファイルを実態に同期 — branch `docs/sync-plan-files-after-72-75`。`tasklist.md` / `BACKLOG.md` が 2026-05-27 で停止し、PR #72・#75 を「main merge 待ち」と誤記したままだったため実態反映。`gh pr list` で両者マージ済を確認 (#72 Phase 11.9 サブ PR α 2026-05-28、#75 Issue #74 fix 2026-05-29 squash `dcac842`)。`tasklist.md` の「進行中」2 件を「直近マージ済み」へ移動、次の着手単位 = Phase 11.9 サブ PR β を明記、Follow-up に POST_NOTIFICATIONS 初回ダイアログ非表示問題を追加。`BACKLOG.md` 進捗サマリ表 Phase 11.9 行を「α・#74 fix マージ済 → 次 β」に更新。`docs/dev-log.md` #75 セクション末尾の「main 反映待ち」を「マージ完了」に更新。doc-only、`flutter analyze` / `flutter test` 不要。作業ツリーの 15 生成ファイル modified 表示は LF→CRLF eol 差のみで内容差分ゼロ、コミット対象外）
 
 過去の更新: 2026-05-27（Phase 11.9 サブ PR α 実装完了 — branch `phase-11.9-alpha` (ベース `phase-11.8-close-out`) で T0 applicationId rename (`com.bonkotu.timer.timer_utility` → `io.github.bonkoturyu.timer_utility`) + I.1 MethodChannel rename (`com.bonkotu.timer/permission` → `io.github.bonkoturyu.timer_utility/permission`) + alarm_ringing_screen.dart ハードコード解消 (`PermissionChannel.channelName` 定数参照) + live docs 5 ファイル追従 (README / architecture / android-constraints / permissions / platform-channels) を atomic に切替。`AndroidManifest.xml` は触らず (`.MainActivity` 相対参照 + `${applicationName}` プレースホルダ + flutter_local_notifications の third-party receiver は変更不要、事前検討メモ §B.1 で確認済)。`flutter analyze --fatal-infos` 0 issues / `flutter test` 642 passed (1 skipped) / `dart run tool/check_translations_doc.dart` ARB 171 / Doc 171 aligned、grep `com\.bonkotu\.timer` で live files 残存 0 (履歴 docs のみ、§B.4 据置対象)。PR 作成済。残: **Pixel 6a 実機検証** (`adb uninstall com.bonkotu.timer.timer_utility` → `flutter run` → Phase 6 FSI 3 パターン + Phase 8.5 アラーム単音化回帰) はユーザ実施。検証 OK → main マージはユーザ判断。次の着手単位: Phase 11.9 サブ PR β (アイコン素材 + flutter_launcher_icons + flutter_native_splash + strings.xml 5 言語 + Pixel 6a 4 パターン確認)。詳細は [dev-log](docs/dev-log.md) 「Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)」セクション）
 
