@@ -35,7 +35,7 @@
   `AndroidManifest.xml` の `android:label` → `@string/app_name` 配線 (T4 相当、
   OS 表示名が `timer_utility` → `TimerUtility` 化)
 - §G アイコン仕様を公式一次ソースで裏取り・確定 (66dp safe zone / Play 角丸 30%+shadow
-  自動適用 / `<monochrome>` 宣言要素 / sRGB)。`docs/phase-11.9-prep-notes.md`
+  自動適用 / `<monochrome>` 宣言要素 / sRGB)。[docs/phase-11.9-prep-notes.md](docs/phase-11.9-prep-notes.md)
 - §A 依存版数を pub.dev で再確認・確定 (`flutter_launcher_icons 0.14.4` /
   `flutter_native_splash 2.4.7`、いずれも最新)
 
