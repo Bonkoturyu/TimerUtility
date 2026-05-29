@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default / en fallback. App name is a coined brand kept identical across all
+     locales (see docs/phase-11.9-prep-notes.md §I.3). -->
+<resources>
+    <string name="app_name">TimerUtility</string>
+</resources>

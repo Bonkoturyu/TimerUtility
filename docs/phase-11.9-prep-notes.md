@@ -44,6 +44,11 @@ dev_dependencies:
 Dart SDK 制約 (`^3.11.5`) との衝突は事前確認の限り見当たらない。実際の `flutter pub get`
 時点で改めて検証する。
 
+> **版数再確認 (2026-05-29)**: pub.dev で両パッケージを再取得。
+> `flutter_launcher_icons` は **0.14.4 が最新** (11 ヶ月前公開、`adaptive_icon_monochrome`
+> キー存在を確認)、`flutter_native_splash` は **2.4.7 が最新** (7 ヶ月前公開、
+> `android_12` セクション対応を確認)。いずれも MIT。本セクションの採用版で確定。
+
 ---
 
 ## B. applicationId 移行影響範囲 (Phase 11.9-T0 前準備)
@@ -166,19 +171,28 @@ scriptCode) と整合する。
 
 ## G. アイコン仕様要件 (Phase 11.9-T1 前準備、Phase 11.10-T2 で再裏取り必須)
 
-> **裏取り注意**: 本セクションは知識ベース (cutoff: 2026-01) からの記述で、
-> WebFetch で公式ページに到達できなかった (developer.android.com / m3.material.io
-> の対象 URL が 404 を返した)。Phase 11.10-T2 で公式ページにアクセスし、
-> Adaptive Icon 仕様 + Play Store の icon 要求が現行のまま (= 本セクションの
-> 内容と一致) であることを再確認すること。乖離があれば本セクションを訂正、
-> または T1 / T11 設計に反映してから素材を作る。
+> **裏取り済 (2026-05-29)**: 当初は知識ベース (cutoff: 2026-01) からの記述で
+> 公式ページに到達できていなかったが、本日 WebSearch + WebFetch で現行公式
+> ドキュメントを取得し、本セクションを確定・訂正した。参照した一次ソース:
+> - Adaptive icons (Compose): <https://developer.android.com/develop/ui/compose/system/icon_design_adaptive>
+> - Android 13 themed app icons: <https://developer.android.com/about/versions/13/features#themed-app-icons>
+> - Google Play icon design specifications: <https://developer.android.com/distribute/google-play/resources/icon-design-specifications>
+>
+> 訂正点: (a) safe zone を「72×72 dp 円」→ 72dp は masked viewport、保証 safe
+> zone は **66×66 dp** に修正、(b) Play の「square crop」→ Play が **角丸 mask
+> (30%) + shadow を自動適用**に修正、(c) monochrome の宣言要素 `<monochrome>`
+> と sRGB color profile 要求を追記。Phase 11.10-T2 での再裏取りは、aab ビルド直前の最終確認
+> として軽く再訪する程度でよい (本確定で寸法は固定)。
 
 ### G.1 Adaptive Icon (Android 8 / API 26〜)
 
 - 2 レイヤー構造: foreground PNG + background (PNG または solid color)
-- 各レイヤーの canvas サイズ: **108 × 108 dp**
-- 安全ゾーン (Safe Zone): 中央 **72 × 72 dp** の円 (OEM ごとに mask 形状が
-  異なるため、コア要素は安全ゾーン内に収める)
+- 各レイヤーの canvas サイズ: **108 × 108 dp** (foreground / background とも必須)
+- masked viewport: 中央 **72 × 72 dp** (= inner 2/3。外周 **18 dp** ずつは
+  mask の parallax / shape 変形用に予約され、108 − 18×2 = 72)
+- 安全ゾーン (Safe Zone): **66 × 66 dp** (Material keyline)。OEM のどの mask 形状
+  でも **絶対にクリップされない保証ゾーン** はこの 66 dp 円。72 dp は mask 形状に
+  よっては角が欠けうるため、ロゴ等のコア要素は **66 dp 内** に収める
 - 推奨ソース解像度: **1024 × 1024 px** PNG (`flutter_launcher_icons` が
   各 mipmap density に scale して生成)
 - 周辺 18 dp はクロップされる前提でデザインする
@@ -186,11 +200,16 @@ scriptCode) と整合する。
 ### G.2 Themed Icon / Monochrome Layer (Android 13 / API 33〜)
 
 - 第 3 レイヤー: monochrome (modulo alpha)
-- 形式: **VectorDrawable XML** または PNG (32-bit、alpha のみ意味を持つ)
-- レンダリング: OS が動的に背景色 / 前景色を適用してテーマ整合
-- 必須化: 知識カットオフ時点では **任意** だが、Play Store / ランチャー
-  ベンダ要求が今後上がる傾向。Phase 11.10-T2 で再確認 (もし monochrome 必須化が
-  確定していれば T1 で素材を必ず作る)
+- 宣言: `<adaptive-icon>` 直下の **`<monochrome>`** 要素
+  (`<background>` / `<foreground>` と並ぶ第 3 child)。
+  `flutter_launcher_icons` の `adaptive_icon_monochrome` キーに素材を渡せば
+  この XML は自動生成されるため、手書きは不要
+- 形式: **vector (VectorDrawable XML) 優先**、bitmap PNG も可。色は持たず
+  alpha のみ意味を持つ (OS が tint)
+- レンダリング: OS がユーザの壁紙 / テーマ配色から tint 色を決定して適用
+- 必須化: 公式上 **任意 (optional but recommended)**。ユーザが system 設定で
+  「Themed icons」を ON かつランチャーが対応した時のみ表示、未対応時は通常の
+  adaptive icon にフォールバック。§I.2 で **常に作る** と決定済
 - TimerUtility 案: 時計アイコンのシルエットを monochrome 化、白 + 透過のみ
 
 ### G.3 mipmap density (`flutter_launcher_icons` 自動生成)
@@ -208,9 +227,14 @@ scriptCode) と整合する。
 
 ### G.4 Play Store 高解像度アイコン
 
-- サイズ: **512 × 512 px** PNG (32-bit、Play Console upload 用)
-- ファイルサイズ上限: 1 MB
-- 透過: 非推奨 (Play Console が square crop する)
+- サイズ: **512 × 512 px** PNG (**32-bit、with alpha**、Play Console upload 用)
+- ファイルサイズ上限: **1024 KB**
+- color profile: **sRGB**
+- 形状: **フルスクエアで入稿**。Play 側がアップロード後に **角丸 mask (角丸半径
+  = アイコンの 30%) + shadow を動的に適用** するため、**自分で角丸・ドロップ
+  シャドウを付けない**
+- 透過: 透過部分は Play UI の背景色が透ける。ブランドに合った **非透過の背景色**
+  を敷くのが推奨 (アイコン内の作画上の陰影は可、最終 asset への drop shadow は不可)
 - ストア掲載素材として `design/icon/play-store-512.png` を別途準備
   (Phase 11.9-T1 で同時作成)
 
