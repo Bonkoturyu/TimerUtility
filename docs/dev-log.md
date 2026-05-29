@@ -17,6 +17,133 @@
 
 ---
 
+## Issue #74 fix — Lock 画面表示中の FSI 二重音 (2026-05-28)
+
+Phase 11.9 サブ PR α (PR #72) の Pixel 6a 実機検証 B-2 / B-3 / D-3 で
+発覚した「Lock 画面 FSI 経路でアラーム二重音」を
+[issue #74](https://github.com/Bonkoturyu/TimerUtility/issues/74) として
+follow-up 化、本 PR で fix。
+
+branch: `fix/issue-74-fsi-cold-launch-double-sound` (ベース: `main`)
+
+### 原因の絞り込み (Pixel 6a 4 シナリオ検証で 2 段階補正)
+
+**初期仮説 (Issue#74 当初)**: 「cold-launch FSI のみ」二重音、warm-launch
+FSI は単音 (Phase 11.9 α B-3 検証時の手順「Snooze 通知を手で dismiss」を
+前提とした観察結果)。
+
+**Pixel 6a 4 シナリオ検証 (2026-05-28、本 PR)**: 手順を整備して再検証:
+
+| # | 経路 | 画面状態 | Phase 8.5 fix 500 ms delay |
+| --- | --- | --- | --- |
+| 1 | Foreground | 画面 ON | ✅ 単音 |
+| 2 | Home (background) | 画面 ON | ✅ 単音 |
+| 3 | Lock cold-launch (app kill + Lock 画面待機) | **画面 OFF + Lock** | ❌ **二重音** |
+| 4 | Lock warm-launch (Snooze 再鳴動、app 生存 + Lock) | **画面 OFF + Lock** | ❌ **二重音** |
+
+→ **真の判定軸は cold/warm-launch ではなく「Lock 画面表示中か」**。Pixel
+/ Android 16 では keyguard が上がっている状態で OS の alarm-stream tone
+release が遅く、500 ms では audioplayers と重なる。Phase 11.9 α B-3 検証
+で warm-launch が単音と観察されたのは「Snooze 通知を手で dismiss」手順が
+Channel sound 系を事前解放していたためと推測。
+
+中間 commit `9aba774` (cold-launch 限定 1800 ms) は シナリオ 4 を cover
+できなかったため、本 commit で判定軸を `KeyguardManager.isKeyguardLocked()`
+に切り替える。
+
+### 採用方針 (Issue#74 案 A: Native で Lock 状態取得)
+
+Native MethodChannel 経由で `KeyguardManager.isKeyguardLocked()` を読み、
+ロック中のみ 1800 ms に伸ばす。unlock 経路 (foreground / Home) は 500 ms
+据置で体感遅延ゼロを維持。
+
+clean architecture を維持するため Domain port `ScreenLockQuery` を介して
+AlarmRingingNotifier から呼ぶ。
+
+判定軸見送り検討:
+- 一律 1800 ms (Issue#74 案 A 当初): foreground / Home (画面 ON) に
+  1.3 秒の不要な遅延 → 体感的に NG
+- Channel sound + AlarmSoundPlayer 統一 (Issue#74 案 C): Phase 6c FSI
+  fallback 設計の再検討が必要、影響範囲過大
+
+### 変更内容
+
+#### Native (Kotlin) — CLAUDE.md「ユーザー確認必須」項目
+
+- [android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt)
+  - PERMISSION_CHANNEL の MethodCallHandler に `"isScreenLocked"` ブランチ追加
+  - `isScreenLockedInternal()` private fun を追加し、既存
+    `applyKeyguardOverrideIfLocked()` と同じく `KeyguardManager.isKeyguardLocked()`
+    を呼ぶ (`KeyguardManager` / `Context` の import は既存、追加 import なし)
+
+#### Domain port + Infrastructure adapter (新規)
+
+- [lib/domain/ports/screen_lock_query.dart](../lib/domain/ports/screen_lock_query.dart)
+  (新規): `ScreenLockQuery` abstract class、`isScreenLocked()` のみ
+- [lib/infrastructure/platform/method_channel_screen_lock_query.dart](../lib/infrastructure/platform/method_channel_screen_lock_query.dart)
+  (新規): 既存 `PermissionChannel.channelName` を流用、PlatformException /
+  MissingPluginException は false にフォールバック (= 既定 500 ms delay
+  適用、安全側)
+- [lib/application/screen_lock_query_provider.dart](../lib/application/screen_lock_query_provider.dart)
+  (新規): keepAlive Riverpod Provider、テストで override 可能
+
+#### AlarmRingingNotifier 修正
+
+- [lib/application/alarm_ringing_notifier.dart](../lib/application/alarm_ringing_notifier.dart)
+  - 中間 commit `9aba774` の `isColdLaunch: bool` param を削除 (revert)
+  - `start()` 内部で `await ref.read(screenLockQueryProvider).isScreenLocked()`
+    を call、結果で delay 分岐
+  - 定数を `_defaultCancelDelay` / `_lockedScreenCancelDelay` に rename
+    (semantic 補正、500ms / 1800ms 値は変えず)
+  - 経緯コメントを「画面 OFF + Lock 状態」根拠に書き直し
+
+#### AlarmRingingScreen + main.dart 修正 (中間 commit の revert)
+
+- [lib/presentation/screens/alarm_ringing_screen.dart](../lib/presentation/screens/alarm_ringing_screen.dart):
+  `coldLaunch: bool` field 削除 (Native 判定に置き換え)
+- [lib/main.dart](../lib/main.dart): `cold=1` クエリ追加コード + GoRoute の
+  `coldLaunch:` 渡し削除 (Native 判定に置き換え)
+
+#### Test 修正
+
+- [test/application/alarm_ringing_notifier_test.dart](../test/application/alarm_ringing_notifier_test.dart):
+  `_StubScreenLockQuery` 追加、`_container(player, screenLocked: bool)` で
+  override 注入、`unlocked path: ~500ms` / `locked path: ~1800ms` 2 ケースに
+  書き直し
+- [test/presentation/screens/alarm_ringing_screen_test.dart](../test/presentation/screens/alarm_ringing_screen_test.dart):
+  `_harness` の `coldLaunch` param を `screenLocked` に rename、Provider
+  override 注入、新規ケース 2 件も `screenLocked=true/false` 命名に変更
+- [test/presentation/screens/alarm_ringing_screen_alarm_test.dart](../test/presentation/screens/alarm_ringing_screen_alarm_test.dart):
+  ScreenLockQuery override 注入 (default の MethodChannelScreenLockQuery が
+  test 環境で MethodChannel call を残し play() に到達しない fail を fix)
+- [test/infrastructure/platform/method_channel_screen_lock_query_test.dart](../test/infrastructure/platform/method_channel_screen_lock_query_test.dart)
+  (新規): adapter 単体テスト、Native true/false/null + PlatformException
+  fallback + MissingPluginException fallback の 5 ケース
+
+### 検証
+
+| 項目 | 結果 |
+| --- | --- |
+| `flutter analyze --fatal-infos` | 0 issues |
+| `flutter test` | 651 passed (1 skipped) — `9aba774` 時点 646 + 新規 5 件 |
+| `dart format` | 全 lib/ test/ に適用済 |
+
+### Pixel 6a 実機 4 シナリオ再検証 (2026-05-29、完了)
+
+- [x] シナリオ 1: Foreground — ✅ 単音 + delay ~500 ms (リグレッション防止)
+- [x] シナリオ 2: Home (background、heads-up タップで遷移) — ✅ 単音 + delay ~500 ms (リグレッション防止)
+- [x] シナリオ 3: Lock cold-launch — ✅ **単音** + delay ~1800 ms (★ 本 fix の主目的、`9aba774` で達成済)
+- [x] シナリオ 4: Lock warm-launch (Snooze 再鳴動) × **3 回連続** — ✅ 全部単音 + delay ~1800 ms (★ 本 commit の追加対象)
+
+logcat instrumentation (一時) で全 6 ログ (初回 3 回 + Snooze 再鳴動 3 回)
+が `isLocked=true delay=1800ms` を Lock 経路で、`isLocked=false delay=500ms`
+を前面経路で安定して返すことを客観確認。instrumentation は merge 前に削除。
+
+PR #75 ([fix(issue-74): Lock 画面 FSI 二重音を KeyguardManager 判定で解消](https://github.com/Bonkoturyu/TimerUtility/pull/75))
+で main 反映待ち。検証 OK → main マージはユーザ判断。
+
+---
+
 ## Phase 11.9 サブ PR α — applicationId + MethodChannel rename (2026-05-27)
 
 Phase 11.9 計画書 [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)

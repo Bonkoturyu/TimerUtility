@@ -41,8 +41,13 @@ class MainActivity : FlutterActivity() {
      */
     private fun applyKeyguardOverrideIfLocked() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            if (km.isKeyguardLocked) {
+            // Safe cast (`as?` + null-check) defends against a hypothetical
+            // null return from getSystemService — KEYGUARD_SERVICE has been
+            // available since API 1 so this is mostly belt-and-braces, but
+            // a hard cast crash here would strand the FSI Activity on the
+            // keyguard. See PR #75 Gemini review.
+            val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+            if (km?.isKeyguardLocked == true) {
                 setShowWhenLocked(true)
                 setTurnScreenOn(true)
             }
@@ -73,6 +78,7 @@ class MainActivity : FlutterActivity() {
                         clearShowWhenLockedInternal()
                         result.success(null)
                     }
+                    "isScreenLocked" -> result.success(isScreenLockedInternal())
                     else -> result.notImplemented()
                 }
             }
@@ -90,6 +96,28 @@ class MainActivity : FlutterActivity() {
             setShowWhenLocked(false)
             setTurnScreenOn(false)
         }
+    }
+
+    /**
+     * Returns true when the device is currently showing the keyguard
+     * (lock screen), regardless of whether it is secure. Used by the
+     * Dart side to pick the cancel→play delay when the alarm starts
+     * ringing — Pixel / Android 16 releases the alarm-stream tone of a
+     * channel-bundled notification more slowly while the keyguard is up,
+     * so the longer delay only fires on those paths and the foreground /
+     * unlocked-home paths stay snappy. See Issue #74.
+     *
+     * `KeyguardManager.isKeyguardLocked()` is available since API 16, so
+     * no SDK_INT gate is needed.
+     */
+    private fun isScreenLockedInternal(): Boolean {
+        // Safe cast defends against a hypothetical null return from
+        // getSystemService — the Dart side (MethodChannelScreenLockQuery)
+        // is on the alarm-ring critical path, and a hard cast crash here
+        // would surface as a PlatformException and silence the alarm.
+        // See PR #75 Gemini review.
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        return km?.isKeyguardLocked == true
     }
 
     /**

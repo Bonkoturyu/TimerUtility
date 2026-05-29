@@ -81,6 +81,24 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
   (handler 登録) + [MainActivity.kt:88-93](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L88-L93)
   (`clearShowWhenLockedInternal` 本体)
 
+#### `isScreenLocked` (Issue #74 fix、2026-05-28)
+
+- 引数: なし
+- 戻り値: `bool`
+- 内部: `KeyguardManager.isKeyguardLocked()` を返す。API level 16 から利用
+  可能なので SDK_INT ガード不要。例外は投げず常に `success`
+- 用途: `AlarmRingingNotifier.start` が cancel→play 間の delay を
+  「unlock = 500 ms / Lock 画面 = 1800 ms」で分岐する。Pixel / Android 16
+  では keyguard 表示中に OS の alarm-stream tone release が遅く、500 ms で
+  は Channel sound と audioplayers が重なって二重音になる挙動の補正
+- Dart 側ラッパ:
+  [`MethodChannelScreenLockQuery`](../lib/infrastructure/platform/method_channel_screen_lock_query.dart)
+  経由で読み込み、`PlatformException` / `MissingPluginException` は false
+  にフォールバック (= unlock 経路扱い、500 ms delay 適用、安全側)
+- Domain port: [`ScreenLockQuery`](../lib/domain/ports/screen_lock_query.dart)
+  / Riverpod provider:
+  [`screenLockQueryProvider`](../lib/application/screen_lock_query_provider.dart)
+
 #### 不採用とした関連メソッド
 
 旧仕様書に記載していた以下は `permission_handler` パッケージ（および周辺）で

@@ -9,6 +9,7 @@ import 'alarm_sound_player_provider.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
+import 'screen_lock_query_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
@@ -76,6 +77,14 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// Phase 9.5: [source] で「タイマー由来」「アラーム由来」を区別する。
   /// 省略時は `AlarmSource.timer` (Phase 8 までの既存挙動を維持し、
   /// 既存呼び出し側 / テストとの後方互換を保つ)。
+  ///
+  /// Issue #74 fix (2026-05-28、Pixel 6a 4 シナリオ検証で補正):
+  /// cancel→play 間の delay は `screenLockQueryProvider` で「keyguard が
+  /// 上がっているか」を判定して切り替える。上がっていれば
+  /// [_lockedScreenCancelDelay] = 1800 ms、それ以外は
+  /// [_defaultCancelDelay] = 500 ms。Pixel / Android 16 では Lock 画面
+  /// 表示中 (cold-launch / warm-launch 問わず) のみ OS の alarm-stream
+  /// tone 解放が遅く、audioplayers と重なって二重音になるため。
   Future<void> start({
     required String timerId,
     required AlarmSound sound,
@@ -116,13 +125,41 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // lifecycle for a few seconds), then start the audioplayers loop.
     // Without the delay the user hears a double tone on the snooze-fired
     // / heads-up-tap paths (#2 verification, 2026-05-02). 500 ms is the
-    // empirical sweet spot — long enough for the OS tone to drop, short
-    // enough that the foreground path (where cancel is a no-op) is not
-    // perceptibly slower.
+    // empirical sweet spot for the unlocked path — long enough for the
+    // OS tone to drop, short enough that the foreground path (where
+    // cancel is a no-op) is not perceptibly slower.
+    //
+    // Issue #74 (2026-05-28、Pixel 6a 4 シナリオ検証で補正): Lock 画面
+    // 表示中の経路 (cold-launch FSI / warm-launch FSI snooze 再鳴動など)
+    // では OS の alarm-stream tone 解放が遅く、500 ms では audioplayers
+    // と重なって二重音になる。`KeyguardManager.isKeyguardLocked()` を
+    // Native MethodChannel 経由で読み、ロック中のみ
+    // [_lockedScreenCancelDelay] = 1800 ms に伸ばす。foreground / Home
+    // (unlock 済) は [_defaultCancelDelay] = 500 ms 据置 (体感遅延なし)。
     await ref.read(notificationSchedulerProvider).cancel(notificationId);
-    await Future<void>.delayed(const Duration(milliseconds: 500));
+    final bool isLocked = await ref
+        .read(screenLockQueryProvider)
+        .isScreenLocked();
+    await Future<void>.delayed(
+      isLocked ? _lockedScreenCancelDelay : _defaultCancelDelay,
+    );
+    // If the user (or `stop()` / `snoozeRequested()`) flipped the state
+    // back to idle while we were waiting on the cancel→play delay, do
+    // NOT start playback — the user already dismissed the alarm. The
+    // 1800 ms locked-screen branch widens this race window noticeably,
+    // so this guard is load-bearing (PR #75 Copilot review).
+    if (!state.isPlaying) return;
     await ref.read(alarmSoundPlayerProvider).play(sound);
   }
+
+  /// Foreground / Home (unlock 済) で OS Channel sound が release される
+  /// までの empirical delay (Phase 8.5、2026-05-02)。
+  static const Duration _defaultCancelDelay = Duration(milliseconds: 500);
+
+  /// Lock 画面表示中 (cold-launch FSI / warm-launch FSI snooze 再鳴動)
+  /// で OS Channel sound が release されるまでの empirical delay
+  /// (Issue #74、2026-05-28)。
+  static const Duration _lockedScreenCancelDelay = Duration(milliseconds: 1800);
 
   /// Stop the ringing alarm and reset state to idle.
   Future<void> stop() async {

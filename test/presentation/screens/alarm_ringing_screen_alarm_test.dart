@@ -11,6 +11,7 @@ import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
+import 'package:timer_utility/application/screen_lock_query_provider.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/alarm/alarm_entity.dart';
 import 'package:timer_utility/domain/alarm/alarm_repeat.dart';
@@ -19,6 +20,7 @@ import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
+import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
@@ -83,6 +85,15 @@ class _InMemoryTimerRepo implements TimerRepository {
   Future<TimerEntity?> findById(String id) async => null;
   @override
   Future<void> upsert(TimerEntity entity) async {}
+}
+
+/// Issue #74 fix: AlarmRingingNotifier consults ScreenLockQuery on start.
+/// テスト環境で Native MethodChannel 未登録だと delay 計算が完了せず
+/// play() に到達しない (alarm_ringing_screen_alarm_test.dart 失敗例)。
+/// 既定値 false (unlock = 500 ms delay) を即値で返す Stub で override。
+class _StubScreenLockQuery implements ScreenLockQuery {
+  @override
+  Future<bool> isScreenLocked() async => false;
 }
 
 class _GrantedPermissionNotifier extends PermissionNotifier {
@@ -168,6 +179,7 @@ Widget _harness(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
       ),
       notificationSchedulerProvider.overrideWithValue(s),
+      screenLockQueryProvider.overrideWithValue(_StubScreenLockQuery()),
       testNotificationStringsOverride(),
       alarmRepositoryProvider.overrideWithValue(repo),
       timerRepositoryProvider.overrideWithValue(_InMemoryTimerRepo()),

@@ -8,10 +8,12 @@ import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/screen_lock_query_provider.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
@@ -48,6 +50,17 @@ class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
 
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
+
+/// Issue #74 fix: AlarmRingingNotifier consults ScreenLockQuery to pick
+/// the cancel→play delay (500 ms unlocked / 1800 ms locked).
+class _StubScreenLockQuery implements ScreenLockQuery {
+  _StubScreenLockQuery({this.locked = false});
+
+  final bool locked;
+
+  @override
+  Future<bool> isScreenLocked() async => locked;
+}
 
 /// In-memory [TimerRepository] used by every harness so the
 /// [TimerCollectionNotifier] under test never touches a real DB.
@@ -100,6 +113,7 @@ Widget _harness(
   _StubAlarmSoundPlayer player, {
   DateTime? now,
   TimerEntity? seedRinging,
+  bool screenLocked = false,
 }) {
   final NotificationScheduler scheduler = _stubScheduler();
   final _InMemoryTimerRepository repo = _InMemoryTimerRepository();
@@ -133,6 +147,9 @@ Widget _harness(
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
       notificationSchedulerProvider.overrideWithValue(scheduler),
+      screenLockQueryProvider.overrideWithValue(
+        _StubScreenLockQuery(locked: screenLocked),
+      ),
       testNotificationStringsOverride(),
       timerRepositoryProvider.overrideWithValue(repo),
     ],
@@ -346,6 +363,42 @@ void main() {
         expect(entity.endAt, isNotNull);
         expect(find.text('home-stub'), findsOneWidget);
         expect(find.byType(AlarmRingingScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'screenLocked=true defers play until ~1800ms (Issue #74 lock-screen fix)',
+      (WidgetTester tester) async {
+        // Lock 画面表示中の FSI 経路 (cold-launch / warm-launch snooze
+        // 再鳴動など) シナリオ。`ScreenLockQuery.isScreenLocked()` が
+        // true を返すと `AlarmRingingNotifier.start` 内部で delay が
+        // 既定 500 ms ではなく 1800 ms に伸びることを間接的に検証する。
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player, screenLocked: true));
+        await tester.pumpAndSettle();
+
+        // 600 ms 経過時点では unlock 経路なら play 済だが、Lock 中なら
+        // まだ delay 中なので playCalls == 0。
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(player.playCalls, 0, reason: 'Lock 画面では 500 ms 後もまだ delay 中');
+
+        // 合計 1800 ms 経過させる (600 + 1300 = 1900 ms)。play 完了。
+        await tester.pump(const Duration(milliseconds: 1300));
+        expect(player.playCalls, 1);
+      },
+    );
+
+    testWidgets(
+      'screenLocked=false (default) plays at ~500ms (Phase 8.5 fast path)',
+      (WidgetTester tester) async {
+        // foreground / Home (unlock 済) を想定。既定の 500 ms delay で
+        // play されることを確認 (Lock 画面 fix のリグレッション防止)。
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player));
+        await tester.pumpAndSettle();
+
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(player.playCalls, 1);
       },
     );
 

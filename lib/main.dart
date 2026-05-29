@@ -372,6 +372,12 @@ Future<void> main() async {
   // Cold-launch path: プロセスが死んでいた状態で通知をタップされた場合は
   // `onNotificationTap` が発火しないので、プラグインに直接問い合わせて
   // 初期ロケーションを `/alarm-ringing?payload=...` に切り替える。
+  //
+  // Issue #74 fix (2026-05-28、案 A 補正): cold/warm-launch 判定では
+  // 不十分 (warm-launch FSI snooze 再鳴動も Lock 画面状態なら二重音発生)
+  // → `AlarmRingingNotifier.start` 内部で
+  // `KeyguardManager.isKeyguardLocked()` を Native から読んで delay 分岐
+  // する設計に変更。main.dart は経路情報を伝達しない (cold=1 クエリ廃止)。
   final String? coldLaunchPayload = await adapter.coldLaunchPayload();
   final String initialLocation = coldLaunchPayload != null
       ? Uri(
