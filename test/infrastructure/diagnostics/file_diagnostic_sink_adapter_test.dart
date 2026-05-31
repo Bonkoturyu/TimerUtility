@@ -186,4 +186,42 @@ void main() {
       await sink.dispose();
     });
   });
+
+  group('FileDiagnosticSinkAdapter dispose', () {
+    test('write after dispose is dropped (does not reopen the file)', () async {
+      final Clock clock = Clock.fixed(DateTime.utc(2026, 5, 15, 12));
+      final FileDiagnosticSinkAdapter sink = makeSink(clock: clock);
+
+      sink.write(
+        DiagnosticEvent.timerAction(
+          occurredAt: clock.now(),
+          timerId: 'before-dispose',
+          action: TimerActionKind.start,
+        ),
+      );
+      await sink.flush();
+      await sink.dispose();
+
+      final File f = File('${rootDir.path}/diagnostic_2026-05-15.log');
+      final String before = await f.readAsString();
+
+      // A late write must be dropped: no reopen, no extra bytes, no leaked
+      // IOSink. The directory still holds exactly one file and its content
+      // is byte-identical.
+      sink.write(
+        DiagnosticEvent.timerAction(
+          occurredAt: clock.now(),
+          timerId: 'after-dispose',
+          action: TimerActionKind.start,
+        ),
+      );
+      await sink.flush();
+
+      final List<File> files = rootDir.listSync().whereType<File>().toList();
+      expect(files, hasLength(1));
+      final String after = await f.readAsString();
+      expect(after, before);
+      expect(after, isNot(contains('after-dispose')));
+    });
+  });
 }

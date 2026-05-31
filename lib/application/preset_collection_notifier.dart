@@ -57,6 +57,13 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
   }
 
   Future<void> _restoreFromRepository() async {
+    // Race guard, mirroring AlarmCollectionNotifier._loadFromRepository:
+    // build() schedules this restore as a microtask, but the user can
+    // call create() / replaceFromTemplate() before findAll() resolves. If
+    // state is already populated, trust the in-memory side and skip the
+    // load entirely — otherwise the older persisted snapshot would clobber
+    // the just-created preset and it would vanish from the UI.
+    if (!state.isEmpty) return;
     final List<Preset> persisted = await ref
         .read(presetRepositoryProvider)
         .findAll();
@@ -67,6 +74,8 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
       // keep the empty collection.
       return;
     }
+    // Double-check: state may have been populated while findAll() awaited.
+    if (!state.isEmpty) return;
     state = PresetCollection.fromList(persisted);
   }
 

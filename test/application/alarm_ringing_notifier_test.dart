@@ -40,6 +40,38 @@ class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   Future<void> dispose() async {}
 }
 
+/// Player whose [play] parks on a gate so a test can interleave a stop()
+/// during the `await play()` async gap (post-play guard regression).
+class _BlockingAlarmSoundPlayer implements AlarmSoundPlayer {
+  final Completer<void> _gate = Completer<void>();
+  bool _isPlaying = false;
+  int playCalls = 0;
+  int stopCalls = 0;
+
+  void completePlay() => _gate.complete();
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> play(AlarmSound sound) async {
+    playCalls++;
+    await _gate.future;
+    _isPlaying = true;
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCalls++;
+    _isPlaying = false;
+  }
+
+  @override
+  Future<void> dispose() async {
+    _isPlaying = false;
+  }
+}
+
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
 
@@ -55,7 +87,7 @@ class _StubScreenLockQuery implements ScreenLockQuery {
 }
 
 ({ProviderContainer container, _MockNotificationScheduler scheduler})
-_container(_StubAlarmSoundPlayer player, {bool screenLocked = false}) {
+_container(AlarmSoundPlayer player, {bool screenLocked = false}) {
   final scheduler = _MockNotificationScheduler();
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
   when(() => scheduler.cancelAll()).thenAnswer((_) async {});
@@ -337,6 +369,96 @@ void main() {
       expect(state.snoozeRequested, isTrue);
       expect(state.isPlaying, isFalse);
       expect(player.stopCalls, 1);
+    });
+
+    test(
+      'stop() during play()\'s async gap stops the player (post-play guard)',
+      () {
+        // The pre-play guard on L151 only covers the window *before*
+        // play() starts. This exercises the second window: stop() arriving
+        // while `await play(sound)` is in flight.
+        fakeAsync((FakeAsync async) {
+          final player = _BlockingAlarmSoundPlayer();
+          final h = _container(player); // unlocked → 500 ms delay
+
+          unawaited(
+            h.container
+                .read(alarmRingingNotifierProvider.notifier)
+                .start(
+                  timerId: 't-gap',
+                  sound: AlarmSoundCatalog.defaultSound,
+                  notificationId: 300,
+                ),
+          );
+          // Clear the cancel→play delay; start() now enters play() and
+          // parks on the gate.
+          async.elapse(const Duration(milliseconds: 500));
+          async.flushMicrotasks();
+          expect(player.playCalls, 1);
+          expect(player.isPlaying, isFalse, reason: 'play() is still parked');
+
+          // User taps Stop *during* the play() async gap.
+          unawaited(
+            h.container.read(alarmRingingNotifierProvider.notifier).stop(),
+          );
+          async.flushMicrotasks();
+          expect(
+            h.container.read(alarmRingingNotifierProvider).isPlaying,
+            isFalse,
+          );
+
+          // play() resolves; without the post-play guard the loop would be
+          // running while state is idle. The guard must stop it.
+          player.completePlay();
+          async.flushMicrotasks();
+
+          expect(player.isPlaying, isFalse);
+          expect(player.stopCalls, greaterThanOrEqualTo(1));
+          expect(player.playCalls, 1);
+        });
+      },
+    );
+
+    test('stale start() does not overwrite audio after the ringing slot '
+        'switched timers (PR #84 gemini review: pre-play id guard)', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final h = _container(player); // unlocked → 500 ms delay
+        final notifier = h.container.read(
+          alarmRingingNotifierProvider.notifier,
+        );
+        final soundA = AlarmSoundCatalog.all[0]; // default
+        final soundB = AlarmSoundCatalog.all[1]; // gentle
+
+        // t-1 rings and parks inside its 500 ms cancel→play delay.
+        unawaited(
+          notifier.start(timerId: 't-1', sound: soundA, notificationId: 1),
+        );
+        async.elapse(const Duration(milliseconds: 250));
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
+
+        // User dismisses t-1, then a second timer (t-2) takes the slot.
+        unawaited(notifier.stop());
+        async.flushMicrotasks();
+        unawaited(
+          notifier.start(timerId: 't-2', sound: soundB, notificationId: 2),
+        );
+        async.flushMicrotasks();
+
+        // Advance past both the original t-1 window and t-2's window.
+        async.elapse(const Duration(milliseconds: 600));
+        async.flushMicrotasks();
+
+        // Only t-2 plays; t-1's stale play() is dropped by the
+        // currentTimerId guard (without it, t-1 would overwrite t-2).
+        expect(player.playCalls, 1);
+        expect(player.lastPlayed, soundB);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentTimerId,
+          't-2',
+        );
+      });
     });
   });
 }
