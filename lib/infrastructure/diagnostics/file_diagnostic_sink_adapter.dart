@@ -50,6 +50,7 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
   File? _currentFile;
   String? _currentDateKey;
   bool _prunedOnce = false;
+  bool _disposed = false;
 
   /// Serializes writes so concurrent callers' lines don't interleave.
   /// Each `write` waits for the previous to finish before appending.
@@ -57,6 +58,10 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
 
   @override
   void write(DiagnosticEvent event) {
+    // Once dispose() has run the IOSink is closed and `_sink` is null. A
+    // late write would otherwise fall through to `_openCurrent()` and
+    // reopen the file, leaking an IOSink nobody closes. Drop it instead.
+    if (_disposed) return;
     final String line = formatter.format(event);
     _writeChain = _writeChain.then((_) => _writeLine(line)).catchError((
       Object _,
@@ -154,6 +159,9 @@ class FileDiagnosticSinkAdapter implements DiagnosticSink {
   /// the equivalent lifecycle teardown so the IOSink is not abandoned
   /// — Dart's IO library does not auto-flush on process exit.
   Future<void> dispose() async {
+    // Set the flag before draining so any write() racing with dispose()
+    // is dropped rather than queued onto a chain we're about to abandon.
+    _disposed = true;
     await _writeChain;
     await _closeCurrent();
   }

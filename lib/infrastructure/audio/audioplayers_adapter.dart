@@ -12,14 +12,17 @@ import '../../domain/timer/alarm_sound.dart';
 /// what audioplayers expects (the prefix is added internally).
 class AudioplayersAdapter implements AlarmSoundPlayer {
   AudioplayersAdapter({AudioPlayer? player})
-    : _player = player ?? AudioPlayer() {
-    _stateSub = _player.onPlayerStateChanged.listen((PlayerState state) {
-      _isPlaying = state == PlayerState.playing;
-    });
-  }
+    : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
-  late final StreamSubscription<PlayerState> _stateSub;
+
+  // Single source of truth for `isPlaying`: only play() / stop() /
+  // dispose() write it. We deliberately do NOT also subscribe to
+  // `onPlayerStateChanged` — a second, asynchronous writer made the
+  // flag non-deterministic under rapid play→stop sequencing (a late
+  // "playing" event could revive the flag after stop() cleared it).
+  // Playback is always ReleaseMode.loop, so the stream never reports a
+  // natural completion the explicit sets would miss.
   bool _isPlaying = false;
 
   @override
@@ -44,7 +47,6 @@ class AudioplayersAdapter implements AlarmSoundPlayer {
 
   @override
   Future<void> dispose() async {
-    await _stateSub.cancel();
     await _player.dispose();
     _isPlaying = false;
   }

@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/diagnostics/diagnostic_event.dart';
+import '../domain/ports/alarm_sound_player.dart';
 import '../domain/timer/alarm_sound.dart';
 import 'alarm_sound_player_provider.dart';
 import 'clock_provider.dart';
@@ -149,7 +150,17 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // 1800 ms locked-screen branch widens this race window noticeably,
     // so this guard is load-bearing (PR #75 Copilot review).
     if (!state.isPlaying) return;
-    await ref.read(alarmSoundPlayerProvider).play(sound);
+    final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
+    await player.play(sound);
+    // Second race window (beyond the pre-play guard on L151): stop() /
+    // snoozeRequested() can flip the state back to idle *during* the
+    // `await play(sound)` async gap. If that happened, the player is now
+    // looping with nobody left to stop it — the alarm would keep ringing
+    // even though the user dismissed it. Re-check and stop so the audio
+    // can never outlive the ringing state.
+    if (!state.isPlaying) {
+      await player.stop();
+    }
   }
 
   /// Foreground / Home (unlock 済) で OS Channel sound が release される
@@ -162,9 +173,13 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   static const Duration _lockedScreenCancelDelay = Duration(milliseconds: 1800);
 
   /// Stop the ringing alarm and reset state to idle.
+  ///
+  /// Awaits the player stop (rather than fire-and-forget) so the ordering
+  /// is deterministic against a concurrent `start()`: the post-play guard
+  /// in `start()` relies on `stop()` having actually settled the player.
   Future<void> stop() async {
     state = AlarmRingingState.idle();
-    unawaited(ref.read(alarmSoundPlayerProvider).stop());
+    await ref.read(alarmSoundPlayerProvider).stop();
   }
 
   /// Mark the snooze button as pressed and stop the audio.
@@ -174,6 +189,6 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// later" behaviour is wired up in Phase 7.
   Future<void> snoozeRequested() async {
     state = state.copyWith(isPlaying: false, snoozeRequested: true);
-    unawaited(ref.read(alarmSoundPlayerProvider).stop());
+    await ref.read(alarmSoundPlayerProvider).stop();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +67,29 @@ class _InMemoryPresetRepo implements PresetRepository {
 /// the in-memory repo's seed has been loaded.
 Future<void> settleRestore() => Future<void>.delayed(Duration.zero);
 
+/// Preset repo whose [findAll] stays pending on [findAllGate] so a test
+/// can interleave a create() before the restore microtask resolves
+/// (double-check guard regression).
+class _GatedPresetRepo implements PresetRepository {
+  final Completer<List<Preset>> findAllGate = Completer<List<Preset>>();
+  final List<Preset> upserted = <Preset>[];
+
+  @override
+  Future<List<Preset>> findAll() => findAllGate.future;
+
+  @override
+  Future<void> upsert(Preset entity) async => upserted.add(entity);
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<Preset?> findById(String id) async => null;
+
+  @override
+  Future<void> replaceAll(List<Preset> entities) async {}
+}
+
 /// Deterministic id sequence for the notifier under test.
 class _IdSequence {
   int _i = 0;
@@ -122,6 +147,56 @@ void main() {
       await settleRestore();
       expect(h.repo.store.containsKey('p-00'), isTrue);
     });
+
+    test(
+      'create before restore completes is not clobbered by the load',
+      () async {
+        // findAll() stays pending on the gate so we can interleave a create()
+        // before the restore microtask resolves.
+        final repo = _GatedPresetRepo();
+        final container = ProviderContainer(
+          overrides: <Override>[
+            clockProvider.overrideWithValue(
+              Clock(() => DateTime.utc(2026, 5, 2, 12)),
+            ),
+            presetRepositoryProvider.overrideWithValue(repo),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final notifier = container.read(
+          presetCollectionNotifierProvider.notifier,
+        );
+        notifier.debugSetIdGenerator(_IdSequence().next);
+        await Future<void>.value(); // let restore reach the findAll await
+
+        // User creates a preset while the persisted load is still in flight.
+        final created = notifier.create(
+          label: 'Focus',
+          duration: const Duration(minutes: 25),
+        );
+        expect(container.read(presetCollectionNotifierProvider).size, 1);
+
+        // The persisted snapshot (predates the new preset) now resolves.
+        repo.findAllGate.complete(<Preset>[
+          Preset(
+            id: 'old-1',
+            label: 'Tea',
+            duration: const Duration(minutes: 3),
+            soundId: null,
+            createdAt: DateTime.utc(2026, 1, 1),
+          ),
+        ]);
+        await Future<void>.value();
+        await Future<void>.value();
+
+        // The freshly-created preset survives: the double-check guard skips
+        // the load because state is already non-empty.
+        final state = container.read(presetCollectionNotifierProvider);
+        expect(state.size, 1);
+        expect(state.findById(created.id)?.label, 'Focus');
+      },
+    );
 
     test('create throws when at max capacity', () async {
       final Map<String, Preset> seeded = <String, Preset>{
