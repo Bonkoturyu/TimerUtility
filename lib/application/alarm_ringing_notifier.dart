@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -149,7 +147,16 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // NOT start playback — the user already dismissed the alarm. The
     // 1800 ms locked-screen branch widens this race window noticeably,
     // so this guard is load-bearing (PR #75 Copilot review).
-    if (!state.isPlaying) return;
+    //
+    // The `currentTimerId != timerId` arm additionally covers the case
+    // where this ringing was dismissed and a *different* timer took over
+    // the slot during our delay (stop t-1 → start t-2 re-sets
+    // isPlaying=true under a new id): the stale t-1 play() must not
+    // overwrite t-2's audio (PR #84 gemini review). The `!state.isPlaying`
+    // arm is still required because snoozeRequested() keeps currentTimerId
+    // set while flipping isPlaying to false, so the id check alone would
+    // let a snoozed alarm start playing.
+    if (!state.isPlaying || state.currentTimerId != timerId) return;
     final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
     await player.play(sound);
     // Second race window (beyond the pre-play guard on L151): stop() /

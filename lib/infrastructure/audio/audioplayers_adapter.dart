@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:audioplayers/audioplayers.dart';
 
 import '../../domain/ports/alarm_sound_player.dart';

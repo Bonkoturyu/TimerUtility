@@ -418,5 +418,47 @@ void main() {
         });
       },
     );
+
+    test('stale start() does not overwrite audio after the ringing slot '
+        'switched timers (PR #84 gemini review: pre-play id guard)', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final h = _container(player); // unlocked → 500 ms delay
+        final notifier = h.container.read(
+          alarmRingingNotifierProvider.notifier,
+        );
+        final soundA = AlarmSoundCatalog.all[0]; // default
+        final soundB = AlarmSoundCatalog.all[1]; // gentle
+
+        // t-1 rings and parks inside its 500 ms cancel→play delay.
+        unawaited(
+          notifier.start(timerId: 't-1', sound: soundA, notificationId: 1),
+        );
+        async.elapse(const Duration(milliseconds: 250));
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
+
+        // User dismisses t-1, then a second timer (t-2) takes the slot.
+        unawaited(notifier.stop());
+        async.flushMicrotasks();
+        unawaited(
+          notifier.start(timerId: 't-2', sound: soundB, notificationId: 2),
+        );
+        async.flushMicrotasks();
+
+        // Advance past both the original t-1 window and t-2's window.
+        async.elapse(const Duration(milliseconds: 600));
+        async.flushMicrotasks();
+
+        // Only t-2 plays; t-1's stale play() is dropped by the
+        // currentTimerId guard (without it, t-1 would overwrite t-2).
+        expect(player.playCalls, 1);
+        expect(player.lastPlayed, soundB);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentTimerId,
+          't-2',
+        );
+      });
+    });
   });
 }
