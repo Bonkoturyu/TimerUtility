@@ -47,13 +47,41 @@ class AlarmRingingScreen extends ConsumerStatefulWidget {
 }
 
 class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
+  /// Captured in [initState] because `ref` is unusable once the widget is
+  /// disposed. The notifier lives in the keepAlive container, so it
+  /// outlives this widget (Review #5).
+  late final AlarmPushReservation _pushReservation;
+
   @override
   void initState() {
     super.initState();
+    _pushReservation = ref.read(alarmPushReservationProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _bootstrapRingingIfNeeded();
     });
+  }
+
+  @override
+  void dispose() {
+    // Release the reservation on EVERY disposal path, not just the explicit
+    // Stop / Snooze exit — a parent rebuild or programmatic navigation that
+    // tears the screen down would otherwise leak the slot, permanently
+    // blocking future alarm pushes (PR #88 gemini review).
+    //
+    // Deferred to a microtask because Riverpod forbids mutating a provider
+    // synchronously inside a widget life-cycle callback. The `catch` covers
+    // the case where the owning container is torn down before the microtask
+    // runs (e.g. widget-test teardown), where the notifier is already gone.
+    final AlarmPushReservation reservation = _pushReservation;
+    Future<void>.microtask(() {
+      try {
+        reservation.release();
+      } catch (_) {
+        // Container already disposed — nothing left to release.
+      }
+    });
+    super.dispose();
   }
 
   void _bootstrapRingingIfNeeded() {
@@ -391,12 +419,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// still covers the Recent-double-task and back-key-exit issues from
   /// F-4.
   void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
-    // Free the push-reservation slot so the next ring can push the alarm
-    // screen again. Done here (a user-action handler, reached only via the
-    // Stop / Snooze buttons since PopScope blocks every other exit) rather
-    // than in dispose, because Riverpod forbids mutating a provider during
-    // widget life-cycle callbacks (Review #5).
-    ref.read(alarmPushReservationProvider.notifier).release();
     // Release the keyguard-override state via the Application-layer
     // provider rather than touching the MethodChannel directly from
     // Presentation (Issue #73). Fire-and-forget — clearing the override is

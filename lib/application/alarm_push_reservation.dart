@@ -14,7 +14,10 @@ part 'alarm_push_reservation.g.dart';
 /// other before the route stack settles, leaving two `/alarm-ringing` frames
 /// stacked. Both callers commit synchronously via [tryReserve]; the loser
 /// bails before adding a second frame. The owner releases the slot in
-/// `AlarmRingingScreen.dispose` so a future ring can push again.
+/// `AlarmRingingScreen.dispose` (deferred via a microtask, since Riverpod
+/// forbids mutating a provider inside a widget life-cycle callback) so a
+/// future ring can push again — on every disposal path, not just the
+/// explicit Stop / Snooze exit.
 ///
 /// Review #5: previously a static mutable field on `AlarmRingingScreen`.
 /// Moving it to a `keepAlive` provider keeps the same app-global semantics in
@@ -38,6 +41,6 @@ class AlarmPushReservation extends _$AlarmPushReservation {
   }
 
   /// Releases the reservation so a future ring can push again. Called from
-  /// `AlarmRingingScreen.dispose`.
+  /// `AlarmRingingScreen.dispose` (deferred via a microtask).
   void release() => state = false;
 }
