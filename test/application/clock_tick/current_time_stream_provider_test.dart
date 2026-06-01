@@ -62,7 +62,9 @@ void main() {
                 calls++;
                 // call 1 = initial add, call 2 = +1s tick, call 3 = +2s tick.
                 // Throw on the +2s tick to simulate a transient clock failure.
-                if (calls == 3) throw StateError('transient clock failure');
+                // An Exception (not an Error) is the runtime-condition kind
+                // the production guard is meant to absorb.
+                if (calls == 3) throw Exception('transient clock failure');
                 return base.add(async.elapsed);
               }),
             ),
@@ -71,11 +73,13 @@ void main() {
         addTearDown(container.dispose);
 
         final List<DateTime> emitted = <DateTime>[];
-        AsyncValue<DateTime>? latest;
+        bool sawError = false;
         final ProviderSubscription<AsyncValue<DateTime>> sub = container.listen(
           currentTimeProvider,
           (AsyncValue<DateTime>? _, AsyncValue<DateTime> next) {
-            latest = next;
+            // Track every emission, not just the final state, so a brief
+            // AsyncError that recovers on the next tick is still caught.
+            if (next.hasError) sawError = true;
             final DateTime? value = next.valueOrNull;
             if (value != null) emitted.add(value);
           },
@@ -93,10 +97,13 @@ void main() {
           base.add(const Duration(seconds: 1)),
           base.add(const Duration(seconds: 3)),
         ]);
-        // The provider must never be left in an error state — that is what
-        // would freeze the world-clock display.
-        expect(latest!.hasError, isFalse);
-        expect(latest!.value, base.add(const Duration(seconds: 3)));
+        // The provider must never surface an error — not even transiently —
+        // because that is what would freeze the world-clock display.
+        expect(
+          sawError,
+          isFalse,
+          reason: 'no emission may carry an AsyncError, even briefly',
+        );
       });
     });
 
