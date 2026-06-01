@@ -99,11 +99,15 @@ class _StubScreenLockQuery implements ScreenLockQuery {
 }
 
 /// Issue #73: AlarmRingingScreen releases the keyguard-override via this
-/// controller on leave. No-op stub so the alarm-path widget tests never
-/// touch a real MethodChannel.
+/// controller on leave. Records the call count so tests can assert it
+/// fired, without touching a real MethodChannel.
 class _StubKeyguardOverrideController implements KeyguardOverrideController {
+  int clearCalls = 0;
+
   @override
-  Future<void> clearShowWhenLocked() async {}
+  Future<void> clearShowWhenLocked() async {
+    clearCalls++;
+  }
 }
 
 class _GrantedPermissionNotifier extends PermissionNotifier {
@@ -145,6 +149,7 @@ Widget _harness(
   required AlarmEntity seedAlarm,
   DateTime? now,
   NotificationScheduler? scheduler,
+  _StubKeyguardOverrideController? keyguard,
 }) {
   final NotificationScheduler s = scheduler ?? _stubScheduler();
   final _InMemoryAlarmRepo repo = _InMemoryAlarmRepo();
@@ -189,7 +194,7 @@ Widget _harness(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
       ),
       keyguardOverrideControllerProvider.overrideWithValue(
-        _StubKeyguardOverrideController(),
+        keyguard ?? _StubKeyguardOverrideController(),
       ),
       notificationSchedulerProvider.overrideWithValue(s),
       screenLockQueryProvider.overrideWithValue(_StubScreenLockQuery()),
@@ -252,7 +257,10 @@ void main() {
       'Stop 押下で AlarmCollectionNotifier.onFiredStop が走り once は disabled',
       (WidgetTester tester) async {
         final player = _StubAlarmSoundPlayer();
-        await tester.pumpWidget(_harness(player, seedAlarm: _seedOnceAlarm()));
+        final keyguard = _StubKeyguardOverrideController();
+        await tester.pumpWidget(
+          _harness(player, seedAlarm: _seedOnceAlarm(), keyguard: keyguard),
+        );
         await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 600));
 
@@ -260,6 +268,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(player.stopCalls, greaterThanOrEqualTo(1));
+        // Issue #73: leaving the screen releases the keyguard-override via
+        // the Application-layer provider.
+        expect(keyguard.clearCalls, 1);
         // Phase 11 follow-up: cold-start fallback は alarm / timer 共に
         // `/` 単独に統一。tab 復元は HomeScreen の lastHomePageIndex に
         // 委譲する。ここでは home-stub を起点にして provider を読み、
@@ -278,12 +289,14 @@ void main() {
     ) async {
       final scheduler = _stubScheduler();
       final player = _StubAlarmSoundPlayer();
+      final keyguard = _StubKeyguardOverrideController();
       await tester.pumpWidget(
         _harness(
           player,
           seedAlarm: _seedOnceAlarm(),
           now: DateTime(2026, 5, 4, 7, 0),
           scheduler: scheduler,
+          keyguard: keyguard,
         ),
       );
       await tester.pumpAndSettle();
@@ -307,6 +320,8 @@ void main() {
       ).called(1);
       // 鳴動 UI を抜けている。
       expect(find.byType(AlarmRingingScreen), findsNothing);
+      // Issue #73: 画面退出時に keyguard-override が provider 経由で解除される。
+      expect(keyguard.clearCalls, 1);
     });
   });
 }
