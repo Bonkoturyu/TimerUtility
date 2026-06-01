@@ -37,7 +37,7 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 ## 実装済み Channel
 
 唯一実装されている Channel は `io.github.bonkoturyu.timer_utility/permission`（MethodChannel）。
-3 メソッドを提供する。
+4 メソッドを提供する。
 
 ### `io.github.bonkoturyu.timer_utility/permission` (MethodChannel)
 
@@ -72,13 +72,23 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 - 用途: FSI 経由で起動された Activity が立てた
   `setShowWhenLocked(true)` / `setTurnScreenOn(true)` を解除する
 - 呼び出し元: `AlarmRingingScreen._leaveAlarmScreen` (Stop / Snooze 時、
-  [alarm_ringing_screen.dart:444-447](../lib/presentation/screens/alarm_ringing_screen.dart#L444-L447))
+  [alarm_ringing_screen.dart:439-447](../lib/presentation/screens/alarm_ringing_screen.dart#L439-L447))。
+  Issue #73 で Presentation 直叩きを解消し、`keyguardOverrideControllerProvider`
+  (Application) → [`MethodChannelKeyguardOverrideController`](../lib/infrastructure/platform/method_channel_keyguard_override_controller.dart)
+  (Infrastructure) 経由で呼ぶ
 - 対応 API: 27+ (Android 8.1 / `Build.VERSION_CODES.O_MR1`)、それ未満は no-op
 - なぜ必要: `setShowWhenLocked(true)` は明示的に `false` に戻さないと残り続け、
   ロック解除後も Activity が「lock-screen overlay」モードに留まる。結果として
   recents (■) ナビゲーションボタンが消失したままになる不具合の修正
-- 実装参照: [MainActivity.kt:72-75](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L72-L75)
-  (handler 登録) + [MainActivity.kt:88-93](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L88-L93)
+- Dart 側ラッパ:
+  [`MethodChannelKeyguardOverrideController`](../lib/infrastructure/platform/method_channel_keyguard_override_controller.dart)
+  経由で呼び出し、すべての platform 例外を握りつぶす (clear 失敗は recents
+  ボタン表示にしか影響せず best-effort。`MethodChannelScreenLockQuery` と同方針)
+- Domain port: [`KeyguardOverrideController`](../lib/domain/ports/keyguard_override_controller.dart)
+  / Riverpod provider:
+  [`keyguardOverrideControllerProvider`](../lib/application/keyguard_override_controller_provider.dart)
+- 実装参照: [MainActivity.kt:77-80](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L77-L80)
+  (handler 登録) + [MainActivity.kt:94-99](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L94-L99)
   (`clearShowWhenLockedInternal` 本体)
 
 #### `isScreenLocked` (Issue #74 fix、2026-05-28)
@@ -200,7 +210,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PERMISSION_CHANNEL)
-            .setMethodCallHandler { call, result -> /* 3 メソッドを dispatch */ }
+            .setMethodCallHandler { call, result -> /* 4 メソッドを dispatch */ }
     }
 }
 ```
@@ -226,7 +236,9 @@ flutter_local_notifications パッケージ内蔵の `ScheduledNotificationBootR
 
 ### Provider / 利用箇所
 
-`PermissionChannel` クラスは Riverpod Provider 化していない。利用箇所は 3 つ:
+`PermissionChannel` クラス自体は Riverpod Provider 化していないが、
+`io.github.bonkoturyu.timer_utility/permission` を叩く経路はすべて
+Infrastructure 層に閉じている。利用箇所は 4 つ:
 
 1. [`PermissionHandlerAdapter`](../lib/infrastructure/permission/permission_handler_adapter.dart)
    内部で `final PermissionChannel _channel` として保持し、FSI 権限の
@@ -236,18 +248,30 @@ flutter_local_notifications パッケージ内蔵の `ScheduledNotificationBootR
    内部で `final PermissionChannel _permissionChannel` として保持し、
    `_safeCanUseFullScreenIntent()` 経由で `schedule()` から FSI 可否を
    再問い合わせ（OS 設定がいつでも変わる可能性があるためキャッシュしない）
-3. [alarm_ringing_screen.dart:23-25](../lib/presentation/screens/alarm_ringing_screen.dart#L23-L25)
-   で `const MethodChannel(PermissionChannel.channelName)` を生成し、
-   `clearShowWhenLocked` のみ単発呼び出し（ラッパクラスを介さない）
+3. [`MethodChannelScreenLockQuery`](../lib/infrastructure/platform/method_channel_screen_lock_query.dart)
+   が `MethodChannel(PermissionChannel.channelName)` を内部生成し
+   `isScreenLocked` を呼ぶ (Issue #74)。`AlarmRingingNotifier.start` は
+   domain port [`ScreenLockQuery`](../lib/domain/ports/screen_lock_query.dart) /
+   [`screenLockQueryProvider`](../lib/application/screen_lock_query_provider.dart)
+   (Application) 経由でこの adapter を取得し、cancel→play delay の判定に使う
+4. [`MethodChannelKeyguardOverrideController`](../lib/infrastructure/platform/method_channel_keyguard_override_controller.dart)
+   が `MethodChannel(PermissionChannel.channelName)` を内部生成し
+   `clearShowWhenLocked` を呼ぶ (Issue #73)。`AlarmRingingScreen._leaveAlarmScreen`
+   は domain port
+   [`KeyguardOverrideController`](../lib/domain/ports/keyguard_override_controller.dart) /
+   [`keyguardOverrideControllerProvider`](../lib/application/keyguard_override_controller_provider.dart)
+   (Application) 経由でこの adapter を取得し、画面退出時に keyguard-override を解除する
 
-3 の Presentation 層 (`AlarmRingingScreen`) から Infrastructure 詳細
-(`MethodChannel`) を直接参照している構造は、CLAUDE.md および
-`.gemini/styleguide.md` の依存方向原則
-（`Presentation → Application → Domain ← Infrastructure`）に対する
-**例外（技術的負債）として認識** している。1 メソッドのために
-`PermissionChannel` ラッパ経由 / Riverpod Provider 経由に整える価値が
-低かったため現状こうなっているが、Channel / メソッドが増えた段階で
-ラッパー経由への統一を検討する。
+> **過去の技術的負債（解消済、Issue #73）**: かつては上記 4 の `clearShowWhenLocked`
+> を `AlarmRingingScreen` から `const MethodChannel(PermissionChannel.channelName)`
+> 直生成で単発呼び出ししており、Presentation 層が Infrastructure 詳細
+> (`MethodChannel`) を直接参照する依存方向違反（CLAUDE.md /
+> `.gemini/styleguide.md` の `Presentation → Application → Domain ← Infrastructure`
+> 原則に対する例外）になっていた。Issue #73 で、`isScreenLocked` (Issue #74) と
+> 同型の domain port (`KeyguardOverrideController`) + infra adapter
+> (`MethodChannelKeyguardOverrideController`) + Application provider
+> (`keyguardOverrideControllerProvider`) に整理して解消した。Presentation 層は
+> `MethodChannel` / `permission_channel.dart` を一切 import しない。
 
 ---
 
@@ -255,7 +279,7 @@ flutter_local_notifications パッケージ内蔵の `ScheduledNotificationBootR
 
 ### 引数 / 戻り値のエンコード
 
-- 現状 `io.github.bonkoturyu.timer_utility/permission` の 3 メソッドはすべて引数なし、戻り値も
+- 現状 `io.github.bonkoturyu.timer_utility/permission` の 4 メソッドはすべて引数なし、戻り値も
   `bool` または `null` のみ。MethodChannel の standard codec で十分
 - 将来複雑な型を渡す必要が出た場合は、メッセージを JSON 文字列で固める方針
   （オブジェクト境界での型ずれを避けるため）

@@ -7,11 +7,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/keyguard_override_controller_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/keyguard_override_controller.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
@@ -60,6 +62,18 @@ class _StubScreenLockQuery implements ScreenLockQuery {
 
   @override
   Future<bool> isScreenLocked() async => locked;
+}
+
+/// Issue #73: AlarmRingingScreen releases the keyguard-override via this
+/// controller on leave. Records the call so tests can assert it fired
+/// without touching a real MethodChannel.
+class _StubKeyguardOverrideController implements KeyguardOverrideController {
+  int clearCalls = 0;
+
+  @override
+  Future<void> clearShowWhenLocked() async {
+    clearCalls++;
+  }
 }
 
 /// In-memory [TimerRepository] used by every harness so the
@@ -146,6 +160,9 @@ Widget _harness(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
+      keyguardOverrideControllerProvider.overrideWithValue(
+        _StubKeyguardOverrideController(),
+      ),
       notificationSchedulerProvider.overrideWithValue(scheduler),
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),

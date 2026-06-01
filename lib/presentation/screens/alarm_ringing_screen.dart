@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_collection_notifier.dart';
 import '../../application/alarm_ringing_notifier.dart';
+import '../../application/keyguard_override_controller_provider.dart';
 import '../../application/timer_collection_notifier.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/exceptions.dart';
@@ -13,16 +16,7 @@ import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/notification_id_generator.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
-import '../../infrastructure/platform/permission_channel.dart';
 import '../../l10n/app_localizations.dart';
-
-/// Native channel used to release the keyguard-override state set by
-/// Android when this screen was launched via FullScreenIntent. Reuses
-/// the existing permission channel rather than spinning up a second
-/// channel just for one method.
-const MethodChannel _permissionChannel = MethodChannel(
-  PermissionChannel.channelName,
-);
 
 /// Phase 8 ringing screen. Reads the currently ringing timer from
 /// [TimerCollectionNotifier]. If multiple timers ring concurrently we
@@ -443,9 +437,14 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// still covers the Recent-double-task and back-key-exit issues from
   /// F-4.
   void _leaveAlarmScreen(BuildContext context, {AlarmSource? source}) {
-    _permissionChannel
-        .invokeMethod<void>('clearShowWhenLocked')
-        .catchError((_) {});
+    // Release the keyguard-override state via the Application-layer
+    // provider rather than touching the MethodChannel directly from
+    // Presentation (Issue #73). Fire-and-forget — clearing the override is
+    // best-effort and we must not add a native round-trip to the leave
+    // path; the adapter swallows any platform error internally.
+    unawaited(
+      ref.read(keyguardOverrideControllerProvider).clearShowWhenLocked(),
+    );
     // FullScreenIntent 経由で起動された Activity が `setShowWhenLocked(true)`
     // を立てている間、Android が暗黙に system bar を hidden 扱いする
     // ことがある。ホーム画面に戻った後も時計・バッテリー・電波表示が

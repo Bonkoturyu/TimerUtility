@@ -9,6 +9,7 @@ import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/keyguard_override_controller_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
@@ -18,6 +19,7 @@ import 'package:timer_utility/domain/alarm/alarm_repeat.dart';
 import 'package:timer_utility/domain/alarm/time_of_day_value.dart';
 import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/keyguard_override_controller.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
@@ -94,6 +96,14 @@ class _InMemoryTimerRepo implements TimerRepository {
 class _StubScreenLockQuery implements ScreenLockQuery {
   @override
   Future<bool> isScreenLocked() async => false;
+}
+
+/// Issue #73: AlarmRingingScreen releases the keyguard-override via this
+/// controller on leave. No-op stub so the alarm-path widget tests never
+/// touch a real MethodChannel.
+class _StubKeyguardOverrideController implements KeyguardOverrideController {
+  @override
+  Future<void> clearShowWhenLocked() async {}
 }
 
 class _GrantedPermissionNotifier extends PermissionNotifier {
@@ -177,6 +187,9 @@ Widget _harness(
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
+      ),
+      keyguardOverrideControllerProvider.overrideWithValue(
+        _StubKeyguardOverrideController(),
       ),
       notificationSchedulerProvider.overrideWithValue(s),
       screenLockQueryProvider.overrideWithValue(_StubScreenLockQuery()),
