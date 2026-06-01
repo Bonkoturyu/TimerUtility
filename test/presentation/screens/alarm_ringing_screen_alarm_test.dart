@@ -9,6 +9,7 @@ import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/keyguard_override_controller_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
@@ -18,6 +19,7 @@ import 'package:timer_utility/domain/alarm/alarm_repeat.dart';
 import 'package:timer_utility/domain/alarm/time_of_day_value.dart';
 import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/keyguard_override_controller.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
@@ -96,6 +98,18 @@ class _StubScreenLockQuery implements ScreenLockQuery {
   Future<bool> isScreenLocked() async => false;
 }
 
+/// Issue #73: AlarmRingingScreen releases the keyguard-override via this
+/// controller on leave. Records the call count so tests can assert it
+/// fired, without touching a real MethodChannel.
+class _StubKeyguardOverrideController implements KeyguardOverrideController {
+  int clearCalls = 0;
+
+  @override
+  Future<void> clearShowWhenLocked() async {
+    clearCalls++;
+  }
+}
+
 class _GrantedPermissionNotifier extends PermissionNotifier {
   @override
   PermissionState build() => const PermissionState(
@@ -135,6 +149,7 @@ Widget _harness(
   required AlarmEntity seedAlarm,
   DateTime? now,
   NotificationScheduler? scheduler,
+  _StubKeyguardOverrideController? keyguard,
 }) {
   final NotificationScheduler s = scheduler ?? _stubScheduler();
   final _InMemoryAlarmRepo repo = _InMemoryAlarmRepo();
@@ -177,6 +192,9 @@ Widget _harness(
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
+      ),
+      keyguardOverrideControllerProvider.overrideWithValue(
+        keyguard ?? _StubKeyguardOverrideController(),
       ),
       notificationSchedulerProvider.overrideWithValue(s),
       screenLockQueryProvider.overrideWithValue(_StubScreenLockQuery()),
@@ -239,7 +257,10 @@ void main() {
       'Stop 押下で AlarmCollectionNotifier.onFiredStop が走り once は disabled',
       (WidgetTester tester) async {
         final player = _StubAlarmSoundPlayer();
-        await tester.pumpWidget(_harness(player, seedAlarm: _seedOnceAlarm()));
+        final keyguard = _StubKeyguardOverrideController();
+        await tester.pumpWidget(
+          _harness(player, seedAlarm: _seedOnceAlarm(), keyguard: keyguard),
+        );
         await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 600));
 
@@ -247,6 +268,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(player.stopCalls, greaterThanOrEqualTo(1));
+        // Issue #73: leaving the screen releases the keyguard-override via
+        // the Application-layer provider.
+        expect(keyguard.clearCalls, 1);
         // Phase 11 follow-up: cold-start fallback は alarm / timer 共に
         // `/` 単独に統一。tab 復元は HomeScreen の lastHomePageIndex に
         // 委譲する。ここでは home-stub を起点にして provider を読み、
@@ -265,12 +289,14 @@ void main() {
     ) async {
       final scheduler = _stubScheduler();
       final player = _StubAlarmSoundPlayer();
+      final keyguard = _StubKeyguardOverrideController();
       await tester.pumpWidget(
         _harness(
           player,
           seedAlarm: _seedOnceAlarm(),
           now: DateTime(2026, 5, 4, 7, 0),
           scheduler: scheduler,
+          keyguard: keyguard,
         ),
       );
       await tester.pumpAndSettle();
@@ -294,6 +320,8 @@ void main() {
       ).called(1);
       // 鳴動 UI を抜けている。
       expect(find.byType(AlarmRingingScreen), findsNothing);
+      // Issue #73: 画面退出時に keyguard-override が provider 経由で解除される。
+      expect(keyguard.clearCalls, 1);
     });
   });
 }

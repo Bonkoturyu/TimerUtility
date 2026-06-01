@@ -7,11 +7,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/keyguard_override_controller_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/keyguard_override_controller.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
@@ -60,6 +62,18 @@ class _StubScreenLockQuery implements ScreenLockQuery {
 
   @override
   Future<bool> isScreenLocked() async => locked;
+}
+
+/// Issue #73: AlarmRingingScreen releases the keyguard-override via this
+/// controller on leave. Records the call so tests can assert it fired
+/// without touching a real MethodChannel.
+class _StubKeyguardOverrideController implements KeyguardOverrideController {
+  int clearCalls = 0;
+
+  @override
+  Future<void> clearShowWhenLocked() async {
+    clearCalls++;
+  }
 }
 
 /// In-memory [TimerRepository] used by every harness so the
@@ -114,6 +128,7 @@ Widget _harness(
   DateTime? now,
   TimerEntity? seedRinging,
   bool screenLocked = false,
+  _StubKeyguardOverrideController? keyguard,
 }) {
   final NotificationScheduler scheduler = _stubScheduler();
   final _InMemoryTimerRepository repo = _InMemoryTimerRepository();
@@ -146,6 +161,9 @@ Widget _harness(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
+      keyguardOverrideControllerProvider.overrideWithValue(
+        keyguard ?? _StubKeyguardOverrideController(),
+      ),
       notificationSchedulerProvider.overrideWithValue(scheduler),
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),
@@ -252,6 +270,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final player = _StubAlarmSoundPlayer();
+      final keyguard = _StubKeyguardOverrideController();
       final TimerEntity seeded = TimerEntity(
         id: 'ringing-1',
         notificationId: 1,
@@ -262,7 +281,9 @@ void main() {
         status: TimerStatus.ringing,
         createdAt: DateTime(2026, 1, 1),
       );
-      await tester.pumpWidget(_harness(player, seedRinging: seeded));
+      await tester.pumpWidget(
+        _harness(player, seedRinging: seeded, keyguard: keyguard),
+      );
       // Pump the microtask that loads the collection from the repo.
       await tester.pumpAndSettle();
       await tester.pump(const Duration(milliseconds: 600));
@@ -271,6 +292,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(player.stopCalls, greaterThanOrEqualTo(1));
+      // Issue #73: leaving the screen releases the keyguard-override via
+      // the Application-layer provider.
+      expect(keyguard.clearCalls, 1);
       // Phase 11 follow-up: Stop の cold-launch fallback は `/` 単独に
       // 置換 (Phase 10.5 までの「`/timer` push で 2 段再構築」は廃止)。
       // tab 復元は HomeScreen の lastHomePageIndex に委譲するので、
@@ -339,10 +363,16 @@ void main() {
       'selecting 5 minutes snoozes the timer and leaves the alarm screen',
       (WidgetTester tester) async {
         final player = _StubAlarmSoundPlayer();
+        final keyguard = _StubKeyguardOverrideController();
         final TimerEntity seeded = _seedRinging();
         final DateTime fixedNow = DateTime(2026, 5, 1, 7, 30);
         await tester.pumpWidget(
-          _harness(player, now: fixedNow, seedRinging: seeded),
+          _harness(
+            player,
+            now: fixedNow,
+            seedRinging: seeded,
+            keyguard: keyguard,
+          ),
         );
         await tester.pumpAndSettle();
         await tester.pump(const Duration(milliseconds: 600));
@@ -351,6 +381,10 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('alarm_snooze_choice_5m')));
         await tester.pumpAndSettle();
+
+        // Issue #73: snooze also leaves the screen → keyguard-override
+        // released via the provider.
+        expect(keyguard.clearCalls, 1);
 
         // Phase 11 follow-up: snooze の cold-launch fallback も Stop と
         // 同じく `/` 単独 push に統一。home-stub への遷移を assert する。
