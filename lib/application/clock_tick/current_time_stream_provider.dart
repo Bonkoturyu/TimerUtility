@@ -22,10 +22,30 @@ part 'current_time_stream_provider.g.dart';
 Stream<DateTime> currentTime(Ref ref) {
   final Clock clock = ref.watch(clockProvider);
   return Stream<DateTime>.multi((MultiStreamController<DateTime> controller) {
-    controller.add(clock.now());
-    final Timer timer = Timer.periodic(const Duration(seconds: 1), (Timer _) {
-      controller.add(clock.now());
-    });
+    // Skip a transient `clock.now()` failure instead of letting it surface
+    // as a stream error: an `AsyncError` here is sticky, so `ClockPage`
+    // would stop rebuilding and the world clock would freeze on the last
+    // value until a new emission. Dropping the bad tick keeps the stream
+    // alive so the next tick recovers. Both the synchronous initial emit
+    // and the periodic ticks go through this guard (Review #3).
+    //
+    // Only `Exception` is swallowed — an `Error` (e.g. a `TypeError` from a
+    // programming bug) still propagates so it is not silently hidden. In
+    // practice `clock.now()` (pure Dart, no platform boundary) throws
+    // neither, so this is purely defensive.
+    void emitNow() {
+      try {
+        controller.add(clock.now());
+      } on Exception catch (_) {
+        // Next periodic tick re-reads the clock.
+      }
+    }
+
+    emitNow();
+    final Timer timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (Timer _) => emitNow(),
+    );
     controller.onCancel = () {
       timer.cancel();
     };
