@@ -24,7 +24,16 @@ Stream<DateTime> currentTime(Ref ref) {
   return Stream<DateTime>.multi((MultiStreamController<DateTime> controller) {
     controller.add(clock.now());
     final Timer timer = Timer.periodic(const Duration(seconds: 1), (Timer _) {
-      controller.add(clock.now());
+      // Skip a transient `clock.now()` failure instead of letting it
+      // surface as a stream error: an `AsyncError` here is sticky, so
+      // `ClockPage` would stop rebuilding and the world clock would
+      // freeze on the last value until a new emission. Dropping the bad
+      // tick keeps the stream alive so the next tick recovers. (Review #3)
+      try {
+        controller.add(clock.now());
+      } catch (_) {
+        // Intentionally swallow — the next periodic tick re-reads the clock.
+      }
     });
     controller.onCancel = () {
       timer.cancel();
