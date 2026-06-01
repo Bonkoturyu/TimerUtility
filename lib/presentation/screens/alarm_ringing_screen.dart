@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_collection_notifier.dart';
+import '../../application/alarm_push_reservation.dart';
 import '../../application/alarm_ringing_notifier.dart';
 import '../../application/keyguard_override_controller_provider.dart';
 import '../../application/timer_collection_notifier.dart';
@@ -43,49 +44,18 @@ class AlarmRingingScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
-
-  /// Synchronous reservation flag used by both push paths
-  /// (`main.dart#onNotificationTap` and `TimerListScreen`'s ringing
-  /// listener) to dedupe concurrent push attempts.
-  ///
-  /// Both paths can fire in the same frame when a timer rings while
-  /// the app is backgrounded:
-  ///   1. The OS notification tap delivers `onDidReceiveNotificationResponse`
-  ///   2. The TimerCollection ticker resumes and flips state to ringing,
-  ///      causing TimerListScreen's `ref.listen` to schedule a push.
-  /// Each path's "is alarm screen already on top?" check (matchedLocation)
-  /// can race past the other before the route stack settles, leaving
-  /// two `/alarm-ringing` frames stacked. With this flag both callers
-  /// commit synchronously to the push attempt and the loser bails
-  /// before adding a second frame.
-  ///
-  /// Reset in [_AlarmRingingScreenState.dispose] so a future ring can
-  /// push again after the screen is dismissed.
-  static bool _pushReserved = false;
-
-  /// Atomic check-and-set: returns false if a push has already been
-  /// reserved (and is either pending or currently mounted), true if
-  /// this caller now owns the slot. Caller must follow up with a
-  /// `push('/alarm-ringing')`. The reservation is released in
-  /// [_AlarmRingingScreenState.dispose].
-  static bool tryReservePush() {
-    if (_pushReserved) return false;
-    _pushReserved = true;
-    return true;
-  }
-
-  /// Test seam: tests can call this in `tearDown` to reset the flag
-  /// without going through the full widget mount/dispose cycle.
-  @visibleForTesting
-  static void debugResetPushReservation() {
-    _pushReserved = false;
-  }
 }
 
 class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
+  /// Captured in [initState] because `ref` is unusable once the widget is
+  /// disposed. The notifier lives in the keepAlive container, so it
+  /// outlives this widget (Review #5).
+  late final AlarmPushReservation _pushReservation;
+
   @override
   void initState() {
     super.initState();
+    _pushReservation = ref.read(alarmPushReservationProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _bootstrapRingingIfNeeded();
@@ -94,11 +64,23 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
 
   @override
   void dispose() {
-    // Release the reservation regardless of how this screen was
-    // entered. Cold-launch via `initialLocation` skips the reserve
-    // step (the flag stays false there), so resetting to false here
-    // is always correct.
-    AlarmRingingScreen._pushReserved = false;
+    // Release the reservation on EVERY disposal path, not just the explicit
+    // Stop / Snooze exit — a parent rebuild or programmatic navigation that
+    // tears the screen down would otherwise leak the slot, permanently
+    // blocking future alarm pushes (PR #88 gemini review).
+    //
+    // Deferred to a microtask because Riverpod forbids mutating a provider
+    // synchronously inside a widget life-cycle callback. The `catch` covers
+    // the case where the owning container is torn down before the microtask
+    // runs (e.g. widget-test teardown), where the notifier is already gone.
+    final AlarmPushReservation reservation = _pushReservation;
+    Future<void>.microtask(() {
+      try {
+        reservation.release();
+      } catch (_) {
+        // Container already disposed — nothing left to release.
+      }
+    });
     super.dispose();
   }
 

@@ -16,6 +16,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'application/alarm_push_reservation.dart';
 import 'application/alarm_repository_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
 import 'application/diagnostic_log_exporter_provider.dart';
@@ -355,8 +356,13 @@ Future<void> main() async {
       // The matchedLocation check is best-effort and can race with the
       // ringing listener's push when both fire in the same frame
       // (notification tap + ticker tick on app resume). Defer to the
-      // synchronous reservation flag so only one path actually pushes.
-      if (!AlarmRingingScreen.tryReservePush()) return;
+      // synchronous reservation slot so only one path actually pushes.
+      // `container` is the same instance the widget tree reads via
+      // UncontrolledProviderScope, so HomeScreen's listener sees this
+      // reservation too (Review #5).
+      if (!container.read(alarmPushReservationProvider.notifier).tryReserve()) {
+        return;
+      }
       // payload を queryParameter に載せて screen に渡す。
       // push (not go) で前の画面はスタックに残し、`_leaveAlarmScreen` の
       // pop で home に戻れるようにする。

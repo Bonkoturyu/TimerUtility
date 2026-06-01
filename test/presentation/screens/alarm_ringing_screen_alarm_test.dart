@@ -228,10 +228,10 @@ AlarmEntity _seedOnceAlarm() => AlarmEntity(
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime.utc(2026));
-    AlarmRingingScreen.debugResetPushReservation();
   });
 
-  tearDown(AlarmRingingScreen.debugResetPushReservation);
+  // Review #5: the push reservation is now a per-container provider, so
+  // each test's fresh ProviderScope starts unreserved — no static reset.
 
   group('AlarmRingingScreen (alarm payload path)', () {
     testWidgets('payload="alarm:<id>" で起動すると alarm 由来として再生される', (

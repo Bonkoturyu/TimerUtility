@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/alarm_push_reservation.dart';
 import '../../../application/home_active_page_index_provider.dart';
 import '../../../application/timer_collection_notifier.dart';
 import '../../../application/user_preferences_provider.dart';
@@ -12,7 +13,6 @@ import '../../../domain/timer/timer_status.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/home_dot_indicator.dart';
 import '../../widgets/page_navigation_hint.dart';
-import '../alarm_ringing_screen.dart' show AlarmRingingScreen;
 import '../settings_screen.dart';
 import 'alarm_list_page.dart';
 import 'clock_page.dart';
@@ -192,7 +192,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (!mounted) return;
           final String here = GoRouterState.of(context).matchedLocation;
           if (here == '/alarm-ringing') return;
-          if (!AlarmRingingScreen.tryReservePush()) return;
+          if (!ref.read(alarmPushReservationProvider.notifier).tryReserve()) {
+            return;
+          }
           context.push('/alarm-ringing');
         });
       }
