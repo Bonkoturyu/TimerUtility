@@ -1,4 +1,6 @@
 import 'package:clock/clock.dart';
+import 'package:fake_async/fake_async.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -95,6 +97,11 @@ class _GrantedPermissionNotifier extends PermissionNotifier {
 }
 
 void main() {
+  // TimerCollectionNotifier.build() registers a WidgetsBindingObserver
+  // (Review #9), so the binding must exist even for these plain `test()`
+  // cases that never pump a widget.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   setUpAll(() {
     registerFallbackValue(DateTime.utc(2026));
   });
@@ -385,6 +392,74 @@ void main() {
           reason: 'collision at $i (${t.notificationId})',
         );
       }
+    });
+  });
+
+  group('TimerCollectionNotifier lifecycle ticker (Review #9)', () {
+    test('paused stops the 200ms ticker; resumed re-arms it while running', () {
+      fakeAsync((FakeAsync async) {
+        final container = _makeContainer(
+          clock: Clock.fixed(DateTime.utc(2026, 5, 1, 12)),
+          repo: _InMemoryRepo(),
+          scheduler: _stubScheduler(),
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(
+          timerCollectionNotifierProvider.notifier,
+        );
+        final TimerEntity created = notifier.create(
+          label: '',
+          duration: const Duration(minutes: 5),
+        );
+        notifier.start(created.id);
+        async.flushMicrotasks();
+        expect(
+          async.periodicTimerCount,
+          greaterThanOrEqualTo(1),
+          reason: 'a running timer arms the 200 ms ticker',
+        );
+
+        notifier.didChangeAppLifecycleState(AppLifecycleState.paused);
+        expect(
+          async.periodicTimerCount,
+          0,
+          reason: 'paused cancels the ticker — OS AlarmManager still fires',
+        );
+
+        notifier.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        expect(
+          async.periodicTimerCount,
+          greaterThanOrEqualTo(1),
+          reason: 'resumed re-arms the ticker because a timer is running',
+        );
+
+        // Cancel so fakeAsync ends with no pending periodic timer.
+        notifier.cancel(created.id);
+        expect(async.periodicTimerCount, 0);
+      });
+    });
+
+    test('resumed does NOT arm the ticker when no timer is running', () {
+      fakeAsync((FakeAsync async) {
+        final container = _makeContainer(
+          clock: Clock.fixed(DateTime.utc(2026, 5, 1, 12)),
+          repo: _InMemoryRepo(),
+          scheduler: _stubScheduler(),
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(
+          timerCollectionNotifierProvider.notifier,
+        );
+        async.flushMicrotasks();
+        expect(async.periodicTimerCount, 0);
+
+        notifier.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        expect(
+          async.periodicTimerCount,
+          0,
+          reason: 'no running timers → resume must not start a ticker',
+        );
+      });
     });
   });
 }

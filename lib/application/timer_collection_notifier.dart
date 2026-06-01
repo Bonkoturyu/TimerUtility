@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart'
+    show AppLifecycleState, WidgetsBinding, WidgetsBindingObserver;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -42,15 +44,42 @@ part 'timer_collection_notifier.g.dart';
 /// screen is intentionally NOT launched and audio is NOT played for
 /// these — see Phase 8 plan #4.
 @Riverpod(keepAlive: true)
-class TimerCollectionNotifier extends _$TimerCollectionNotifier {
+class TimerCollectionNotifier extends _$TimerCollectionNotifier
+    with WidgetsBindingObserver {
   Timer? _ticker;
 
   @override
   TimerCollection build() {
-    ref.onDispose(_stopTicker);
+    // Observe app lifecycle so the 200 ms ticker can pause while the app
+    // is backgrounded (Review #9). Actual timer firing is owned by the OS
+    // AlarmManager notification, so a paused foreground ticker only skips
+    // redundant `status == ringing` recomputation — `endAt` is absolute,
+    // so the first tick after `resumed` catches up any timer that elapsed
+    // while we were paused.
+    WidgetsBinding.instance.addObserver(this);
+    ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(this);
+      _stopTicker();
+    });
     // Kick off restore asynchronously so build() can return synchronously.
     Future<void>.microtask(_restoreFromRepository);
     return TimerCollection.empty();
+  }
+
+  // Param is named `state` to match the overridden method; `this.state`
+  // disambiguates the Notifier's collection state from the lifecycle arg.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // Background: stop burning a 200 ms wakeup loop. The OS notification
+      // still fires the alarm; nothing is lost.
+      _stopTicker();
+    } else if (state == AppLifecycleState.resumed &&
+        this.state.runningCount > 0) {
+      // Foreground again with timers still running: resume ticking. The
+      // next `_onTick` reconciles any timer that completed while paused.
+      _startTicker();
+    }
   }
 
   Future<void> _restoreFromRepository() async {
