@@ -31,7 +31,6 @@ import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
 import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
-import 'package:timer_utility/presentation/screens/alarm_ringing_screen.dart';
 import 'package:timer_utility/presentation/screens/clock_entry_edit_screen.dart';
 import 'package:timer_utility/presentation/screens/home/alarm_list_page.dart';
 import 'package:timer_utility/presentation/screens/home/clock_page.dart';
@@ -681,7 +680,8 @@ void main() {
           status: TimerStatus.ringing,
           createdAt: DateTime(2026, 5, 10),
         );
-        addTearDown(AlarmRingingScreen.debugResetPushReservation);
+        // Review #5: push reservation is a per-container provider now;
+        // this test's fresh ProviderScope starts unreserved.
 
         // Stopwatch (index 0) で起動して、Timer タブが visible でない
         // 状況を作る。

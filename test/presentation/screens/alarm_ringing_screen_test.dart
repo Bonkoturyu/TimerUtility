@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/application/alarm_push_reservation.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
@@ -436,16 +437,25 @@ void main() {
       },
     );
 
-    group('tryReservePush dedup', () {
-      tearDown(AlarmRingingScreen.debugResetPushReservation);
+    group('AlarmPushReservation dedup (Review #5)', () {
+      test(
+        'first caller acquires, subsequent callers blocked until released',
+        () {
+          // Per-container scope replaces the old static flag + debugReset
+          // seam: a fresh container starts unreserved, no manual reset.
+          final ProviderContainer container = ProviderContainer();
+          addTearDown(container.dispose);
+          final AlarmPushReservation reservation = container.read(
+            alarmPushReservationProvider.notifier,
+          );
 
-      test('first caller acquires, subsequent callers blocked until reset', () {
-        expect(AlarmRingingScreen.tryReservePush(), isTrue);
-        expect(AlarmRingingScreen.tryReservePush(), isFalse);
-        expect(AlarmRingingScreen.tryReservePush(), isFalse);
-        AlarmRingingScreen.debugResetPushReservation();
-        expect(AlarmRingingScreen.tryReservePush(), isTrue);
-      });
+          expect(reservation.tryReserve(), isTrue);
+          expect(reservation.tryReserve(), isFalse);
+          expect(reservation.tryReserve(), isFalse);
+          reservation.release();
+          expect(reservation.tryReserve(), isTrue);
+        },
+      );
     });
 
     testWidgets(
