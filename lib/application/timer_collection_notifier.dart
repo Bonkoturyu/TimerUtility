@@ -48,6 +48,13 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     with WidgetsBindingObserver {
   Timer? _ticker;
 
+  /// Last observed app lifecycle (`null` until the first lifecycle event,
+  /// which the framework delivers as `resumed` on a foreground start).
+  /// Tracked locally so [_startTicker] can refuse to arm while backgrounded
+  /// even when called by an operation other than the resume handler — e.g.
+  /// a background `start` / `resume` / `snooze` / restore (Review #9).
+  AppLifecycleState? _lifecycle;
+
   @override
   TimerCollection build() {
     // Observe app lifecycle so the 200 ms ticker can pause while the app
@@ -70,6 +77,7 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
   // disambiguates the Notifier's collection state from the lifecycle arg.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycle = state;
     if (state == AppLifecycleState.paused) {
       // Background: stop burning a 200 ms wakeup loop. The OS notification
       // still fires the alarm; nothing is lost.
@@ -346,6 +354,12 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
 
   void _startTicker() {
     if (_ticker != null) return;
+    // Don't arm the ticker while backgrounded, even if an operation that
+    // normally starts it (start / resume / snooze / restore) runs from a
+    // background context. The resume handler re-arms it on foreground
+    // (Review #9). Firing itself stays correct — the OS AlarmManager
+    // notification handles it regardless of the foreground ticker.
+    if (_lifecycle == AppLifecycleState.paused) return;
     _ticker = Timer.periodic(
       const Duration(milliseconds: 200),
       (_) => _onTick(),

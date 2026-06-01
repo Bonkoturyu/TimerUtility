@@ -461,5 +461,44 @@ void main() {
         );
       });
     });
+
+    test('start() while paused does NOT arm the ticker; resume arms it', () {
+      // PR #89 review (gemini): a background start/resume/snooze must not
+      // sneak the ticker on while paused, defeating the battery saving.
+      fakeAsync((FakeAsync async) {
+        final container = _makeContainer(
+          clock: Clock.fixed(DateTime.utc(2026, 5, 1, 12)),
+          repo: _InMemoryRepo(),
+          scheduler: _stubScheduler(),
+        );
+        addTearDown(container.dispose);
+        final notifier = container.read(
+          timerCollectionNotifierProvider.notifier,
+        );
+        notifier.didChangeAppLifecycleState(AppLifecycleState.paused);
+
+        final TimerEntity created = notifier.create(
+          label: '',
+          duration: const Duration(minutes: 5),
+        );
+        notifier.start(created.id);
+        async.flushMicrotasks();
+        expect(
+          async.periodicTimerCount,
+          0,
+          reason: 'start() while paused must not arm the ticker',
+        );
+
+        notifier.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        expect(
+          async.periodicTimerCount,
+          greaterThanOrEqualTo(1),
+          reason: 'resume arms the ticker that start() deferred',
+        );
+
+        notifier.cancel(created.id);
+        expect(async.periodicTimerCount, 0);
+      });
+    });
   });
 }
