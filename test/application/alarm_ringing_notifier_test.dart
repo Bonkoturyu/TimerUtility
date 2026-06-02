@@ -6,9 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
+import 'package:timer_utility/application/diagnostic_logger_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
+import 'package:timer_utility/domain/diagnostics/diagnostic_event.dart';
+import 'package:timer_utility/domain/diagnostics/diagnostic_logger.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/diagnostic_sink.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
@@ -86,8 +90,24 @@ class _StubScreenLockQuery implements ScreenLockQuery {
   Future<bool> isScreenLocked() async => locked;
 }
 
+/// In-test [DiagnosticSink] that records every event the logger forwards,
+/// so the Issue #86 playback breadcrumb can be asserted.
+class _RecordingSink implements DiagnosticSink {
+  final List<DiagnosticEvent> events = <DiagnosticEvent>[];
+
+  @override
+  void write(DiagnosticEvent event) => events.add(event);
+
+  @override
+  Future<void> flush() async {}
+}
+
 ({ProviderContainer container, _MockNotificationScheduler scheduler})
-_container(AlarmSoundPlayer player, {bool screenLocked = false}) {
+_container(
+  AlarmSoundPlayer player, {
+  bool screenLocked = false,
+  DiagnosticSink? diagnosticSink,
+}) {
   final scheduler = _MockNotificationScheduler();
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
   when(() => scheduler.cancelAll()).thenAnswer((_) async {});
@@ -109,6 +129,14 @@ _container(AlarmSoundPlayer player, {bool screenLocked = false}) {
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),
       ),
+      if (diagnosticSink != null)
+        diagnosticLoggerProvider.overrideWithValue(
+          DiagnosticLogger(
+            sink: diagnosticSink,
+            isEnabled: () => true,
+            threshold: DiagnosticSeverity.debug,
+          ),
+        ),
     ],
   );
   addTearDown(c.dispose);
@@ -457,6 +485,89 @@ void main() {
         expect(
           h.container.read(alarmRingingNotifierProvider).currentTimerId,
           't-2',
+        );
+      });
+    });
+
+    test('Issue #86 breadcrumb: play 到達時に alarmPlaybackStart を timerId 付きで '
+        '記録する', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final sink = _RecordingSink();
+        final h = _container(player, screenLocked: true, diagnosticSink: sink);
+
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 't-bc',
+                sound: AlarmSoundCatalog.defaultSound,
+                notificationId: 400,
+              ),
+        );
+
+        // 1800 ms locked delay 完了前は play 前 → breadcrumb なし。
+        async.elapse(const Duration(milliseconds: 1799));
+        async.flushMicrotasks();
+        expect(
+          sink.events.whereType<DiagnosticTimerAction>().where(
+            (DiagnosticTimerAction e) =>
+                e.action == TimerActionKind.alarmPlaybackStart,
+          ),
+          isEmpty,
+          reason: 'play 到達前は playback breadcrumb を出さない',
+        );
+
+        // 1800 ms 到達で play() → breadcrumb 1 件記録。
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(player.playCalls, 1);
+        final List<DiagnosticTimerAction> playbackEvents = sink.events
+            .whereType<DiagnosticTimerAction>()
+            .where(
+              (DiagnosticTimerAction e) =>
+                  e.action == TimerActionKind.alarmPlaybackStart,
+            )
+            .toList();
+        expect(playbackEvents, hasLength(1));
+        expect(playbackEvents.single.timerId, 't-bc');
+      });
+    });
+
+    test('Issue #86 breadcrumb: delay 中の stop で play に到達しない場合は '
+        'alarmPlaybackStart を記録しない', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final sink = _RecordingSink();
+        final h = _container(player, screenLocked: true, diagnosticSink: sink);
+
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 't-bc-stop',
+                sound: AlarmSoundCatalog.defaultSound,
+                notificationId: 401,
+              ),
+        );
+        async.elapse(const Duration(milliseconds: 1000));
+        async.flushMicrotasks();
+
+        unawaited(
+          h.container.read(alarmRingingNotifierProvider.notifier).stop(),
+        );
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(milliseconds: 1000));
+        async.flushMicrotasks();
+
+        expect(player.playCalls, 0);
+        expect(
+          sink.events.whereType<DiagnosticTimerAction>().where(
+            (DiagnosticTimerAction e) =>
+                e.action == TimerActionKind.alarmPlaybackStart,
+          ),
+          isEmpty,
         );
       });
     });
