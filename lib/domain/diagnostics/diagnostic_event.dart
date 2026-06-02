@@ -49,13 +49,15 @@ enum TimerActionKind {
   alarmDelete,
   alarmFiredStop,
   alarmFiredSnooze,
-  // Diagnostics-only breadcrumb (Issue #86): records the instant the
-  // audioplayers loop is actually started in `AlarmRingingNotifier.start`,
-  // i.e. after the cancel→delay sequence and the pre-play guard. Lets the
-  // double-tone investigation correlate "audioplayers play begins" against
-  // the OS alarm-stream tone release observed via `dumpsys`, since the
-  // existing `notificationFired` breadcrumb only marks the start of the
-  // sequence (≈ cancel time), not the play instant.
+  // Diagnostics-only breadcrumb (Issue #86): records the instant audioplayers
+  // playback is *requested* — the clock reading taken immediately before the
+  // `player.play()` call in `AlarmRingingNotifier.start`, after the
+  // cancel→delay sequence and the pre-play guard. This is the play-request
+  // time, NOT the audible onset: the actual sound lags by the audioplayers /
+  // OS playout latency. Lets the double-tone investigation correlate the play
+  // request against the OS alarm-stream tone release observed via `dumpsys`,
+  // since the existing `notificationFired` breadcrumb only marks the start of
+  // the sequence (≈ cancel time), not the play request.
   alarmPlaybackStart,
 }
 
