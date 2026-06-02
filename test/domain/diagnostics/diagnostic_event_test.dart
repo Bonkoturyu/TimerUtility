@@ -91,6 +91,20 @@ void main() {
       });
     });
 
+    test('alarmPlaybackStart (Issue #86 breadcrumb) も action.name で出る', () {
+      final DiagnosticEvent e = DiagnosticEvent.timerAction(
+        occurredAt: t,
+        timerId: 'uuid-play',
+        action: TimerActionKind.alarmPlaybackStart,
+      );
+      expect(e.severity, DiagnosticSeverity.debug);
+      expect(e.kind, 'timerAction');
+      expect(e.toJsonPayload(), <String, Object?>{
+        'timerId': 'uuid-play',
+        'action': 'alarmPlaybackStart',
+      });
+    });
+
     test('factory 経由でも具象クラスに redirect される (pattern match)', () {
       final DiagnosticEvent e = DiagnosticEvent.timerAction(
         occurredAt: t,

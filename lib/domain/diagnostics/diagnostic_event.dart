@@ -49,6 +49,14 @@ enum TimerActionKind {
   alarmDelete,
   alarmFiredStop,
   alarmFiredSnooze,
+  // Diagnostics-only breadcrumb (Issue #86): records the instant the
+  // audioplayers loop is actually started in `AlarmRingingNotifier.start`,
+  // i.e. after the cancel→delay sequence and the pre-play guard. Lets the
+  // double-tone investigation correlate "audioplayers play begins" against
+  // the OS alarm-stream tone release observed via `dumpsys`, since the
+  // existing `notificationFired` breadcrumb only marks the start of the
+  // sequence (≈ cancel time), not the play instant.
+  alarmPlaybackStart,
 }
 
 /// Top of the diagnostic event hierarchy. Pure Dart sealed class so

@@ -158,6 +158,23 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // let a snoozed alarm start playing.
     if (!state.isPlaying || state.currentTimerId != timerId) return;
     final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
+    // Issue #86 instrumentation: mark the exact instant audioplayers
+    // takes over, *after* the cancel→delay sequence and the pre-play
+    // guard. Paired with the start-of-sequence `notificationFired` log
+    // (≈ cancel time) this brackets the cancel→play interval, so the
+    // double-tone investigation can line up play-start against the OS
+    // alarm-stream tone release seen in `dumpsys`. Logged only on the
+    // path that actually plays — a dismiss during the delay returns above
+    // and emits nothing, keeping the breadcrumb count == real playbacks.
+    ref
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.timerAction(
+            occurredAt: ref.read(clockProvider).now(),
+            timerId: timerId,
+            action: TimerActionKind.alarmPlaybackStart,
+          ),
+        );
     await player.play(sound);
     // Second race window (beyond the pre-play guard on L151): stop() /
     // snoozeRequested() can flip the state back to idle *during* the
