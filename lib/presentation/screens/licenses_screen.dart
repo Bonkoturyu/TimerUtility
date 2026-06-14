@@ -7,14 +7,14 @@ import '../../l10n/app_localizations.dart';
 ///
 /// Reasons we don't reuse the stock page:
 ///   - The stock page lists every entry in a flat alphabetical list,
-///     mixing app-bundled assets (sounds) with pub packages. Users
+///     mixing app-bundled assets with pub packages. Users
 ///     can't tell at a glance "what does this app ship vs. depend on".
-///   - Sound license entries embed line-broken bullet lists; the stock
+///   - Asset license entries embed line-broken bullet lists; the stock
 ///     detail view centers paragraphs which makes bullets hard to read.
 ///
 /// We group entries into two ExpansionTile sections:
-///   - "Bundled sounds": entries whose primary package name ends with
-///     [bundledPackageNameSuffix] (set by `_registerBundledSoundsLicense`
+///   - "Bundled assets": entries whose primary package name ends with
+///     [bundledPackageNameSuffix] (set by `_registerBundledAssetLicenses`
 ///     in `main.dart`). Initially expanded — small set, immediately
 ///     useful.
 ///   - "Software licenses": every other entry (i.e. pub packages).
@@ -28,7 +28,7 @@ class LicensesScreen extends StatelessWidget {
   static const String routeLocation = '/licenses';
 
   /// Suffix tagged onto the primary package name in
-  /// `_registerBundledSoundsLicense` (lib/main.dart). Used here to split
+  /// `_registerBundledAssetLicenses` (lib/main.dart). Used here to split
   /// app-bundled entries from pub-package entries without a side
   /// channel. Keep both ends in sync.
   static const String bundledPackageNameSuffix = ' (bundled)';
@@ -68,7 +68,7 @@ class LicensesScreen extends StatelessWidget {
                 children: <Widget>[
                   ExpansionTile(
                     key: const Key('licenses_group_bundled'),
-                    title: Text(l.licenseGroupBundledSounds),
+                    title: Text(l.licenseGroupBundledAssets),
                     initiallyExpanded: true,
                     children: <Widget>[
                       for (final LicenseEntry entry in bundled)

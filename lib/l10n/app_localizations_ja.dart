@@ -354,7 +354,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get licenseMenuOverflow => 'ライセンス';
 
   @override
-  String get licenseGroupBundledSounds => '同梱音源';
+  String get licenseGroupBundledAssets => '同梱アセット';
 
   @override
   String get licenseGroupSoftware => 'ソフトウェアライセンス';

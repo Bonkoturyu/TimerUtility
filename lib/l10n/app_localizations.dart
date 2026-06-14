@@ -733,11 +733,11 @@ abstract class AppLocalizations {
   /// **'ライセンス'**
   String get licenseMenuOverflow;
 
-  /// No description provided for @licenseGroupBundledSounds.
+  /// No description provided for @licenseGroupBundledAssets.
   ///
   /// In ja, this message translates to:
-  /// **'同梱音源'**
-  String get licenseGroupBundledSounds;
+  /// **'同梱アセット'**
+  String get licenseGroupBundledAssets;
 
   /// No description provided for @licenseGroupSoftware.
   ///

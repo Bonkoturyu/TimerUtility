@@ -172,21 +172,21 @@ class _BootstrappedNotificationStringsNotifier
   NotificationStrings build() => _initial;
 }
 
-/// Register the bundled-sound license file (`assets/sounds/LICENSES.md`)
-/// so Flutter's `showLicensePage` lists it alongside pub-package licenses.
+/// Register metadata for bundled assets (`assets/sounds/LICENSES.md`) so the
+/// licenses screen lists them alongside pub-package licenses.
 ///
-/// We split the markdown by `## <file>.mp3` headers and yield one entry
-/// per audio file. Naming each entry `<file>.mp3 (bundled)` makes it
-/// obvious in the license list that these are app-owned resources, not
-/// pub dependencies. The body is split into one paragraph per line so
-/// `showLicensePage` renders the bullet list legibly — by default
+/// We split the markdown by `## <asset>` headers and yield one entry per
+/// asset. Naming each entry `<asset> (bundled)` makes it obvious in the
+/// license list that these are app-owned resources, not pub dependencies.
+/// The body is split into one paragraph per line so the detail screen renders
+/// the bullet list legibly — by default
 /// `LicenseEntryWithLineBreaks` joins single newlines and you'd see
 /// every bullet collapsed into a single wall of text.
 ///
 /// `LicenseRegistry.addLicense` takes a callback that returns a stream
 /// of entries — the asset is read lazily the first time the license page
 /// is opened, so this adds no startup cost.
-void _registerBundledSoundsLicense() {
+void _registerBundledAssetLicenses() {
   LicenseRegistry.addLicense(() async* {
     final String content = await rootBundle.loadString(
       'assets/sounds/LICENSES.md',
@@ -195,9 +195,9 @@ void _registerBundledSoundsLicense() {
     String? currentName;
     final List<String> currentLines = <String>[];
 
-    Iterable<_BundledSoundLicenseEntry> flush() sync* {
+    Iterable<_BundledAssetLicenseEntry> flush() sync* {
       if (currentName != null) {
-        yield _BundledSoundLicenseEntry(
+        yield _BundledAssetLicenseEntry(
           packageName: '$currentName (bundled)',
           lines: List<String>.unmodifiable(currentLines),
         );
@@ -207,7 +207,7 @@ void _registerBundledSoundsLicense() {
     for (final String raw in lines) {
       final String line = raw.trimRight();
       if (line.startsWith('## ')) {
-        for (final _BundledSoundLicenseEntry entry in flush()) {
+        for (final _BundledAssetLicenseEntry entry in flush()) {
           yield entry;
         }
         currentName = line.substring(3).trim();
@@ -216,7 +216,7 @@ void _registerBundledSoundsLicense() {
         currentLines.add(line);
       }
     }
-    for (final _BundledSoundLicenseEntry entry in flush()) {
+    for (final _BundledAssetLicenseEntry entry in flush()) {
       yield entry;
     }
   });
@@ -226,8 +226,8 @@ void _registerBundledSoundsLicense() {
 /// `LicenseParagraph` — fixes the "wall of text" rendering of
 /// `LicenseEntryWithLineBreaks` when the source uses single newlines
 /// between bullets.
-class _BundledSoundLicenseEntry extends LicenseEntry {
-  _BundledSoundLicenseEntry({required this.packageName, required this.lines});
+class _BundledAssetLicenseEntry extends LicenseEntry {
+  _BundledAssetLicenseEntry({required this.packageName, required this.lines});
   final String packageName;
   final List<String> lines;
 
@@ -296,7 +296,7 @@ Future<void> main() async {
   // time. A persisted user toggle (if any) overrides this.
   const bool diagnosticDefaultEnabled = !kReleaseMode;
 
-  _registerBundledSoundsLicense();
+  _registerBundledAssetLicenses();
   final NotificationStrings notificationStrings =
       await _resolveNotificationStrings();
   final adapter = FlutterLocalNotificationAdapter();

@@ -393,7 +393,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get licenseMenuOverflow => 'Licenses';
 
   @override
-  String get licenseGroupBundledSounds => 'Bundled sounds';
+  String get licenseGroupBundledAssets => 'Bundled assets';
 
   @override
   String get licenseGroupSoftware => 'Software licenses';

@@ -4,7 +4,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 サードパーティ製ソフトウェア (production / dev 依存 + 同梱アセット + Native 依存) の
 ライセンス内訳を一覧化し、各ライセンス本文への参照を提供する。
 
-最終更新日: 2026-05-16 (Phase 11.8 OSS 公開準備)
+最終更新日: 2026-06-14 (PixAI 生成モデル情報を追加)
 
 ---
 
@@ -69,7 +69,9 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 
 ---
 
-## 4. 同梱アセット (assets/sounds/)
+## 4. 同梱アセット
+
+### 4.1 音源 (`assets/sounds/`)
 
 3 件の MP3 はすべて [Pixabay Content License](https://pixabay.com/service/license-summary/)
 で配布されているもの。商用利用可・帰属表示不要・再配布可。2024 年改定の「Pixabay
@@ -86,10 +88,27 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 
 ---
 
+### 4.2 アプリアイコン
+
+アプリアイコンの原画生成には PixAI の AI イラストモデル
+[Hoshino v2](https://pixai.art/ja/model/1954632827019711809) を使用した。
+モデル提供者は `PixAI Official`。モデルページでは生成画像の商用利用が許可されている
+(2026-06-14 確認)。
+
+| 項目 | 内容 |
+| --- | --- |
+| 生成サービス | PixAI |
+| 使用モデル | Hoshino v2 |
+| モデル提供者 | PixAI Official |
+| 用途 | アプリアイコン原画の生成 |
+| 利用条件 | モデルページで生成画像の商用利用を許可 |
+
+---
+
 ## 5. ライセンス本文
 
 各ライセンスの本文は配布元 (pub.dev / GitHub) で参照すること。アプリ実行時には
-`LicenseRegistry` 経由で同梱音源ライセンスとソフトウェアライセンス一覧を設定画面の
+`LicenseRegistry` 経由で同梱アセット情報とソフトウェアライセンス一覧を設定画面の
 「ライセンス」項目から表示できる ([lib/main.dart](lib/main.dart) の
 `LicenseRegistry.addLicense` 配線参照)。
 
@@ -98,7 +117,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 ## 6. 参照ドキュメント
 
 - [LICENSE](LICENSE) — 本プロジェクト本体 (MIT)
-- [assets/sounds/LICENSES.md](assets/sounds/LICENSES.md) — 同梱音源詳細
+- [assets/sounds/LICENSES.md](assets/sounds/LICENSES.md) — 同梱アセット詳細
 - [docs/oss-publishing-notes.md](docs/oss-publishing-notes.md) — 公開可否・特許リスク監査
 - [pubspec.yaml](pubspec.yaml) — 依存パッケージ一覧 (transitive 含む全体は
   `flutter pub deps` で確認可能)

@@ -169,7 +169,7 @@
   "timerSoundSheetTitle": "音源を選択",
 
   "licenseMenuOverflow": "ライセンス",
-  "licenseGroupBundledSounds": "同梱音源",
+  "licenseGroupBundledAssets": "同梱アセット",
   "licenseGroupSoftware": "ソフトウェアライセンス",
 
   "alarmEditTitleNew": "アラームを追加",
