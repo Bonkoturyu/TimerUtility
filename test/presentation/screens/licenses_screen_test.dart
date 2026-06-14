@@ -1,25 +1,26 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timer_utility/infrastructure/licenses/bundled_asset_licenses.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/licenses_screen.dart';
 
 void main() {
   const String packageName = 'App icon / Hoshino v2 (bundled)';
 
-  setUpAll(() {
+  setUpAll(() async {
+    final String content = await rootBundle.loadString(
+      bundledAssetLicensesPath,
+    );
+    final List<LicenseEntry> entries = parseBundledAssetLicenses(content);
+    expect(
+      entries.map((LicenseEntry entry) => entry.packages.first),
+      contains(packageName),
+    );
     LicenseRegistry.addLicense(
-      () => Stream<LicenseEntry>.value(
-        const LicenseEntryWithLineBreaks(
-          <String>[packageName],
-          '''
-- 生成サービス: PixAI
-- 使用モデル: Hoshino v2
-- モデルページ: https://pixai.art/ja/model/1954632827019711809
-''',
-        ),
-      ),
+      () => Stream<LicenseEntry>.fromIterable(entries),
     );
   });
 

@@ -5,12 +5,7 @@ import 'package:clock/clock.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'
-    show
-        LicenseEntry,
-        LicenseParagraph,
-        LicenseRegistry,
-        PlatformDispatcher,
-        kReleaseMode;
+    show LicenseEntry, LicenseRegistry, PlatformDispatcher, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +41,7 @@ import 'infrastructure/diagnostics/diagnostic_log_rotator.dart';
 import 'infrastructure/diagnostics/file_diagnostic_sink_adapter.dart';
 import 'infrastructure/diagnostics/zip_diagnostic_log_exporter_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
+import 'infrastructure/licenses/bundled_asset_licenses.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
@@ -189,56 +185,12 @@ class _BootstrappedNotificationStringsNotifier
 void _registerBundledAssetLicenses() {
   LicenseRegistry.addLicense(() async* {
     final String content = await rootBundle.loadString(
-      'assets/sounds/LICENSES.md',
+      bundledAssetLicensesPath,
     );
-    final List<String> lines = content.split('\n');
-    String? currentName;
-    final List<String> currentLines = <String>[];
-
-    Iterable<_BundledAssetLicenseEntry> flush() sync* {
-      if (currentName != null) {
-        yield _BundledAssetLicenseEntry(
-          packageName: '$currentName (bundled)',
-          lines: List<String>.unmodifiable(currentLines),
-        );
-      }
-    }
-
-    for (final String raw in lines) {
-      final String line = raw.trimRight();
-      if (line.startsWith('## ')) {
-        for (final _BundledAssetLicenseEntry entry in flush()) {
-          yield entry;
-        }
-        currentName = line.substring(3).trim();
-        currentLines.clear();
-      } else if (currentName != null) {
-        currentLines.add(line);
-      }
-    }
-    for (final _BundledAssetLicenseEntry entry in flush()) {
+    for (final LicenseEntry entry in parseBundledAssetLicenses(content)) {
       yield entry;
     }
   });
-}
-
-/// Custom [LicenseEntry] that emits each source line as its own
-/// `LicenseParagraph` — fixes the "wall of text" rendering of
-/// `LicenseEntryWithLineBreaks` when the source uses single newlines
-/// between bullets.
-class _BundledAssetLicenseEntry extends LicenseEntry {
-  _BundledAssetLicenseEntry({required this.packageName, required this.lines});
-  final String packageName;
-  final List<String> lines;
-
-  @override
-  Iterable<String> get packages => <String>[packageName];
-
-  @override
-  // indent 0 = no left padding, left-aligned. Each source line is its
-  // own paragraph so bullet lists render with line breaks.
-  Iterable<LicenseParagraph> get paragraphs =>
-      lines.map((String line) => LicenseParagraph(line, 0));
 }
 
 Future<void> main() async {

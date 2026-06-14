@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show LicenseEntry, LicenseRegistry;
 import 'package:flutter/material.dart';
 
+import '../../infrastructure/licenses/bundled_asset_licenses.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Custom licenses screen replacing Flutter's stock `showLicensePage`.
@@ -14,9 +15,8 @@ import '../../l10n/app_localizations.dart';
 ///
 /// We group entries into two ExpansionTile sections:
 ///   - "Bundled assets": entries whose primary package name ends with
-///     [bundledPackageNameSuffix] (set by `_registerBundledAssetLicenses`
-///     in `main.dart`). Initially expanded — small set, immediately
-///     useful.
+///     [bundledAssetPackageNameSuffix]. Initially expanded — small set,
+///     immediately useful.
 ///   - "Software licenses": every other entry (i.e. pub packages).
 ///     Collapsed by default since the list is long.
 ///
@@ -26,12 +26,6 @@ class LicensesScreen extends StatelessWidget {
   const LicensesScreen({super.key});
 
   static const String routeLocation = '/licenses';
-
-  /// Suffix tagged onto the primary package name in
-  /// `_registerBundledAssetLicenses` (lib/main.dart). Used here to split
-  /// app-bundled entries from pub-package entries without a side
-  /// channel. Keep both ends in sync.
-  static const String bundledPackageNameSuffix = ' (bundled)';
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +43,7 @@ class LicensesScreen extends StatelessWidget {
               final List<LicenseEntry> software = <LicenseEntry>[];
               for (final LicenseEntry entry in snapshot.data!) {
                 final String first = entry.packages.first;
-                if (first.endsWith(bundledPackageNameSuffix)) {
+                if (first.endsWith(bundledAssetPackageNameSuffix)) {
                   bundled.add(entry);
                 } else {
                   software.add(entry);
@@ -74,7 +68,7 @@ class LicensesScreen extends StatelessWidget {
                       for (final LicenseEntry entry in bundled)
                         _LicenseEntryTile(
                           entry: entry,
-                          stripSuffix: bundledPackageNameSuffix,
+                          stripSuffix: bundledAssetPackageNameSuffix,
                         ),
                     ],
                   ),

@@ -18,6 +18,7 @@
 - ライセンス: Pixabay Content License
 - 取得日: 2026-04-30
 - 加工: なし
+
 ## App icon / Hoshino v2
 - 生成サービス: PixAI
 - 使用モデル: Hoshino v2
