@@ -246,7 +246,7 @@ AlarmEntity 起動時の通知タイトル / 本文。`NotificationStrings` (Pur
 | key | ja | en | 用途 |
 | --- | --- | --- | --- |
 | `licenseMenuOverflow` | ライセンス | Licenses | HomeScreen AppBar overflow メニュー項目 |
-| `licenseGroupBundledSounds` | 同梱音源 | Bundled sounds | LicensesScreen のセクション見出し |
+| `licenseGroupBundledAssets` | 同梱アセット | Bundled assets | LicensesScreen のセクション見出し |
 | `licenseGroupSoftware` | ソフトウェアライセンス | Software licenses | LicensesScreen のセクション見出し |
 
 ## プリセット選択シート（FAB → bottom sheet）
