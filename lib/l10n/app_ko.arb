@@ -124,7 +124,7 @@
   "timerSoundSheetTitle": "사운드 선택",
 
   "licenseMenuOverflow": "라이선스",
-  "licenseGroupBundledSounds": "내장 사운드",
+  "licenseGroupBundledAssets": "번들 자산",
   "licenseGroupSoftware": "소프트웨어 라이선스",
 
   "alarmEditTitleNew": "알람 추가",

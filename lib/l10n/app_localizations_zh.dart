@@ -374,7 +374,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get licenseMenuOverflow => '许可证';
 
   @override
-  String get licenseGroupBundledSounds => '随附音源';
+  String get licenseGroupBundledAssets => '随附资源';
 
   @override
   String get licenseGroupSoftware => '软件许可证';
@@ -965,7 +965,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get licenseMenuOverflow => '授權';
 
   @override
-  String get licenseGroupBundledSounds => '內建音效';
+  String get licenseGroupBundledAssets => '隨附資源';
 
   @override
   String get licenseGroupSoftware => '軟體授權';

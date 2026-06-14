@@ -378,7 +378,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get licenseMenuOverflow => '라이선스';
 
   @override
-  String get licenseGroupBundledSounds => '내장 사운드';
+  String get licenseGroupBundledAssets => '번들 자산';
 
   @override
   String get licenseGroupSoftware => '소프트웨어 라이선스';
