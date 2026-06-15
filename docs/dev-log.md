@@ -17,6 +17,53 @@
 
 ---
 
+## Phase 11.9 サブ PR β — アイコン・Splash・ストア素材 (2026-06-14)
+
+Phase 11.9 T1〜T6 のアイコン / Splash 実装と、Play Store 用素材の一部を
+PR #91 で実施。PR #77 で front-load 済みの `pubspec.yaml` 設定と
+Android `app_name` 配線へ、確定素材を投入して生成した。
+
+PR: [#91 アプリアイコン・スプラッシュとPixAIクレジットを追加](https://github.com/Bonkoturyu/TimerUtility/pull/91)
+
+main squash commit: `954eea2`
+
+### 完了内容
+
+- `design/icon/`: 1024 px 原画、adaptive foreground / background /
+  monochrome、Splash logo、Play Store 512 px icon
+- `design/store/feature-graphic-1024x500.png`: Play Store Feature Graphic
+- `flutter_launcher_icons` 生成物: density 別 launcher icon、Adaptive Icon、
+  API 33+ Themed Icon (`<monochrome>`)
+- `flutter_native_splash` 生成物: Android 12+、light / dark 各 Splash
+- PixAI / Hoshino v2 の生成モデル情報を `THIRD_PARTY_NOTICES.md`、
+  `assets/sounds/LICENSES.md`、アプリ内ライセンス画面へ反映
+- 実アセットを `rootBundle` から読み、PixAI エントリの parse / 表示を検証する
+  Widget Test を追加
+
+### 検証
+
+| 項目 | 結果 |
+| --- | --- |
+| `flutter analyze` | 成功 |
+| `flutter test` | 673 passed / 1 skipped |
+| `flutter build apk --debug` | 成功 |
+| `dart run tool/check_translations_doc.dart` | 成功 |
+| Adaptive Icon mask preview | 円形 / 角丸 / squircle 確認済み |
+| Play Store icon | 512 x 512 PNG |
+| Feature Graphic | 1024 x 500 PNG |
+
+### 残作業
+
+- Pixel 6a で launcher icon / Themed Icon を確認
+- Pixel 6a で cold / warm、light / dark の Splash を確認
+- OS 表示名 `TimerUtility` を確認
+- Play Store 用スクリーンショット 7 シナリオを撮影
+
+実装・生成・静的検証は完了しているが、Phase 11.9 T7 の実機表示確認が
+未完のため、β 全体は「実装完了・実機確認待ち」とする。
+
+---
+
 ## Issue #74 fix — Lock 画面表示中の FSI 二重音 (2026-05-28)
 
 Phase 11.9 サブ PR α (PR #72) の Pixel 6a 実機検証 B-2 / B-3 / D-3 で
