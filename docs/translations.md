@@ -92,7 +92,7 @@
 | `alarmStop` | 停止 | Stop | プライマリ |
 | `alarmSnooze` | スヌーズ | Snooze | セカンダリ |
 | `alarmSnoozePickerTitle` | スヌーズ時間を選択 | Choose snooze duration | bottom sheet タイトル |
-| `alarmSnoozeMinutes` | {minutes} 分 | {minutes, plural, =1{1 minute} other{{minutes} minutes}} | bottom sheet オプション（ja は固定形式） |
+| `alarmSnoozeMinutes` | {minutes} 分 | {% raw %}{minutes, plural, =1{1 minute} other{{minutes} minutes}}{% endraw %} | bottom sheet オプション（ja は固定形式） |
 | `alarmSnoozeCancel` | キャンセル | Cancel | bottom sheet ボタン |
 
 ## アラーム一覧画面（Phase 9.5）
@@ -119,7 +119,7 @@
 | `alarmEditLabelHint` | ラベル（任意） | Label (optional) | TextField placeholder |
 | `alarmEditSoundLabel` | 音源 | Sound | セクション見出し |
 | `alarmEditSnoozeLabel` | スヌーズ | Snooze | セクション見出し |
-| `alarmEditSnoozeMinutes` | {count}分 | {count, plural, =1{1 minute} other{{count} minutes}} | SegmentedButton (5/10/15) |
+| `alarmEditSnoozeMinutes` | {count}分 | {% raw %}{count, plural, =1{1 minute} other{{count} minutes}}{% endraw %} | SegmentedButton (5/10/15) |
 | `alarmEditCancel` | キャンセル | Cancel | アクション |
 | `alarmEditSave` | 保存 | Save | AppBar 保存ボタン tooltip |
 | `alarmEditDelete` | 削除 | Delete | AppBar 削除ボタン tooltip |
@@ -299,7 +299,7 @@ AlarmEntity 起動時の通知タイトル / 本文。`NotificationStrings` (Pur
 | `presetTemplateReplaceModeOverwrite` | 上書き | Overwrite | 破壊的アクション（既存を全削除して置換） |
 | `presetTemplateReplaceModeAppend` | 追加 | Append | 既存に追加（プライマリ） |
 | `presetTemplateReplaceModeCancel` | キャンセル | Cancel | キャンセル |
-| `presetTemplateReplaceLimitWarning` | {discarded, plural, =0{} other{プリセット件数の上限を超えたため、{discarded} 件が追加されませんでした}} | {discarded, plural, =0{} =1{1 preset was skipped because the limit was reached} other{{discarded} presets were skipped because the limit was reached}} | append 時に上限到達した件数を伝える SnackBar |
+| `presetTemplateReplaceLimitWarning` | {discarded, plural, =0{} other{プリセット件数の上限を超えたため、{discarded} 件が追加されませんでした}} | {% raw %}{discarded, plural, =0{} =1{1 preset was skipped because the limit was reached} other{{discarded} presets were skipped because the limit was reached}}{% endraw %} | append 時に上限到達した件数を伝える SnackBar |
 
 ## プリセットラベル（duration → 表示文字列）
 
@@ -307,9 +307,9 @@ AlarmEntity 起動時の通知タイトル / 本文。`NotificationStrings` (Pur
 
 | key | ja | en | 用途 |
 | --- | --- | --- | --- |
-| `presetLabelSeconds` | {count}秒 | {count, plural, =1{1 second} other{{count} seconds}} | 秒のみ（< 1 分） |
-| `presetLabelMinutes` | {count}分 | {count, plural, =1{1 minute} other{{count} minutes}} | 分のみ（< 1 時間 & 秒 = 0） |
-| `presetLabelHours` | {count}時間 | {count, plural, =1{1 hour} other{{count} hours}} | 時のみ（分 = 0 & 秒 = 0） |
+| `presetLabelSeconds` | {count}秒 | {% raw %}{count, plural, =1{1 second} other{{count} seconds}}{% endraw %} | 秒のみ（< 1 分） |
+| `presetLabelMinutes` | {count}分 | {% raw %}{count, plural, =1{1 minute} other{{count} minutes}}{% endraw %} | 分のみ（< 1 時間 & 秒 = 0） |
+| `presetLabelHours` | {count}時間 | {% raw %}{count, plural, =1{1 hour} other{{count} hours}}{% endraw %} | 時のみ（分 = 0 & 秒 = 0） |
 
 > 1h30m / 5m20s のような複合 duration はこの表に当てはまらず、`HH:MM:SS` 形式（`DurationFormatter`）にフォールバックする。
 
