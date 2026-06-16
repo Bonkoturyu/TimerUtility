@@ -23,7 +23,7 @@
 
 Play Store 提出準備を進行中。
 
-- [~] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs` 保存済、公開 URL 確認待ち）
+- [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
 - Play Store listing と Data Safety 申告の確定
 - Pixel 6a スクリーンショット 7 シナリオ
 - [x] `android/key.properties.template` 追加
@@ -99,8 +99,7 @@ Play Store 提出準備を進行中。
 
 ---
 
-最終更新日: 2026-06-16（Phase 11.9 β 実機確認と POST_NOTIFICATIONS follow-up
-実機確認を完了反映。γ は GitHub Pages 公開 URL 確認、スクショ、AAB 検証が残り）
+最終更新日: 2026-06-17（GitHub Pages 公開成功と Privacy Policy 実 URL確認を反映。γ はスクショ、upload keystore、署名付き AAB 検証が残り）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a
