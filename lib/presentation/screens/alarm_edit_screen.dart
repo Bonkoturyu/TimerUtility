@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/alarm_collection_notifier.dart';
+import '../../application/permission_notifier.dart';
 import '../../application/settings_notifier.dart';
 import '../../application/user_preferences_provider.dart';
 import '../../domain/alarm/alarm_entity.dart';
@@ -161,6 +162,12 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
     final notifier = ref.read(alarmCollectionNotifierProvider.notifier);
 
     try {
+      if (_enabled) {
+        await ref
+            .read(permissionNotifierProvider.notifier)
+            .ensureNotificationPermissionForScheduling();
+        if (!mounted) return;
+      }
       if (_isEditMode) {
         // 既存: notificationId / createdAt は notifier 側で merge される。
         final List<AlarmEntity> all = ref.read(alarmCollectionNotifierProvider);

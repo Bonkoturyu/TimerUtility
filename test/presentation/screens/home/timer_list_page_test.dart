@@ -87,17 +87,28 @@ NotificationScheduler _stubScheduler() {
 }
 
 class _GrantedPermissionNotifier extends PermissionNotifier {
+  int ensureCalls = 0;
+
   @override
   PermissionState build() => const PermissionState(
     postNotifications: DomainPermissionStatus.granted,
     scheduleExactAlarm: DomainPermissionStatus.granted,
     fullScreenIntent: DomainPermissionStatus.granted,
   );
+
+  @override
+  Future<void> ensureNotificationPermissionForScheduling() async {
+    ensureCalls++;
+  }
 }
 
 /// Wraps [TimerListPage] in a Scaffold so SnackBar / FAB hosting works
 /// the same way HomeScreen / TimerListScreen will host it in production.
-Widget _harness(_InMemoryRepo repo) {
+Widget _harness(
+  _InMemoryRepo repo, {
+  PermissionNotifier Function()? permissionNotifier,
+  bool includeFab = false,
+}) {
   return ProviderScope(
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock.fixed(DateTime(2026, 5, 10, 12))),
@@ -106,14 +117,22 @@ Widget _harness(_InMemoryRepo repo) {
       notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
       testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
-        () => _GrantedPermissionNotifier(),
+        permissionNotifier ?? () => _GrantedPermissionNotifier(),
       ),
     ],
-    child: const MaterialApp(
-      locale: Locale('ja'),
+    child: MaterialApp(
+      locale: const Locale('ja'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: <Locale>[Locale('ja'), Locale('en')],
-      home: Scaffold(body: TimerListPage()),
+      supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+      home: Scaffold(
+        body: const TimerListPage(),
+        floatingActionButton: includeFab
+            ? Consumer(
+                builder: (BuildContext context, WidgetRef ref, _) =>
+                    TimerListPage.buildFab(context, ref),
+              )
+            : null,
+      ),
     ),
   );
 }
@@ -134,6 +153,26 @@ void main() {
       // FAB is supplied by the host (Scaffold), so the page itself
       // should not render one.
       expect(find.byKey(const Key('timer_list_add_fab')), findsNothing);
+    });
+
+    testWidgets('FAB タップでプリセット sheet 前に通知権限要求フローを通す', (
+      WidgetTester tester,
+    ) async {
+      final permissions = _GrantedPermissionNotifier();
+      await tester.pumpWidget(
+        _harness(
+          _InMemoryRepo(),
+          permissionNotifier: () => permissions,
+          includeFab: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('timer_list_add_fab')));
+      await tester.pumpAndSettle();
+
+      expect(permissions.ensureCalls, 1);
+      expect(find.byType(BottomSheet), findsOneWidget);
     });
   });
 }
