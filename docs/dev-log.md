@@ -2925,12 +2925,19 @@ PermissionBanner も非表示のまま進む」follow-up を修正。
 
 - `android/key.properties` と upload keystore 実体はユーザー手元で作成が必要。
   これが無い状態では署名付き release AAB 検証は未実施。
-- GitHub Pages は Source = `main` / `/docs` 保存済み。Privacy Policy 公開 URL 確認待ち。
+- GitHub Pages は Source = `main` / `/docs` で公開済み。PR #96 で `docs/index.md` を追加し、
+  PR #97 で `docs/translations.md` の ICU 例文を Jekyll/Liquid が誤解釈する build error を
+  `{% raw %}...{% endraw %}` で修正した。
+- Privacy Policy 実 URL 確認済み:
+  - 日本語: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`
+  - English: `https://bonkoturyu.github.io/TimerUtility/privacy-policy.en`
+  - トップ: `https://bonkoturyu.github.io/TimerUtility/`
+  いずれも `200 OK` を確認済み。Play Console 登録用 URL は日本語版を使用する。
 - Pixel 6a スクリーンショット 7 シナリオ撮影。
 
 ---
 
-最終更新日: 2026-06-16（Phase 11.9 γ 着手 + POST_NOTIFICATIONS follow-up 実機確認追記）
+最終更新日: 2026-06-17（GitHub Pages 公開成功 + Privacy Policy 実 URL確認を追記）
 
 過去の更新:
 
