@@ -158,5 +158,69 @@ void main() {
       expect(opened, isTrue);
       expect(pm.openAppSettingsCalls, 1);
     });
+
+    test(
+      'ensureNotificationPermissionForScheduling refreshes unknown then requests',
+      () async {
+        final pm = _StubPermissionManager(
+          notificationStatus: DomainPermissionStatus.unknown,
+          notificationAfterRequest: DomainPermissionStatus.denied,
+        );
+        final c = _container(pm);
+
+        await c
+            .read(permissionNotifierProvider.notifier)
+            .ensureNotificationPermissionForScheduling();
+
+        expect(pm.requestNotificationCalls, 1);
+        expect(
+          c.read(permissionNotifierProvider).postNotifications,
+          DomainPermissionStatus.denied,
+        );
+      },
+    );
+
+    test(
+      'ensureNotificationPermissionForScheduling requests denied status',
+      () async {
+        final pm = _StubPermissionManager(
+          notificationStatus: DomainPermissionStatus.denied,
+          notificationAfterRequest: DomainPermissionStatus.granted,
+        );
+        final c = _container(pm);
+        await c.read(permissionNotifierProvider.notifier).refresh();
+
+        await c
+            .read(permissionNotifierProvider.notifier)
+            .ensureNotificationPermissionForScheduling();
+
+        expect(pm.requestNotificationCalls, 1);
+        expect(
+          c.read(permissionNotifierProvider).postNotifications,
+          DomainPermissionStatus.granted,
+        );
+      },
+    );
+
+    test(
+      'ensureNotificationPermissionForScheduling does not request non-requestable statuses',
+      () async {
+        for (final status in <DomainPermissionStatus>[
+          DomainPermissionStatus.granted,
+          DomainPermissionStatus.permanentlyDenied,
+          DomainPermissionStatus.notRequired,
+        ]) {
+          final pm = _StubPermissionManager(notificationStatus: status);
+          final c = _container(pm);
+          await c.read(permissionNotifierProvider.notifier).refresh();
+
+          await c
+              .read(permissionNotifierProvider.notifier)
+              .ensureNotificationPermissionForScheduling();
+
+          expect(pm.requestNotificationCalls, 0);
+        }
+      },
+    );
   });
 }

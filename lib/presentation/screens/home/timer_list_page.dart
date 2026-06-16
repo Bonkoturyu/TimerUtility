@@ -76,6 +76,10 @@ class TimerListPage extends ConsumerStatefulWidget {
   /// without copying the limit-reached SnackBar logic.
   static Future<void> handleAddTap(BuildContext context, WidgetRef ref) async {
     final AppLocalizations l = AppLocalizations.of(context);
+    await ref
+        .read(permissionNotifierProvider.notifier)
+        .ensureNotificationPermissionForScheduling();
+    if (!context.mounted) return;
     // Surface the limit before opening the picker so the user doesn't
     // configure a duration only to have it rejected on confirm.
     final TimerCollection current = ref.read(timerCollectionNotifierProvider);

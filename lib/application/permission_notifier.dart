@@ -74,6 +74,23 @@ class PermissionNotifier extends _$PermissionNotifier {
     _logTransition(PermissionKind.postNotifications, before, next);
   }
 
+  /// Make sure the notification permission prompt has had a chance to appear
+  /// before the user creates timer/alarm work that depends on OS notifications.
+  ///
+  /// Denial is not treated as an error: timers and alarms still work while the
+  /// app is foregrounded, and [PermissionBanners] keeps surfacing the degraded
+  /// background behavior.
+  Future<void> ensureNotificationPermissionForScheduling() async {
+    if (state.postNotifications == DomainPermissionStatus.unknown) {
+      await refresh();
+    }
+    final status = state.postNotifications;
+    if (status == DomainPermissionStatus.unknown ||
+        status == DomainPermissionStatus.denied) {
+      await requestNotification();
+    }
+  }
+
   Future<void> requestScheduleExactAlarm() async {
     final manager = ref.read(permissionManagerProvider);
     final DomainPermissionStatus before = state.scheduleExactAlarm;

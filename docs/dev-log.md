@@ -2879,9 +2879,61 @@ F-8 自体は文中改行解消の DoD を満たしたためクローズ。taskl
 
 ---
 
-最終更新日: 2026-05-15（F-8 PermissionBanner 折り返し改善エントリ追加）
+---
+
+## Phase 11.9 γ 着手 + POST_NOTIFICATIONS follow-up (2026-06-16)
+
+Phase 11.9 サブ PR γ のローカル配線に着手し、同時に Phase 11.9 α 実機検証で
+見つかっていた「新規 install 直後に POST_NOTIFICATIONS 初回ダイアログが出ず、
+PermissionBanner も非表示のまま進む」follow-up を修正。
+
+### 変更内容
+
+- `PermissionNotifier.ensureNotificationPermissionForScheduling()` を追加。
+  `postNotifications == unknown` なら `refresh()` で実状態を取り直し、
+  なお `unknown` / `denied` の場合は `requestNotification()` を呼ぶ。
+  `granted` / `notRequired` / `permanentlyDenied` では要求しない。
+- `TimerListPage.handleAddTap()` でプリセット sheet を開く前に上記フローを実行。
+  タイマー作成 UX の入口で OS 通知許可ダイアログを出せるようにした。
+- `AlarmEditScreen._onSave()` で enabled なアラーム保存前に上記フローを実行。
+  disabled 保存では通知不要なので要求しない。
+- `android/key.properties.template` を追加し、ローカル upload keystore 設定の
+  雛形を commit 対象化。実体 `android/key.properties` は既存 `.gitignore` で除外。
+- `android/app/build.gradle.kts` の release signing を debug keystore 暫定設定から
+  `android/key.properties` 経由の `release` signingConfig に変更。
+- `pubspec.yaml` を `1.0.0+2` に bump。
+
+### 検証
+
+- `dart format` 成功。
+- `flutter analyze --fatal-infos`: No issues found。
+- `flutter test`: 679 passed / 1 skipped。
+- `flutter build apk --debug`: 成功。
+- `flutter test test/application/permission_notifier_test.dart
+  test/presentation/screens/alarm_edit_screen_test.dart
+  test/presentation/screens/home/timer_list_page_test.dart`: 成功。
+- Pixel 6a / Android 16 実機確認:
+  - launcher icon OK。
+  - Themed Icon (monochrome) OK。
+  - splash cold / warm、light / dark OK。
+  - OS 表示名 `TimerUtility` OK。
+  - 新規 install 後、Timer 追加時と Alarm 保存時に
+    POST_NOTIFICATIONS の OS 許可ダイアログが出ることを確認。
+  - 1 分タイマー鳴動、Lock 画面 FSI、二重音なしも OK。
+
+### 残作業
+
+- `android/key.properties` と upload keystore 実体はユーザー手元で作成が必要。
+  これが無い状態では署名付き release AAB 検証は未実施。
+- GitHub Pages は Source = `main` / `/docs` 保存済み。Privacy Policy 公開 URL 確認待ち。
+- Pixel 6a スクリーンショット 7 シナリオ撮影。
+
+---
+
+最終更新日: 2026-06-16（Phase 11.9 γ 着手 + POST_NOTIFICATIONS follow-up 実機確認追記）
 
 過去の更新:
 
+- 2026-05-15（F-8 PermissionBanner 折り返し改善エントリ追加）
 - 2026-05-13（Phase 6 docs cleanup エントリ追加）
 - 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）

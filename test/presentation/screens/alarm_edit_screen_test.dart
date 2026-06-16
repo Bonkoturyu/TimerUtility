@@ -83,12 +83,19 @@ class _MemoryUserPrefs implements UserPreferences {
 }
 
 class _GrantedPermissionNotifier extends PermissionNotifier {
+  int ensureCalls = 0;
+
   @override
   PermissionState build() => const PermissionState(
     postNotifications: DomainPermissionStatus.granted,
     scheduleExactAlarm: DomainPermissionStatus.granted,
     fullScreenIntent: DomainPermissionStatus.granted,
   );
+
+  @override
+  Future<void> ensureNotificationPermissionForScheduling() async {
+    ensureCalls++;
+  }
 }
 
 NotificationScheduler _stubScheduler() {
@@ -113,6 +120,7 @@ Widget _harness({
   AlarmEntity? seed,
   _MemoryUserPrefs? userPrefs,
   _InMemoryAlarmRepo? repo,
+  PermissionNotifier Function()? permissionNotifier,
 }) {
   final _InMemoryAlarmRepo r = repo ?? _InMemoryAlarmRepo();
   if (seed != null) r.store[seed.id] = seed;
@@ -167,7 +175,7 @@ Widget _harness({
         userPrefs ?? _MemoryUserPrefs(),
       ),
       permissionNotifierProvider.overrideWith(
-        () => _GrantedPermissionNotifier(),
+        permissionNotifier ?? () => _GrantedPermissionNotifier(),
       ),
     ],
     child: MaterialApp.router(
@@ -236,6 +244,42 @@ void main() {
       await tester.tap(find.byKey(const Key('alarm_edit_save_button')));
       await tester.pumpAndSettle();
 
+      expect(repo.store.length, 1);
+    });
+
+    testWidgets('enabled=true の新規保存前に通知権限要求フローを通す', (
+      WidgetTester tester,
+    ) async {
+      final repo = _InMemoryAlarmRepo();
+      final permissions = _GrantedPermissionNotifier();
+      await tester.pumpWidget(
+        _harness(repo: repo, permissionNotifier: () => permissions),
+      );
+      await _openEdit(tester);
+
+      await tester.tap(find.byKey(const Key('alarm_edit_save_button')));
+      await tester.pumpAndSettle();
+
+      expect(permissions.ensureCalls, 1);
+      expect(repo.store.length, 1);
+    });
+
+    testWidgets('enabled=false の新規保存では通知権限要求を省略する', (
+      WidgetTester tester,
+    ) async {
+      final repo = _InMemoryAlarmRepo();
+      final permissions = _GrantedPermissionNotifier();
+      await tester.pumpWidget(
+        _harness(repo: repo, permissionNotifier: () => permissions),
+      );
+      await _openEdit(tester);
+
+      await tester.tap(find.byKey(const Key('alarm_edit_enabled_switch')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('alarm_edit_save_button')));
+      await tester.pumpAndSettle();
+
+      expect(permissions.ensureCalls, 0);
       expect(repo.store.length, 1);
     });
 
