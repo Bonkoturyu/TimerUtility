@@ -203,7 +203,7 @@ void main() {
     );
 
     test(
-      'ensureNotificationPermissionForScheduling does not request granted or permanentlyDenied',
+      'ensureNotificationPermissionForScheduling does not request non-requestable statuses',
       () async {
         for (final status in <DomainPermissionStatus>[
           DomainPermissionStatus.granted,
