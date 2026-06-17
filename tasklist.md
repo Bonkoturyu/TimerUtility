@@ -26,6 +26,7 @@ Play Store 提出準備を進行中。
 - [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
 - Play Store listing と Data Safety 申告の確定
 - [x] Pixel 6a スクリーンショット 7 シナリオ（ja、1080×2400、`design/screenshots/phone/ja/` に配置）
+- [ ] en スクリーンショット追加撮影要否の確認（Play Console の locale 別 listing 実画面で確認。必要なら `design/screenshots/phone/en/` に同 7 シナリオを追加）
 - [x] `android/key.properties.template` 追加
 - [x] release signing を `android/key.properties` 経由に配線
 - [x] version bump (`1.0.0+2`)
@@ -99,7 +100,7 @@ Play Store 提出準備を進行中。
 
 ---
 
-最終更新日: 2026-06-17（Pixel 6a スクリーンショット 7 シナリオを `design/screenshots/phone/ja/` に格納。γ は Play Console 実画面での listing / Data Safety 確定、upload keystore、署名付き AAB 検証が残り）
+最終更新日: 2026-06-17（Pixel 6a スクリーンショット 7 シナリオを `design/screenshots/phone/ja/` に格納。γ は Play Console 実画面での listing / Data Safety 確定、en スクリーンショット追加撮影要否確認、upload keystore、署名付き AAB 検証が残り）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a
