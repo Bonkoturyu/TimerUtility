@@ -293,7 +293,7 @@ ja / en のみで提出)。
 | World Clock (アナログデザイン、6 都市登録) | `design/screenshots/phone/en/04_world_clock_analog_6_cities.png` |
 | Alarm Ringing 画面 | `design/screenshots/phone/en/05_alarm_ringing_screen.png` |
 | Settings (テーマ / 言語 / 診断ログトグル可視) | `design/screenshots/phone/en/06_settings_theme_language_diagnostics.png` |
-| Preset Manage Screen | `design/screenshots/phone/en/07_preset_manage.png` |
+| Preset Manage Screen (プリセット管理) | `design/screenshots/phone/en/07_preset_manage.png` |
 
 ### 9.4 英語版 Store listing 用素材
 
