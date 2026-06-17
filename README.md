@@ -10,12 +10,9 @@ Flutter 製のストップウォッチ + タイマー + アラーム + 世界時
 
 ## Screenshots
 
-> Phase 11.9 (Play Store 提出準備) で Pixel 6a 実機スクリーンショットを差し込み予定。
-> 現状はデフォルト Flutter ロゴ + プレースホルダ。
-
 | Stopwatch | Timer | Alarm | World Clock |
 | --- | --- | --- | --- |
-| _(TBD)_ | _(TBD)_ | _(TBD)_ | _(TBD)_ |
+| <img src="design/screenshots/phone/ja/02_stopwatch_laps.png" alt="Stopwatch with laps" width="180"> | <img src="design/screenshots/phone/ja/01_timer_multi_running.png" alt="Multiple timers" width="180"> | <img src="design/screenshots/phone/ja/03_alarm_list_repeat_once.png" alt="Alarm list" width="180"> | <img src="design/screenshots/phone/ja/04_world_clock_analog_6_cities.png" alt="World clock" width="180"> |
 
 ---
 

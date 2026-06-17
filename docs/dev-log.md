@@ -2933,11 +2933,37 @@ PermissionBanner も非表示のまま進む」follow-up を修正。
   - English: `https://bonkoturyu.github.io/TimerUtility/privacy-policy.en`
   - トップ: `https://bonkoturyu.github.io/TimerUtility/`
   いずれも `200 OK` を確認済み。Play Console 登録用 URL は日本語版を使用する。
-- Pixel 6a スクリーンショット 7 シナリオ撮影。
 
 ---
 
-最終更新日: 2026-06-17（GitHub Pages 公開成功 + Privacy Policy 実 URL確認を追記）
+## Phase 11.9 γ — Pixel 6a スクリーンショット 7 シナリオ撮影 (2026-06-17)
+
+Play Store listing / README 用の実機スクリーンショットを Pixel 6a / Android 16 で撮影。
+DEBUG バナーを避けるため profile APK を再ビルドして実機へ上書きインストールし、
+前セクションの残作業だった日本語 UI の 7 シナリオを
+`design/screenshots/phone/ja/` に配置した。
+
+### 撮影ファイル
+
+- `01_timer_multi_running.png`: Timer タブ、複数タイマー実行中。
+- `02_stopwatch_laps.png`: Stopwatch、ラップ記録あり。
+- `03_alarm_list_repeat_once.png`: Alarm List、単発 + 毎日繰り返し。
+- `04_world_clock_analog_6_cities.png`: World Clock、アナログ表示、6 都市登録。
+- `05_alarm_ringing_screen.png`: Alarm Ringing 画面。ドキュメント方針どおり通常画面で代用。
+- `06_settings_theme_language_diagnostics.png`: Settings、テーマ / 言語 / 診断ログトグル可視。
+- `07_preset_manage.png`: Preset Manage Screen。
+
+### 検証
+
+- 7 ファイルすべて 1080×2400 PNG。
+- Play Store のスマホスクリーンショット条件「横幅 1080 px 以上」を満たす。
+- 撮影用に作成した 07:00 のアラーム 2 件は撮影後にオフへ戻した。
+- en スクリーンショットは Play Console 実画面で locale 別 listing の要否を確認した上で追加撮影する。
+- 画像 / docs only 変更のため `flutter analyze` / `flutter test` は未実行。
+
+---
+
+最終更新日: 2026-06-17（Pixel 6a スクリーンショット 7 シナリオ撮影を追記）
 
 過去の更新:
 
