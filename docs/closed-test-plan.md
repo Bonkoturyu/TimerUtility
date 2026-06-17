@@ -37,7 +37,8 @@ TimerUtility の Google Play closed test に協力していただける方を募
 - Google アカウントで closed test に参加登録する
 - 参加後 14 日間はテスト参加を解除しない
 - 可能ならアプリを数回起動し、タイマー / アラーム / 世界時計のいずれかを試す
-- 気付いた不具合や分かりにくい点があれば GitHub Issue または指定連絡先に送る
+- 気付いた不具合や分かりにくい点があれば GitHub Issues
+  (<https://github.com/Bonkoturyu/TimerUtility/issues>) に送る
 
 注意:
 - テスト版は Google Play 経由で配布されます
@@ -120,7 +121,7 @@ TimerUtility の Google Play closed test に協力していただける方を募
 
 - テスターが途中で opt-out すると、そのテスターは 14 日連続条件にカウントされない。
 - 一度抜けて再参加しても、合計 14 日ではなく連続 14 日が必要。
-- テスターは Google Account または Google Workspace account が必要。
+- テスターは Google アカウントまたは Google Workspace アカウントが必要。
 - Internal testing は closed testing 要件の代替にはならない。
 - Production access 承認後の通常アップデートで、同じ 12 人 14 日を毎回やり直す
   要件ではない。ただし別アプリを Production 公開する場合は、そのアプリで再度
