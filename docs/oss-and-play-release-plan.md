@@ -152,7 +152,7 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 | # | タスク | 編集対象 | 確認必須 |
 | --- | --- | --- | --- |
 | T1 | Play Console アカウント開設 ($25) + Play App Signing 加入 + アプリ作成 (パッケージ名 = `io.github.bonkoturyu.timer_utility`) | Play Console Web | **必須** |
-| T2 | **WebFetch で公式仕様裏取り** ([CLAUDE.md:25-44](../CLAUDE.md#L25-L44) ソース信用原則): Data Safety フォーム / Play App Signing 加入要件 / Internal Testing 人数・期間 / Closed Testing 20 人 14 日ルールの現行ポリシー / Adaptive Icon monochrome 必須化時期 / 現行要求 target SDK / SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT 事前申請審査の有無 / Pixabay Content License 2024 改定影響 | 読み取りのみ | — |
+| T2 | **WebFetch で公式仕様裏取り** ([CLAUDE.md:25-44](../CLAUDE.md#L25-L44) ソース信用原則): Data Safety フォーム / Play App Signing 加入要件 / Internal Testing 人数・期間 / 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件 / Adaptive Icon monochrome 必須化時期 / 現行要求 target SDK / SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT 事前申請審査の有無 / Pixabay Content License 2024 改定影響 | 読み取りのみ | — |
 | T3 | T2 結果を `docs/play-store-listing.md` に反映、必要なら Phase 11.9 の決定 (targetSdk 固定値・権限申告文言) を差し戻し再修正 | `docs/play-store-listing.md` + 必要時 Native | **必須** |
 | T4 | [android/app/build.gradle.kts:29-31](../android/app/build.gradle.kts#L29-L31) の `targetSdk = flutter.targetSdkVersion` の実 SDK 版数を確認、Play 要求と乖離があれば明示値固定 | [android/app/build.gradle.kts](../android/app/build.gradle.kts) | **必須** |
 | T5 | aab ビルド → Play Console に手動 upload (Internal Testing track) | — | — |
@@ -206,7 +206,7 @@ CLAUDE.md ソース信用原則に従い、以下は計画段階で断定せず 
 1. Data Safety フォームの最新項目構成
 2. Play App Signing の 2026 年加入フロー (新規アプリ強制か任意か)
 3. Internal Testing 人数上限・期間
-4. Closed Testing 14 日 20 人ルールの個人アカウント適用範囲
+4. 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件の Play Console 実画面確認
 5. Adaptive Icon monochrome 必須化時期 (Android 13 themed icon との関係)
 6. 現行 Play 要求 target SDK (Android 14 / 15 / 16 のどれが minimum か)
 7. SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否
