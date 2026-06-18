@@ -3009,10 +3009,33 @@ What's new の English 草稿が揃っているため、追加で言語依存の
 
 ---
 
-最終更新日: 2026-06-17（英語版 Store listing 素材準備を追記。en スクリーンショット 7 シナリオ撮影済み）
+## Phase 11.9 γ — 計画文書の現在実態同期 (2026-06-18)
+
+Phase 11.9 γ の進捗が複数文書で微妙にずれていたため、短期タスク・Backlog・
+OSS/Play 計画書を現在の実態へ同期した。
+
+### 対応
+
+- `tasklist.md` の Store listing / Data Safety を未チェック項目として明示し、
+  残タスクを Play Console 実画面での確定、upload keystore 実体生成 +
+  `android/key.properties` 作成、署名付き AAB ビルドに整理。
+- `BACKLOG.md` の Phase 11 / 11.9 サマリを更新し、アプリアイコン / Splash と
+  ja/en ストア素材は完了済み、未完了は Play Store 提出準備の最終工程のみと明示。
+- `docs/oss-and-play-release-plan.md` の古い「未整備」「実機表示確認未完」
+  「T13〜T18 一括未完」表現を解消し、T13〜T16 を完了、T17〜T18 を残作業として分離。
+
+### 検証
+
+- doc-only 変更のため `flutter analyze` / `flutter test` は未実行。
+- `git diff` で対象文書の差分を確認。
+
+---
+
+最終更新日: 2026-06-18（Phase 11.9 γ の計画文書同期を追記）
 
 過去の更新:
 
+- 2026-06-17（英語版 Store listing 素材準備を追記。en スクリーンショット 7 シナリオ撮影済み）
 - 2026-05-15（F-8 PermissionBanner 折り返し改善エントリ追加）
 - 2026-05-13（Phase 6 docs cleanup エントリ追加）
 - 2026-05-12（`tasklist.md` から完了タスクログを本ファイルに集約）
