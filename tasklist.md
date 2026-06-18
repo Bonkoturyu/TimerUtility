@@ -24,7 +24,7 @@
 Play Store 提出準備を進行中。
 
 - [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
-- Play Store listing と Data Safety 申告の確定
+- [ ] Play Console 実画面での Store listing / Data Safety 申告の確定
 - [x] Pixel 6a スクリーンショット 7 シナリオ（ja、1080×2400、`design/screenshots/phone/ja/` に配置）
 - [x] en スクリーンショット追加撮影要否の確認（英語版 Store listing も初回提出範囲に含める方針のため、追加撮影する）
 - [x] 英語版 Feature Graphic 追加（`design/store/feature-graphic-1024x500-en.png`。日本語コピー入りの既存版は ja 用として維持）
@@ -50,7 +50,7 @@ Play Store 提出準備を進行中。
   も追加。PixAI / Hoshino v2 のクレジットをアプリ内ライセンスと
   `THIRD_PARTY_NOTICES.md` に反映。`flutter analyze`、`flutter test`
   (673 passed / 1 skipped)、debug APK build、翻訳文書チェック成功。
-  実機表示確認は未完のため上記「進行中」に分離。
+  実機表示確認は 2026-06-15 に完了済み。
 - [x] **Phase 11.9 サブ PR β 事前準備** — `phase-11.9-beta-prep` /
   **PR #77 main マージ済 (2026-05-29、squash `0a0509d`)**。素材非依存の β 準備:
   strings.xml 5 言語 + Manifest `app_name` 配線 (T4 相当) + §G アイコン仕様の公式裏取り
@@ -102,7 +102,7 @@ Play Store 提出準備を進行中。
 
 ---
 
-最終更新日: 2026-06-17（英語版 Store listing 用素材を追加。英語版 Feature Graphic と en スクリーンショット 7 シナリオを配置済み。γ は Play Console 実画面での listing / Data Safety 確定、upload keystore、署名付き AAB 検証が残り）
+最終更新日: 2026-06-18（現在の実態へ同期。Phase 11.9 γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump まで完了。残りは Play Console 実画面での Store listing / Data Safety 確定、upload keystore 実体生成 + `android/key.properties` 作成、署名付き AAB ビルド）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a
