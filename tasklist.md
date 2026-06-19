@@ -32,8 +32,8 @@ Play Store 提出準備を進行中。
 - [x] `android/key.properties.template` 追加
 - [x] release signing を `android/key.properties` 経由に配線
 - [x] version bump (`1.0.0+2`)
-- [ ] upload keystore 実体生成 + `android/key.properties` 作成
-- [ ] 署名付き AAB ビルド
+- [x] upload keystore 実体生成 + `android/key.properties` 作成（`android/key.properties` は gitignore 済み。`storeFile` は ASCII パスへ配置）
+- [x] 署名付き AAB ビルド（`flutter build appbundle --release` 成功、`build/app/outputs/bundle/release/app-release.aab`、51.4 MB）
 
 ### 直近マージ済み (実態反映、2026-06-15 同期)
 
@@ -102,7 +102,7 @@ Play Store 提出準備を進行中。
 
 ---
 
-最終更新日: 2026-06-18（現在の実態へ同期。Phase 11.9 γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump まで完了。残りは Play Console 実画面での Store listing / Data Safety 確定、upload keystore 実体生成 + `android/key.properties` 作成、署名付き AAB ビルド）
+最終更新日: 2026-06-19（Phase 11.9 γ は upload keystore 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了。生成物は `build/app/outputs/bundle/release/app-release.aab`。残りは Play Console 実画面での Store listing / Data Safety 申告の確定）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a
