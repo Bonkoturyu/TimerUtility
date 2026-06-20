@@ -1,8 +1,7 @@
 # Privacy Policy (TimerUtility)
 
-Last updated: 2026-05-17
-Version: 1.0 (draft / Phase 11.9 preparation; finalized in Phase 11.9-T8 before
-Play Store submission)
+Last updated: 2026-06-20
+Version: 1.0 (final version for Play Store submission)
 Canonical version: [docs/privacy-policy.md](privacy-policy.md) (Japanese)
 This document: English translation
 
