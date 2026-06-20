@@ -1,7 +1,7 @@
 # プライバシーポリシー (TimerUtility)
 
-最終更新日: 2026-05-17
-バージョン: 1.0 (草稿 / Phase 11.9 準備、Play Store 提出前に Phase 11.9-T8 で確定)
+最終更新日: 2026-06-20
+バージョン: 1.0 (Play Store 提出用確定版)
 原本: 本ファイル (日本語)
 英語版: [docs/privacy-policy.en.md](privacy-policy.en.md)
 

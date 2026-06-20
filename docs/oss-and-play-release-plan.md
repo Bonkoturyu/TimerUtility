@@ -1,7 +1,7 @@
 # TimerUtility OSS 公開 → Play Store 提出 実装計画
 
 作成日: 2026-05-16
-状態: 承認済 / 実態同期済 (2026-06-18)
+状態: 承認済 / 実態同期済 (2026-06-19)
 関連: [docs/oss-publishing-notes.md](oss-publishing-notes.md) (公開可否・特許リスク監査) / [BACKLOG.md](../BACKLOG.md) (Phase 11 残タスク) / [tasklist.md](../tasklist.md)
 
 ## Context
@@ -9,20 +9,22 @@
 TimerUtility (Flutter / Android 16 / Pixel 6a 主ターゲット) は、コア機能・
 ローカライズ・診断ログ機構・OSS 公開・アプリアイコン / Splash 生成と実機確認まで
 完了済み。Play Store 提出準備 (Phase 11.9 γ) は、Privacy Policy 公開、ja/en の
-ストア素材、release signing 配線、version bump (`1.0.0+2`) まで完了している。
-現在の残作業は Play Console 実画面での Store listing / Data Safety 確定、
-upload keystore 実体生成 + `android/key.properties` 作成、署名付き AAB ビルド。
+ストア素材、release signing 配線、version bump (`1.0.0+2`)、upload keystore
+実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了している。
+現在の残作業は Play Console 実画面での Store listing / Data Safety 確定と、
+必要に応じた bundletool / Pixel 6a install 確認。
 
 [docs/oss-publishing-notes.md](oss-publishing-notes.md) (2026-05-02) で OSS 公開可・特許リスクなしと監査済。本計画策定セッション (2026-05-16) のリポジトリ実態確認結果:
 
 - ライセンス・秘密情報・commit author email は全クリア
 - ネットワーク送信ゼロ、Data Safety 申告は「収集なし / 共有なし」で出せる
 - README / community files / アイコン / Splash / プライバシーポリシー / ja/en ストア素材は整備済み
-- 未整備として残るのは upload keystore 実体、gitignore 除外済みの `android/key.properties` 実体、署名付き AAB
+- upload keystore 実体、gitignore 除外済みの `android/key.properties` 実体、署名付き AAB は整備済み
 
 本計画は **OSS 公開を先行** し、フィードバックを受けながら Play 提出素材を整える
-3 段階構造として開始した。2026-06-18 時点では Phase 11.8 は完了、Phase 11.9 は
-最終 signing / AAB 工程のみ進行中、Phase 11.10 は未着手。
+3 段階構造として開始した。2026-06-19 時点では Phase 11.8 は完了、Phase 11.9 は
+Play Console 実画面での Store listing / Data Safety 確定と、必要に応じた
+bundletool / Pixel 6a install 確認のみ進行中、Phase 11.10 は未着手。
 
 ## 確定方針 (ユーザ承認済)
 
@@ -107,10 +109,10 @@ upload keystore 実体生成 + `android/key.properties` 作成、署名付き AA
 | T14 | [android/app/build.gradle.kts:35-40](../android/app/build.gradle.kts#L35-L40) の release signingConfig を `key.properties` 経由に書換、TODO コメント解消 | [android/app/build.gradle.kts](../android/app/build.gradle.kts) | **必須** |
 | T15 | `versionCode` / `versionName` を Play 用に bump (`pubspec.yaml` の `1.0.0+1` を `1.0.0+2` に) | [pubspec.yaml](../pubspec.yaml) | **必須** |
 | T16 | README の "fork 時 applicationId 書換ガイド" を新 ID に追従更新 | [README.md](../README.md) | 不要 |
-| T17 | `flutter build appbundle --release` ローカル成功、`bundletool` で APK 展開して実機 install テスト | — | — |
+| T17 | upload keystore 実体生成 + `android/key.properties` 作成後、`flutter build appbundle --release` ローカル成功、AAB サイズ計測。必要に応じて `bundletool` で APK 展開し、Pixel 6a に install テスト | — | — |
 | T18 | BACKLOG.md / tasklist.md / docs/dev-log.md に Phase 11.9 完了記録を追記 | `docs/` + ルート md | **必須** (`docs/`) |
 
-### 進捗 (2026-06-18 同期)
+### 進捗 (2026-06-19 同期)
 
 - [x] T0: PR #72 で applicationId / MethodChannel 移行、Pixel 6a 8 シナリオ確認
 - [x] T1〜T6: PR #77 の事前配線後、PR #91 (`954eea2`) で素材投入・
@@ -119,7 +121,7 @@ upload keystore 実体生成 + `android/key.properties` 作成、署名付き AA
   warm、light / dark、OS 表示名 `TimerUtility` を確認済み。併せて Timer / Alarm の
   POST_NOTIFICATIONS 初回ダイアログ、1 分タイマー鳴動、Lock 画面 FSI、二重音なしも
   回帰確認済み
-- [x] T8: Privacy Policy 日英草稿作成済み
+- [x] T8: Privacy Policy 日英版は Play Store 提出用確定版として更新済み
 - [x] T9: GitHub Pages 有効化と安定 URL 確認（Source = `main` / `/docs`。PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
 - [~] T10: Play Store listing / Data Safety 草稿は作成済み。残りは Play Console
   実画面での項目確定と転記内容の最終確認
@@ -136,31 +138,36 @@ upload keystore 実体生成 + `android/key.properties` 作成、署名付き AA
 - [x] T14: release signing を `android/key.properties` 経由に配線済み
 - [x] T15: version `1.0.0+2` に bump 済み
 - [x] T16: README の fork 時 applicationId 書換ガイドは新 ID 前提に追従済み
-- [ ] T17: upload keystore 実体生成 + `android/key.properties` 作成後、
-  `flutter build appbundle --release` と必要な bundletool / 実機検証を実施
-- [ ] T18: T17 完了後、BACKLOG.md / tasklist.md / docs/dev-log.md に
-  Phase 11.9 完了記録を追記
+- [~] T17: upload keystore 実体生成 + `android/key.properties` 作成後、
+  `flutter build appbundle --release` 成功。生成物は
+  `build/app/outputs/bundle/release/app-release.aab` (51.4 MB)。
+  `docs/release-signing.md` §4.2 の bundletool / Pixel 6a install 確認は未実施。
+- [ ] T18: Play Console 実画面での Store listing / Data Safety 確定後、
+  BACKLOG.md / tasklist.md / docs/dev-log.md に Phase 11.9 完了記録を追記
 
 PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 `flutter build apk --debug`、`dart run tool/check_translations_doc.dart` 成功。
 実機表示確認は 2026-06-15 に完了済み。
+現時点検証 (2026-06-19): `flutter analyze --fatal-infos`、`flutter test`
+(679 passed / 1 skipped)、`dart run tool/check_translations_doc.dart` 成功。
 
 ### DoD
 
 - 実機 Pixel 6a で新 applicationId + 新アイコン + Android 12+ SplashScreen が cold start で正しく表示済み
 - `flutter build appbundle --release` がローカル成功、サイズ計測済
-- Privacy Policy が GitHub Pages の安定 URL で公開済み
+- Privacy Policy が Play Store 提出用確定版として GitHub Pages の安定 URL で公開済み
 - Data Safety 申告草稿が `docs/play-store-listing.md` にレビュー可能形で揃い、Play Console 実画面での確定待ち
-- upload keystore はユーザ手元で生成予定、`key.properties` は gitignore 除外、template のみ commit 済み
+- upload keystore はユーザ手元で生成済み、`android/key.properties` は gitignore 除外、template のみ commit 済み
 - 全テスト緑、回帰なし
 
 ### 検証
 
 1. [x] `flutter analyze` / `flutter test` 緑 (PR #91 時点で 673 passed / 1 skipped)
-2. [ ] `flutter build appbundle --release` 成功 (upload keystore 実体生成後)
-3. [x] 実機 Pixel 6a で cold start アイコン + Splash 確認、8.5 follow-up シナリオ (アラーム単音化) 回帰なし、Phase 6 FullScreenIntent 回帰なし
-4. [x] Privacy Policy URL を HTTPS で表示確認済み
-5. [x] 旧 applicationId のアプリが Pixel 6a に残らないことを Phase 11.9 α で確認済み
+2. [x] `flutter build appbundle --release` 成功 (`build/app/outputs/bundle/release/app-release.aab`, 51.4 MB)
+3. [ ] `bundletool` で生成 AAB を APK 展開し、Pixel 6a に install テスト (`docs/release-signing.md` §4.2)
+4. [x] 実機 Pixel 6a で cold start アイコン + Splash 確認、8.5 follow-up シナリオ (アラーム単音化) 回帰なし、Phase 6 FullScreenIntent 回帰なし
+5. [x] Privacy Policy URL を HTTPS で表示確認済み
+6. [x] 旧 applicationId のアプリが Pixel 6a に残らないことを Phase 11.9 α で確認済み
 
 ---
 
@@ -238,7 +245,7 @@ CLAUDE.md ソース信用原則に従い、以下は計画段階で断定せず 
 ## 全体検証
 
 - Phase 11.8 完了時: GitHub Public 化、Community Standards 100%、回帰なし
-- Phase 11.9 完了時: 新 applicationId + 新アイコンの aab がローカル build 成功、642 テスト緑、Privacy Policy 公開
+- Phase 11.9 現時点: 新 applicationId + 新アイコンの aab がローカル build 成功、679 テスト緑、Privacy Policy 公開。残りは Play Console 実画面での Store listing / Data Safety 確定と、必要に応じた bundletool / Pixel 6a install 確認
 - Phase 11.10 完了時: Production rollout 開始、CI 緑、Pre-launch report 警告ゼロ
 
 ---
