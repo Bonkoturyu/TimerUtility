@@ -154,7 +154,7 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
      への push までを暗黙に許可する** 形と整合する。main への push / マージは
      引き続き別途明示承認 (毎回ルール) が必要。
    - 全コメントに必ずリプライ
-     (`gh api repos/{owner}/{repo}/pulls/comments/{comment_id}/replies -X POST --input tmp.json`)
+     (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -X POST --input tmp.json`)
    - リプライ本文の API 投稿は **必ず一時 JSON ファイル経由** (`--input tmp.json`)
      で行う (シェル展開バグ実績あり: バッククォートや `$` を含むと
      `-f body=...` 直渡しは内容が破損する)
@@ -201,4 +201,4 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
 
 ---
 
-最終更新日: 2026-05-03（ソース信用原則 + PR レビュー対応プロトコルを追加）
+最終更新日: 2026-07-08（PR リプライ用 API エンドポイントの誤記を修正: `{pull_number}` セグメント欠落）
