@@ -1,10 +1,11 @@
-<!-- 正典宣言: このファイルが指示ファイルの正典 (single source of truth)。
-     AGENTS.md は Codex 向けのツール名置換ミラーであり、直接編集しない。
-     同期は必ず CLAUDE.md → AGENTS.md の一方向で行うこと。 -->
 # CLAUDE.md
 
 このファイルは Claude Code が本プロジェクトで作業する際に **毎セッション最初に読む** 絶対制約集です。
 詳細は `docs/` 配下に分離しています。本ファイルは最小限の制約とインデックスのみを記載します。
+
+> **正典宣言**: このファイルが指示ファイルの正典 (single source of truth)。
+> `AGENTS.md` は Codex 向けのツール名置換ミラーであり、直接編集しないこと。
+> 同期は必ず CLAUDE.md → AGENTS.md の一方向で行う。
 
 ---
 
