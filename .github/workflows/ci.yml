@@ -6,11 +6,18 @@ on:
   pull_request:
     branches: [main]
 
-# 同一 ref の旧 run を自動キャンセル (PR のみ)。main への push は
-# コミットごとの CI 結果を履歴として残すためキャンセルしない。
+# PR: 同一 PR (refs/pull/N/merge) で group を共有し旧 run を自動キャンセル。
+# main: sha を付与して run ごとに unique group とし、キャンセルも直列化もせず
+#       コミットごとに独立した CI 結果を並列で残す。
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# restricted default GITHUB_TOKEN 環境でも動くよう明示的に付与する。
+# checkout に contents:read、dorny/paths-filter の PR 変更検出に pull-requests:read が必要。
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   flutter-checks:

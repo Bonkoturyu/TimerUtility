@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   cleanup:
+    # fork PR は read-only token のため cache 書き込み自体が不可 = 掃除対象の cache が
+    # 存在しない。actions: write が付与されず gh cache delete が失敗して赤 run になるのも防ぐ。
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
