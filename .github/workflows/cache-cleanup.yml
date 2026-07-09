@@ -1,0 +1,37 @@
+name: Cleanup PR caches
+
+# PR クローズ時に、その PR の merge ref に紐づく Actions cache を削除する。
+# cache はリポジトリ全体で 10GB の LRU クォータのため、閉じた PR 由来の
+# エントリを残さないことで main / アクティブ PR のキャッシュヒット率を守る。
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows#force-deleting-cache-entries
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    # fork PR は read-only token のため cache 書き込み自体が不可 = 掃除対象の cache が
+    # 存在しない。actions: write が付与されず gh cache delete が失敗して赤 run になるのも防ぐ。
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete caches created by this PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          ids=$(gh cache list --repo "$REPO" --ref "$BRANCH" --limit 100 --json id --jq '.[].id')
+          if [ -z "$ids" ]; then
+            echo "No caches found for $BRANCH"
+            exit 0
+          fi
+          echo "$ids" | while read -r id; do
+            echo "Deleting cache $id"
+            gh cache delete "$id" --repo "$REPO"
+          done

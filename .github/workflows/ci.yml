@@ -6,18 +6,60 @@ on:
   pull_request:
     branches: [main]
 
+# PR: 同一 PR (refs/pull/N/merge) で group を共有し旧 run を自動キャンセル。
+# main: sha を付与して run ごとに unique group とし、キャンセルも直列化もせず
+#       コミットごとに独立した CI 結果を並列で残す。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || '' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# restricted default GITHUB_TOKEN 環境でも動くよう明示的に付与する。
+# checkout に contents:read、dorny/paths-filter の PR 変更検出に pull-requests:read が必要。
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   flutter-checks:
     name: Flutter analyze, format, test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      # docs 系のみの変更では Flutter ツールチェーンのセットアップごとスキップする。
+      # required check (このジョブ) は step スキップでも success で完了するため
+      # branch protection とは干渉しない。
+      # 例外: docs/translations.md は tool/check_translations_doc.dart の検査対象
+      # のため、単独変更でも CI を実行する。
+      - uses: dorny/paths-filter@v4
+        id: changes
+        with:
+          # 'every': 変更ファイルが全パターン (否定含む) を満たす場合のみ true
+          predicate-quantifier: 'every'
+          filters: |
+            source:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!.claude/**'
+              - '!LICENSE'
+              - '!.gitignore'
+            translations_doc:
+              - 'docs/translations.md'
       - uses: subosito/flutter-action@v2
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
         with:
           channel: 'stable'
           flutter-version: '3.41.8'
+          # Flutter SDK と pub cache の両方をキャッシュ (pub-cache は cache に追従)
+          cache: true
       - run: flutter pub get
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: dart format --set-exit-if-changed .
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: dart run tool/check_translations_doc.dart
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: flutter analyze --fatal-infos
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: flutter test
+        if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
