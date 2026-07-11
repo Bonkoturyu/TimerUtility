@@ -23,6 +23,13 @@ Flutter 製のストップウォッチ + タイマーアプリ。Android 16 (API
 - **専門用語 OK**: ユーザーは C/C++/C# 5年以上のエンジニア。冗長な基礎説明は不要
 - **アーキテクチャ的根拠を必ず添える**: 「なぜこの設計か」を Plan に含める
 
+### Git / PR 操作の厳命
+
+- **ユーザーから対象操作の明示的な指示がない限り、`git commit`、`git push`、PR 作成を実行しない**
+- 実装・修正・PR レビュー対応の依頼は、これらの操作を暗黙に許可しない
+- 複数の操作を行う場合は、ユーザーが明示した操作だけを実行する（例: 「コミットして」は push や PR 作成を含まない）
+- 明示的な指示がない場合、変更は未コミットのまま検証結果とともに報告する
+
 ---
 
 ## レビュー / 検証時のソース信用原則
@@ -97,8 +104,8 @@ Auto 起動中の Codex は以下に厳格に従うこと。
 
 - ✅ コード生成・編集（「ユーザー確認必須ファイル」を除く）
 - ✅ `flutter analyze` / `flutter test` / `dart format` の実行
-- ✅ ローカルでの `git add` / `git commit`
-- ❌ `git push`（**ユーザーが明示的に指示した時のみ実行**）
+- ✅ ローカルでの `git add`
+- ❌ `git commit` / `git push` / PR 作成（**各操作をユーザーが明示的に指示した時のみ実行**）
 - ❌ `flutter pub add` 等の依存追加（pubspec.yaml 編集に該当、要ユーザー確認）
 - ❌ Native 側（Kotlin / AndroidManifest）の編集（要ユーザー確認）
 
@@ -119,7 +126,7 @@ Auto 起動中の Codex は以下に厳格に従うこと。
 3. Plan を tasklist.md に追記（実装前）
 4. コード生成 + 同時にテスト作成
 5. `flutter analyze` + `flutter test` 実行
-6. 全部緑なら `git commit`（push はしない）
+6. 全部緑なら未コミットのまま検証結果を報告（明示的な指示がある場合のみ、指示された Git / PR 操作を実行）
 7. tasklist.md を更新（完了マーク）
 8. 次タスクへ。Phase DoD 達成時は停止
 
@@ -147,10 +154,9 @@ Auto 起動中の Codex は以下に厳格に従うこと。
    - (d) **誤指摘**: AI が誤った前提で書いている → 根拠提示して却下リプライ
 
 3. **対応**:
-   - (a)(b) で適用するもの: **対象 PR の feature branch にのみ** commit + push。
-     上記「Auto 運用ポリシー」の「git push はユーザーが明示的に指示した時のみ」
-     ルールに対して、ユーザの「PR #N のレビュー対応して」指示が **feature branch
-     への push までを暗黙に許可する** 形と整合する。main への push / マージは
+   - (a)(b) で適用するもの: 対象 PR の feature branch で修正する。
+     commit / push は「PR #N のレビュー対応して」という依頼には含まれず、
+     ユーザーが各操作を明示的に指示した場合のみ実行する。main への push / マージも
      引き続き別途明示承認 (毎回ルール) が必要。
    - 全コメントに必ずリプライ
      (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -X POST --input tmp.json`)
