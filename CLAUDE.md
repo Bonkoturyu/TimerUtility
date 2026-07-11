@@ -140,11 +140,19 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
 半自動対応する:
 
 1. **取得**:
-   - PR 番号の指定がなければ最新の open PR を対象とする
+   - PR 番号の指定がなければ、作成日時が最新の open PR を対象とする
+     (`gh pr list --state open --limit 100 --json number,createdAt --jq 'sort_by(.createdAt) | reverse | .[0].number'`)
    - `gh pr view {pull_number}` で PR メタ情報
    - `gh api repos/{owner}/{repo}/pulls/{pull_number}/comments` で行コメント
    - `gh pr checks {pull_number}` で CI 状態
    - GraphQL の `reviewThreads` で未解決 / outdated / 行位置を確認
+
+   `reviewThreads` は以下の最小クエリを基準に取得する
+   (`{owner}` / `{repo}` / `{pull_number}` は実値に置換):
+
+   ```powershell
+   gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id isResolved isOutdated path line comments(first:100){nodes{id body author{login}}}}}}}}' -F owner='{owner}' -F repo='{repo}' -F number={pull_number}
+   ```
 
    `gh` CLI は `{owner}` / `{repo}` プレースホルダを現在の repo
    コンテキストから自動補完するため、コマンドはそのまま貼って使える。
@@ -171,6 +179,10 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
      `-f body=...` 直渡しは内容が破損する)
    - 却下時は根拠 (URL or API 出力) を本文に明示
    - 対応済みスレッドは、結果返信後に GraphQL の `resolveReviewThread` で解決する
+
+     ```powershell
+     gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{id isResolved}}}' -F threadId='{thread_id}'
+     ```
    - push 後に CI を再確認し、失敗があればログを取得して同じプロトコルで対応する
 
 4. **報告**:
