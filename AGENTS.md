@@ -26,7 +26,8 @@ Flutter 製のストップウォッチ + タイマーアプリ。Android 16 (API
 ### Git / PR 操作の厳命
 
 - **ユーザーから対象操作の明示的な指示がない限り、`git commit`、`git push`、PR 作成を実行しない**
-- 実装・修正・PR レビュー対応の依頼は、これらの操作を暗黙に許可しない
+- 実装・修正の依頼は、これらの操作を暗黙に許可しない
+- 例外として、ユーザーの「PR の対応をしてください」等の明示的な PR 対応指示は、対象 PR の feature branch への commit / push、コメント返信、対応済みスレッドの解決までを一括で許可する（PR 作成、main への push、マージ、Draft 解除は含まない）
 - 複数の操作を行う場合は、ユーザーが明示した操作だけを実行する（例: 「コミットして」は push や PR 作成を含まない）
 - 明示的な指示がない場合、変更は未コミットのまま検証結果とともに報告する
 
@@ -134,43 +135,61 @@ Auto 起動中の Codex は以下に厳格に従うこと。
 
 ## PR レビュー対応プロトコル
 
-ユーザが「PR #N のレビュー対応して」と指示したら、Codex は以下の手順で
+ユーザが「PR の対応をしてください」「PR #N のレビュー対応して」等と明示的に指示したら、Codex は以下の手順で
 半自動対応する:
 
 1. **取得**:
+   - PR 番号の指定がなければ、作成日時が最新の open PR を対象とする
+     (`gh pr list --state open --limit 100 --json number,createdAt --jq 'sort_by(.createdAt) | reverse | .[0].number'`)
    - `gh pr view {pull_number}` で PR メタ情報
    - `gh api repos/{owner}/{repo}/pulls/{pull_number}/comments` で行コメント
    - `gh pr checks {pull_number}` で CI 状態
+   - GraphQL の `reviewThreads` で未解決 / outdated / 行位置を確認
+
+   `reviewThreads` は以下の最小クエリを基準に取得する
+   (`{owner}` / `{repo}` / `{pull_number}` は実値に置換):
+
+   ```powershell
+   gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id isResolved isOutdated path line comments(first:100){nodes{id body author{login}}}}}}}}' -F owner='{owner}' -F repo='{repo}' -F number={pull_number}
+   ```
 
    `gh` CLI は `{owner}` / `{repo}` プレースホルダを現在の repo
    コンテキストから自動補完するため、コマンドはそのまま貼って使える。
 
-2. **分類**:
+2. **分類・事前返信**:
    - (a) **自明な fix**: typo / 矛盾 / lint / 命名 → そのまま適用
    - (b) **検証必要**: 「これは正しい？」系 → 公式 docs / API validator /
      コード grep で裏取り (上記「ソース信用原則」に従う) → 適用 or 却下
    - (c) **設計判断必要**: アーキテクチャ変更 / 仕様分岐 → ユーザに判断委譲、
      一旦停止して相談
    - (d) **誤指摘**: AI が誤った前提で書いている → 根拠提示して却下リプライ
+   - 修正着手前に、各未解決コメントへ次の 4 項目を必ず返信する:
+     1. **妥当性**: 指摘が妥当 / 一部妥当 / 非妥当のいずれか
+     2. **原因**: 指摘が発生した実装・設定・記述上の原因
+     3. **修正可否**: 修正可能 / 修正不要 / ユーザー判断必要のいずれか
+     4. **詳細**: 裏取り根拠と、修正する場合は具体的な対応方針
 
 3. **対応**:
-   - (a)(b) で適用するもの: 対象 PR の feature branch で修正する。
-     commit / push は「PR #N のレビュー対応して」という依頼には含まれず、
-     ユーザーが各操作を明示的に指示した場合のみ実行する。main への push / マージも
-     引き続き別途明示承認 (毎回ルール) が必要。
-   - 全コメントに必ずリプライ
+   - (a)(b) で適用するもの: 対象 PR の feature branch で修正・検証し、commit + push する
+   - push 後、全コメントに対応結果を必ず追記返信する
      (`gh api repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies -X POST --input tmp.json`)
    - リプライ本文の API 投稿は **必ず一時 JSON ファイル経由** (`--input tmp.json`)
      で行う (シェル展開バグ実績あり: バッククォートや `$` を含むと
      `-f body=...` 直渡しは内容が破損する)
    - 却下時は根拠 (URL or API 出力) を本文に明示
+   - 対応済みスレッドは、結果返信後に GraphQL の `resolveReviewThread` で解決する
+
+     ```powershell
+     gh api graphql -f query='mutation($threadId:ID!){resolveReviewThread(input:{threadId:$threadId}){thread{id isResolved}}}' -F threadId='{thread_id}'
+     ```
+   - push 後に CI を再確認し、失敗があればログを取得して同じプロトコルで対応する
 
 4. **報告**:
    - 適用 / 却下 / ユーザ判断委譲の件数をサマリ
    - CI 再実行緑後にユーザへマージ可否を確認 (毎回ルール)
 
 5. **禁止事項**:
-   - main への直 push / 自動マージは絶対にしない (毎回明示承認ルール)
+   - PR 作成 / main への直 push / マージ / Draft 解除は実行しない (それぞれ別途明示承認ルール)
    - AI 指摘の鵜呑み (上記「ソース信用原則」と整合)
 
 ---
