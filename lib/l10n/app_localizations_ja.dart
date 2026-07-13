@@ -543,6 +543,22 @@ class AppLocalizationsJa extends AppLocalizations {
       'タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。';
 
   @override
+  String get timerIntervalNotificationLabel => '定間隔通知';
+
+  @override
+  String get timerIntervalNotificationDescription =>
+      '計測を続けながら、設定時間ごとに短く音を鳴らします。';
+
+  @override
+  String get timerIntervalNotificationEnabledTooltip => '定間隔通知：有効';
+
+  @override
+  String get timerIntervalNotificationDisabledTooltip => '定間隔通知：無効';
+
+  @override
+  String get commonClose => '閉じる';
+
+  @override
   String get settingsDiagnosticShareLogs => 'ログを共有';
 
   @override

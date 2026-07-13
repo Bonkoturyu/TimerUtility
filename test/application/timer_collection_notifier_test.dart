@@ -6,10 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/interval_notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/interval_notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/exceptions.dart';
@@ -20,6 +22,9 @@ import 'package:timer_utility/domain/timer/timer_status.dart';
 import '../helpers/test_notification_strings.dart';
 
 class _MockScheduler extends Mock implements NotificationScheduler {}
+
+class _MockIntervalScheduler extends Mock
+    implements IntervalNotificationScheduler {}
 
 class _InMemoryRepo implements TimerRepository {
   final Map<String, TimerEntity> store = <String, TimerEntity>{};
@@ -70,12 +75,17 @@ ProviderContainer _makeContainer({
   required Clock clock,
   required TimerRepository repo,
   required NotificationScheduler scheduler,
+  IntervalNotificationScheduler? intervalScheduler,
 }) {
   return ProviderContainer(
     overrides: <Override>[
       clockProvider.overrideWithValue(clock),
       timerRepositoryProvider.overrideWithValue(repo),
       notificationSchedulerProvider.overrideWithValue(scheduler),
+      if (intervalScheduler != null)
+        intervalNotificationSchedulerProvider.overrideWithValue(
+          intervalScheduler,
+        ),
       testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
         () => _GrantedPermissionNotifier(),
@@ -104,6 +114,91 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(DateTime.utc(2026));
+    registerFallbackValue(const Duration(minutes: 1));
+  });
+
+  test('定間隔通知を有効にしたタイマーはNative周期予約を使用する', () async {
+    final repo = _InMemoryRepo();
+    final interval = _MockIntervalScheduler();
+    when(
+      () => interval.schedule(
+        notificationId: any(named: 'notificationId'),
+        firstFireAt: any(named: 'firstFireAt'),
+        interval: any(named: 'interval'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        exact: any(named: 'exact'),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => interval.cancel(any())).thenAnswer((_) async {});
+    final container = _makeContainer(
+      clock: Clock.fixed(DateTime(2026, 5, 1, 12)),
+      repo: repo,
+      scheduler: _stubScheduler(),
+      intervalScheduler: interval,
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(timerCollectionNotifierProvider.notifier);
+    final timer = notifier.create(
+      label: 'pace',
+      duration: const Duration(minutes: 2),
+      intervalNotificationEnabled: true,
+    );
+
+    notifier.start(timer.id);
+
+    verify(
+      () => interval.schedule(
+        notificationId: timer.notificationId,
+        firstFireAt: DateTime(2026, 5, 1, 12, 2),
+        interval: const Duration(minutes: 2),
+        title: 'pace',
+        body: any(named: 'body'),
+        exact: true,
+      ),
+    ).called(1);
+  });
+
+  test('定間隔通知タイマーの一時停止でNative予約を解除する', () async {
+    final repo = _InMemoryRepo();
+    final interval = _MockIntervalScheduler();
+    when(
+      () => interval.schedule(
+        notificationId: any(named: 'notificationId'),
+        firstFireAt: any(named: 'firstFireAt'),
+        interval: any(named: 'interval'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        exact: any(named: 'exact'),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => interval.cancel(any())).thenAnswer((_) async {});
+    final container = _makeContainer(
+      clock: Clock.fixed(DateTime(2026, 5, 1, 12)),
+      repo: repo,
+      scheduler: _stubScheduler(),
+      intervalScheduler: interval,
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(timerCollectionNotifierProvider.notifier);
+    final timer = notifier.create(
+      label: '',
+      duration: const Duration(minutes: 2),
+      intervalNotificationEnabled: true,
+    );
+    notifier.start(timer.id);
+    clearInteractions(interval);
+
+    notifier.pause(timer.id);
+
+    verify(() => interval.cancel(timer.notificationId)).called(1);
+    expect(
+      container
+          .read(timerCollectionNotifierProvider)
+          .findById(timer.id)!
+          .status,
+      TimerStatus.paused,
+    );
   });
 
   group('TimerCollectionNotifier basic CRUD', () {

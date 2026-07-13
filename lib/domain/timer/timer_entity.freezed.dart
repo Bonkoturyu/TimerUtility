@@ -25,6 +25,7 @@ mixin _$TimerEntity {
   Duration? get pausedRemaining => throw _privateConstructorUsedError;
   TimerStatus get status => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
+  bool get intervalNotificationEnabled => throw _privateConstructorUsedError;
   String? get soundId => throw _privateConstructorUsedError;
 
   /// Create a copy of TimerEntity
@@ -50,6 +51,7 @@ abstract class $TimerEntityCopyWith<$Res> {
     Duration? pausedRemaining,
     TimerStatus status,
     DateTime createdAt,
+    bool intervalNotificationEnabled,
     String? soundId,
   });
 }
@@ -77,6 +79,7 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
     Object? pausedRemaining = freezed,
     Object? status = null,
     Object? createdAt = null,
+    Object? intervalNotificationEnabled = null,
     Object? soundId = freezed,
   }) {
     return _then(
@@ -113,6 +116,10 @@ class _$TimerEntityCopyWithImpl<$Res, $Val extends TimerEntity>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            intervalNotificationEnabled: null == intervalNotificationEnabled
+                ? _value.intervalNotificationEnabled
+                : intervalNotificationEnabled // ignore: cast_nullable_to_non_nullable
+                      as bool,
             soundId: freezed == soundId
                 ? _value.soundId
                 : soundId // ignore: cast_nullable_to_non_nullable
@@ -141,6 +148,7 @@ abstract class _$$TimerEntityImplCopyWith<$Res>
     Duration? pausedRemaining,
     TimerStatus status,
     DateTime createdAt,
+    bool intervalNotificationEnabled,
     String? soundId,
   });
 }
@@ -167,6 +175,7 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
     Object? pausedRemaining = freezed,
     Object? status = null,
     Object? createdAt = null,
+    Object? intervalNotificationEnabled = null,
     Object? soundId = freezed,
   }) {
     return _then(
@@ -203,6 +212,10 @@ class __$$TimerEntityImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        intervalNotificationEnabled: null == intervalNotificationEnabled
+            ? _value.intervalNotificationEnabled
+            : intervalNotificationEnabled // ignore: cast_nullable_to_non_nullable
+                  as bool,
         soundId: freezed == soundId
             ? _value.soundId
             : soundId // ignore: cast_nullable_to_non_nullable
@@ -224,6 +237,7 @@ class _$TimerEntityImpl implements _TimerEntity {
     required this.pausedRemaining,
     required this.status,
     required this.createdAt,
+    this.intervalNotificationEnabled = false,
     this.soundId,
   });
 
@@ -244,11 +258,14 @@ class _$TimerEntityImpl implements _TimerEntity {
   @override
   final DateTime createdAt;
   @override
+  @JsonKey()
+  final bool intervalNotificationEnabled;
+  @override
   final String? soundId;
 
   @override
   String toString() {
-    return 'TimerEntity(id: $id, notificationId: $notificationId, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt, soundId: $soundId)';
+    return 'TimerEntity(id: $id, notificationId: $notificationId, label: $label, duration: $duration, endAt: $endAt, pausedRemaining: $pausedRemaining, status: $status, createdAt: $createdAt, intervalNotificationEnabled: $intervalNotificationEnabled, soundId: $soundId)';
   }
 
   @override
@@ -268,6 +285,12 @@ class _$TimerEntityImpl implements _TimerEntity {
             (identical(other.status, status) || other.status == status) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
+            (identical(
+                  other.intervalNotificationEnabled,
+                  intervalNotificationEnabled,
+                ) ||
+                other.intervalNotificationEnabled ==
+                    intervalNotificationEnabled) &&
             (identical(other.soundId, soundId) || other.soundId == soundId));
   }
 
@@ -282,6 +305,7 @@ class _$TimerEntityImpl implements _TimerEntity {
     pausedRemaining,
     status,
     createdAt,
+    intervalNotificationEnabled,
     soundId,
   );
 
@@ -304,6 +328,7 @@ abstract class _TimerEntity implements TimerEntity {
     required final Duration? pausedRemaining,
     required final TimerStatus status,
     required final DateTime createdAt,
+    final bool intervalNotificationEnabled,
     final String? soundId,
   }) = _$TimerEntityImpl;
 
@@ -323,6 +348,8 @@ abstract class _TimerEntity implements TimerEntity {
   TimerStatus get status;
   @override
   DateTime get createdAt;
+  @override
+  bool get intervalNotificationEnabled;
   @override
   String? get soundId;
 

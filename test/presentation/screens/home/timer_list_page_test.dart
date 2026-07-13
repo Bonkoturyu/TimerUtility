@@ -14,6 +14,7 @@ import 'package:timer_utility/domain/ports/preset_repository.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
+import 'package:timer_utility/domain/timer/timer_status.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/home/timer_list_page.dart';
 
@@ -173,6 +174,48 @@ void main() {
 
       expect(permissions.ensureCalls, 1);
       expect(find.byType(BottomSheet), findsOneWidget);
+    });
+
+    testWidgets('定間隔通知アイコンからBottom Sheetを開いて有効化できる', (
+      WidgetTester tester,
+    ) async {
+      final repo = _InMemoryRepo();
+      repo.store['timer-interval'] = TimerEntity(
+        id: 'timer-interval',
+        notificationId: 42,
+        label: 'pace',
+        duration: const Duration(minutes: 2),
+        endAt: null,
+        pausedRemaining: null,
+        status: TimerStatus.idle,
+        createdAt: DateTime(2026, 5, 10),
+      );
+      await tester.pumpWidget(_harness(repo));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.notifications_off), findsOneWidget);
+      expect(find.text('計測を続けながら、設定時間ごとに短く音を鳴らします。'), findsNothing);
+      await tester.tap(
+        find.byKey(
+          const Key('timer_card_timer-interval_interval_notification'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('定間隔通知'), findsNWidgets(2));
+      expect(find.text('計測を続けながら、設定時間ごとに短く音を鳴らします。'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const Key('interval_notification_sheet_toggle')),
+      );
+      await tester.pump();
+
+      expect(repo.store['timer-interval']!.intervalNotificationEnabled, isTrue);
+
+      await tester.tap(
+        find.byKey(const Key('interval_notification_sheet_close')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.notifications_active), findsOneWidget);
     });
   });
 }

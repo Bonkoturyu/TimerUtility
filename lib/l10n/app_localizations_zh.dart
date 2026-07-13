@@ -573,6 +573,21 @@ class AppLocalizationsZh extends AppLocalizations {
       '将定时器操作、权限变更、通知触发与异常记录到设备本地文件。不会记录个人信息（标签/位置）。';
 
   @override
+  String get timerIntervalNotificationLabel => '定间隔提醒';
+
+  @override
+  String get timerIntervalNotificationDescription => '持续计时，并在每个设定间隔播放短提示音。';
+
+  @override
+  String get timerIntervalNotificationEnabledTooltip => '定间隔提醒：已开启';
+
+  @override
+  String get timerIntervalNotificationDisabledTooltip => '定间隔提醒：已关闭';
+
+  @override
+  String get commonClose => '关闭';
+
+  @override
   String get settingsDiagnosticShareLogs => '共享日志';
 
   @override
@@ -1162,6 +1177,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get settingsDiagnosticLogToggleDescription =>
       '將計時器操作、權限變更、通知觸發與例外狀況記錄到裝置內檔案。不會記錄個人資訊（標籤/位置）。';
+
+  @override
+  String get timerIntervalNotificationLabel => '定間隔提醒';
+
+  @override
+  String get timerIntervalNotificationDescription => '持續計時，並在每個設定間隔播放短提示音。';
+
+  @override
+  String get timerIntervalNotificationEnabledTooltip => '定間隔提醒：已開啟';
+
+  @override
+  String get timerIntervalNotificationDisabledTooltip => '定間隔提醒：已關閉';
+
+  @override
+  String get commonClose => '關閉';
 
   @override
   String get settingsDiagnosticShareLogs => '分享紀錄';

@@ -56,6 +56,11 @@ void main() {
     try {
       // 1. v5 で作られた clock_entries を DROP。
       await setup.customStatement('DROP TABLE clock_entries');
+      // AppDatabase は現在 v6 まで作成するため、v4 fixture へ戻す際は
+      // v6 追加列も除去する。再open時に v4→v6 migration が列を追加する。
+      await setup.customStatement(
+        'ALTER TABLE timers DROP COLUMN interval_notification_enabled',
+      );
       // 2. v4 schema の clock_locations を生 SQL で再構築。
       //    本番 app_database.dart の table 定義と同じカラム列。
       await setup.customStatement(

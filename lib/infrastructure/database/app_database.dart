@@ -28,6 +28,8 @@ class Timers extends Table {
   IntColumn get pausedRemainingMs => integer().nullable()();
   TextColumn get status => text()();
   TextColumn get soundId => text().nullable()();
+  BoolColumn get intervalNotificationEnabled =>
+      boolean().withDefault(const Constant<bool>(false))();
   IntColumn get createdAtUtcMs => integer()();
 
   @override
@@ -143,7 +145,7 @@ class AppDatabase extends _$AppDatabase {
   final String Function() _idGenerator;
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -188,6 +190,11 @@ class AppDatabase extends _$AppDatabase {
           );
           await customStatement('DROP TABLE clock_locations');
         }
+      }
+      if (from < 6) {
+        // 定間隔通知は既存タイマーでは無効から開始する。DEFAULT 0 により
+        // 既存行を保持したまま安全に NOT NULL 列を追加できる。
+        await m.addColumn(timers, timers.intervalNotificationEnabled);
       }
     },
   );

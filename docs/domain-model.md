@@ -129,6 +129,14 @@ StopwatchIdle
 
 ### TimerEntity
 
+#### 定間隔通知
+
+`TimerEntity.intervalNotificationEnabled` が true のタイマーは、`endAt` を
+終了時刻ではなく「次の周期境界」として扱う。境界到達時も status は
+`running` を維持し、次回境界を `前回境界 + duration × N` で算出する。
+通知音の再生完了時刻を基準にしないため、通知遅延が後続周期へ累積しない。
+遅延中に通過した境界はまとめてスキップし、現在時刻より後の最初の境界へ進む。
+
 ```
 TimerEntity {
   id: TimerId                        // UUID v4（Phase 3 では String）

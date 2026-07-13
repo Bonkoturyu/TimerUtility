@@ -102,7 +102,18 @@ Play Store 提出準備を進行中。
 
 ---
 
-最終更新日: 2026-06-19（Phase 11.9 γ は upload keystore 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了。生成物は `build/app/outputs/bundle/release/app-release.aab`。残りは Play Console 実画面での Store listing / Data Safety 申告の確定）
+## 定間隔通知（2026-07-12）
+
+- [x] Domain: 周期境界でも `running` 継続、基準時刻ベースでドリフト防止
+- [x] Native: 自己再予約Receiver、再起動復元、画面操作からの取消
+- [x] Drift schema v6: `interval_notification_enabled` 追加（既存行はfalse）
+- [x] UI / i18n: タイマーカード切替、日本語・英語・簡体字・繁体字・韓国語
+- [x] 自動検証（analyze、687 tests、翻訳整合性、debug APK build）
+- [x] Pixel 6a実機検証（画面OFFで短音、deep Doze中に30秒周期で2回連続、
+  再起動後にBoot Receiverが予約復元して2回連続、境界275ms前／253ms後の停止で
+  次回予約が復活しないことを確認。サイレントモード中もアラーム音量で2秒鳴動）
+
+最終更新日: 2026-07-12（定間隔通知を実装し、自動検証・Pixel 6a実機検証を完了）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a

@@ -42,6 +42,18 @@
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".IntervalNotificationReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".IntervalNotificationBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
         <!--
             Android 12+ (API 31+) requires receivers with system-broadcast
             intent-filters (BOOT_COMPLETED / MY_PACKAGE_REPLACED など) を

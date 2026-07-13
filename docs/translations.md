@@ -71,6 +71,11 @@
 | `timerCardActionReset` | リセット | Reset | プライマリボタン（完了/取消） |
 | `timerCardActionDelete` | 削除 | Delete | カード削除 |
 | `timerCardSoundChange` | 音源を変更 | Change sound | 音源ボタンの tooltip |
+| `timerIntervalNotificationLabel` | 定間隔通知 | Interval notifications | タイマーカードの切替項目 |
+| `timerIntervalNotificationDescription` | 計測を続けながら、設定時間ごとに短く音を鳴らします。 | Keep measuring and play a short sound at each set interval. | 定間隔通知の説明 |
+| `timerIntervalNotificationEnabledTooltip` | 定間隔通知：有効 | Interval notifications: on | ONアイコンのtooltip / Semantics |
+| `timerIntervalNotificationDisabledTooltip` | 定間隔通知：無効 | Interval notifications: off | OFFアイコンのtooltip / Semantics |
+| `commonClose` | 閉じる | Close | Bottom Sheet共通の閉じる操作 |
 
 ## タイマーステータス
 

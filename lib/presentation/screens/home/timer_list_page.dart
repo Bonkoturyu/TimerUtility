@@ -16,6 +16,7 @@ import '../../../domain/timer/timer_entity.dart';
 import '../../../domain/timer/timer_status.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/duration_picker.dart';
+import '../../widgets/interval_notification_settings_sheet.dart';
 import '../../widgets/permission_banners.dart';
 import '../../widgets/preset_select_sheet.dart';
 import '../preset_manage_screen.dart';
@@ -339,6 +340,22 @@ class _TimerCard extends ConsumerWidget {
                   icon: const Icon(Icons.music_note),
                   onPressed: () => _onChangeSound(context, ref),
                 ),
+                IconButton(
+                  key: Key('timer_card_${entity.id}_interval_notification'),
+                  tooltip: entity.intervalNotificationEnabled
+                      ? l.timerIntervalNotificationEnabledTooltip
+                      : l.timerIntervalNotificationDisabledTooltip,
+                  color: entity.intervalNotificationEnabled
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                  icon: Icon(
+                    entity.intervalNotificationEnabled
+                        ? Icons.notifications_active
+                        : Icons.notifications_off,
+                  ),
+                  onPressed: () =>
+                      _onConfigureIntervalNotification(context, ref),
+                ),
                 OutlinedButton(
                   key: Key('timer_card_${entity.id}_delete'),
                   onPressed: () => notifier.delete(entity.id),
@@ -362,6 +379,22 @@ class _TimerCard extends ConsumerWidget {
     ref
         .read(timerCollectionNotifierProvider.notifier)
         .changeSound(entity.id, picked);
+  }
+
+  Future<void> _onConfigureIntervalNotification(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => IntervalNotificationSettingsSheet(
+        initialEnabled: entity.intervalNotificationEnabled,
+        onChanged: (bool value) => ref
+            .read(timerCollectionNotifierProvider.notifier)
+            .setIntervalNotificationEnabled(entity.id, value),
+      ),
+    );
   }
 
   Widget _buildPrimaryButton(

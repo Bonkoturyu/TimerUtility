@@ -119,6 +119,40 @@ void main() {
     });
   });
 
+  group('TimerService 定間隔通知', () {
+    test('周期境界では ringing にせず次の基準境界へ進む', () {
+      final holder = _MutableNow(DateTime(2026, 1, 1, 12, 2, 5));
+      final service = _service(holder);
+      final timer = service
+          .createIdle(
+            label: '',
+            duration: const Duration(minutes: 2),
+            intervalNotificationEnabled: true,
+          )
+          .copyWith(
+            status: TimerStatus.running,
+            endAt: DateTime(2026, 1, 1, 12, 2),
+          );
+
+      final next = service.tick(timer);
+
+      expect(next.status, TimerStatus.running);
+      expect(next.endAt, DateTime(2026, 1, 1, 12, 4));
+    });
+
+    test('複数周期遅延しても現在時刻より後の最初の基準境界へ進む', () {
+      final holder = _MutableNow(DateTime(2026, 1, 1, 12, 7));
+      final service = _service(holder);
+
+      final next = service.nextIntervalBoundary(
+        previousBoundary: DateTime(2026, 1, 1, 12, 2),
+        interval: const Duration(minutes: 2),
+      );
+
+      expect(next, DateTime(2026, 1, 1, 12, 8));
+    });
+  });
+
   group('TimerService.start', () {
     test('idle → running with endAt = now + duration', () {
       final now = _MutableNow(DateTime(2026, 1, 1, 12));

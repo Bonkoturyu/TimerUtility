@@ -45,6 +45,7 @@ class TimerService {
     String? id,
     DateTime? createdAt,
     String? soundId,
+    bool intervalNotificationEnabled = false,
   }) {
     if (duration <= Duration.zero) {
       throw ArgumentError.value(duration, 'duration', 'must be > 0');
@@ -69,6 +70,7 @@ class TimerService {
       pausedRemaining: null,
       status: TimerStatus.idle,
       createdAt: createdAt ?? _clock.now(),
+      intervalNotificationEnabled: intervalNotificationEnabled,
       soundId: soundId,
     );
   }
@@ -149,6 +151,14 @@ class TimerService {
       return entity;
     }
     if (!entity.endAt!.isAfter(_clock.now())) {
+      if (entity.intervalNotificationEnabled) {
+        return entity.copyWith(
+          endAt: nextIntervalBoundary(
+            previousBoundary: entity.endAt!,
+            interval: entity.duration,
+          ),
+        );
+      }
       return entity.copyWith(
         endAt: null,
         pausedRemaining: null,
@@ -156,6 +166,26 @@ class TimerService {
       );
     }
     return entity;
+  }
+
+  /// Returns the first interval boundary strictly after now.
+  ///
+  /// The calculation advances from [previousBoundary], never from the
+  /// notification/audio completion time, so delayed delivery cannot drift
+  /// later boundaries. Missed boundaries are skipped rather than replayed.
+  DateTime nextIntervalBoundary({
+    required DateTime previousBoundary,
+    required Duration interval,
+  }) {
+    if (interval <= Duration.zero) {
+      throw ArgumentError.value(interval, 'interval', 'must be > 0');
+    }
+    final DateTime now = _clock.now();
+    if (previousBoundary.isAfter(now)) return previousBoundary;
+    final int elapsedUs = now.difference(previousBoundary).inMicroseconds;
+    final int intervalUs = interval.inMicroseconds;
+    final int steps = elapsedUs ~/ intervalUs + 1;
+    return previousBoundary.add(Duration(microseconds: intervalUs * steps));
   }
 
   /// Snooze a `ringing` timer for [snoozeMinutes] more minutes.

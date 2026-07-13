@@ -1093,6 +1093,36 @@ abstract class AppLocalizations {
   /// **'タイマー操作・権限変更・通知発火・例外を端末内ファイルに記録します。個人情報 (ラベル / 位置情報) は記録されません。'**
   String get settingsDiagnosticLogToggleDescription;
 
+  /// No description provided for @timerIntervalNotificationLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'定間隔通知'**
+  String get timerIntervalNotificationLabel;
+
+  /// No description provided for @timerIntervalNotificationDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'計測を続けながら、設定時間ごとに短く音を鳴らします。'**
+  String get timerIntervalNotificationDescription;
+
+  /// No description provided for @timerIntervalNotificationEnabledTooltip.
+  ///
+  /// In ja, this message translates to:
+  /// **'定間隔通知：有効'**
+  String get timerIntervalNotificationEnabledTooltip;
+
+  /// No description provided for @timerIntervalNotificationDisabledTooltip.
+  ///
+  /// In ja, this message translates to:
+  /// **'定間隔通知：無効'**
+  String get timerIntervalNotificationDisabledTooltip;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In ja, this message translates to:
+  /// **'閉じる'**
+  String get commonClose;
+
   /// No description provided for @settingsDiagnosticShareLogs.
   ///
   /// In ja, this message translates to:

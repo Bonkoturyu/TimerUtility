@@ -25,6 +25,7 @@ class TimerMapper {
     pausedRemainingMs: entity.pausedRemaining?.inMilliseconds,
     status: entity.status.name,
     soundId: entity.soundId,
+    intervalNotificationEnabled: entity.intervalNotificationEnabled,
     createdAtUtcMs: entity.createdAt.toUtc().millisecondsSinceEpoch,
   );
 
@@ -37,6 +38,9 @@ class TimerMapper {
     pausedRemainingMs: Value<int?>(entity.pausedRemaining?.inMilliseconds),
     status: Value<String>(entity.status.name),
     soundId: Value<String?>(entity.soundId),
+    intervalNotificationEnabled: Value<bool>(
+      entity.intervalNotificationEnabled,
+    ),
     createdAtUtcMs: Value<int>(entity.createdAt.toUtc().millisecondsSinceEpoch),
   );
 
@@ -53,6 +57,7 @@ class TimerMapper {
         : Duration(milliseconds: row.pausedRemainingMs!),
     status: _statusFromName(row.status),
     soundId: row.soundId,
+    intervalNotificationEnabled: row.intervalNotificationEnabled,
     createdAt: DateTime.fromMillisecondsSinceEpoch(
       row.createdAtUtcMs,
       isUtc: true,

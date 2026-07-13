@@ -49,6 +49,7 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `clockProvider` | function | `Clock` | keepAlive | 時刻取得の抽象化（テスト時に override） |
 | `appDatabaseProvider` | function | `AppDatabase` | keepAlive | Drift DB インスタンス |
 | `notificationSchedulerProvider` | function | `NotificationScheduler` | keepAlive | 通知予約 Adapter（Phase 8 で `show()` 即時通知 API 追加） |
+| `intervalNotificationSchedulerProvider` | function | `IntervalNotificationScheduler` | keepAlive | 定間隔通知のNative連鎖予約。Flutterプロセス停止中も次周期を自己再予約 |
 | `alarmSoundPlayerProvider` | function | `AlarmSoundPlayer` | keepAlive | 音再生 Adapter |
 | `timerRepositoryProvider` | function | `TimerRepository` | keepAlive | Timer 永続化（Phase 8 で実装、main.dart で DriftTimerRepository を override） |
 | `presetRepositoryProvider` | function | `PresetRepository` | keepAlive | Preset 永続化 |
@@ -130,6 +131,7 @@ Phase 3 までの単一 `TimerNotifier` を廃止し、複数タイマーの単�
 - 200 ms ticker による全 running の進行と ringing 遷移検知
   (`runningCount == 0` で自動停止 / 必要時に再起動)
 - NotificationScheduler への schedule / cancel (state 変更ごとに連動)
+- 定間隔通知では `ringing` へ遷移せず `running` を維持し、Native側の自己再予約を開始。一時停止・取消・削除・通常モード切替で予約を解除
 - 同時稼働上限 (10 本) の検証
 - 各操作後に Repository.upsert / delete でフルライト
 
