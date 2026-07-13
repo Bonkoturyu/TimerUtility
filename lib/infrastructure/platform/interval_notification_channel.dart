@@ -20,7 +20,6 @@ class IntervalNotificationChannel implements IntervalNotificationScheduler {
     required String title,
     required String body,
     required bool exact,
-    required String payload,
   }) async {
     await _channel.invokeMethod<void>('schedule', <String, Object>{
       'notificationId': notificationId,
@@ -29,7 +28,6 @@ class IntervalNotificationChannel implements IntervalNotificationScheduler {
       'title': title,
       'body': body,
       'exact': exact,
-      'payload': payload,
     });
   }
 

@@ -98,15 +98,14 @@ class MainActivity : FlutterActivity() {
                         val title = call.argument<String>("title")
                         val body = call.argument<String>("body")
                         val exact = call.argument<Boolean>("exact")
-                        val payload = call.argument<String>("payload")
                         if (id == null || first == null || interval == null || title == null ||
-                            body == null || exact == null || payload == null || interval <= 0L) {
+                            body == null || exact == null || interval <= 0L) {
                             result.error("INVALID_ARGUMENT", "Invalid interval schedule", null)
                         } else {
                             IntervalNotificationScheduler.schedule(
                                 this,
                                 IntervalNotificationScheduler.Entry(
-                                    id, first, interval, title, body, exact, payload,
+                                    id, first, interval, title, body, exact,
                                 ),
                             )
                             result.success(null)

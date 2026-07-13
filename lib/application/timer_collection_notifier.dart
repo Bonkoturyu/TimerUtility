@@ -350,7 +350,6 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
               title: title,
               body: strings.timerEndedBody,
               exact: useExact,
-              payload: 'timer:${entity.id}',
             ),
       );
       return;

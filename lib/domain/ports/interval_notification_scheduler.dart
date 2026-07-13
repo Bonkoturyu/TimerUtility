@@ -11,7 +11,6 @@ abstract class IntervalNotificationScheduler {
     required String title,
     required String body,
     required bool exact,
-    required String payload,
   });
 
   Future<void> cancel(int notificationId);

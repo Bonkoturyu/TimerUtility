@@ -29,7 +29,6 @@ void main() {
       title: 'pace',
       body: 'boundary',
       exact: true,
-      payload: 'timer:id-1',
     );
 
     expect(calls.single.method, 'schedule');
@@ -46,7 +45,6 @@ void main() {
       'title': 'pace',
       'body': 'boundary',
       'exact': true,
-      'payload': 'timer:id-1',
     });
   });
 

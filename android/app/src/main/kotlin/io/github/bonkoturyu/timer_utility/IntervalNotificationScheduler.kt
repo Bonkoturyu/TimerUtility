@@ -18,7 +18,6 @@ object IntervalNotificationScheduler {
         val title: String,
         val body: String,
         val exact: Boolean,
-        val payload: String,
     )
 
     @Synchronized
@@ -33,7 +32,7 @@ object IntervalNotificationScheduler {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(pendingIntent(context, notificationId))
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().remove(key(notificationId)).commit()
+            .edit().remove(key(notificationId)).apply()
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         notificationManager.cancel(notificationId)
@@ -47,15 +46,17 @@ object IntervalNotificationScheduler {
      */
     @Synchronized
     fun fireAndScheduleNext(context: Context, notificationId: Int, fire: (Entry) -> Unit) {
-        val entry = loadAll(context).firstOrNull { it.notificationId == notificationId } ?: return
+        val entry = load(context, notificationId) ?: return
         fire(entry)
         schedule(context, next(entry, System.currentTimeMillis()))
     }
 
-    fun loadAll(context: Context): List<Entry> =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all.keys
+    fun loadAll(context: Context): List<Entry> {
+        val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return preferences.all.keys
             .filter { it.startsWith(PREFIX) }
-            .mapNotNull { decode(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(it, null)) }
+            .mapNotNull { decode(preferences.getString(it, null)) }
+    }
 
     fun next(entry: Entry, nowUtcMs: Long): Entry {
         val elapsed = (nowUtcMs - entry.nextFireAtUtcMs).coerceAtLeast(0L)
@@ -103,26 +104,31 @@ object IntervalNotificationScheduler {
 
     private fun persist(context: Context, entry: Entry) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString(key(entry.notificationId), encode(entry)).commit()
+            .putString(key(entry.notificationId), encode(entry)).apply()
     }
+
+    private fun load(context: Context, notificationId: Int): Entry? =
+        decode(
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(key(notificationId), null),
+        )
 
     private fun key(id: Int) = "$PREFIX$id"
 
     private fun encode(e: Entry): String = listOf(
         e.notificationId.toString(), e.nextFireAtUtcMs.toString(), e.intervalMs.toString(),
-        e.exact.toString(), android.util.Base64.encodeToString(e.title.toByteArray(), android.util.Base64.NO_WRAP),
-        android.util.Base64.encodeToString(e.body.toByteArray(), android.util.Base64.NO_WRAP),
-        android.util.Base64.encodeToString(e.payload.toByteArray(), android.util.Base64.NO_WRAP),
+        e.exact.toString(),
+        android.util.Base64.encodeToString(e.title.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP),
+        android.util.Base64.encodeToString(e.body.toByteArray(Charsets.UTF_8), android.util.Base64.NO_WRAP),
     ).joinToString("|")
 
     private fun decode(raw: String?): Entry? = try {
         val p = raw?.split('|') ?: return null
         Entry(
             p[0].toInt(), p[1].toLong(), p[2].toLong(),
-            String(android.util.Base64.decode(p[4], android.util.Base64.NO_WRAP)),
-            String(android.util.Base64.decode(p[5], android.util.Base64.NO_WRAP)),
+            String(android.util.Base64.decode(p[4], android.util.Base64.NO_WRAP), Charsets.UTF_8),
+            String(android.util.Base64.decode(p[5], android.util.Base64.NO_WRAP), Charsets.UTF_8),
             p[3].toBoolean(),
-            String(android.util.Base64.decode(p[6], android.util.Base64.NO_WRAP)),
         )
     } catch (_: Exception) { null }
 }

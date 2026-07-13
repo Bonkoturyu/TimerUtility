@@ -128,7 +128,6 @@ void main() {
         title: any(named: 'title'),
         body: any(named: 'body'),
         exact: any(named: 'exact'),
-        payload: any(named: 'payload'),
       ),
     ).thenAnswer((_) async {});
     when(() => interval.cancel(any())).thenAnswer((_) async {});
@@ -156,7 +155,6 @@ void main() {
         title: 'pace',
         body: any(named: 'body'),
         exact: true,
-        payload: 'timer:${timer.id}',
       ),
     ).called(1);
   });
@@ -172,7 +170,6 @@ void main() {
         title: any(named: 'title'),
         body: any(named: 'body'),
         exact: any(named: 'exact'),
-        payload: any(named: 'payload'),
       ),
     ).thenAnswer((_) async {});
     when(() => interval.cancel(any())).thenAnswer((_) async {});

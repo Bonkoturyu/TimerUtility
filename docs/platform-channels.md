@@ -42,12 +42,12 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 
 | Method | 引数 | 戻り値 | 用途 |
 | --- | --- | --- | --- |
-| `schedule` | `notificationId`, `firstFireAtUtcMs`, `intervalMs`, `title`, `body`, `exact`, `payload` | `null` | 最初の周期境界を予約し、発火後はNative Receiverが基準境界から次回を自己再予約 |
+| `schedule` | `notificationId`, `firstFireAtUtcMs`, `intervalMs`, `title`, `body`, `exact` | `null` | 最初の周期境界を予約し、発火後はNative Receiverが基準境界から次回を自己再予約 |
 | `cancel` | `notificationId` | `null` | AlarmManager予約、永続設定、表示中通知を一括解除 |
 
 端末再起動／アプリ更新後は`IntervalNotificationBootReceiver`が永続設定を読み、
 現在時刻より後の最初の境界へ予約を復元する。
-4 メソッドを提供する。
+2 メソッドを提供する。
 
 ### `io.github.bonkoturyu.timer_utility/permission` (MethodChannel)
 

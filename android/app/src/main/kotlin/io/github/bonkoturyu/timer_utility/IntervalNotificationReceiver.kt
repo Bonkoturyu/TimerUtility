@@ -75,7 +75,9 @@ class IntervalNotificationReceiver : BroadcastReceiver() {
         }
 
         try {
-            player = MediaPlayer().apply {
+            val createdPlayer = MediaPlayer()
+            player = createdPlayer
+            createdPlayer.apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
