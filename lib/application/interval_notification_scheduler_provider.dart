@@ -24,6 +24,5 @@ class _NoopIntervalNotificationScheduler
     required String title,
     required String body,
     required bool exact,
-    required String payload,
   }) async {}
 }
