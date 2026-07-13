@@ -90,6 +90,21 @@ class $TimersTable extends Timers with TableInfo<$TimersTable, TimerRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _intervalNotificationEnabledMeta =
+      const VerificationMeta('intervalNotificationEnabled');
+  @override
+  late final GeneratedColumn<bool> intervalNotificationEnabled =
+      GeneratedColumn<bool>(
+        'interval_notification_enabled',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("interval_notification_enabled" IN (0, 1))',
+        ),
+        defaultValue: const Constant<bool>(false),
+      );
   static const VerificationMeta _createdAtUtcMsMeta = const VerificationMeta(
     'createdAtUtcMs',
   );
@@ -111,6 +126,7 @@ class $TimersTable extends Timers with TableInfo<$TimersTable, TimerRow> {
     pausedRemainingMs,
     status,
     soundId,
+    intervalNotificationEnabled,
     createdAtUtcMs,
   ];
   @override
@@ -189,6 +205,15 @@ class $TimersTable extends Timers with TableInfo<$TimersTable, TimerRow> {
         soundId.isAcceptableOrUnknown(data['sound_id']!, _soundIdMeta),
       );
     }
+    if (data.containsKey('interval_notification_enabled')) {
+      context.handle(
+        _intervalNotificationEnabledMeta,
+        intervalNotificationEnabled.isAcceptableOrUnknown(
+          data['interval_notification_enabled']!,
+          _intervalNotificationEnabledMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at_utc_ms')) {
       context.handle(
         _createdAtUtcMsMeta,
@@ -241,6 +266,10 @@ class $TimersTable extends Timers with TableInfo<$TimersTable, TimerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}sound_id'],
       ),
+      intervalNotificationEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}interval_notification_enabled'],
+      )!,
       createdAtUtcMs: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at_utc_ms'],
@@ -263,6 +292,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
   final int? pausedRemainingMs;
   final String status;
   final String? soundId;
+  final bool intervalNotificationEnabled;
   final int createdAtUtcMs;
   const TimerRow({
     required this.id,
@@ -273,6 +303,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
     this.pausedRemainingMs,
     required this.status,
     this.soundId,
+    required this.intervalNotificationEnabled,
     required this.createdAtUtcMs,
   });
   @override
@@ -292,6 +323,9 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
     if (!nullToAbsent || soundId != null) {
       map['sound_id'] = Variable<String>(soundId);
     }
+    map['interval_notification_enabled'] = Variable<bool>(
+      intervalNotificationEnabled,
+    );
     map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs);
     return map;
   }
@@ -312,6 +346,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
       soundId: soundId == null && nullToAbsent
           ? const Value.absent()
           : Value(soundId),
+      intervalNotificationEnabled: Value(intervalNotificationEnabled),
       createdAtUtcMs: Value(createdAtUtcMs),
     );
   }
@@ -330,6 +365,9 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
       pausedRemainingMs: serializer.fromJson<int?>(json['pausedRemainingMs']),
       status: serializer.fromJson<String>(json['status']),
       soundId: serializer.fromJson<String?>(json['soundId']),
+      intervalNotificationEnabled: serializer.fromJson<bool>(
+        json['intervalNotificationEnabled'],
+      ),
       createdAtUtcMs: serializer.fromJson<int>(json['createdAtUtcMs']),
     );
   }
@@ -345,6 +383,9 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
       'pausedRemainingMs': serializer.toJson<int?>(pausedRemainingMs),
       'status': serializer.toJson<String>(status),
       'soundId': serializer.toJson<String?>(soundId),
+      'intervalNotificationEnabled': serializer.toJson<bool>(
+        intervalNotificationEnabled,
+      ),
       'createdAtUtcMs': serializer.toJson<int>(createdAtUtcMs),
     };
   }
@@ -358,6 +399,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
     Value<int?> pausedRemainingMs = const Value.absent(),
     String? status,
     Value<String?> soundId = const Value.absent(),
+    bool? intervalNotificationEnabled,
     int? createdAtUtcMs,
   }) => TimerRow(
     id: id ?? this.id,
@@ -370,6 +412,8 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
         : this.pausedRemainingMs,
     status: status ?? this.status,
     soundId: soundId.present ? soundId.value : this.soundId,
+    intervalNotificationEnabled:
+        intervalNotificationEnabled ?? this.intervalNotificationEnabled,
     createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
   );
   TimerRow copyWithCompanion(TimersCompanion data) {
@@ -390,6 +434,9 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
           : this.pausedRemainingMs,
       status: data.status.present ? data.status.value : this.status,
       soundId: data.soundId.present ? data.soundId.value : this.soundId,
+      intervalNotificationEnabled: data.intervalNotificationEnabled.present
+          ? data.intervalNotificationEnabled.value
+          : this.intervalNotificationEnabled,
       createdAtUtcMs: data.createdAtUtcMs.present
           ? data.createdAtUtcMs.value
           : this.createdAtUtcMs,
@@ -407,6 +454,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
           ..write('pausedRemainingMs: $pausedRemainingMs, ')
           ..write('status: $status, ')
           ..write('soundId: $soundId, ')
+          ..write('intervalNotificationEnabled: $intervalNotificationEnabled, ')
           ..write('createdAtUtcMs: $createdAtUtcMs')
           ..write(')'))
         .toString();
@@ -422,6 +470,7 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
     pausedRemainingMs,
     status,
     soundId,
+    intervalNotificationEnabled,
     createdAtUtcMs,
   );
   @override
@@ -436,6 +485,8 @@ class TimerRow extends DataClass implements Insertable<TimerRow> {
           other.pausedRemainingMs == this.pausedRemainingMs &&
           other.status == this.status &&
           other.soundId == this.soundId &&
+          other.intervalNotificationEnabled ==
+              this.intervalNotificationEnabled &&
           other.createdAtUtcMs == this.createdAtUtcMs);
 }
 
@@ -448,6 +499,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
   final Value<int?> pausedRemainingMs;
   final Value<String> status;
   final Value<String?> soundId;
+  final Value<bool> intervalNotificationEnabled;
   final Value<int> createdAtUtcMs;
   final Value<int> rowid;
   const TimersCompanion({
@@ -459,6 +511,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
     this.pausedRemainingMs = const Value.absent(),
     this.status = const Value.absent(),
     this.soundId = const Value.absent(),
+    this.intervalNotificationEnabled = const Value.absent(),
     this.createdAtUtcMs = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -471,6 +524,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
     this.pausedRemainingMs = const Value.absent(),
     required String status,
     this.soundId = const Value.absent(),
+    this.intervalNotificationEnabled = const Value.absent(),
     required int createdAtUtcMs,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -488,6 +542,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
     Expression<int>? pausedRemainingMs,
     Expression<String>? status,
     Expression<String>? soundId,
+    Expression<bool>? intervalNotificationEnabled,
     Expression<int>? createdAtUtcMs,
     Expression<int>? rowid,
   }) {
@@ -500,6 +555,8 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
       if (pausedRemainingMs != null) 'paused_remaining_ms': pausedRemainingMs,
       if (status != null) 'status': status,
       if (soundId != null) 'sound_id': soundId,
+      if (intervalNotificationEnabled != null)
+        'interval_notification_enabled': intervalNotificationEnabled,
       if (createdAtUtcMs != null) 'created_at_utc_ms': createdAtUtcMs,
       if (rowid != null) 'rowid': rowid,
     });
@@ -514,6 +571,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
     Value<int?>? pausedRemainingMs,
     Value<String>? status,
     Value<String?>? soundId,
+    Value<bool>? intervalNotificationEnabled,
     Value<int>? createdAtUtcMs,
     Value<int>? rowid,
   }) {
@@ -526,6 +584,8 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
       pausedRemainingMs: pausedRemainingMs ?? this.pausedRemainingMs,
       status: status ?? this.status,
       soundId: soundId ?? this.soundId,
+      intervalNotificationEnabled:
+          intervalNotificationEnabled ?? this.intervalNotificationEnabled,
       createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
       rowid: rowid ?? this.rowid,
     );
@@ -558,6 +618,11 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
     if (soundId.present) {
       map['sound_id'] = Variable<String>(soundId.value);
     }
+    if (intervalNotificationEnabled.present) {
+      map['interval_notification_enabled'] = Variable<bool>(
+        intervalNotificationEnabled.value,
+      );
+    }
     if (createdAtUtcMs.present) {
       map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs.value);
     }
@@ -578,6 +643,7 @@ class TimersCompanion extends UpdateCompanion<TimerRow> {
           ..write('pausedRemainingMs: $pausedRemainingMs, ')
           ..write('status: $status, ')
           ..write('soundId: $soundId, ')
+          ..write('intervalNotificationEnabled: $intervalNotificationEnabled, ')
           ..write('createdAtUtcMs: $createdAtUtcMs, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2059,6 +2125,7 @@ typedef $$TimersTableCreateCompanionBuilder =
       Value<int?> pausedRemainingMs,
       required String status,
       Value<String?> soundId,
+      Value<bool> intervalNotificationEnabled,
       required int createdAtUtcMs,
       Value<int> rowid,
     });
@@ -2072,6 +2139,7 @@ typedef $$TimersTableUpdateCompanionBuilder =
       Value<int?> pausedRemainingMs,
       Value<String> status,
       Value<String?> soundId,
+      Value<bool> intervalNotificationEnabled,
       Value<int> createdAtUtcMs,
       Value<int> rowid,
     });
@@ -2122,6 +2190,11 @@ class $$TimersTableFilterComposer
 
   ColumnFilters<String> get soundId => $composableBuilder(
     column: $table.soundId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get intervalNotificationEnabled => $composableBuilder(
+    column: $table.intervalNotificationEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2180,6 +2253,11 @@ class $$TimersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get intervalNotificationEnabled => $composableBuilder(
+    column: $table.intervalNotificationEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get createdAtUtcMs => $composableBuilder(
     column: $table.createdAtUtcMs,
     builder: (column) => ColumnOrderings(column),
@@ -2227,6 +2305,11 @@ class $$TimersTableAnnotationComposer
   GeneratedColumn<String> get soundId =>
       $composableBuilder(column: $table.soundId, builder: (column) => column);
 
+  GeneratedColumn<bool> get intervalNotificationEnabled => $composableBuilder(
+    column: $table.intervalNotificationEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get createdAtUtcMs => $composableBuilder(
     column: $table.createdAtUtcMs,
     builder: (column) => column,
@@ -2269,6 +2352,7 @@ class $$TimersTableTableManager
                 Value<int?> pausedRemainingMs = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> soundId = const Value.absent(),
+                Value<bool> intervalNotificationEnabled = const Value.absent(),
                 Value<int> createdAtUtcMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TimersCompanion(
@@ -2280,6 +2364,7 @@ class $$TimersTableTableManager
                 pausedRemainingMs: pausedRemainingMs,
                 status: status,
                 soundId: soundId,
+                intervalNotificationEnabled: intervalNotificationEnabled,
                 createdAtUtcMs: createdAtUtcMs,
                 rowid: rowid,
               ),
@@ -2293,6 +2378,7 @@ class $$TimersTableTableManager
                 Value<int?> pausedRemainingMs = const Value.absent(),
                 required String status,
                 Value<String?> soundId = const Value.absent(),
+                Value<bool> intervalNotificationEnabled = const Value.absent(),
                 required int createdAtUtcMs,
                 Value<int> rowid = const Value.absent(),
               }) => TimersCompanion.insert(
@@ -2304,6 +2390,7 @@ class $$TimersTableTableManager
                 pausedRemainingMs: pausedRemainingMs,
                 status: status,
                 soundId: soundId,
+                intervalNotificationEnabled: intervalNotificationEnabled,
                 createdAtUtcMs: createdAtUtcMs,
                 rowid: rowid,
               ),

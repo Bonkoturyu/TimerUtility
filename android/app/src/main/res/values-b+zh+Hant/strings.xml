@@ -3,4 +3,5 @@
      coined brand kept identical across all locales. -->
 <resources>
     <string name="app_name">TimerUtility</string>
+    <string name="interval_notification_channel_name">定時通知</string>
 </resources>

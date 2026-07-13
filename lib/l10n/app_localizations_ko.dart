@@ -577,6 +577,22 @@ class AppLocalizationsKo extends AppLocalizations {
       '타이머 조작, 권한 변경, 알림 발생, 예외를 기기 내 파일에 기록합니다. 개인정보(라벨 / 위치)는 기록되지 않습니다.';
 
   @override
+  String get timerIntervalNotificationLabel => '일정 간격 알림';
+
+  @override
+  String get timerIntervalNotificationDescription =>
+      '측정을 계속하면서 설정한 간격마다 짧은 알림음을 재생합니다.';
+
+  @override
+  String get timerIntervalNotificationEnabledTooltip => '일정 간격 알림: 켜짐';
+
+  @override
+  String get timerIntervalNotificationDisabledTooltip => '일정 간격 알림: 꺼짐';
+
+  @override
+  String get commonClose => '닫기';
+
+  @override
   String get settingsDiagnosticShareLogs => '로그 공유';
 
   @override

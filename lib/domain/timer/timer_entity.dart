@@ -20,7 +20,9 @@ part 'timer_entity.freezed.dart';
 ///     a bundled sound across releases stays backwards compatible).
 ///
 /// Phase 4 adds `notificationId`. Phase 5 adds `soundId`. `snooze` is
-/// added in Phase 7.
+/// added in Phase 7. `intervalNotificationEnabled` enables a continuous
+/// countdown whose boundary is a short notification rather than a terminal
+/// `ringing` transition.
 @freezed
 class TimerEntity with _$TimerEntity {
   const factory TimerEntity({
@@ -32,6 +34,7 @@ class TimerEntity with _$TimerEntity {
     required Duration? pausedRemaining,
     required TimerStatus status,
     required DateTime createdAt,
+    @Default(false) bool intervalNotificationEnabled,
     String? soundId,
   }) = _TimerEntity;
 }

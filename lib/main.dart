@@ -20,6 +20,7 @@ import 'application/diagnostic_settings_notifier.dart';
 import 'application/diagnostic_sink_provider.dart';
 import 'application/location_detector_provider.dart';
 import 'application/notification_scheduler_provider.dart';
+import 'application/interval_notification_scheduler_provider.dart';
 import 'application/notification_strings_provider.dart';
 import 'application/preset_repository_provider.dart';
 import 'application/settings_notifier.dart';
@@ -43,6 +44,7 @@ import 'infrastructure/diagnostics/zip_diagnostic_log_exporter_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/licenses/bundled_asset_licenses.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
+import 'infrastructure/platform/interval_notification_channel.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_edit_screen.dart';
@@ -424,6 +426,9 @@ Future<void> main() async {
   container = ProviderContainer(
     overrides: <Override>[
       notificationSchedulerProvider.overrideWithValue(adapter),
+      intervalNotificationSchedulerProvider.overrideWithValue(
+        IntervalNotificationChannel(),
+      ),
       notificationStringsNotifierProvider.overrideWith(
         () => _BootstrappedNotificationStringsNotifier(notificationStrings),
       ),

@@ -21,6 +21,8 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     companion object {
         private const val PERMISSION_CHANNEL = "io.github.bonkoturyu.timer_utility/permission"
+        private const val INTERVAL_CHANNEL =
+            "io.github.bonkoturyu.timer_utility/interval_notification"
     }
 
     /**
@@ -79,6 +81,45 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "isScreenLocked" -> result.success(isScreenLockedInternal())
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, INTERVAL_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "schedule" -> {
+                        // StandardMessageCodec uses Integer for values that
+                        // fit in 32 bits (e.g. a 30-second interval) and Long
+                        // for larger values (e.g. epoch milliseconds). Accept
+                        // Number at the channel boundary, then normalize.
+                        val id = call.argument<Number>("notificationId")?.toInt()
+                        val first = call.argument<Number>("firstFireAtUtcMs")?.toLong()
+                        val interval = call.argument<Number>("intervalMs")?.toLong()
+                        val title = call.argument<String>("title")
+                        val body = call.argument<String>("body")
+                        val exact = call.argument<Boolean>("exact")
+                        val payload = call.argument<String>("payload")
+                        if (id == null || first == null || interval == null || title == null ||
+                            body == null || exact == null || payload == null || interval <= 0L) {
+                            result.error("INVALID_ARGUMENT", "Invalid interval schedule", null)
+                        } else {
+                            IntervalNotificationScheduler.schedule(
+                                this,
+                                IntervalNotificationScheduler.Entry(
+                                    id, first, interval, title, body, exact, payload,
+                                ),
+                            )
+                            result.success(null)
+                        }
+                    }
+                    "cancel" -> {
+                        val id = call.argument<Number>("notificationId")?.toInt()
+                        if (id == null) result.error("INVALID_ARGUMENT", "Missing notificationId", null)
+                        else {
+                            IntervalNotificationScheduler.cancel(this, id)
+                            result.success(null)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }

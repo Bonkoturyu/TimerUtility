@@ -100,6 +100,7 @@ void main() {
         pausedRemainingMs: null,
         status: 'unknown_future_status',
         soundId: null,
+        intervalNotificationEnabled: false,
         createdAtUtcMs: DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
       );
       expect(mapper.toEntity(corrupted).status, TimerStatus.cancelled);

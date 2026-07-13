@@ -13,6 +13,7 @@ import '../domain/timer/timer_service.dart';
 import '../domain/timer/timer_status.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
+import 'interval_notification_scheduler_provider.dart';
 import 'notification_scheduler_provider.dart';
 import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
@@ -103,6 +104,18 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
       if (t.status == TimerStatus.running &&
           t.endAt != null &&
           !t.endAt!.isAfter(now)) {
+        if (t.intervalNotificationEnabled) {
+          final TimerEntity advanced = t.copyWith(
+            endAt: ref
+                .read(timerServiceProvider)
+                .nextIntervalBoundary(
+                  previousBoundary: t.endAt!,
+                  interval: t.duration,
+                ),
+          );
+          restored.add(advanced);
+          continue;
+        }
         final TimerEntity completed = t.copyWith(
           endAt: null,
           pausedRemaining: null,
@@ -116,6 +129,16 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     }
 
     state = TimerCollection.fromList(restored);
+
+    // Reconcile the Native self-chaining alarm with the DB snapshot. This is
+    // idempotent (same notification id replaces the pending PendingIntent)
+    // and repairs schedules after app-data restoration or package update.
+    for (final TimerEntity t in restored) {
+      if (t.status == TimerStatus.running && t.intervalNotificationEnabled) {
+        _persist(t);
+        _scheduleNotification(t);
+      }
+    }
 
     // Persist the rewritten overdue entries and surface a single notification
     // each so the user knows the timer fired while the app was away.
@@ -148,10 +171,16 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     required String label,
     required Duration duration,
     String? soundId,
+    bool intervalNotificationEnabled = false,
   }) {
     final TimerEntity created = ref
         .read(timerServiceProvider)
-        .createIdle(label: label, duration: duration, soundId: soundId);
+        .createIdle(
+          label: label,
+          duration: duration,
+          soundId: soundId,
+          intervalNotificationEnabled: intervalNotificationEnabled,
+        );
     state = state.add(created);
     _persist(created);
     _logAction(created.id, TimerActionKind.create);
@@ -232,6 +261,23 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     _logAction(id, TimerActionKind.changeSound);
   }
 
+  /// Enables/disables continuous fixed-interval boundary notifications.
+  /// A running timer keeps its current next boundary; only the terminal
+  /// behavior and OS scheduling mode change.
+  void setIntervalNotificationEnabled(String id, bool enabled) {
+    final TimerEntity current = _require(id);
+    final TimerEntity next = current.copyWith(
+      intervalNotificationEnabled: enabled,
+    );
+    state = state.update(next);
+    if (next.status == TimerStatus.running) {
+      _scheduleNotification(next);
+    } else if (!enabled) {
+      _cancelIntervalNotification(next.notificationId);
+    }
+    _persist(next);
+  }
+
   /// Permanently remove a timer from the collection (and DB).
   void delete(String id) {
     final TimerEntity? current = state.findById(id);
@@ -292,6 +338,24 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     final String title = entity.label.isEmpty
         ? strings.timerEndedTitle
         : entity.label;
+    if (entity.intervalNotificationEnabled) {
+      _cancelNotification(entity.notificationId);
+      unawaited(
+        ref
+            .read(intervalNotificationSchedulerProvider)
+            .schedule(
+              notificationId: entity.notificationId,
+              firstFireAt: entity.endAt!,
+              interval: entity.duration,
+              title: title,
+              body: strings.timerEndedBody,
+              exact: useExact,
+              payload: 'timer:${entity.id}',
+            ),
+      );
+      return;
+    }
+    _cancelIntervalNotification(entity.notificationId);
     unawaited(
       ref
           .read(notificationSchedulerProvider)
@@ -308,6 +372,13 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
 
   void _cancelNotification(int notificationId) {
     unawaited(ref.read(notificationSchedulerProvider).cancel(notificationId));
+    _cancelIntervalNotification(notificationId);
+  }
+
+  void _cancelIntervalNotification(int notificationId) {
+    unawaited(
+      ref.read(intervalNotificationSchedulerProvider).cancel(notificationId),
+    );
   }
 
   void _showRestoredCompletionNotification(TimerEntity entity) {
@@ -388,6 +459,8 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
         working = working.update(next);
         if (next.status == TimerStatus.ringing) {
           ringingTransitions.add(next);
+        } else if (next.intervalNotificationEnabled) {
+          _persist(next);
         }
       }
     }

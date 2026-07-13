@@ -3,4 +3,5 @@
      (docs/phase-11.9-prep-notes.md §I.3). -->
 <resources>
     <string name="app_name">TimerUtility</string>
+    <string name="interval_notification_channel_name">定时通知</string>
 </resources>

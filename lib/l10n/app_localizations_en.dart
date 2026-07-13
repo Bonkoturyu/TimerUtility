@@ -596,6 +596,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Record timer actions, permission changes, notification fires, and exceptions to on-device files. No personal data (labels / location) is captured.';
 
   @override
+  String get timerIntervalNotificationLabel => 'Interval notifications';
+
+  @override
+  String get timerIntervalNotificationDescription =>
+      'Keep measuring and play a short sound at each set interval.';
+
+  @override
+  String get timerIntervalNotificationEnabledTooltip =>
+      'Interval notifications: on';
+
+  @override
+  String get timerIntervalNotificationDisabledTooltip =>
+      'Interval notifications: off';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
   String get settingsDiagnosticShareLogs => 'Share logs';
 
   @override
