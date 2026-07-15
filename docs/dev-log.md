@@ -28,7 +28,8 @@ PR #114 (commit `0d962c1`) で、端末ストレージから任意の音源を�
 - 空き容量 10 GB、置換時の旧音源保持、失敗補償を定義
 - 外部 URI を保持せず、検証済み音源をアプリ内部へコピーする方針を確定
 - 参照中音源の削除時は全参照を同梱デフォルト音へ一括置換
-- cold launch でも固定 3200 ms のハンドオフ境界を延長しない
+- cold launch 時も取り込み音源 Repository から期限付きで解決し、解決遅延で
+  固定 3200 ms のハンドオフ境界を延長しない
 - 制限値と購入権限を Domain から分離する境界を ADR 0006 に記録
 
 文書のみの変更であり、`flutter analyze` / `flutter test` は未実行。実装は
@@ -62,7 +63,8 @@ PR #111 (commit `aa3872a`) で、タイマー満了後も指定間隔で短い�
 - Drift schema v6 に `interval_notification_enabled` を追加（既存行は `false`）
 - タイマーカードから設定できる UI と5言語の文言を追加
 
-`flutter analyze`、全テスト (687 tests)、翻訳整合性チェック、debug APK build に成功。
+`flutter analyze`、全テスト (687 passed / 1 skipped)、翻訳整合性チェック、
+debug APK build に成功。
 Pixel 6a / Android 16 で画面OFF、deep Doze中の30秒周期、再起動後の予約復元、
 周期境界の直前・直後で停止した場合に次回予約が復活しないことを確認した。
 サイレントモード中もアラーム音量で2秒鳴動することを確認済み。

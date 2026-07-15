@@ -52,7 +52,7 @@ Play Store 提出準備を進行中。
   Pixel 6a で前面・ロック画面・cold launch・サイレントモードを確認済み。
 - [x] **定間隔通知** — **PR #111 main マージ済 (2026-07-13、commit `aa3872a`)**。
   周期境界でタイマーを継続し、Native 自己再予約、再起動復元、Drift v6、5言語 UIを実装。
-  `flutter analyze`、全テスト (687 tests)、翻訳整合性、debug APK build 成功。
+  `flutter analyze`、全テスト (687 passed / 1 skipped)、翻訳整合性、debug APK build 成功。
   Pixel 6a で画面OFF、deep Doze、再起動復元、停止境界を確認済み。
 
 - [x] **Phase 11.9 サブ PR β 実機確認** — Pixel 6a / Android 16 で
