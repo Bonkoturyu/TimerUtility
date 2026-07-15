@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -8,10 +9,20 @@ import 'alarm_sound_player_provider.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
-import 'screen_lock_query_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
+
+/// Fixed OS cue → app-player handoff policy.
+///
+/// Pixel 6a / Android 16 measurements on 2026-07-15 placed OS cue completion
+/// 2.97–3.12 seconds after the Flutter handoff sequence began. The extra
+/// margin keeps decoder / scheduler jitter from reintroducing overlap. This
+/// value depends only on the bundled cue, never on the selected loop length.
+/// The provider also lets tests use a zero-duration boundary.
+final Provider<Duration> alarmSoundHandoffDelayProvider = Provider<Duration>(
+  (Ref ref) => const Duration(milliseconds: 3200),
+);
 
 /// 鳴動の起動元 (Phase 9.5、ADR 0005 の payload prefix 方針に対応)。
 /// - `timer`: 既存のカウントダウンタイマーが満了して鳴った場合
@@ -49,9 +60,9 @@ class AlarmRingingState with _$AlarmRingingState {
 /// Responsibilities are intentionally narrow per `docs/state-management.md`:
 ///   - manages the currently ringing timer's metadata and player state
 ///   - does NOT modify timer state (TimerNotifier owns that)
-///   - cancels ONLY the OS notification it is taking over from, so the
-///     bundled-sound notification does not double up with the audioplayers
-///     loop. Other lifecycle (scheduling, cancelAll) stays with
+///   - cancels ONLY the OS notification it is taking over from, prepares the
+///     selected sound during the fixed OS cue, and starts it after handoff.
+///     Other lifecycle (scheduling, cancelAll) stays with
 ///     NotificationScheduler / TimerNotifier.
 ///
 /// Phase 5 implements `start` and `stop`. `snoozeRequested` records intent
@@ -59,31 +70,28 @@ class AlarmRingingState with _$AlarmRingingState {
 /// is in place.
 @Riverpod(keepAlive: true)
 class AlarmRingingNotifier extends _$AlarmRingingNotifier {
+  int _playbackGeneration = 0;
+
   @override
   AlarmRingingState build() => AlarmRingingState.idle();
 
   /// Begin playing [sound] for the timer identified by [timerId].
   /// Replaces any in-progress playback.
   ///
-  /// [notificationId] is the OS notification id for the firing timer. We
-  /// cancel it here so the channel-bundled alarm tone (which the OS plays
-  /// while Flutter was asleep) stops the moment audioplayers takes over —
-  /// otherwise the user hears the same tone twice, slightly out of phase.
-  /// Required because every entry path into the ringing state has a
-  /// corresponding scheduled notification (foreground tick, FSI, cold
-  /// launch).
+  /// [notificationId] is the OS notification id for the firing timer. The
+  /// notification uses a short, self-terminating cue. While that cue plays,
+  /// this notifier prepares [sound], then starts it after a fixed handoff
+  /// window so the OS player and audioplayers never own audible output at
+  /// the same time.
   ///
   /// Phase 9.5: [source] で「タイマー由来」「アラーム由来」を区別する。
   /// 省略時は `AlarmSource.timer` (Phase 8 までの既存挙動を維持し、
   /// 既存呼び出し側 / テストとの後方互換を保つ)。
   ///
-  /// Issue #74 fix (2026-05-28、Pixel 6a 4 シナリオ検証で補正):
-  /// cancel→play 間の delay は `screenLockQueryProvider` で「keyguard が
-  /// 上がっているか」を判定して切り替える。上がっていれば
-  /// [_lockedScreenCancelDelay] = 1800 ms、それ以外は
-  /// [_defaultCancelDelay] = 500 ms。Pixel / Android 16 では Lock 画面
-  /// 表示中 (cold-launch / warm-launch 問わず) のみ OS の alarm-stream
-  /// tone 解放が遅く、audioplayers と重なって二重音になるため。
+  /// Issue #86 Phase A: `cancel(notificationId)` does not stop a channel
+  /// sound already owned by Android. The handoff therefore waits for the
+  /// fixed cue to finish instead of inferring completion from notification
+  /// cancellation or keyguard state.
   Future<void> start({
     required String timerId,
     required AlarmSound sound,
@@ -97,6 +105,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     if (state.isPlaying) {
       return;
     }
+    final int generation = ++_playbackGeneration;
     state = state.copyWith(
       isPlaying: true,
       snoozeRequested: false,
@@ -118,46 +127,20 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
                 : NotificationFireKind.timerFired,
           ),
         );
-    // Sequencing matters: cancel the OS notification first, wait briefly
-    // so Pixel / Android 16 actually releases the alarm-stream tone (the
-    // banner disappears immediately but the tone keeps going on its own
-    // lifecycle for a few seconds), then start the audioplayers loop.
-    // Without the delay the user hears a double tone on the snooze-fired
-    // / heads-up-tap paths (#2 verification, 2026-05-02). 500 ms is the
-    // empirical sweet spot for the unlocked path — long enough for the
-    // OS tone to drop, short enough that the foreground path (where
-    // cancel is a no-op) is not perceptibly slower.
-    //
-    // Issue #74 (2026-05-28、Pixel 6a 4 シナリオ検証で補正): Lock 画面
-    // 表示中の経路 (cold-launch FSI / warm-launch FSI snooze 再鳴動など)
-    // では OS の alarm-stream tone 解放が遅く、500 ms では audioplayers
-    // と重なって二重音になる。`KeyguardManager.isKeyguardLocked()` を
-    // Native MethodChannel 経由で読み、ロック中のみ
-    // [_lockedScreenCancelDelay] = 1800 ms に伸ばす。foreground / Home
-    // (unlock 済) は [_defaultCancelDelay] = 500 ms 据置 (体感遅延なし)。
-    await ref.read(notificationSchedulerProvider).cancel(notificationId);
-    final bool isLocked = await ref
-        .read(screenLockQueryProvider)
-        .isScreenLocked();
-    await Future<void>.delayed(
-      isLocked ? _lockedScreenCancelDelay : _defaultCancelDelay,
+    // Start the cue window immediately. Cancellation only removes the
+    // notification UI; Pixel 6a / Android 16 measurements showed that it
+    // does not stop the OS-owned sound. Preparing in parallel hides decoder
+    // startup latency without producing audible output.
+    final Future<void> handoffWindow = Future<void>.delayed(
+      ref.read(alarmSoundHandoffDelayProvider),
     );
-    // If the user (or `stop()` / `snoozeRequested()`) flipped the state
-    // back to idle while we were waiting on the cancel→play delay, do
-    // NOT start playback — the user already dismissed the alarm. The
-    // 1800 ms locked-screen branch widens this race window noticeably,
-    // so this guard is load-bearing (PR #75 Copilot review).
-    //
-    // The `currentTimerId != timerId` arm additionally covers the case
-    // where this ringing was dismissed and a *different* timer took over
-    // the slot during our delay (stop t-1 → start t-2 re-sets
-    // isPlaying=true under a new id): the stale t-1 play() must not
-    // overwrite t-2's audio (PR #84 gemini review). The `!state.isPlaying`
-    // arm is still required because snoozeRequested() keeps currentTimerId
-    // set while flipping isPlaying to false, so the id check alone would
-    // let a snoozed alarm start playing.
-    if (!state.isPlaying || state.currentTimerId != timerId) return;
     final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
+    await ref.read(notificationSchedulerProvider).cancel(notificationId);
+    if (!_isCurrent(generation, timerId)) return;
+    await player.prepare(sound);
+    if (!_isCurrent(generation, timerId)) return;
+    await handoffWindow;
+    if (!_isCurrent(generation, timerId)) return;
     // Issue #86 instrumentation: mark when audioplayers playback is
     // *requested* — the clock reading taken immediately before the
     // `player.play()` call below, after the cancel→delay sequence and the
@@ -185,19 +168,15 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     // looping with nobody left to stop it — the alarm would keep ringing
     // even though the user dismissed it. Re-check and stop so the audio
     // can never outlive the ringing state.
-    if (!state.isPlaying) {
+    if (!_isCurrent(generation, timerId) && !state.isPlaying) {
       await player.stop();
     }
   }
 
-  /// Foreground / Home (unlock 済) で OS Channel sound が release される
-  /// までの empirical delay (Phase 8.5、2026-05-02)。
-  static const Duration _defaultCancelDelay = Duration(milliseconds: 500);
-
-  /// Lock 画面表示中 (cold-launch FSI / warm-launch FSI snooze 再鳴動)
-  /// で OS Channel sound が release されるまでの empirical delay
-  /// (Issue #74、2026-05-28)。
-  static const Duration _lockedScreenCancelDelay = Duration(milliseconds: 1800);
+  bool _isCurrent(int generation, String timerId) =>
+      generation == _playbackGeneration &&
+      state.isPlaying &&
+      state.currentTimerId == timerId;
 
   /// Stop the ringing alarm and reset state to idle.
   ///
@@ -205,6 +184,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// is deterministic against a concurrent `start()`: the post-play guard
   /// in `start()` relies on `stop()` having actually settled the player.
   Future<void> stop() async {
+    _playbackGeneration++;
     state = AlarmRingingState.idle();
     await ref.read(alarmSoundPlayerProvider).stop();
   }
@@ -215,6 +195,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// stops playback. The downstream "reschedule the timer for N minutes
   /// later" behaviour is wired up in Phase 7.
   Future<void> snoozeRequested() async {
+    _playbackGeneration++;
     state = state.copyWith(isPlaying: false, snoozeRequested: true);
     await ref.read(alarmSoundPlayerProvider).stop();
   }

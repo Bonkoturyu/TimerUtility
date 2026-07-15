@@ -179,8 +179,9 @@ flutter:
    - ただし assets と二重管理になる
 
 2. **通知音は標準 + アラーム画面起動後にカスタム音再生**（採用）
-   - 通知 Channel: 標準音 or 短い通知音
-   - アラーム画面表示後: `audioplayers` で `assets/sounds/` の音源を再生
+   - 通知 Channel: 固定の短い通知音
+   - 通知音の再生中に `audioplayers` で選択音源を prepare
+   - 固定ハンドオフ境界後に選択音源のループ再生を開始
 
 3. **通知音なし + バイブ + フルスクリーン Intent**
    - 通知時点では音を鳴らさず、画面遷移後に鳴らす
@@ -192,12 +193,15 @@ flutter:
 - assets 一元管理
 - アラーム画面のスヌーズ / 停止操作と音再生のライフサイクルが一致
 - 通知音は短い「タンッ」程度で OK（あくまで存在通知）
+- OS 通知音の長さとユーザー選択音源の長さを分離できる
+- Stop / Snooze は待機中の再生世代も無効化し、遅延開始を防止できる
 
-ただし通知のみで気付かせたいケース（ロック画面に出ない場合）があるため、`res/raw/` にも軽い通知音 `notification_chime.mp3` を 1 つ配置。
+ただし通知のみで気付かせたいケース（ロック画面に出ない場合）があるため、`res/raw/` に固定通知音 `notif_alert.mp3` を配置する。Pixel 6a / Android 16 の実測では OS 音の完了が Flutter 側の引き継ぎ開始から 2.97〜3.12 秒後だったため、Application 層の固定ハンドオフ値は 3200 ms とする。この値はユーザー選択音源の再生時間には依存しない。
 
 ```
 android/app/src/main/res/raw/
-└── notification_chime.mp3  // 通知 Channel 用、1〜2 秒
+├── notif_alert.mp3   // 通常タイマー／アラーム Channel 用、約2秒
+└── alarm_default.mp3 // 定間隔通知 Receiver 用（Native側で再生時間を制限）
 ```
 
 ---
@@ -207,7 +211,7 @@ android/app/src/main/res/raw/
 ### 音源
 
 - 形式: `<category>_<name>.<ext>`
-- 例: `alarm_gentle.mp3`, `notification_chime.mp3`
+- 例: `alarm_gentle.mp3`, `notif_alert.mp3`
 - すべて小文字、スネークケース
 
 ### カテゴリ

@@ -14,6 +14,9 @@ class AudioplayersAdapter implements AlarmSoundPlayer {
 
   final AudioPlayer _player;
 
+  Future<void> _operation = Future<void>.value();
+  String? _preparedSoundId;
+
   // Single source of truth for `isPlaying`: only play() / stop() /
   // dispose() write it. We deliberately do NOT also subscribe to
   // `onPlayerStateChanged` — a second, asynchronous writer made the
@@ -27,25 +30,54 @@ class AudioplayersAdapter implements AlarmSoundPlayer {
   bool get isPlaying => _isPlaying;
 
   @override
-  Future<void> play(AlarmSound sound) async {
+  Future<void> prepare(AlarmSound sound) => _enqueue(() => _prepare(sound));
+
+  @override
+  Future<void> play(AlarmSound sound) => _enqueue(() async {
+    if (_preparedSoundId != sound.id) {
+      await _prepare(sound);
+    }
+    await _player.resume();
+    _isPlaying = true;
+  });
+
+  @override
+  Future<void> stop() => _enqueue(() async {
     await _player.stop();
+    _isPlaying = false;
+  });
+
+  @override
+  Future<void> dispose() => _enqueue(() async {
+    await _player.dispose();
+    _isPlaying = false;
+    _preparedSoundId = null;
+  });
+
+  Future<void> _prepare(AlarmSound sound) async {
+    await _player.stop();
+    _isPlaying = false;
+    await _player.setAudioContext(
+      AudioContext(
+        android: const AudioContextAndroid(
+          contentType: AndroidContentType.music,
+          usageType: AndroidUsageType.alarm,
+          audioFocus: AndroidAudioFocus.gain,
+          stayAwake: true,
+        ),
+      ),
+    );
     await _player.setReleaseMode(ReleaseMode.loop);
     final String relativePath = sound.assetPath.startsWith('assets/')
         ? sound.assetPath.substring('assets/'.length)
         : sound.assetPath;
-    await _player.play(AssetSource(relativePath));
-    _isPlaying = true;
+    await _player.setSource(AssetSource(relativePath));
+    _preparedSoundId = sound.id;
   }
 
-  @override
-  Future<void> stop() async {
-    await _player.stop();
-    _isPlaying = false;
-  }
-
-  @override
-  Future<void> dispose() async {
-    await _player.dispose();
-    _isPlaying = false;
+  Future<void> _enqueue(Future<void> Function() operation) {
+    final Future<void> result = _operation.then((_) => operation());
+    _operation = result.catchError((Object _) {});
+    return result;
   }
 }

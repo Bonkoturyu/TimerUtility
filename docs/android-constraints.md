@@ -191,7 +191,10 @@ Claude Code は Phase 4 以降の作業前に必ず本ドキュメントを参�
 
 - 通知の `setSound()` で `assets/sounds/` の音源は **直接指定不可**
 - `flutter_local_notifications` の `RawResourceAndroidNotificationSound` で `android/app/src/main/res/raw/` 配下の音源を指定する方法がある
-- 本プロジェクトでは: **通知音は通知 Channel の標準音 + アラーム画面起動後に audioplayers でカスタム音再生** の二段構え
+- 本プロジェクトでは: **通知 Channel の固定短音 + 固定ハンドオフ後に audioplayers で選択音源をループ再生** の二段構え
+- Android が所有する Channel 音は通知を cancel しても停止しないため、通知音再生中に選択音源を prepare し、Pixel 6a / Android 16 の実測に基づく 3200 ms 後に再生を開始する
+- audioplayers 側も `AndroidUsageType.alarm` を指定し、OS 通知音と同じアラーム用途で再生する
+- Stop / Snooze / 別タイマー開始時は再生世代を更新し、待機中または prepare 中の古い再生開始を破棄する
 
 詳細は `docs/assets-spec.md` 参照。
 

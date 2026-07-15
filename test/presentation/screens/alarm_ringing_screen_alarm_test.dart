@@ -34,10 +34,16 @@ import '../../helpers/test_notification_strings.dart';
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   bool _isPlaying = false;
   int playCalls = 0;
+  int prepareCalls = 0;
   int stopCalls = 0;
 
   @override
   bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> prepare(AlarmSound sound) async {
+    prepareCalls++;
+  }
 
   @override
   Future<void> play(AlarmSound sound) async {
@@ -190,6 +196,7 @@ Widget _harness(
   return ProviderScope(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
+      alarmSoundHandoffDelayProvider.overrideWithValue(Duration.zero),
       clockProvider.overrideWithValue(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
       ),

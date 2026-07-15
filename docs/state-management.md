@@ -154,9 +154,10 @@ Phase 3 までの単一 `TimerNotifier` を廃止し、複数タイマーの単�
 - 鳴動中エントリのリスト管理（Timer / Alarm 両用、複数同時鳴動対応）
 - AlarmSoundPlayer による音再生制御
 - ringing 起動時に「自分が引き継ぐ通知」を NotificationScheduler.cancel
-  で停止する（OS Channel の bundled sound と audioplayers の二重再生
-  を避けるため。詳細経緯は docs/android-constraints.md の Phase 6 後
-  フォロー再発防止メモ）
+  で画面上から除去する。ただし OS Channel 音自体は cancel で止まらないため、
+  固定短音の再生中に AlarmSoundPlayer.prepare を行い、固定ハンドオフ後に
+  play する
+- 再生世代により Stop / Snooze / 別タイマー開始後の遅延 play を無効化する
 - start は isPlaying 検査で idempotent（複数経路から呼ばれても OK）
 - Native からの「アラーム発火」イベント受信（payload prefix で起動元判別）
 - 停止 / スヌーズ操作の受付

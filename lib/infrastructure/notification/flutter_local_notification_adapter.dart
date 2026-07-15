@@ -28,8 +28,9 @@ const List<String> _legacyTimerAlarmChannelIds = <String>[
   'timer_alarm_v3',
   'timer_alarm_v4',
   'timer_alarm_v5',
+  'timer_alarm_v6',
 ];
-const String timerAlarmChannelId = 'timer_alarm_v6';
+const String timerAlarmChannelId = 'timer_alarm_v7';
 
 /// Silent channel used by [FlutterLocalNotificationAdapter.show] for the
 /// Phase 8 background-restore notification path. The alarm channel above
@@ -39,13 +40,14 @@ const String timerAlarmChannelId = 'timer_alarm_v6';
 /// also toggle it independently in OS settings.
 const String timerCompletedChannelId = 'timer_completed_v1';
 
-/// Resource id of the default alarm sound bundled at
-/// `android/app/src/main/res/raw/alarm_default.mp3`. This is what the
-/// notification layer plays when the OS fires the alarm while the Flutter
-/// engine is asleep (background or cold start) AND the user is in a
-/// state where Android only emits a heads-up (no FullScreenIntent) —
-/// that path has no other way to make sound.
-const String _alarmRawResource = 'alarm_default';
+/// Resource id of the short, self-terminating notification cue bundled at
+/// `android/app/src/main/res/raw/notif_alert.mp3`.
+///
+/// Android owns channel-sound playback independently from the notification,
+/// so cancelling the notification does not stop a cue already in progress.
+/// Keeping this resource fixed and short gives the Application layer a stable
+/// handoff boundary before it starts the selected looping alarm sound.
+const String _channelCueRawResource = 'notif_alert';
 
 /// Concrete [NotificationScheduler] backed by `flutter_local_notifications`.
 ///
@@ -60,28 +62,20 @@ const String _alarmRawResource = 'alarm_default';
 ///     a heads-up notification instead. Importance/priority stay at max,
 ///     so the user still sees the banner over their current screen.
 ///
-/// Channel sound rationale (Phase 8.5 follow-ups, 2026-05-02):
+/// Channel sound rationale (Phase 8.5 → Issue #86 Phase A):
 ///
 /// The OS-level channel sound is intentionally ON. Android does not
 /// always honor FullScreenIntent — when the screen is on and the user
 /// is actively in another app or on the home screen, Pixel 6a / Android
 /// 16 emits a heads-up notification only (QoS gate) and never starts
-/// AlarmRingingScreen. In that path the OS-played alarm tone is the
-/// only thing that makes sound until the user taps the heads-up.
-///
-/// The downside: when FullScreenIntent does fire, the OS-played tone
-/// continues on its own lifecycle for a few seconds after
-/// `_plugin.cancel(notificationId)` (alarm-stream behavior on Pixel),
-/// which would overlap with the audioplayers loop kicked off by the
-/// alarm screen and produce a double-tone. We mitigate that in
-/// [AlarmRingingNotifier.start] by sequencing cancel → small delay →
-/// play, giving the OS a window to release the tone before audioplayers
-/// takes over.
+/// AlarmRingingScreen. In that path the OS-played cue is the only thing
+/// that makes sound until the user taps the heads-up.
 ///
 /// We tried `playSound: false` (Phase 8.5 first attempt) to suppress
 /// the channel tone entirely and own audio from audioplayers only, but
 /// that left heads-up paths silent until the user tapped — losing the
-/// "I hear my timer go off in the background" property.
+/// "I hear my timer go off in the background" property. The adopted design
+/// uses a short OS cue followed by an explicitly delayed app-player handoff.
 class FlutterLocalNotificationAdapter implements NotificationScheduler {
   FlutterLocalNotificationAdapter({
     FlutterLocalNotificationsPlugin? plugin,
@@ -194,7 +188,9 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
         playSound: true,
         // Bundled tone, alarm stream. Required so heads-up paths (FSI
         // not granted by Android) still produce sound. See class doc.
-        sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
+        sound: const RawResourceAndroidNotificationSound(
+          _channelCueRawResource,
+        ),
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
@@ -247,7 +243,9 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
           visibility: NotificationVisibility.public,
           enableVibration: true,
           playSound: true,
-          sound: const RawResourceAndroidNotificationSound(_alarmRawResource),
+          sound: const RawResourceAndroidNotificationSound(
+            _channelCueRawResource,
+          ),
         ),
       ),
       androidScheduleMode: mode,

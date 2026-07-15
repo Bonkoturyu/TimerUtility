@@ -30,10 +30,16 @@ import '../../helpers/test_notification_strings.dart';
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   bool _isPlaying = false;
   int playCalls = 0;
+  int prepareCalls = 0;
   int stopCalls = 0;
 
   @override
   bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> prepare(AlarmSound sound) async {
+    prepareCalls++;
+  }
 
   @override
   Future<void> play(AlarmSound sound) async {
@@ -129,6 +135,7 @@ Widget _harness(
   DateTime? now,
   TimerEntity? seedRinging,
   bool screenLocked = false,
+  Duration handoffDelay = Duration.zero,
   _StubKeyguardOverrideController? keyguard,
 }) {
   final NotificationScheduler scheduler = _stubScheduler();
@@ -161,6 +168,7 @@ Widget _harness(
   return ProviderScope(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
+      alarmSoundHandoffDelayProvider.overrideWithValue(handoffDelay),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
       keyguardOverrideControllerProvider.overrideWithValue(
         keyguard ?? _StubKeyguardOverrideController(),
@@ -401,41 +409,39 @@ void main() {
       },
     );
 
-    testWidgets(
-      'screenLocked=true defers play until ~1800ms (Issue #74 lock-screen fix)',
-      (WidgetTester tester) async {
-        // Lock 画面表示中の FSI 経路 (cold-launch / warm-launch snooze
-        // 再鳴動など) シナリオ。`ScreenLockQuery.isScreenLocked()` が
-        // true を返すと `AlarmRingingNotifier.start` 内部で delay が
-        // 既定 500 ms ではなく 1800 ms に伸びることを間接的に検証する。
-        final player = _StubAlarmSoundPlayer();
-        await tester.pumpWidget(_harness(player, screenLocked: true));
-        await tester.pumpAndSettle();
+    testWidgets('screenLocked=true でも固定3200msのハンドオフ境界を使う', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(
+        _harness(
+          player,
+          screenLocked: true,
+          handoffDelay: const Duration(milliseconds: 3200),
+        ),
+      );
+      await tester.pump();
 
-        // 600 ms 経過時点では unlock 経路なら play 済だが、Lock 中なら
-        // まだ delay 中なので playCalls == 0。
-        await tester.pump(const Duration(milliseconds: 600));
-        expect(player.playCalls, 0, reason: 'Lock 画面では 500 ms 後もまだ delay 中');
+      await tester.pump(const Duration(milliseconds: 3199));
+      expect(player.playCalls, 0);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(player.playCalls, 1);
+    });
 
-        // 合計 1800 ms 経過させる (600 + 1300 = 1900 ms)。play 完了。
-        await tester.pump(const Duration(milliseconds: 1300));
-        expect(player.playCalls, 1);
-      },
-    );
+    testWidgets('screenLocked=false でも固定3200msのハンドオフ境界を使う', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(
+        _harness(player, handoffDelay: const Duration(milliseconds: 3200)),
+      );
+      await tester.pump();
 
-    testWidgets(
-      'screenLocked=false (default) plays at ~500ms (Phase 8.5 fast path)',
-      (WidgetTester tester) async {
-        // foreground / Home (unlock 済) を想定。既定の 500 ms delay で
-        // play されることを確認 (Lock 画面 fix のリグレッション防止)。
-        final player = _StubAlarmSoundPlayer();
-        await tester.pumpWidget(_harness(player));
-        await tester.pumpAndSettle();
-
-        await tester.pump(const Duration(milliseconds: 600));
-        expect(player.playCalls, 1);
-      },
-    );
+      await tester.pump(const Duration(milliseconds: 3199));
+      expect(player.playCalls, 0);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(player.playCalls, 1);
+    });
 
     group('AlarmPushReservation dedup (Review #5)', () {
       test(

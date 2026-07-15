@@ -21,11 +21,19 @@ import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   bool _isPlaying = false;
   AlarmSound? lastPlayed;
+  AlarmSound? lastPrepared;
+  int prepareCalls = 0;
   int playCalls = 0;
   int stopCalls = 0;
 
   @override
   bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> prepare(AlarmSound sound) async {
+    prepareCalls++;
+    lastPrepared = sound;
+  }
 
   @override
   Future<void> play(AlarmSound sound) async {
@@ -56,6 +64,9 @@ class _BlockingAlarmSoundPlayer implements AlarmSoundPlayer {
 
   @override
   bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> prepare(AlarmSound sound) async {}
 
   @override
   Future<void> play(AlarmSound sound) async {
@@ -107,6 +118,7 @@ _container(
   AlarmSoundPlayer player, {
   bool screenLocked = false,
   DiagnosticSink? diagnosticSink,
+  Duration handoffDelay = Duration.zero,
 }) {
   final scheduler = _MockNotificationScheduler();
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
@@ -125,6 +137,7 @@ _container(
   final c = ProviderContainer(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
+      alarmSoundHandoffDelayProvider.overrideWithValue(handoffDelay),
       notificationSchedulerProvider.overrideWithValue(scheduler),
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),
@@ -217,96 +230,80 @@ void main() {
       expect(player.stopCalls, 1);
     });
 
-    test(
-      'unlocked path: cancel→play delay is ~500ms (Phase 8.5 sweet spot)',
-      () {
-        // foreground / Home (unlock 済) を想定。
-        // ScreenLockQuery.isScreenLocked() = false → 500 ms 経過で play。
-        fakeAsync((FakeAsync async) {
-          final player = _StubAlarmSoundPlayer();
-          final h = _container(player);
+    test('通知音の再生中に prepare し、3200ms の固定ハンドオフ後に play する', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final h = _container(
+          player,
+          handoffDelay: const Duration(milliseconds: 3200),
+        );
 
-          unawaited(
-            h.container
-                .read(alarmRingingNotifierProvider.notifier)
-                .start(
-                  timerId: 't-unlocked',
-                  sound: AlarmSoundCatalog.defaultSound,
-                  notificationId: 100,
-                ),
-          );
-          // cancel() + isScreenLocked() 完了 → 500 ms 待機開始までの
-          // microtask を流す。
-          async.flushMicrotasks();
-          expect(player.playCalls, 0, reason: 'play は delay 中はまだ走らない');
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 't-unlocked',
+                sound: AlarmSoundCatalog.defaultSound,
+                notificationId: 100,
+              ),
+        );
+        async.flushMicrotasks();
+        expect(player.prepareCalls, 1, reason: '通知音の再生中に音源を準備する');
+        expect(player.lastPrepared, AlarmSoundCatalog.defaultSound);
+        expect(player.playCalls, 0, reason: 'play は delay 中はまだ走らない');
 
-          // 499 ms ではまだ play されない。
-          async.elapse(const Duration(milliseconds: 499));
-          async.flushMicrotasks();
-          expect(player.playCalls, 0);
+        async.elapse(const Duration(milliseconds: 3199));
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
 
-          // 残り 1 ms 進めて 500 ms 経過。play() が走る。
-          async.elapse(const Duration(milliseconds: 1));
-          async.flushMicrotasks();
-          expect(player.playCalls, 1);
-        });
-      },
-    );
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(player.playCalls, 1);
+      });
+    });
 
-    test(
-      'locked path: cancel→play delay is ~1800ms (Issue #74 fix, lock-screen)',
-      () {
-        // Lock 画面表示中 (cold-launch FSI / warm-launch FSI snooze 再鳴動
-        // など) を想定。ScreenLockQuery.isScreenLocked() = true →
-        // 1800 ms 経過で play。
-        fakeAsync((FakeAsync async) {
-          final player = _StubAlarmSoundPlayer();
-          final h = _container(player, screenLocked: true);
+    test('ロック状態に依存せず同じ3200msのハンドオフ境界を使う', () {
+      fakeAsync((FakeAsync async) {
+        final player = _StubAlarmSoundPlayer();
+        final h = _container(
+          player,
+          screenLocked: true,
+          handoffDelay: const Duration(milliseconds: 3200),
+        );
 
-          unawaited(
-            h.container
-                .read(alarmRingingNotifierProvider.notifier)
-                .start(
-                  timerId: 't-locked',
-                  sound: AlarmSoundCatalog.defaultSound,
-                  notificationId: 101,
-                ),
-          );
-          async.flushMicrotasks();
-          expect(player.playCalls, 0);
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 't-locked',
+                sound: AlarmSoundCatalog.defaultSound,
+                notificationId: 101,
+              ),
+        );
+        async.flushMicrotasks();
+        expect(player.prepareCalls, 1);
+        expect(player.playCalls, 0);
 
-          // 500 ms 経過時点ではまだ play されない (既定 delay より長い)。
-          async.elapse(const Duration(milliseconds: 500));
-          async.flushMicrotasks();
-          expect(
-            player.playCalls,
-            0,
-            reason: 'Lock 画面では 500 ms では足りない (二重音 fix)',
-          );
+        async.elapse(const Duration(milliseconds: 3199));
+        async.flushMicrotasks();
+        expect(player.playCalls, 0);
 
-          // 1799 ms ではまだ。
-          async.elapse(const Duration(milliseconds: 1299));
-          async.flushMicrotasks();
-          expect(player.playCalls, 0);
-
-          // 1800 ms 経過で play()。
-          async.elapse(const Duration(milliseconds: 1));
-          async.flushMicrotasks();
-          expect(player.playCalls, 1);
-        });
-      },
-    );
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(player.playCalls, 1);
+      });
+    });
 
     test(
-      'stop() during the cancel→play delay drops the pending play '
-      '(PR #75 Copilot review: race window widened by 1800ms locked branch)',
+      'stop() during the cue handoff invalidates the pending play generation',
       () {
-        // Lock 経路で stop() が delay 中に呼ばれた場合、delay 後の
-        // play() に到達してしまうと「ユーザが止めた直後に音が鳴り始める」
-        // 競合になる。`if (!state.isPlaying) return;` ガードで防ぐ。
         fakeAsync((FakeAsync async) {
           final player = _StubAlarmSoundPlayer();
-          final h = _container(player, screenLocked: true);
+          final h = _container(
+            player,
+            screenLocked: true,
+            handoffDelay: const Duration(milliseconds: 3200),
+          );
 
           unawaited(
             h.container
@@ -317,19 +314,16 @@ void main() {
                   notificationId: 200,
                 ),
           );
-          // 1000 ms 経過 (1800 ms delay の途中) で stop() を呼ぶ。
           async.elapse(const Duration(milliseconds: 1000));
           async.flushMicrotasks();
-          expect(player.playCalls, 0, reason: '1000ms < 1800ms なのでまだ play 前');
+          expect(player.playCalls, 0);
 
           unawaited(
             h.container.read(alarmRingingNotifierProvider.notifier).stop(),
           );
           async.flushMicrotasks();
 
-          // 残り 1000 ms 進めて 1800 ms delay 完了 → ガードが効いて
-          // play() に到達しないことを確認。
-          async.elapse(const Duration(milliseconds: 1000));
+          async.elapse(const Duration(milliseconds: 2500));
           async.flushMicrotasks();
           expect(player.playCalls, 0, reason: 'stop() 後は delay 完了しても play しない');
           expect(player.stopCalls, 1);
@@ -338,14 +332,17 @@ void main() {
     );
 
     test(
-      'snoozeRequested() during the cancel→play delay drops the pending play '
-      '(PR #75 Copilot review)',
+      'snoozeRequested() during the cue handoff invalidates pending play',
       () {
         // snoozeRequested も state.isPlaying = false に落とすので、
         // stop と同じガードで play() への到達が阻止されることを確認。
         fakeAsync((FakeAsync async) {
           final player = _StubAlarmSoundPlayer();
-          final h = _container(player, screenLocked: true);
+          final h = _container(
+            player,
+            screenLocked: true,
+            handoffDelay: const Duration(milliseconds: 3200),
+          );
 
           unawaited(
             h.container
@@ -356,7 +353,7 @@ void main() {
                   notificationId: 201,
                 ),
           );
-          async.elapse(const Duration(milliseconds: 1000));
+          async.elapse(const Duration(milliseconds: 2500));
           async.flushMicrotasks();
           expect(player.playCalls, 0);
 
@@ -407,7 +404,10 @@ void main() {
         // while `await play(sound)` is in flight.
         fakeAsync((FakeAsync async) {
           final player = _BlockingAlarmSoundPlayer();
-          final h = _container(player); // unlocked → 500 ms delay
+          final h = _container(
+            player,
+            handoffDelay: const Duration(milliseconds: 3200),
+          );
 
           unawaited(
             h.container
@@ -418,9 +418,9 @@ void main() {
                   notificationId: 300,
                 ),
           );
-          // Clear the cancel→play delay; start() now enters play() and
+          // Clear the cue handoff delay; start() now enters play() and
           // parks on the gate.
-          async.elapse(const Duration(milliseconds: 500));
+          async.elapse(const Duration(milliseconds: 3200));
           async.flushMicrotasks();
           expect(player.playCalls, 1);
           expect(player.isPlaying, isFalse, reason: 'play() is still parked');
@@ -451,14 +451,17 @@ void main() {
         'switched timers (PR #84 gemini review: pre-play id guard)', () {
       fakeAsync((FakeAsync async) {
         final player = _StubAlarmSoundPlayer();
-        final h = _container(player); // unlocked → 500 ms delay
+        final h = _container(
+          player,
+          handoffDelay: const Duration(milliseconds: 3200),
+        );
         final notifier = h.container.read(
           alarmRingingNotifierProvider.notifier,
         );
         final soundA = AlarmSoundCatalog.all[0]; // default
         final soundB = AlarmSoundCatalog.all[1]; // gentle
 
-        // t-1 rings and parks inside its 500 ms cancel→play delay.
+        // t-1 rings and parks inside its cue handoff delay.
         unawaited(
           notifier.start(timerId: 't-1', sound: soundA, notificationId: 1),
         );
@@ -475,7 +478,7 @@ void main() {
         async.flushMicrotasks();
 
         // Advance past both the original t-1 window and t-2's window.
-        async.elapse(const Duration(milliseconds: 600));
+        async.elapse(const Duration(milliseconds: 3300));
         async.flushMicrotasks();
 
         // Only t-2 plays; t-1's stale play() is dropped by the
@@ -494,7 +497,12 @@ void main() {
       fakeAsync((FakeAsync async) {
         final player = _StubAlarmSoundPlayer();
         final sink = _RecordingSink();
-        final h = _container(player, screenLocked: true, diagnosticSink: sink);
+        final h = _container(
+          player,
+          screenLocked: true,
+          diagnosticSink: sink,
+          handoffDelay: const Duration(milliseconds: 3200),
+        );
 
         unawaited(
           h.container
@@ -506,8 +514,8 @@ void main() {
               ),
         );
 
-        // 1800 ms locked delay 完了前は play 前 → breadcrumb なし。
-        async.elapse(const Duration(milliseconds: 1799));
+        // 3200 ms handoff 完了前は play 前 → breadcrumb なし。
+        async.elapse(const Duration(milliseconds: 3199));
         async.flushMicrotasks();
         expect(
           sink.events.whereType<DiagnosticTimerAction>().where(
@@ -518,7 +526,7 @@ void main() {
           reason: 'play 到達前は playback breadcrumb を出さない',
         );
 
-        // 1800 ms 到達で play() → breadcrumb 1 件記録。
+        // 3200 ms 到達で play() → breadcrumb 1 件記録。
         async.elapse(const Duration(milliseconds: 1));
         async.flushMicrotasks();
         expect(player.playCalls, 1);
@@ -539,7 +547,12 @@ void main() {
       fakeAsync((FakeAsync async) {
         final player = _StubAlarmSoundPlayer();
         final sink = _RecordingSink();
-        final h = _container(player, screenLocked: true, diagnosticSink: sink);
+        final h = _container(
+          player,
+          screenLocked: true,
+          diagnosticSink: sink,
+          handoffDelay: const Duration(milliseconds: 3200),
+        );
 
         unawaited(
           h.container
@@ -550,7 +563,7 @@ void main() {
                 notificationId: 401,
               ),
         );
-        async.elapse(const Duration(milliseconds: 1000));
+        async.elapse(const Duration(milliseconds: 2500));
         async.flushMicrotasks();
 
         unawaited(
