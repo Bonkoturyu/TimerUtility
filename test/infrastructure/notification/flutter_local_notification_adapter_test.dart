@@ -82,7 +82,7 @@ void main() {
       final AndroidNotificationChannel alarmCh =
           captured[0] as AndroidNotificationChannel;
       expect(alarmCh.id, timerAlarmChannelId);
-      expect(alarmCh.id, 'timer_alarm_v7');
+      expect(timerAlarmChannelId, 'timer_alarm_v7');
       expect(alarmCh.sound?.sound, 'notif_alert');
       expect(alarmCh.name, _japaneseStrings.timerAlarmChannelName);
       expect(
