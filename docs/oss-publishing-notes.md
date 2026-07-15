@@ -85,7 +85,7 @@
 - `MainActivity.kt` / `AndroidManifest.xml`: 自作
 - `build.gradle.kts`: Flutter 標準テンプレート
 - `desugar_jdk_libs:2.1.4`: BSD-3-Clause (Google)
-- `applicationId = "com.bonkotu.timer.timer_utility"`: 個人識別の
+- `applicationId = "io.github.bonkoturyu.timer_utility"`: 個人識別の
   リバースドメインだが OSS 上は問題なし。fork 時はユーザーが書き換える
   運用 (README で明示推奨)
 
@@ -247,27 +247,27 @@ notification audio / lock screen / recent apps button, check the
 
 ### 5.1 公開前必須
 
-- [ ] README.md を OSS 向けに整備
+- [x] README.md を OSS 向けに整備
   - スクリーンショット
   - ビルド手順 (`flutter pub get` → `flutter run`)
   - Architecture 概要 (Clean Architecture の図か `docs/` への
     リンク)
   - License 表記 (MIT)
   - Section 4.3 の「What's special」案
-  - 「fork したら `applicationId` を `com.bonkotu.timer.timer_utility`
+  - 「fork したら `applicationId` を `io.github.bonkoturyu.timer_utility`
     から自分のものに書き換えてください」の明記
-- [ ] `git ls-files | grep -iE "(secret|key|token|password|env)"`
+- [x] `git ls-files | grep -iE "(secret|key|token|password|env)"`
   で秘密情報の混入チェック
-- [ ] `git log --pretty=format:"%an <%ae>"` で commit author email が
+- [x] `git log --pretty=format:"%an <%ae>"` で commit author email が
   公開可能なものか確認 (個人 email を匿名化したい場合は
   `git filter-repo` で書き換え)
 
 ### 5.2 公開直後でもよい
 
-- [ ] ルートに `THIRD_PARTY_NOTICES.md` 配置 (もしくは README から
+- [x] ルートに `THIRD_PARTY_NOTICES.md` 配置 (もしくは README から
   `assets/sounds/LICENSES.md` を参照)
-- [ ] `.github/ISSUE_TEMPLATE/` / `.github/PULL_REQUEST_TEMPLATE.md`
-- [ ] `CODE_OF_CONDUCT.md` / `CONTRIBUTING.md`
+- [x] `.github/ISSUE_TEMPLATE/` / `.github/PULL_REQUEST_TEMPLATE.md`
+- [x] `CODE_OF_CONDUCT.md` / `CONTRIBUTING.md`
   (GitHub Community Standards 達成用、任意)
 
 ### 5.3 検討事項
