@@ -221,6 +221,12 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
   `permission_banners.dart` の 3 種バナーに重大度ラベル `[重要]` / `[推奨]` / `[補助]` 併記 +
   `FontWeight` 段階差 + 左端色帯幅で形状差を付与。558 テストパス (1 skipped)。
   実機検証は [dev-log](docs/dev-log.md)
+- [x] **定間隔通知** (2026-07-13, PR #111): 周期境界で `running` を継続し、
+  Native 自己再予約、再起動復元、Drift v6、5言語 UI を実装。Pixel 6a で
+  deep Doze、再起動復元、停止境界を確認済み。詳細は [dev-log](docs/dev-log.md)
+- [x] **通知音とアプリ音源の重複解消** (2026-07-15, PR #112 / Issue #86):
+  短い自己終了音から固定 3200 ms 後にアプリ音源へ引き継ぐ方式へ変更し、Pixel 6a の
+  前面・ロック画面・cold launch で単音化を確認済み。詳細は [dev-log](docs/dev-log.md)
 
 ### 残タスク
 
@@ -361,6 +367,24 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 
 ---
 
+## Phase 13（将来）: ユーザー取り込み音源
+
+- [x] 対応形式、利用枠、容量・時間・件数、空き容量、参照整合性を仕様化
+- [x] ADR 0006 で内部コピー、買い切り枠、Domain 境界、失敗補償方針を確定
+- [ ] 実装タスク分解と Domain / Application / Infrastructure 境界の詳細設計
+- [ ] Android システムファイルピッカー、形式検証、内部コピー、メタデータ永続化
+- [ ] Timer / Alarm / Preset / デフォルト設定の参照置換と欠損時フォールバック
+- [ ] 音源の追加・試聴・改名・削除 UI
+- [ ] Unit / Widget Test と Pixel 6a 実機検証
+
+**DoD**: 通常枠の取り込み音源を安全に登録・管理・鳴動でき、失敗時にも既存参照と
+内部ファイルの整合性が保たれる
+**依存**: Phase 11.9 完了。Phase 12 との実施順は着手時に決定
+**参照**: [docs/assets-spec.md](docs/assets-spec.md),
+[docs/adr/0006-user-imported-sound-policy.md](docs/adr/0006-user-imported-sound-policy.md)
+
+---
+
 ## 進捗サマリ
 
 | Phase | 状態 | 備考 |
@@ -387,10 +411,13 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 | 11.9 (Play 提出準備) | β 完了 / γ 進行中 | サブ PR α (**PR #72 main マージ済 2026-05-28**) で applicationId / MethodChannel 移行、Issue #74 fix (**PR #75 main マージ済 2026-05-29**) で Lock 画面 FSI 二重音を解消。β 事前準備 (**PR #77 main マージ済 2026-05-29**) 後、β 本体 **PR #91 main マージ済 (2026-06-14、squash `954eea2`)**: 3 層 adaptive icon、monochrome themed icon、light / dark splash、Play Store 512 px icon、Feature Graphic を作成・生成。PixAI / Hoshino v2 クレジットもアプリ内と notice に反映。`flutter analyze` / `flutter test` (673 passed / 1 skipped) / debug APK build / 翻訳文書チェック成功。Pixel 6a で launcher / themed icon / splash / 表示名 OK。POST_NOTIFICATIONS follow-up も修正 + 実機確認 OK。γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump、upload keystore 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了。GitHub Pages は PR #96 / #97 で公開入口と Jekyll/Liquid エラーを修正し、Privacy Policy URL (`https://bonkoturyu.github.io/TimerUtility/privacy-policy`) を実確認済み。Pixel 6a スクリーンショット 7 シナリオは ja / en とも配置済み。AAB は `build/app/outputs/bundle/release/app-release.aab` (51.4 MB)。残: Play Console 実画面での Store listing / Data Safety 確定。 |
 | D (Diagnostic Logging) | 完了 | D-1 (PR #49) / D-2 (PR #52) / D-3 (PR #51) すべて main マージ済、Pixel 6a 4 シナリオ OK (2026-05-15) |
 | 12 | 未着手 | 任意 / iOS 版（Android 版完成後） |
+| 13 | 仕様確定 / 実装未着手 | PR #114 でユーザー取り込み音源仕様と ADR 0006 を確定。Play Store 初回提出後の次候補、Phase 12 との実施順は未確定 |
 
 ---
 
-最終更新日: 2026-06-19（Phase 11.9 γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump、upload keystore 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了。生成物は `build/app/outputs/bundle/release/app-release.aab`。残りは Play Console 実画面での Store listing / Data Safety 確定）
+最終更新日: 2026-07-15（PR #111 定間隔通知、PR #112 Issue #86、PR #113
+検証文書同期、PR #114 ユーザー取り込み音源仕様を反映。Play Console 実画面対応を
+Phase 11.9 の残作業、取り込み音源実装を Phase 13 として整理）
 
 過去の更新: 2026-05-29（計画ファイルを実態に同期 — branch `docs/sync-plan-files-after-72-75`。BACKLOG.md / tasklist.md が 2026-05-27 で停止し PR #72・#75 を「main merge 待ち」と誤記したままだったため実態反映。`gh pr list` で両者マージ済を確認: #72 (Phase 11.9 サブ PR α) 2026-05-28、#75 (Issue #74 fix) 2026-05-29 squash `dcac842`。進捗サマリ表 Phase 11.9 行を「α・#74 fix マージ済 → 次 β」に更新、tasklist.md の進行中 2 件を直近マージ済みへ移動 + 次の着手単位 = サブ PR β を明記、docs/dev-log.md #75 セクション末尾をマージ完了に更新。doc-only。作業ツリーの 15 生成ファイル modified 表示は LF→CRLF eol 差のみで内容差分ゼロ、コミット対象外）
 
