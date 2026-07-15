@@ -306,11 +306,15 @@ enum PermissionStatus {
 - [x] AndroidManifest 宣言: POST_NOTIFICATIONS / SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM / USE_FULL_SCREEN_INTENT / WAKE_LOCK / VIBRATE
 - [x] USE_FULL_SCREEN_INTENT 権限取得 UX（Phase 6b、自前 MethodChannel 経由）
 - [x] FSI 拒否時の通知フォールバック（Phase 6c、adapter で `canUseFullScreenIntent()` を毎 schedule 検査し、false なら fullScreenIntent フラグを落としてヘッドアップ通知化）
-- [ ] RECEIVE_BOOT_COMPLETED / バッテリー最適化除外（Phase 10 で対応予定）
-- [ ] ACCESS_COARSE_LOCATION（Phase 10.5 世界時計、初回起動時の現在地検出。拒否時は FlutterTimezone fallback）
+- [x] RECEIVE_BOOT_COMPLETED（Phase 10 の ScheduledNotificationBootReceiver と
+  Phase 11 の定間隔通知用 IntervalNotificationBootReceiver で対応済み）
+- [ ] バッテリー最適化除外（設定画面誘導を含め未実装）
+- [x] ACCESS_COARSE_LOCATION（Phase 10.5 世界時計。初回起動時の現在地検出で
+  要求し、拒否時は FlutterTimezone fallback）
 
 Phase 6b で `PermissionState` に `fullScreenIntent` フィールドを追加。
-`batteryOptimization` は Phase 10 で再起動時復元と一緒に扱う方針（ADR でなく運用判断）。
+`batteryOptimization` は再起動時復元とは分離され、現時点では未実装
+（ADR でなく運用判断）。
 
 ---
 

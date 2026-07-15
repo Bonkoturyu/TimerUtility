@@ -17,6 +17,26 @@
 
 ---
 
+## ドキュメント検証チェック状態の実態同期 (2026-07-15)
+
+`tasklist.md` / `BACKLOG.md`、実装本体、過去の Pixel 6a 実機検証記録を
+突き合わせ、古い未完了チェックを実態へ同期した。
+
+- `android-constraints.md`: Doze 中の発火と Pixel 実機検証を完了へ更新。
+  DND と Pixel 以外のメーカー検証は未実施のため据え置き
+- `testing-strategy.md`: 前面 / 背面、強制終了、ロック画面、サイレント、
+  再起動復元、スヌーズ再鳴動、カスタム音源を完了へ更新。バッテリー最適化
+  ON / OFF と複数タイマー同時鳴動は明示的な実機根拠がないため据え置き
+- `permissions.md`: `RECEIVE_BOOT_COMPLETED` と `ACCESS_COARSE_LOCATION` を
+  完了へ更新。バッテリー最適化除外は未実装項目として分離
+- `oss-publishing-notes.md`: Phase 11.8 で完了済みの OSS 公開チェックを反映し、
+  applicationId を現行値へ更新
+
+Play Console 実画面での申告、Phase 12、DND / 他メーカー端末など、実際の
+未完了項目は変更していない。
+
+---
+
 ## Phase 11.9 サブ PR β — アイコン・Splash・ストア素材 (2026-06-14)
 
 Phase 11.9 T1〜T6 のアイコン / Splash 実装と、Play Store 用素材の一部を

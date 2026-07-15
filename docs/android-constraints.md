@@ -355,7 +355,8 @@ dependencies {
 - [x] アプリ前面時に発火する（Phase 4 で確認済み、Pixel 6a / Android 16）
 - [x] アプリ背面時に発火する（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30）
 - [x] アプリ強制終了状態で発火する（Phase 6c 実機検証、Pixel 6a / Android 16、2026-04-30。バンドル音源 + AudioAttributesUsage.alarm でアラーム音量で鳴動）
-- [ ] 端末スリープ中に発火する（数分後 / 数時間後）
+- [x] 端末スリープ中に発火する（Pixel 6a / Android 16、Doze 中の FSI 発火 +
+  Snooze 3 分後の再鳴動を確認、2026-05-28）
 - [x] サイレントモード時の挙動が想定通り（パターン 3 検証時に「サイレントモード ON/OFF 問わず鳴動」を確認、2026-04-30）
 - [ ] DND モード時の挙動が想定通り
 
@@ -527,7 +528,8 @@ audioplayers が同じ MP3 を鳴らしていたため二重音が「位相の�
 - [x] 再起動中に過ぎた timer が completed 扱い + show 通知 (Pixel 6a / Android 16、2026-05-09)
 
 ### メーカー検証（可能なら）
-- [ ] Pixel（純正）
+- [x] Pixel（純正。Pixel 6a / Android 16 で Phase 4〜11.9 および
+  Issue #86 の実機検証を実施）
 - [ ] Samsung
 - [ ] Xiaomi（できれば）
 - [ ] その他
