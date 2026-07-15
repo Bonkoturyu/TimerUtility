@@ -19,19 +19,6 @@
 
 ## 進行中
 
-### Issue #86 Phase A — OS 通知音からアプリ音源への引き継ぎ
-
-- [x] OS 通知 Channel を短い自己終了音へ切り替え、Channel ID を更新
-- [x] アプリ音源を通知音再生中に prepare し、固定ハンドオフ後に再生開始
-- [x] audioplayers の Android usage を alarm に統一
-- [x] 世代トークンで Stop / Snooze / 別タイマー開始時の遅延再生を無効化
-- [x] Unit Test、analyze、全テスト（690 passed / 1 skipped）、release APK build を実行
-- [x] Release の resource shrink から短音源を保持し、v5 巻き戻し後も Drift v6
-  migration が再実行できるよう既存列判定を追加
-- [x] Pixel 6a で前面・ロック画面・cold launch の二重音解消を確認
-  （前面は単音、ロック中は短音→本音源を重なりなく再生、cold launch は
-  短音が通知キャンセルされ本音源のみ。いずれもサイレントモード中に鳴動）
-
 ### Phase 11.9 サブ PR γ
 
 Play Store 提出準備を進行中。
@@ -48,7 +35,25 @@ Play Store 提出準備を進行中。
 - [x] upload keystore 実体生成 + `android/key.properties` 作成（`android/key.properties` は gitignore 済み。`storeFile` は ASCII パスへ配置）
 - [x] 署名付き AAB ビルド（`flutter build appbundle --release` 成功、`build/app/outputs/bundle/release/app-release.aab`、51.4 MB）
 
-### 直近マージ済み (実態反映、2026-06-15 同期)
+### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
+
+- [ ] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
+  [音源仕様](docs/assets-spec.md) を実装タスクへ分解する
+- [ ] Domain / Application の利用枠・検証・Repository 境界を設計する
+- [ ] Android ファイル選択、内部コピー、メタデータ永続化、参照置換を実装する
+- [ ] 音源の追加・試聴・改名・削除 UI と自動テスト・Pixel 6a 実機検証を行う
+
+### 直近完了・マージ済み
+
+- [x] **Issue #86 Phase A — OS 通知音からアプリ音源への引き継ぎ** —
+  **PR #112 main マージ済 (2026-07-15、commit `651f798`)**。短い自己終了音から
+  固定 3200 ms 後にアプリ音源へ引き継ぎ、世代トークンで遅延再生を無効化。
+  `flutter analyze`、全テスト (690 passed / 1 skipped)、release APK build 成功。
+  Pixel 6a で前面・ロック画面・cold launch・サイレントモードを確認済み。
+- [x] **定間隔通知** — **PR #111 main マージ済 (2026-07-13、commit `aa3872a`)**。
+  周期境界でタイマーを継続し、Native 自己再予約、再起動復元、Drift v6、5言語 UIを実装。
+  `flutter analyze`、全テスト (687 tests)、翻訳整合性、debug APK build 成功。
+  Pixel 6a で画面OFF、deep Doze、再起動復元、停止境界を確認済み。
 
 - [x] **Phase 11.9 サブ PR β 実機確認** — Pixel 6a / Android 16 で
   launcher icon、Themed Icon (monochrome)、splash cold / warm、
@@ -113,20 +118,8 @@ Play Store 提出準備を進行中。
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
----
-
-## 定間隔通知（2026-07-12）
-
-- [x] Domain: 周期境界でも `running` 継続、基準時刻ベースでドリフト防止
-- [x] Native: 自己再予約Receiver、再起動復元、画面操作からの取消
-- [x] Drift schema v6: `interval_notification_enabled` 追加（既存行はfalse）
-- [x] UI / i18n: タイマーカード切替、日本語・英語・簡体字・繁体字・韓国語
-- [x] 自動検証（analyze、687 tests、翻訳整合性、debug APK build）
-- [x] Pixel 6a実機検証（画面OFFで短音、deep Doze中に30秒周期で2回連続、
-  再起動後にBoot Receiverが予約復元して2回連続、境界275ms前／253ms後の停止で
-  次回予約が復活しないことを確認。サイレントモード中もアラーム音量で2秒鳴動）
-
-最終更新日: 2026-07-15（Issue #86 Phase A の実装・自動検証・Pixel 6a 実機検証を完了）
+最終更新日: 2026-07-15（PR #111〜#114 の完了実態を同期。進行中は Play Console
+実画面での確定、次候補はユーザー取り込み音源）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a
