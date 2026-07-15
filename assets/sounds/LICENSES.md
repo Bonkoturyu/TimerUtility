@@ -5,6 +5,12 @@
 - 取得日: 2026-04-30
 - 加工: なし
 
+## notif_alert.mp3
+- 出典: alarm_default.mp3 と同一
+- 作者: freesound_community
+- ライセンス: Pixabay Content License
+- 加工: alarm_default.mp3 を約2秒へ短縮し、終端をフェードアウト
+
 ## alarm_gentle.mp3
 - 出典: https://pixabay.com/sound-effects/technology-bhutan-eas-alarm-bhutan-not-a-ai-515416/
 - 作者: JeremayJimenez

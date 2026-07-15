@@ -5,11 +5,16 @@ import '../timer/alarm_sound.dart';
 /// Phase 5 contract:
 ///   - Only one playback at a time. Calling [play] while another sound is
 ///     playing should stop the previous one and start the new one.
+///   - [prepare] loads [AlarmSound] without producing audible output.
+///     A subsequent [play] for the same sound starts the prepared source.
 ///   - Loops automatically (the implementation owns the loop mode).
 ///   - [stop] is idempotent.
+///   - Calls are serialized by the implementation so a completed stale
+///     prepare cannot overwrite a newer stop / prepare request.
 ///   - [isPlaying] reflects the most recent observed state; it may briefly
 ///     lag platform events but is good enough for UI display.
 abstract class AlarmSoundPlayer {
+  Future<void> prepare(AlarmSound sound);
   Future<void> play(AlarmSound sound);
   Future<void> stop();
   bool get isPlaying;

@@ -46,4 +46,24 @@ void main() {
 
     expect(row.intervalNotificationEnabled, isFalse);
   });
+
+  test('列だけv6でuser_versionがv5の状態から再移行できる', () async {
+    final setup = AppDatabase.forTesting(NativeDatabase(tmpFile));
+    await setup.customStatement(
+      'INSERT INTO timers '
+      '(id, notification_id, label, duration_ms, status, '
+      'interval_notification_enabled, created_at_utc_ms) '
+      "VALUES ('rollback', 8, 'pace', 120000, 'idle', 1, 1700000000000)",
+    );
+    await setup.customStatement('PRAGMA user_version = 5');
+    await setup.close();
+
+    final db = AppDatabase.forTesting(NativeDatabase(tmpFile));
+    addTearDown(db.close);
+    final row = await (db.select(
+      db.timers,
+    )..where((t) => t.id.equals('rollback'))).getSingle();
+
+    expect(row.intervalNotificationEnabled, isTrue);
+  });
 }

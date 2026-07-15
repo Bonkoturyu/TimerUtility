@@ -19,6 +19,19 @@
 
 ## 進行中
 
+### Issue #86 Phase A — OS 通知音からアプリ音源への引き継ぎ
+
+- [x] OS 通知 Channel を短い自己終了音へ切り替え、Channel ID を更新
+- [x] アプリ音源を通知音再生中に prepare し、固定ハンドオフ後に再生開始
+- [x] audioplayers の Android usage を alarm に統一
+- [x] 世代トークンで Stop / Snooze / 別タイマー開始時の遅延再生を無効化
+- [x] Unit Test、analyze、全テスト（690 passed / 1 skipped）、release APK build を実行
+- [x] Release の resource shrink から短音源を保持し、v5 巻き戻し後も Drift v6
+  migration が再実行できるよう既存列判定を追加
+- [x] Pixel 6a で前面・ロック画面・cold launch の二重音解消を確認
+  （前面は単音、ロック中は短音→本音源を重なりなく再生、cold launch は
+  短音が通知キャンセルされ本音源のみ。いずれもサイレントモード中に鳴動）
+
 ### Phase 11.9 サブ PR γ
 
 Play Store 提出準備を進行中。
@@ -113,7 +126,7 @@ Play Store 提出準備を進行中。
   再起動後にBoot Receiverが予約復元して2回連続、境界275ms前／253ms後の停止で
   次回予約が復活しないことを確認。サイレントモード中もアラーム音量で2秒鳴動）
 
-最終更新日: 2026-07-12（定間隔通知を実装し、自動検証・Pixel 6a実機検証を完了）
+最終更新日: 2026-07-15（Issue #86 Phase A の実装・自動検証・Pixel 6a 実機検証を完了）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a

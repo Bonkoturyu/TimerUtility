@@ -194,10 +194,24 @@ class AppDatabase extends _$AppDatabase {
       if (from < 6) {
         // 定間隔通知は既存タイマーでは無効から開始する。DEFAULT 0 により
         // 既存行を保持したまま安全に NOT NULL 列を追加できる。
-        await m.addColumn(timers, timers.intervalNotificationEnabled);
+        // 開発版のダウングレードや OS のロールバック後は、列だけが残り
+        // user_version が v5 に戻る場合がある。その状態でも再起動できるよう
+        // 既存列がある場合は追加をスキップする。
+        if (!await _hasColumn('timers', 'interval_notification_enabled')) {
+          await m.addColumn(timers, timers.intervalNotificationEnabled);
+        }
       }
     },
   );
+
+  Future<bool> _hasColumn(String tableName, String columnName) async {
+    final List<QueryRow> columns = await customSelect(
+      'PRAGMA table_info($tableName)',
+    ).get();
+    return columns.any(
+      (QueryRow row) => row.read<String>('name') == columnName,
+    );
+  }
 
   /// Inserts `PresetTemplates.defaultProfile` (6 entries) into the
   /// `presets` table as a single batch. Called from `onCreate` on a
