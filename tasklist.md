@@ -109,13 +109,22 @@
 - [ ] Pixel 6a 実機で 5 言語の切替表示 + 通知チャンネル名の追従を確認（ユーザー実施）
 - [ ] Play Console のストアリスティングに zh / ko を追加するかの判断（アプリ内
   l10n とは別管理。初回提出は ja / en のみで確定済み）
-### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
 
-- [ ] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
+### Phase 13 — ユーザー取り込み音源（完了）
+
+- [x] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
   [音源仕様](docs/assets-spec.md) を実装タスクへ分解する
-- [ ] Domain / Application の利用枠・検証・Repository 境界を設計する
-- [ ] Android ファイル選択、内部コピー、メタデータ永続化、参照置換を実装する
-- [ ] 音源の追加・試聴・改名・削除 UI と自動テスト・Pixel 6a 実機検証を行う
+- [x] **Phase 13-A**: Domain の Entity / 利用枠 / 検証 / Repository 境界と
+  Unit Test を実装する
+- [x] **Phase 13-B**: Drift schema v7、取り込み音源 Repository、migration test
+- [x] **Phase 13-C**: システムファイル選択、形式・実デコード・SHA-256・空き容量検証、内部コピー
+- [x] **Phase 13-D/E**: 同梱・取り込み音源の再生解決、欠損フォールバック、参照一括置換
+- [x] Android ファイル選択、内部コピー、メタデータ永続化、参照置換を実装する
+- [x] **Phase 13-F/G**: 音源の追加・試聴・改名・削除 UI と自動テスト・Pixel 6a 実機検証
+  - 設定から独立した取り込み音源管理画面へ遷移し、一覧・試聴・改名・削除確認を提供する。
+  - 音源選択 sheet に取り込み済み音源と「端末から追加」を表示し、追加成功時はその音源を選択する。
+  - Application 層に一覧・追加・改名の操作を集約し、既存の削除 Saga と同じ FIFO 境界を使う。
+  - Widget Test、静的解析、全テスト後に接続済み Pixel 6a で MP3 / Ogg Vorbis の追加・試聴と既定音源の参照置換を確認済み。WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ。
 
 ### 直近完了・マージ済み
 
@@ -192,7 +201,10 @@
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-29（Version 1.0.1 手動リリース準備 —
+最終更新日: 2026-07-29（PR #116 のユーザー取り込み音源を現行 main へ統合し、
+未解決レビュー2件を修正。版数を `1.1.0+4` へ更新し、Phase 13 を完了として反映）
+
+過去の更新: 2026-07-29（Version 1.0.1 手動リリース準備 —
 `pubspec.yaml` を `1.0.1+3` へ更新し、翻訳整合・format・analyze・全テストを通過。
 ローカル upload keystore で署名済み AAB 53,978,509 bytes を生成し、生成時
 Manifest の versionName `1.0.1` / versionCode `3` と署名エントリを確認。
@@ -224,6 +236,8 @@ Play Console 実画面対応の進捗を新規セクション化。Developer ア
 
 過去の更新: 2026-07-15（PR #111〜#114 の完了実態を同期。進行中は Play Console
 実画面での確定、次候補はユーザー取り込み音源）
+
+過去の更新: 2026-07-17（Phase 13-F/G の管理 UI、自動テスト、Pixel 6a 実機検証を完了）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a

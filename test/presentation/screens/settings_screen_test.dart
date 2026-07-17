@@ -4,11 +4,44 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timer_utility/application/app_version_provider.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
+import 'package:timer_utility/application/imported_sound_management_controller.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
 import 'package:timer_utility/domain/ports/app_version_reader.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/domain/sound/imported_sound.dart';
+import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/settings_screen.dart';
+
+class _ImportedSoundController extends ImportedSoundManagementController {
+  _ImportedSoundController(this.sounds);
+
+  final List<ImportedSound> sounds;
+
+  @override
+  Future<List<ImportedSound>> build() async => sounds;
+}
+
+class _SettingsSoundNotifier extends SettingsNotifier {
+  _SettingsSoundNotifier(this.soundId);
+
+  final String soundId;
+
+  @override
+  SettingsState build() =>
+      SettingsState.defaults().copyWith(defaultAlarmSoundId: soundId);
+}
+
+ImportedSound _sound() => ImportedSound.create(
+  id: 'imported-1',
+  displayName: 'Kitchen Bell',
+  format: ImportedSoundFormat.mp3,
+  byteLength: 1000,
+  duration: const Duration(seconds: 10),
+  contentHash:
+      '0000000000000000000000000000000000000000000000000000000000000000',
+  createdAt: DateTime(2026, 7, 17),
+);
 
 class _MemoryUserPrefs implements UserPreferences {
   final Map<String, bool> _bools = <String, bool>{};
@@ -54,7 +87,12 @@ class _StubAppVersionReader implements AppVersionReader {
   Future<AppVersion> read() async => value;
 }
 
-Widget _harness({UserPreferences? prefs, AppVersion? appVersion}) {
+Widget _harness({
+  UserPreferences? prefs,
+  AppVersion? appVersion,
+  List<ImportedSound> importedSounds = const <ImportedSound>[],
+  String? settingsSoundId,
+}) {
   final router = GoRouter(
     initialLocation: SettingsScreen.routeLocation,
     routes: <RouteBase>[
@@ -79,6 +117,13 @@ Widget _harness({UserPreferences? prefs, AppVersion? appVersion}) {
           appVersion ?? const AppVersion(version: '1.0.0', buildNumber: '2'),
         ),
       ),
+      importedSoundManagementControllerProvider.overrideWith(
+        () => _ImportedSoundController(importedSounds),
+      ),
+      if (settingsSoundId != null)
+        settingsNotifierProvider.overrideWith(
+          () => _SettingsSoundNotifier(settingsSoundId),
+        ),
     ],
     child: MaterialApp.router(
       routerConfig: router,
@@ -208,6 +253,36 @@ void main() {
       );
     });
 
+    testWidgets('取り込み音源は表示名、未知IDはデフォルト表示になる', (WidgetTester tester) async {
+      final ImportedSound sound = _sound();
+      await tester.pumpWidget(
+        _harness(
+          importedSounds: <ImportedSound>[sound],
+          settingsSoundId: sound.id,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('settings_sound_tile')),
+          matching: find.text('Kitchen Bell'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      await tester.pumpWidget(_harness(settingsSoundId: 'unknown-sound'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('settings_sound_tile')),
+          matching: find.text('デフォルト'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('ライセンス ListTile タップで /licenses に push される', (
       WidgetTester tester,
     ) async {
@@ -216,11 +291,16 @@ void main() {
 
       // バージョン行が増えた分だけライセンス行が下がり、800x600 の既定
       // viewport では折り返しの外に出る。tap 前に可視域へスクロールする。
-      await tester.ensureVisible(
-        find.byKey(const Key('settings_licenses_tile')),
+      final Finder licensesTile = find.byKey(
+        const Key('settings_licenses_tile'),
+      );
+      await tester.scrollUntilVisible(
+        licensesTile,
+        200,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('settings_licenses_tile')));
+      await tester.tap(licensesTile);
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('licenses_stub')), findsOneWidget);

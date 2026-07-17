@@ -36,7 +36,19 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 
 ## 実装済み Channel
 
-実装済み Channel は権限制御用と定間隔通知用の2本。
+実装済み Channel は権限制御用、定間隔通知用、保存容量取得用の3本。
+
+### `io.github.bonkoturyu.timer_utility/storage` (MethodChannel)
+
+Phase 13 の取り込み音源を保存するアプリ内部領域と同じ volume の空き容量を取得する。
+
+| Method | 引数 | 戻り値 | 用途 |
+| --- | --- | --- | --- |
+| `getAvailableBytes` | なし | `int` (bytes) | `StatFs(filesDir.absolutePath).availableBytes` を返し、取り込み後も10 GB以上残るか検証 |
+
+`StatFs` が保存先を解決できない場合は `STORAGE_UNAVAILABLE` を返し、Dart 側の
+`MethodChannelStorageCapacityReader` が `ImportedSoundStorageUnavailableException`
+へ変換する。
 
 ### `io.github.bonkoturyu.timer_utility/interval_notification` (MethodChannel)
 

@@ -1,5 +1,5 @@
 import 'dart:async' show unawaited;
-import 'dart:io' show Directory;
+import 'dart:io' show Directory, File;
 
 import 'package:clock/clock.dart';
 import 'package:path/path.dart' as p;
@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/alarm_push_reservation.dart';
+import 'application/alarm_sound_player_provider.dart';
 import 'application/alarm_repository_provider.dart';
 import 'application/app_version_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
@@ -19,6 +20,12 @@ import 'application/diagnostic_log_exporter_provider.dart';
 import 'application/diagnostic_logger_provider.dart';
 import 'application/diagnostic_settings_notifier.dart';
 import 'application/diagnostic_sink_provider.dart';
+import 'application/imported_sound_file_store_provider.dart';
+import 'application/imported_sound_import_service.dart';
+import 'application/imported_sound_import_service_provider.dart';
+import 'application/imported_sound_recovery_service.dart';
+import 'application/imported_sound_reference_store_provider.dart';
+import 'application/imported_sound_repository_provider.dart';
 import 'application/location_detector_provider.dart';
 import 'application/notification_scheduler_provider.dart';
 import 'application/interval_notification_scheduler_provider.dart';
@@ -32,10 +39,13 @@ import 'application/user_preferences_provider.dart';
 import 'domain/diagnostics/diagnostic_event.dart';
 import 'domain/ports/diagnostic_sink.dart';
 import 'domain/ports/user_preferences.dart';
+import 'infrastructure/audio/audioplayers_adapter.dart';
 import 'infrastructure/database/app_database.dart';
 import 'infrastructure/database/drift_alarm_repository.dart';
 import 'infrastructure/clock/tz_database_timezone_resolver.dart';
 import 'infrastructure/database/drift_clock_entry_repository.dart';
+import 'infrastructure/database/drift_imported_sound_reference_store.dart';
+import 'infrastructure/database/drift_imported_sound_repository.dart';
 import 'infrastructure/database/drift_preset_repository.dart';
 import 'infrastructure/database/drift_timer_repository.dart';
 import 'infrastructure/diagnostics/diagnostic_log_formatter.dart';
@@ -48,6 +58,12 @@ import 'infrastructure/notification/flutter_local_notification_adapter.dart';
 import 'infrastructure/platform/package_info_app_version_reader.dart';
 import 'infrastructure/platform/interval_notification_channel.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
+import 'infrastructure/sound/app_private_imported_sound_file_store.dart';
+import 'infrastructure/sound/audioplayers_imported_sound_probe.dart';
+import 'infrastructure/sound/file_selector_imported_sound_picker.dart';
+import 'infrastructure/sound/imported_alarm_sound_path_resolver.dart';
+import 'infrastructure/sound/imported_sound_storage_layout.dart';
+import 'infrastructure/platform/method_channel_storage_capacity_reader.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/screens/alarm_edit_screen.dart';
 import 'presentation/screens/alarm_list_screen.dart';
@@ -56,6 +72,7 @@ import 'presentation/screens/clock_entry_edit_screen.dart';
 import 'presentation/screens/clock_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/licenses_screen.dart';
+import 'presentation/screens/imported_sound_manage_screen.dart';
 import 'presentation/screens/preset_manage_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
@@ -267,6 +284,55 @@ Future<void> main() async {
   final DriftClockEntryRepository clockRepo = DriftClockEntryRepository(
     database,
   );
+  final DriftImportedSoundRepository importedSoundRepo =
+      DriftImportedSoundRepository(database);
+  final DriftImportedSoundReferenceStore importedSoundReferenceStore =
+      DriftImportedSoundReferenceStore(database);
+  final ImportedSoundStorageLayout importedSoundStorageLayout =
+      ImportedSoundStorageLayout();
+  final AppPrivateImportedSoundFileStore importedSoundFileStore =
+      AppPrivateImportedSoundFileStore(layout: importedSoundStorageLayout);
+  final ImportedSoundImportService importedSoundImportService =
+      ImportedSoundImportService(
+        picker: FileSelectorImportedSoundPicker(),
+        fileStore: importedSoundFileStore,
+        probe: AudioplayersImportedSoundProbe(
+          layout: importedSoundStorageLayout,
+        ),
+        storageCapacityReader: MethodChannelStorageCapacityReader(),
+        repository: importedSoundRepo,
+        clock: const Clock(),
+      );
+  final ImportedAlarmSoundPathResolver importedSoundPathResolver =
+      ImportedAlarmSoundPathResolver(
+        repository: importedSoundRepo,
+        layout: importedSoundStorageLayout,
+      );
+  final AudioplayersAdapter alarmSoundPlayer = AudioplayersAdapter(
+    importedPathLookup: importedSoundPathResolver.resolve,
+    stagedPathLookup: (String stagingToken) async {
+      final File file = await importedSoundStorageLayout.stagedFile(
+        stagingToken,
+      );
+      return await file.exists() ? file.path : null;
+    },
+  );
+
+  // Deletion is a DB/file saga. A process death can leave the file in the
+  // quarantine directory, so reconcile it before any alarm can resolve an
+  // imported path. Recovery is best-effort: a transient I/O failure must not
+  // prevent the timer/alarm app itself from starting.
+  Object? importedSoundRecoveryError;
+  StackTrace? importedSoundRecoveryStackTrace;
+  try {
+    await ImportedSoundRecoveryService(
+      repository: importedSoundRepo,
+      fileStore: importedSoundFileStore,
+    ).recover();
+  } catch (error, stackTrace) {
+    importedSoundRecoveryError = error;
+    importedSoundRecoveryStackTrace = stackTrace;
+  }
   // Phase D-2 / PR #50 review #3246543096: forward GPS /
   // TZ-resolution failures through the diagnostic logger, so the
   // user's `enabled` toggle gates these writes. `loggerLookup` is a
@@ -419,6 +485,11 @@ Future<void> main() async {
         builder: (BuildContext context, GoRouterState state) =>
             const SettingsScreen(),
       ),
+      GoRoute(
+        path: ImportedSoundManageScreen.routeLocation,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ImportedSoundManageScreen(),
+      ),
     ],
   );
 
@@ -445,6 +516,18 @@ Future<void> main() async {
       appVersionReaderProvider.overrideWithValue(
         const PackageInfoAppVersionReader(),
       ),
+      importedSoundRepositoryProvider.overrideWithValue(importedSoundRepo),
+      importedSoundReferenceStoreProvider.overrideWithValue(
+        importedSoundReferenceStore,
+      ),
+      importedSoundFileStoreProvider.overrideWithValue(importedSoundFileStore),
+      importedSoundImportServiceProvider.overrideWithValue(
+        importedSoundImportService,
+      ),
+      alarmSoundPlayerProvider.overrideWith((Ref ref) {
+        ref.onDispose(alarmSoundPlayer.dispose);
+        return alarmSoundPlayer;
+      }),
       locationDetectorProvider.overrideWithValue(detector),
       timezoneResolverProvider.overrideWithValue(timezoneResolver),
       userPreferencesProvider.overrideWithValue(userPrefs),
@@ -457,6 +540,23 @@ Future<void> main() async {
       ),
     ],
   );
+
+  // The recovery failure was deliberately swallowed above to preserve app
+  // startup. Once diagnostics are available, retain its type and stack digest
+  // without recording exception messages or user-visible file paths.
+  if (importedSoundRecoveryError != null) {
+    container
+        .read(diagnosticLoggerProvider)
+        .log(
+          DiagnosticEvent.uncaughtException(
+            occurredAt: clock.now(),
+            exceptionType: importedSoundRecoveryError.runtimeType.toString(),
+            stackTraceDigest: DiagnosticEvent.digestStackTrace(
+              importedSoundRecoveryStackTrace,
+            ),
+          ),
+        );
+  }
 
   // Funnel both the Flutter framework's caught errors (build / layout /
   // render) and asynchronous PlatformDispatcher errors through the

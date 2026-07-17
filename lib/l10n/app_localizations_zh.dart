@@ -566,6 +566,76 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLanguageDialogTitle => '选择语言';
 
   @override
+  String get importedSoundManageTitle => '导入的声音';
+
+  @override
+  String get importedSoundManageDescription => '管理从设备添加的声音';
+
+  @override
+  String get importedSoundAdd => '从设备添加';
+
+  @override
+  String get importedSoundEmpty => '没有导入的声音。\n使用下方按钮添加。';
+
+  @override
+  String get importedSoundLoadError => '无法加载导入的声音';
+
+  @override
+  String importedSoundAdded(String name) {
+    return '已添加 $name';
+  }
+
+  @override
+  String get importedSoundImportError => '无法添加声音';
+
+  @override
+  String importedSoundDuplicate(String name) {
+    return '$name 已添加。将使用现有声音。';
+  }
+
+  @override
+  String get importedSoundPreview => '试听';
+
+  @override
+  String get importedSoundPreviewError => '无法播放声音';
+
+  @override
+  String get importedSoundRename => '重命名';
+
+  @override
+  String get importedSoundRenameTitle => '重命名声音';
+
+  @override
+  String get importedSoundNameLabel => '名称';
+
+  @override
+  String get importedSoundNameRequired => '请输入名称';
+
+  @override
+  String get importedSoundRenameError => '无法重命名声音';
+
+  @override
+  String get importedSoundDelete => '删除';
+
+  @override
+  String get importedSoundDeleteTitle => '要删除此声音吗？';
+
+  @override
+  String get importedSoundDeleteDescription => '正在使用此声音的计时器、闹钟、预设和默认声音将改为默认声音。';
+
+  @override
+  String get importedSoundDeleted => '已删除声音';
+
+  @override
+  String get importedSoundDeleteError => '无法删除声音';
+
+  @override
+  String get importedSoundSave => '保存';
+
+  @override
+  String get importedSoundCancel => '取消';
+
+  @override
   String get settingsSectionDiagnostics => '诊断日志';
 
   @override
@@ -1173,6 +1243,76 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsLanguageDialogTitle => '選擇語言';
+
+  @override
+  String get importedSoundManageTitle => '匯入的音效';
+
+  @override
+  String get importedSoundManageDescription => '管理從裝置新增的音效';
+
+  @override
+  String get importedSoundAdd => '從裝置新增';
+
+  @override
+  String get importedSoundEmpty => '沒有匯入的音效。\n使用下方按鈕新增。';
+
+  @override
+  String get importedSoundLoadError => '無法載入匯入的音效';
+
+  @override
+  String importedSoundAdded(String name) {
+    return '已新增 $name';
+  }
+
+  @override
+  String get importedSoundImportError => '無法新增音效';
+
+  @override
+  String importedSoundDuplicate(String name) {
+    return '$name 已新增。將使用現有音效。';
+  }
+
+  @override
+  String get importedSoundPreview => '試聽';
+
+  @override
+  String get importedSoundPreviewError => '無法播放音效';
+
+  @override
+  String get importedSoundRename => '重新命名';
+
+  @override
+  String get importedSoundRenameTitle => '重新命名音效';
+
+  @override
+  String get importedSoundNameLabel => '名稱';
+
+  @override
+  String get importedSoundNameRequired => '請輸入名稱';
+
+  @override
+  String get importedSoundRenameError => '無法重新命名音效';
+
+  @override
+  String get importedSoundDelete => '刪除';
+
+  @override
+  String get importedSoundDeleteTitle => '要刪除此音效嗎？';
+
+  @override
+  String get importedSoundDeleteDescription => '正在使用此音效的計時器、鬧鐘、預設與預設音效將改為預設音效。';
+
+  @override
+  String get importedSoundDeleted => '已刪除音效';
+
+  @override
+  String get importedSoundDeleteError => '無法刪除音效';
+
+  @override
+  String get importedSoundSave => '儲存';
+
+  @override
+  String get importedSoundCancel => '取消';
 
   @override
   String get settingsSectionDiagnostics => '診斷紀錄';

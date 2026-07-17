@@ -48,6 +48,14 @@ Claude Code は新規 Entity 追加・既存 Entity 変更時に必ず本ドキ�
 │  ・TimerId / PresetId / AlarmId /               │
 │    ClockEntryId / NotificationId                │
 └─────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────┐
+│  Imported Sound Aggregate（Phase 13）           │
+│  ・ImportedSound                                │
+│  ・ImportedSoundFormat                          │
+│  ・ImportedSoundPolicy                          │
+│  ・ImportedSoundValidator                       │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -535,6 +543,56 @@ ClockTime {
 
 ---
 
+## Imported Sound Aggregate（Phase 13）
+
+端末から選択され、アプリ内部ストレージへコピーするユーザー音源を扱う。
+Domain は外部 URI、絶対パス、`dart:io File` を保持せず、安定した `soundId` と
+検証済みメタデータだけを管理する。
+
+### ImportedSound
+
+```
+ImportedSound {
+  id: String
+  displayName: String
+  format: ImportedSoundFormat
+  byteLength: int
+  duration: Duration
+  contentHash: String       // lowercase SHA-256 hex
+  createdAt: DateTime
+}
+```
+
+Entity 自体の内部安全上限は 25 MB / 15 分、最短時間は 1 秒。公開する通常枠の
+5 MB / 3 分 / 3 件は Entity へハードコードせず `ImportedSoundPolicy.standard` で
+表現する。表示名の改名では ID、形式、サイズ、時間、ハッシュ、作成日時を維持する。
+
+### ImportedSoundPolicy
+
+Application が現在の利用権限から解決して注入する上限値。課金 SDK、商品 ID、
+プラン名は保持しない。保持値は 1 ファイル容量、時間、件数、対応形式で、合計容量は
+`maxFileBytes * maxCount` から導出する。通常枠と将来枠 A / B は ADR 0006 の値を使用する。
+
+### ImportedSoundValidator
+
+- 対応形式、1 ファイル容量、再生時間、件数、合計容量を同一ポリシーで検証
+- SHA-256 内容ハッシュによる重複登録防止
+- 取り込み前後とも空き容量 10 GB 以上を要求
+- 置換時は旧音源を件数・合計容量判定から除外するが、物理保存上は新旧を同時保持する
+- 置換対象が存在しない場合は `ImportedSoundNotFoundException`
+
+メタデータ永続化境界は `ImportedSoundRepository` port とし、ファイル選択・コピー・
+空き容量取得・実デコードは Infrastructure 側の別 Adapter が担当する。
+
+削除時は `ImportedSoundReferenceStore` が Timer / Alarm / Preset の参照を同梱
+`default` へ置換し、メタデータ削除までを同一 Drift transaction で行う。
+SharedPreferences のデフォルト設定と物理ファイルは同一 transaction にできないため、
+Application の削除 Saga が設定更新、同一 volume 内の `.deleting` への rename、
+DB transaction、purge の順で調停する。起動時 recovery は、メタデータが残る
+quarantine を復元し、メタデータ削除済みの quarantine を破棄する。
+
+---
+
 ## Shared ValueObjects
 
 ### AlarmSound
@@ -651,6 +709,13 @@ extension type NotificationId(int value) {
 | `MaxClockEntryCountExceededException` | 世界時計の同時表示上限（6）を超過（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
 | `ClockEntryNotFoundException` | 指定 ID の世界時計エントリが存在しない（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
 | `InvalidTimezoneIdException` | `timezoneId` が IANA TZ DB に存在しない（Phase 10.5 で実装済み） |
+| `ImportedSoundNotFoundException` | 置換対象の取り込み音源が存在しない（削除の再実行は冪等 no-op） |
+| `DuplicateImportedSoundContentException` | 同じ SHA-256 の音源が登録済み |
+| `ImportedSoundFileSizeLimitException` | 利用枠の1ファイル容量上限を超過 |
+| `ImportedSoundDurationLimitException` | 利用枠の時間上限を超過 |
+| `ImportedSoundCountLimitException` | 利用枠の登録件数上限を超過 |
+| `ImportedSoundTotalSizeLimitException` | 利用枠から導出した合計容量上限を超過 |
+| `InsufficientImportedSoundStorageException` | 取り込み前後の空き容量10 GB要件を満たさない |
 
 すべて `domain/<aggregate>/exceptions.dart` に集約。
 
@@ -692,6 +757,7 @@ factory TimerEntity.create({
 | `presets` | `Preset` |
 | `alarms` | `AlarmEntity`（Phase 9.5 で追加予定） |
 | `clock_entries` | `ClockEntry`（Phase 10.5 で実装済み、Phase 11 で `clock_locations` → `clock_entries` にリネーム、schemaVersion 4→5） |
+| `imported_sounds` | `ImportedSound`（Phase 13、schemaVersion 6→7。contentHash UNIQUE） |
 
 Mapper クラスを `infrastructure/database/mappers/` に配置。
 ドメイン層は永続化形式を知らない。
@@ -706,4 +772,4 @@ Mapper クラスを `infrastructure/database/mappers/` に配置。
 
 ---
 
-最終更新日: 2026-05-01（Phase 8 完了反映: TimerCollection を実装済みに更新 + TimerEntity の Drift 永続化マッピングを追加）
+最終更新日: 2026-07-16（Imported Sound Aggregate と参照置換・削除整合性を反映）

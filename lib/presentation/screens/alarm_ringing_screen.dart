@@ -12,9 +12,7 @@ import '../../application/keyguard_override_controller_provider.dart';
 import '../../application/timer_collection_notifier.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/exceptions.dart';
-import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
-import '../../domain/timer/notification_id_generator.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
 import '../../l10n/app_localizations.dart';
@@ -107,21 +105,19 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     // 2) 無ければ payload の id (旧形式 payload / cold-start で state 未復元)
     // 3) どちらも無ければ 'unknown' (audio だけは鳴らす、Phase 8 既存挙動)
     final String timerId = entity?.id ?? payloadId ?? 'unknown';
-    final AlarmSound sound =
-        (entity?.soundId == null
-            ? null
-            : AlarmSoundCatalog.findById(entity!.soundId!)) ??
-        AlarmSoundCatalog.defaultSound;
-    // Cold start may have lost the entity, so we have no notification id
-    // to cancel. -1 is harmless: cancel on a non-existent id is a no-op
-    // on Android.
+    final String? knownSoundId = entity == null
+        ? null
+        : entity.soundId ?? AlarmSoundCatalog.defaultSound.id;
+    // Dart の String.hashCode はプロセスをまたぐ安定性を保証しない。
+    // cold launch で entity 未復元なら再計算せず、Notifier に repository
+    // lookup が必要だと伝える sentinel を渡す。
     final int notificationId = entity?.notificationId ?? -1;
 
     ref
         .read(alarmRingingNotifierProvider.notifier)
         .start(
           timerId: timerId,
-          sound: sound,
+          soundId: knownSoundId,
           notificationId: notificationId,
           source: AlarmSource.timer,
         );
@@ -136,30 +132,17 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
         break;
       }
     }
-    final AlarmSound sound =
-        (entity?.soundId == null
-            ? null
-            : AlarmSoundCatalog.findById(entity!.soundId!)) ??
-        AlarmSoundCatalog.defaultSound;
-    // cold-start + FSI 経路では `AlarmCollectionNotifier._loadFromRepository`
-    // の microtask が `addPostFrameCallback` より遅れることがあり、entity が
-    // 取れないケースがある。その場合に `-1` を渡すと `cancel(-1)` が no-op
-    // になって OS 通知音が止まらず audioplayers と重なる二重音が発生する
-    // (実機検証 2026-05-04 シナリオ 4 で観測)。
-    //
-    // `NotificationIdGenerator.idFor(alarmId)` は deterministic
-    // (`alarmId.hashCode & 0x7FFFFFFF`) なので、entity が無くても同じ id を
-    // 再計算できる。`AlarmCollectionNotifier.create` でも
-    // `NotificationIdGenerator().idFor(id)` で発番しているため、永続化済の
-    // notificationId と必ず一致する。
-    final int notificationId =
-        entity?.notificationId ??
-        const NotificationIdGenerator().idFor(alarmId);
+    final String? knownSoundId = entity == null
+        ? null
+        : entity.soundId ?? AlarmSoundCatalog.defaultSound.id;
+    // Timer と同様、cold launch では notificationId を再計算しない。
+    // repository に保存された値だけがプロセスをまたいだ正典になる。
+    final int notificationId = entity?.notificationId ?? -1;
     ref
         .read(alarmRingingNotifierProvider.notifier)
         .start(
           timerId: alarmId,
-          sound: sound,
+          soundId: knownSoundId,
           notificationId: notificationId,
           source: AlarmSource.alarm,
         );

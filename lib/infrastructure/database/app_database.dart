@@ -115,6 +115,25 @@ class Alarms extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+/// Drift table definition for user-imported alarm sound metadata (Phase 13).
+///
+/// The app-private file path is derived from `id` and `format`; no external
+/// URI or absolute path is persisted. `contentHash` is unique so concurrent or
+/// bypassed Application validation cannot register the same bytes twice.
+@DataClassName('ImportedSoundRow')
+class ImportedSounds extends Table {
+  TextColumn get id => text()();
+  TextColumn get displayName => text()();
+  TextColumn get format => text()();
+  IntColumn get byteLength => integer()();
+  IntColumn get durationMs => integer()();
+  TextColumn get contentHash => text().unique()();
+  IntColumn get createdAtUtcMs => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
 /// Application database. Phase 8 shipped with the `timers` table only;
 /// Phase 9 introduces `presets` (schemaVersion bump 1 → 2) along with
 /// a default-profile seed in `onCreate` / `onUpgrade`. Phase 9.5 adds
@@ -127,7 +146,9 @@ class Alarms extends Table {
 /// Use [AppDatabase.forTesting] to spin up an in-memory SQLite instance
 /// without touching disk. `clock` and `idGenerator` are injectable so
 /// migration / seed paths stay deterministic in unit tests.
-@DriftDatabase(tables: <Type>[Timers, Presets, Alarms, ClockEntries])
+@DriftDatabase(
+  tables: <Type>[Timers, Presets, Alarms, ClockEntries, ImportedSounds],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase({Clock? clock, String Function()? idGenerator})
     : _clock = clock ?? const Clock(),
@@ -145,7 +166,7 @@ class AppDatabase extends _$AppDatabase {
   final String Function() _idGenerator;
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -200,6 +221,12 @@ class AppDatabase extends _$AppDatabase {
         if (!await _hasColumn('timers', 'interval_notification_enabled')) {
           await m.addColumn(timers, timers.intervalNotificationEnabled);
         }
+      }
+      if (from < 7) {
+        // Phase 13: imported sound metadata starts empty. Existing soundId
+        // values keep their bundled-catalog meaning, so no data rewrite is
+        // required for timers, alarms, presets, or preferences.
+        await m.createTable(importedSounds);
       }
     },
   );

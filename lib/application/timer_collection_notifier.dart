@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart'
     show AppLifecycleState, WidgetsBinding, WidgetsBindingObserver;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/permission_manager.dart';
+import '../domain/timer/alarm_sound_catalog.dart';
 import '../domain/timer/timer_collection.dart';
 import '../domain/timer/timer_entity.dart';
 import '../domain/timer/timer_service.dart';
@@ -14,6 +14,7 @@ import '../domain/timer/timer_status.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
 import 'interval_notification_scheduler_provider.dart';
+import 'imported_sound_mutation_coordinator.dart';
 import 'notification_scheduler_provider.dart';
 import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
@@ -48,6 +49,7 @@ part 'timer_collection_notifier.g.dart';
 class TimerCollectionNotifier extends _$TimerCollectionNotifier
     with WidgetsBindingObserver {
   Timer? _ticker;
+  final Set<String> _deletedSoundIds = <String>{};
 
   /// Last observed app lifecycle (`null` until the first lifecycle event,
   /// which the framework delivers as `resumed` on a foreground start).
@@ -92,15 +94,22 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
   }
 
   Future<void> _restoreFromRepository() async {
+    // A user mutation can populate state before this build-time microtask
+    // starts. In that case the in-memory state is newer than the persisted
+    // snapshot, so restoring would clobber the just-created/started timer.
+    if (!state.isEmpty) return;
     final List<TimerEntity> persisted = await ref
         .read(timerRepositoryProvider)
         .findAll();
     if (persisted.isEmpty) return;
+    // findAll itself is asynchronous; repeat the guard after it completes.
+    if (!state.isEmpty) return;
 
     final DateTime now = ref.read(clockProvider).now();
     final List<TimerEntity> restored = <TimerEntity>[];
     final List<TimerEntity> overdue = <TimerEntity>[];
-    for (final TimerEntity t in persisted) {
+    for (final TimerEntity persistedTimer in persisted) {
+      final TimerEntity t = _withDeletedSoundFallback(persistedTimer);
       if (t.status == TimerStatus.running &&
           t.endAt != null &&
           !t.endAt!.isAfter(now)) {
@@ -148,9 +157,8 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     // after we've rewritten the timer to completed. Mirrors the
     // AlarmCollectionNotifier past-due once-mode path
     // (`_persist` → `_cancel` → `_showMissedAlarmNotification`).
-    final TimerRepositoryFireAndForget repo = TimerRepositoryFireAndForget(ref);
     for (final TimerEntity t in overdue) {
-      repo.upsert(t);
+      _persist(t);
       _cancelNotification(t.notificationId);
       _showRestoredCompletionNotification(t);
     }
@@ -173,14 +181,16 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     String? soundId,
     bool intervalNotificationEnabled = false,
   }) {
-    final TimerEntity created = ref
-        .read(timerServiceProvider)
-        .createIdle(
-          label: label,
-          duration: duration,
-          soundId: soundId,
-          intervalNotificationEnabled: intervalNotificationEnabled,
-        );
+    final TimerEntity created = _withDeletedSoundFallback(
+      ref
+          .read(timerServiceProvider)
+          .createIdle(
+            label: label,
+            duration: duration,
+            soundId: soundId,
+            intervalNotificationEnabled: intervalNotificationEnabled,
+          ),
+    );
     state = state.add(created);
     _persist(created);
     _logAction(created.id, TimerActionKind.create);
@@ -255,10 +265,31 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
   /// fall back to the catalog default.
   void changeSound(String id, String? soundId) {
     final TimerEntity current = _require(id);
-    final TimerEntity next = current.copyWith(soundId: soundId);
+    final TimerEntity next = _withDeletedSoundFallback(
+      current.copyWith(soundId: soundId),
+    );
     state = state.update(next);
     _persist(next);
     _logAction(id, TimerActionKind.changeSound);
+  }
+
+  /// Mirrors a successful DB-level imported-sound deletion without issuing
+  /// another persistence write or rescheduling notifications.
+  void reconcileDeletedSound(String soundId) {
+    _deletedSoundIds.add(soundId);
+    ref.read(importedSoundDeletionRegistryProvider).markDeleted(soundId);
+    state = TimerCollection.fromList(
+      state.all.map(_withDeletedSoundFallback).toList(growable: false),
+    );
+  }
+
+  TimerEntity _withDeletedSoundFallback(TimerEntity timer) {
+    return (_deletedSoundIds.contains(timer.soundId) ||
+            ref
+                .read(importedSoundDeletionRegistryProvider)
+                .isDeleted(timer.soundId))
+        ? timer.copyWith(soundId: AlarmSoundCatalog.defaultSound.id)
+        : timer;
   }
 
   /// Enables/disables continuous fixed-interval boundary notifications.
@@ -285,7 +316,11 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     state = state.remove(id);
     _cancelNotification(current.notificationId);
     _maybeStopTicker();
-    unawaited(ref.read(timerRepositoryProvider).delete(id));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final repository = ref.read(timerRepositoryProvider);
+    unawaited(coordinator.run(() => repository.delete(id)));
     _logAction(id, TimerActionKind.delete);
   }
 
@@ -308,7 +343,24 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
   }
 
   void _persist(TimerEntity entity) {
-    unawaited(ref.read(timerRepositoryProvider).upsert(entity));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final ImportedSoundDeletionRegistry registry = ref.read(
+      importedSoundDeletionRegistryProvider,
+    );
+    final repository = ref.read(timerRepositoryProvider);
+    unawaited(
+      coordinator.run(() {
+        final String? soundId = registry.normalizeDeletedReference(
+          entity.soundId,
+        );
+        final TimerEntity normalized = soundId == entity.soundId
+            ? entity
+            : entity.copyWith(soundId: soundId);
+        return repository.upsert(normalized);
+      }),
+    );
   }
 
   /// Re-issue scheduled notifications for every currently-running timer.
@@ -472,17 +524,5 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     if (state.runningCount == 0) {
       _stopTicker();
     }
-  }
-}
-
-/// Tiny helper that holds a `Ref` so `_restoreFromRepository` can call
-/// `repo.upsert` outside of the synchronous build window without
-/// rebinding the provider on every call.
-class TimerRepositoryFireAndForget {
-  TimerRepositoryFireAndForget(this._ref);
-  final Ref _ref;
-
-  void upsert(TimerEntity entity) {
-    unawaited(_ref.read(timerRepositoryProvider).upsert(entity));
   }
 }

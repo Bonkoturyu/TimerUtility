@@ -7,6 +7,7 @@ import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/preset_collection_notifier.dart';
 import 'package:timer_utility/application/preset_repository_provider.dart';
 import 'package:timer_utility/domain/ports/preset_repository.dart';
+import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/domain/timer/preset_collection.dart';
 import 'package:timer_utility/domain/timer/preset_exceptions.dart';
@@ -15,6 +16,7 @@ import 'package:timer_utility/domain/timer/preset_templates.dart';
 class _InMemoryPresetRepo implements PresetRepository {
   final Map<String, Preset> store = <String, Preset>{};
   int replaceAllCalls = 0;
+  int upsertCalls = 0;
 
   @override
   Future<void> delete(String id) async {
@@ -29,6 +31,7 @@ class _InMemoryPresetRepo implements PresetRepository {
 
   @override
   Future<void> upsert(Preset entity) async {
+    upsertCalls++;
     store[entity.id] = entity;
   }
 
@@ -101,6 +104,75 @@ class _IdSequence {
 }
 
 void main() {
+  group('PresetCollectionNotifier imported sound reconciliation', () {
+    test('対象音だけを default に置換し、他の状態を維持して永続化しない', () async {
+      final Preset target = Preset(
+        id: 'target',
+        label: 'Target',
+        duration: const Duration(minutes: 5),
+        soundId: 'imported-target',
+        createdAt: DateTime.utc(2026, 5, 1),
+      );
+      final Preset untouched = Preset(
+        id: 'untouched',
+        label: 'Untouched',
+        duration: const Duration(minutes: 10),
+        soundId: 'imported-other',
+        createdAt: DateTime.utc(2026, 5, 2),
+      );
+      final h = makeContainer(
+        seeded: <String, Preset>{target.id: target, untouched.id: untouched},
+      );
+      final Map<String, Preset> persistedBefore = Map.of(h.repo.store);
+      h.container.read(presetCollectionNotifierProvider);
+      await settleRestore();
+
+      h.container
+          .read(presetCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      await Future<void>.value();
+
+      final PresetCollection state = h.container.read(
+        presetCollectionNotifierProvider,
+      );
+      expect(
+        state.findById(target.id),
+        target.copyWith(soundId: AlarmSoundCatalog.defaultSound.id),
+      );
+      expect(state.findById(untouched.id), untouched);
+      expect(h.repo.upsertCalls, 0);
+      expect(h.repo.store, persistedBefore);
+    });
+
+    test('遅延restoreの古いsnapshotから削除済み音源IDを復活させない', () async {
+      final Preset target = Preset(
+        id: 'delayed-target',
+        label: 'Delayed',
+        duration: const Duration(minutes: 5),
+        soundId: 'imported-target',
+        createdAt: DateTime.utc(2026, 5, 1),
+      );
+      final repo = _GatedPresetRepo();
+      final container = ProviderContainer(
+        overrides: <Override>[presetRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      container.read(presetCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      container
+          .read(presetCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      repo.findAllGate.complete(<Preset>[target]);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(presetCollectionNotifierProvider).findById(target.id),
+        target.copyWith(soundId: AlarmSoundCatalog.defaultSound.id),
+      );
+    });
+  });
+
   group('PresetCollectionNotifier basic CRUD', () {
     test('build() starts empty before restore', () {
       final h = makeContainer();

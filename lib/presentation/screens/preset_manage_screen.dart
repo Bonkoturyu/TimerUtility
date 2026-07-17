@@ -9,7 +9,7 @@ import '../../domain/timer/preset.dart';
 import '../../domain/timer/preset_exceptions.dart';
 import '../../domain/timer/preset_templates.dart';
 import '../../l10n/app_localizations.dart';
-import '../widgets/duration_picker.dart' show soundDisplayName;
+import '../widgets/alarm_sound_name.dart';
 import '../widgets/preset_delete_confirm_dialog.dart';
 import '../widgets/preset_edit_sheet.dart';
 import '../widgets/preset_label_formatter.dart';
@@ -283,11 +283,7 @@ class _PresetCard extends ConsumerWidget {
                 // ripple after closing the SoundSelectSheet caused a
                 // visible AppBar-area flicker on real devices.
                 IgnorePointer(
-                  child: Chip(
-                    label: Text(
-                      soundDisplayName(l, preset.soundId ?? 'default'),
-                    ),
-                  ),
+                  child: Chip(label: AlarmSoundName(soundId: preset.soundId)),
                 ),
               ],
             ),

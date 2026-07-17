@@ -6,7 +6,7 @@ part of 'current_time_stream_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentTimeHash() => r'f486bedffe7e2c74870d31336a0e268c55e375b9';
+String _$currentTimeHash() => r'67659d7482b97568daae2626cf6c1897ed15983d';
 
 /// 1-second cadence stream of "now" used by the world-clock screen
 /// (Phase 10.5). Implemented as a function-form `@riverpod` so it

@@ -589,6 +589,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageDialogTitle => 'Select language';
 
   @override
+  String get importedSoundManageTitle => 'Imported sounds';
+
+  @override
+  String get importedSoundManageDescription =>
+      'Manage sounds added from your device';
+
+  @override
+  String get importedSoundAdd => 'Add from device';
+
+  @override
+  String get importedSoundEmpty =>
+      'No imported sounds.\nUse the button below to add one.';
+
+  @override
+  String get importedSoundLoadError => 'Could not load imported sounds';
+
+  @override
+  String importedSoundAdded(String name) {
+    return 'Added $name';
+  }
+
+  @override
+  String get importedSoundImportError => 'Could not add the sound';
+
+  @override
+  String importedSoundDuplicate(String name) {
+    return '$name has already been added. Using the existing sound.';
+  }
+
+  @override
+  String get importedSoundPreview => 'Preview';
+
+  @override
+  String get importedSoundPreviewError => 'Could not play the sound';
+
+  @override
+  String get importedSoundRename => 'Rename';
+
+  @override
+  String get importedSoundRenameTitle => 'Rename sound';
+
+  @override
+  String get importedSoundNameLabel => 'Name';
+
+  @override
+  String get importedSoundNameRequired => 'Enter a name';
+
+  @override
+  String get importedSoundRenameError => 'Could not rename the sound';
+
+  @override
+  String get importedSoundDelete => 'Delete';
+
+  @override
+  String get importedSoundDeleteTitle => 'Delete this sound?';
+
+  @override
+  String get importedSoundDeleteDescription =>
+      'Timers, alarms, presets, and the default sound using it will change to the default sound.';
+
+  @override
+  String get importedSoundDeleted => 'Sound deleted';
+
+  @override
+  String get importedSoundDeleteError => 'Could not delete the sound';
+
+  @override
+  String get importedSoundSave => 'Save';
+
+  @override
+  String get importedSoundCancel => 'Cancel';
+
+  @override
   String get settingsSectionDiagnostics => 'Diagnostic logs';
 
   @override

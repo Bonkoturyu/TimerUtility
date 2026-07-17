@@ -3,14 +3,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/imported_sound_management_controller.dart';
 import 'package:timer_utility/application/preset_collection_notifier.dart';
 import 'package:timer_utility/application/preset_repository_provider.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
 import 'package:timer_utility/domain/ports/preset_repository.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/domain/sound/imported_sound.dart';
+import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/domain/timer/preset.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/preset_manage_screen.dart';
+
+class _ImportedSoundController extends ImportedSoundManagementController {
+  _ImportedSoundController(this.sounds);
+
+  final List<ImportedSound> sounds;
+
+  @override
+  Future<List<ImportedSound>> build() async => sounds;
+}
+
+ImportedSound _sound() => ImportedSound.create(
+  id: 'imported-1',
+  displayName: 'Kitchen Bell',
+  format: ImportedSoundFormat.mp3,
+  byteLength: 1000,
+  duration: const Duration(seconds: 10),
+  contentHash:
+      '0000000000000000000000000000000000000000000000000000000000000000',
+  createdAt: DateTime(2026, 7, 17),
+);
 
 class _InMemoryPresetRepo implements PresetRepository {
   _InMemoryPresetRepo([Iterable<Preset>? seed]) {
@@ -82,12 +105,19 @@ class _MemoryUserPrefs implements UserPreferences {
   }
 }
 
-Widget _harness({Iterable<Preset>? presets, _MemoryUserPrefs? userPrefs}) {
+Widget _harness({
+  Iterable<Preset>? presets,
+  _MemoryUserPrefs? userPrefs,
+  List<ImportedSound> importedSounds = const <ImportedSound>[],
+}) {
   final repo = _InMemoryPresetRepo(presets);
   return ProviderScope(
     overrides: <Override>[
       clockProvider.overrideWithValue(Clock.fixed(DateTime(2026, 5, 2, 12))),
       presetRepositoryProvider.overrideWithValue(repo),
+      importedSoundManagementControllerProvider.overrideWith(
+        () => _ImportedSoundController(importedSounds),
+      ),
       userPreferencesProvider.overrideWithValue(
         userPrefs ?? _MemoryUserPrefs(),
       ),
@@ -128,6 +158,34 @@ void main() {
     expect(find.byKey(const Key('preset_card_p-1')), findsOneWidget);
     expect(find.text('コーヒー'), findsOneWidget);
     expect(find.text('やさしい'), findsOneWidget);
+  });
+
+  testWidgets('取り込み音源は表示名、未知IDはデフォルト表示になる', (WidgetTester tester) async {
+    final ImportedSound sound = _sound();
+    Preset preset(String soundId) => Preset(
+      id: 'p-1',
+      label: '',
+      duration: const Duration(minutes: 1),
+      soundId: soundId,
+      createdAt: DateTime(2026, 5, 1),
+    );
+
+    await tester.pumpWidget(
+      _harness(
+        presets: <Preset>[preset(sound.id)],
+        importedSounds: <ImportedSound>[sound],
+      ),
+    );
+    await _settleRestore(tester);
+    expect(find.text('Kitchen Bell'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+    await tester.pumpWidget(
+      _harness(presets: <Preset>[preset('unknown-sound')]),
+    );
+    await _settleRestore(tester);
+    expect(find.text('デフォルト'), findsOneWidget);
   });
 
   testWidgets('delete with skip-confirm preference removes the card directly', (

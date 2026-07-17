@@ -83,17 +83,29 @@ lib/
 │   │   ├── clock_time.dart                 # ClockTime ValueObject + TimezoneResolver port
 │   │   ├── timezone_catalog.dart           # 25 都市プリセット（pure Dart、IANA TZ ID マップ）
 │   │   └── exceptions.dart
+│   ├── sound/                              # Phase 13: ユーザー取り込み音源
+│   │   ├── imported_sound.dart             # URI / path を持たないメタデータ Entity
+│   │   ├── imported_sound_format.dart      # 対応 container / codec enum
+│   │   ├── imported_sound_policy.dart      # 利用権限から解決済みの上限値
+│   │   ├── imported_sound_validator.dart   # 件数 / 容量 / 時間 / 重複 / 空き容量検証
+│   │   └── imported_sound_exceptions.dart
 │   ├── shared/
 │   │   └── duration_formatter.dart
 │   └── ports/
 │       ├── notification_scheduler.dart     # Phase 4 で実装済み（Phase 8 で show() 追加）
 │       ├── permission_manager.dart         # Phase 4 で実装済み
-│       ├── alarm_sound_player.dart         # Phase 5 で実装済み
+│       ├── alarm_sound_player.dart         # Phase 5、Phase 13 で準備済みhandoffを追加
 │       ├── timer_repository.dart           # Phase 8 で実装済み
 │       ├── preset_repository.dart          # Phase 9 で実装済み
 │       ├── user_preferences.dart           # Phase 9 で実装済み（SharedPreferences 抽象）
 │       ├── alarm_repository.dart           # Phase 9.5 で実装済み
 │       ├── clock_entry_repository.dart     # Phase 10.5 で実装済み（Phase 11 で ClockEntry にリネーム）
+│       ├── imported_sound_repository.dart  # Phase 13: 取り込み音源メタデータ永続化
+│       ├── imported_sound_picker.dart      # Phase 13: OSファイル選択境界
+│       ├── imported_sound_file_store.dart  # Phase 13: staging / 確定 / 破棄境界
+│       ├── imported_sound_probe.dart       # Phase 13: 形式・実デコード検証境界
+│       ├── imported_sound_reference_store.dart # Phase 13: 参照一括置換 + metadata削除
+│       ├── storage_capacity_reader.dart    # Phase 13: アプリ保存先の空き容量境界
 │       └── location_detector.dart          # Phase 10.5 で実装済み（GPS → IANA TZ）
 │
 ├── infrastructure/
@@ -102,9 +114,17 @@ lib/
 │   ├── permission/
 │   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み（Phase 6b で PermissionChannel 注入）
 │   ├── platform/
-│   │   └── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
+│   │   ├── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
+│   │   └── method_channel_storage_capacity_reader.dart # Phase 13: filesDir volume の空き容量
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
+│   ├── sound/                                       # Phase 13: 取り込みパイプライン
+│   │   ├── file_selector_imported_sound_picker.dart
+│   │   ├── app_private_imported_sound_file_store.dart
+│   │   ├── imported_sound_storage_layout.dart
+│   │   ├── audioplayers_imported_sound_probe.dart
+│   │   ├── imported_alarm_sound_path_resolver.dart
+│   │   └── imported_sound_file_extension.dart
 │   ├── location/                                    # Phase 10.5 で実装済み
 │   │   └── location_detector_adapter.dart           # geolocator + geocoding、失敗時 FlutterTimezone fallback
 │   ├── clock/                                       # Phase 10.5 で実装済み
@@ -117,13 +137,21 @@ lib/
 │       ├── drift_timer_repository.dart              # Phase 8 で実装済み
 │       ├── drift_preset_repository.dart             # Phase 9 で実装済み
 │       ├── drift_alarm_repository.dart              # Phase 9.5 で実装済み
+│       ├── drift_imported_sound_repository.dart     # Phase 13: 取り込み音源メタデータ
+│       ├── drift_imported_sound_reference_store.dart # Phase 13: 3参照置換 + metadata削除transaction
 │       ├── mappers/
 │       │   ├── timer_mapper.dart                    # Phase 8 で実装済み（TimerEntity ⇔ TimerRow）
 │       │   ├── preset_mapper.dart                   # Phase 9 で実装済み
-│       │   └── alarm_mapper.dart                    # Phase 9.5 で実装済み
+│       │   ├── alarm_mapper.dart                    # Phase 9.5 で実装済み
+│       │   └── imported_sound_mapper.dart           # Phase 13
 │       └── drift_clock_entry_repository.dart        # Phase 10.5 で実装済み（Phase 11 で clock_locations → clock_entries にリネーム、schemaVersion 4→5）
 │
 ├── application/                  # Riverpod Providers
+│   ├── imported_sound_import_service.dart # Phase 13: 検証・copy・DB確定と失敗補償
+│   ├── imported_sound_deletion_service.dart # Phase 13: quarantine・DB・設定・purge Saga
+│   ├── imported_sound_recovery_service.dart # Phase 13: entry分離した起動時quarantine回復
+│   ├── imported_sound_mutation_coordinator.dart # Phase 13: 参照write/deleteの共有FIFO + tombstone
+│   ├── imported_sound_deletion_controller.dart # Phase 13: 同一ID coalesce・直列削除・Notifier同期
 │   ├── clock_provider.dart                # Clock 抽象 (ADR 0004)
 │   ├── stopwatch_notifier.dart
 │   ├── timer_service_provider.dart           # Phase 8 で分離済み（旧 timer_notifier.dart から）
@@ -480,4 +508,4 @@ iOS 移植時の追加コストは最小:
 
 ---
 
-最終更新日: 2026-05-01（Phase 8 完了反映: infrastructure/database/ + timer_collection_notifier 等を実装済みに更新、timer_screen は timer_list_screen に置換）
+最終更新日: 2026-07-16（Phase 13-A〜E の取り込み・再生・削除 Saga 構成を反映）
