@@ -567,6 +567,77 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsLanguageDialogTitle => '언어 선택';
 
   @override
+  String get importedSoundManageTitle => '가져온 사운드';
+
+  @override
+  String get importedSoundManageDescription => '기기에서 추가한 사운드를 관리합니다';
+
+  @override
+  String get importedSoundAdd => '기기에서 추가';
+
+  @override
+  String get importedSoundEmpty => '가져온 사운드가 없습니다.\n아래 버튼으로 추가하세요.';
+
+  @override
+  String get importedSoundLoadError => '가져온 사운드를 불러올 수 없습니다';
+
+  @override
+  String importedSoundAdded(String name) {
+    return '$name을(를) 추가했습니다';
+  }
+
+  @override
+  String get importedSoundImportError => '사운드를 추가할 수 없습니다';
+
+  @override
+  String importedSoundDuplicate(String name) {
+    return '$name은(는) 이미 추가되었습니다. 기존 사운드를 사용합니다.';
+  }
+
+  @override
+  String get importedSoundPreview => '미리 듣기';
+
+  @override
+  String get importedSoundPreviewError => '사운드를 재생할 수 없습니다';
+
+  @override
+  String get importedSoundRename => '이름 변경';
+
+  @override
+  String get importedSoundRenameTitle => '사운드 이름 변경';
+
+  @override
+  String get importedSoundNameLabel => '이름';
+
+  @override
+  String get importedSoundNameRequired => '이름을 입력하세요';
+
+  @override
+  String get importedSoundRenameError => '이름을 변경할 수 없습니다';
+
+  @override
+  String get importedSoundDelete => '삭제';
+
+  @override
+  String get importedSoundDeleteTitle => '이 사운드를 삭제할까요?';
+
+  @override
+  String get importedSoundDeleteDescription =>
+      '사용 중인 타이머, 알람, 프리셋, 기본 사운드는 기본 사운드로 변경됩니다.';
+
+  @override
+  String get importedSoundDeleted => '사운드를 삭제했습니다';
+
+  @override
+  String get importedSoundDeleteError => '사운드를 삭제할 수 없습니다';
+
+  @override
+  String get importedSoundSave => '저장';
+
+  @override
+  String get importedSoundCancel => '취소';
+
+  @override
   String get settingsSectionDiagnostics => '진단 로그';
 
   @override

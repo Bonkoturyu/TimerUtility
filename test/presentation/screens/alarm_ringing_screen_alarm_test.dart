@@ -84,6 +84,28 @@ class _InMemoryAlarmRepo implements AlarmRepository {
   }
 }
 
+class _DelayedColdAlarmRepo implements AlarmRepository {
+  _DelayedColdAlarmRepo(this.entity, this.lookupDelay);
+
+  final AlarmEntity entity;
+  final Duration lookupDelay;
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<List<AlarmEntity>> findAll() async => <AlarmEntity>[];
+
+  @override
+  Future<AlarmEntity?> findById(String id) async {
+    await Future<void>.delayed(lookupDelay);
+    return id == entity.id ? entity : null;
+  }
+
+  @override
+  Future<void> upsert(AlarmEntity entity) async {}
+}
+
 class _InMemoryTimerRepo implements TimerRepository {
   @override
   Future<void> delete(String id) async {}
@@ -156,10 +178,13 @@ Widget _harness(
   DateTime? now,
   NotificationScheduler? scheduler,
   _StubKeyguardOverrideController? keyguard,
+  AlarmRepository? repository,
+  Duration selectionTimeout = const Duration(seconds: 1),
 }) {
   final NotificationScheduler s = scheduler ?? _stubScheduler();
-  final _InMemoryAlarmRepo repo = _InMemoryAlarmRepo();
-  repo.store[seedAlarm.id] = seedAlarm;
+  final _InMemoryAlarmRepo inMemoryRepo = _InMemoryAlarmRepo();
+  inMemoryRepo.store[seedAlarm.id] = seedAlarm;
+  final AlarmRepository repo = repository ?? inMemoryRepo;
 
   final router = GoRouter(
     initialLocation:
@@ -197,6 +222,7 @@ Widget _harness(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       alarmSoundHandoffDelayProvider.overrideWithValue(Duration.zero),
+      alarmSoundSelectionTimeoutProvider.overrideWithValue(selectionTimeout),
       clockProvider.overrideWithValue(
         Clock(() => now ?? DateTime(2026, 5, 4, 7)),
       ),
@@ -258,6 +284,48 @@ void main() {
       final ringing = container.read(alarmRingingNotifierProvider);
       expect(ringing.currentSource, AlarmSource.alarm);
       expect(ringing.currentTimerId, 'alarm-1');
+    });
+
+    testWidgets('cold alarmは1秒超のDB応答後も保存済みnotificationIdをcancelする', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      final scheduler = _stubScheduler();
+      final persisted = _seedOnceAlarm().copyWith(
+        id: 'alarm-slow-cold',
+        notificationId: 97531,
+        soundId: 'late-imported-alarm-sound',
+      );
+
+      await tester.pumpWidget(
+        _harness(
+          player,
+          seedAlarm: persisted,
+          repository: _DelayedColdAlarmRepo(
+            persisted,
+            const Duration(milliseconds: 1100),
+          ),
+          scheduler: scheduler,
+          selectionTimeout: const Duration(seconds: 1),
+        ),
+      );
+      await tester.pump();
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(player.playCalls, 1, reason: '音源選択はdefaultへ期限内fallbackする');
+      verifyNever(() => scheduler.cancel(persisted.notificationId));
+
+      await tester.pump(const Duration(milliseconds: 100));
+      verify(() => scheduler.cancel(persisted.notificationId)).called(1);
+
+      final BuildContext context = tester.element(
+        find.byType(AlarmRingingScreen),
+      );
+      final container = ProviderScope.containerOf(context);
+      expect(
+        container.read(alarmRingingNotifierProvider).currentSoundId,
+        'default',
+      );
     });
 
     testWidgets(

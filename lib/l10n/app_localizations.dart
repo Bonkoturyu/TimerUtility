@@ -1075,6 +1075,138 @@ abstract class AppLocalizations {
   /// **'言語を選択'**
   String get settingsLanguageDialogTitle;
 
+  /// No description provided for @importedSoundManageTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'取り込み音源'**
+  String get importedSoundManageTitle;
+
+  /// No description provided for @importedSoundManageDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末から追加した音源を管理します'**
+  String get importedSoundManageDescription;
+
+  /// No description provided for @importedSoundAdd.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末から追加'**
+  String get importedSoundAdd;
+
+  /// No description provided for @importedSoundEmpty.
+  ///
+  /// In ja, this message translates to:
+  /// **'取り込み音源はありません。\n右下のボタンから追加できます。'**
+  String get importedSoundEmpty;
+
+  /// No description provided for @importedSoundLoadError.
+  ///
+  /// In ja, this message translates to:
+  /// **'取り込み音源を読み込めませんでした'**
+  String get importedSoundLoadError;
+
+  /// No description provided for @importedSoundAdded.
+  ///
+  /// In ja, this message translates to:
+  /// **'{name} を追加しました'**
+  String importedSoundAdded(String name);
+
+  /// No description provided for @importedSoundImportError.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を追加できませんでした'**
+  String get importedSoundImportError;
+
+  /// No description provided for @importedSoundDuplicate.
+  ///
+  /// In ja, this message translates to:
+  /// **'{name} は追加済みです。既存の音源を選択しました。'**
+  String importedSoundDuplicate(String name);
+
+  /// No description provided for @importedSoundPreview.
+  ///
+  /// In ja, this message translates to:
+  /// **'試聴'**
+  String get importedSoundPreview;
+
+  /// No description provided for @importedSoundPreviewError.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を再生できませんでした'**
+  String get importedSoundPreviewError;
+
+  /// No description provided for @importedSoundRename.
+  ///
+  /// In ja, this message translates to:
+  /// **'名前を変更'**
+  String get importedSoundRename;
+
+  /// No description provided for @importedSoundRenameTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源の名前を変更'**
+  String get importedSoundRenameTitle;
+
+  /// No description provided for @importedSoundNameLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'名前'**
+  String get importedSoundNameLabel;
+
+  /// No description provided for @importedSoundNameRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'名前を入力してください'**
+  String get importedSoundNameRequired;
+
+  /// No description provided for @importedSoundRenameError.
+  ///
+  /// In ja, this message translates to:
+  /// **'名前を変更できませんでした'**
+  String get importedSoundRenameError;
+
+  /// No description provided for @importedSoundDelete.
+  ///
+  /// In ja, this message translates to:
+  /// **'削除'**
+  String get importedSoundDelete;
+
+  /// No description provided for @importedSoundDeleteTitle.
+  ///
+  /// In ja, this message translates to:
+  /// **'この音源を削除しますか？'**
+  String get importedSoundDeleteTitle;
+
+  /// No description provided for @importedSoundDeleteDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'使用中のタイマー、アラーム、プリセット、既定音源はデフォルト音へ変更されます。'**
+  String get importedSoundDeleteDescription;
+
+  /// No description provided for @importedSoundDeleted.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を削除しました'**
+  String get importedSoundDeleted;
+
+  /// No description provided for @importedSoundDeleteError.
+  ///
+  /// In ja, this message translates to:
+  /// **'音源を削除できませんでした'**
+  String get importedSoundDeleteError;
+
+  /// No description provided for @importedSoundSave.
+  ///
+  /// In ja, this message translates to:
+  /// **'保存'**
+  String get importedSoundSave;
+
+  /// No description provided for @importedSoundCancel.
+  ///
+  /// In ja, this message translates to:
+  /// **'キャンセル'**
+  String get importedSoundCancel;
+
   /// No description provided for @settingsSectionDiagnostics.
   ///
   /// In ja, this message translates to:

@@ -63,14 +63,18 @@ Claude Code は新規ロジック追加時に必ず本ドキュメントを参�
 | SnoozeCalculator | Domain Unit | ◎ | |
 | DurationFormatter | Domain Unit | ◎ | |
 | Entity の不変条件 | Domain Unit | ◎ | factory での例外 throw |
+| 取り込み音源の利用枠・重複・空き容量検証 | Domain Unit | ◎ | OS値は引数で注入 |
 | **Application 層** | | | |
 | StopwatchNotifier 状態遷移 | Notifier Test | ◎ | fake_async |
 | TimerNotifier の予約呼び出し | Notifier Test | ◎ | Mock NotificationScheduler |
+| 取り込み音源削除 Saga / restore 競合 | Application Unit / Notifier Test | ◎ | quarantine・DB・設定・purge の順序、FIFO／同一ID coalesce、失敗補償、削除済みIDの再出現防止 |
 | TimerCollectionNotifier の DB 復元 | Notifier Test | ◎ | Mock Repository |
 | AlarmRingingNotifier の音再生制御 | Notifier Test | ◎ | Mock Player |
 | AppLifecycle 対応 | Notifier Test | ○ | 手動でイベント送信 |
 | **Infrastructure 層** | | | |
 | Drift Repository | Infra Test | ◎ | in-memory DB |
+| 取り込み音源参照一括置換 | Infra Test | ◎ | Timer / Alarm / Preset / metadata の commit と rollback |
+| 取り込み音源ファイル保存・再生解決 | Infra Test | ◎ | staging、SHA-256、quarantine recovery、欠損時 null fallback |
 | NotificationIdGenerator | Infra Test | ◎ | |
 | Adapter（Platform Channel ラッパ） | Infra Test | ○ | Channel mock |
 | **Presentation 層** | | | |
@@ -417,4 +421,4 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 
 ---
 
-最終更新日: 2026-04-29
+最終更新日: 2026-07-16（Phase 13 の取り込み音源検証・削除 Saga・参照整合性テストを反映）

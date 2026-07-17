@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_collection_notifier.dart';
 import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
+import 'package:timer_utility/application/imported_sound_management_controller.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
@@ -18,12 +19,34 @@ import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/domain/sound/imported_sound.dart';
+import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/alarm_edit_screen.dart';
 
 import '../../helpers/test_notification_strings.dart';
 
 class _MockScheduler extends Mock implements NotificationScheduler {}
+
+class _ImportedSoundController extends ImportedSoundManagementController {
+  _ImportedSoundController(this.sounds);
+
+  final List<ImportedSound> sounds;
+
+  @override
+  Future<List<ImportedSound>> build() async => sounds;
+}
+
+ImportedSound _sound() => ImportedSound.create(
+  id: 'imported-1',
+  displayName: 'Kitchen Bell',
+  format: ImportedSoundFormat.mp3,
+  byteLength: 1000,
+  duration: const Duration(seconds: 10),
+  contentHash:
+      '0000000000000000000000000000000000000000000000000000000000000000',
+  createdAt: DateTime(2026, 7, 17),
+);
 
 class _InMemoryAlarmRepo implements AlarmRepository {
   final Map<String, AlarmEntity> store = <String, AlarmEntity>{};
@@ -121,6 +144,7 @@ Widget _harness({
   _MemoryUserPrefs? userPrefs,
   _InMemoryAlarmRepo? repo,
   PermissionNotifier Function()? permissionNotifier,
+  List<ImportedSound> importedSounds = const <ImportedSound>[],
 }) {
   final _InMemoryAlarmRepo r = repo ?? _InMemoryAlarmRepo();
   if (seed != null) r.store[seed.id] = seed;
@@ -170,6 +194,9 @@ Widget _harness({
       clockProvider.overrideWithValue(Clock.fixed(DateTime(2026, 5, 4, 6))),
       alarmRepositoryProvider.overrideWithValue(r),
       notificationSchedulerProvider.overrideWithValue(_stubScheduler()),
+      importedSoundManagementControllerProvider.overrideWith(
+        () => _ImportedSoundController(importedSounds),
+      ),
       testNotificationStringsOverride(),
       userPreferencesProvider.overrideWithValue(
         userPrefs ?? _MemoryUserPrefs(),
@@ -391,6 +418,42 @@ void main() {
   });
 
   group('AlarmEditScreen 既存編集モード', () {
+    testWidgets('取り込み音源は表示名、未知IDはデフォルト表示になる', (WidgetTester tester) async {
+      final ImportedSound sound = _sound();
+      await tester.pumpWidget(
+        _harness(
+          alarmId: 'a-1',
+          seed: _seed(soundId: sound.id),
+          importedSounds: <ImportedSound>[sound],
+        ),
+      );
+      await _openEdit(tester);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('alarm_edit_sound_field')),
+          matching: find.text('Kitchen Bell'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      await tester.pumpWidget(
+        _harness(
+          alarmId: 'a-1',
+          seed: _seed(soundId: 'unknown-sound'),
+        ),
+      );
+      await _openEdit(tester);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('alarm_edit_sound_field')),
+          matching: find.text('デフォルト'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('AppBar タイトルが「アラームを編集」になる', (WidgetTester tester) async {
       final AlarmEntity existing = _seed();
       final repo = _InMemoryAlarmRepo()..store[existing.id] = existing;

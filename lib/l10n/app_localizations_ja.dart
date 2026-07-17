@@ -533,6 +533,77 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsLanguageDialogTitle => '言語を選択';
 
   @override
+  String get importedSoundManageTitle => '取り込み音源';
+
+  @override
+  String get importedSoundManageDescription => '端末から追加した音源を管理します';
+
+  @override
+  String get importedSoundAdd => '端末から追加';
+
+  @override
+  String get importedSoundEmpty => '取り込み音源はありません。\n右下のボタンから追加できます。';
+
+  @override
+  String get importedSoundLoadError => '取り込み音源を読み込めませんでした';
+
+  @override
+  String importedSoundAdded(String name) {
+    return '$name を追加しました';
+  }
+
+  @override
+  String get importedSoundImportError => '音源を追加できませんでした';
+
+  @override
+  String importedSoundDuplicate(String name) {
+    return '$name は追加済みです。既存の音源を選択しました。';
+  }
+
+  @override
+  String get importedSoundPreview => '試聴';
+
+  @override
+  String get importedSoundPreviewError => '音源を再生できませんでした';
+
+  @override
+  String get importedSoundRename => '名前を変更';
+
+  @override
+  String get importedSoundRenameTitle => '音源の名前を変更';
+
+  @override
+  String get importedSoundNameLabel => '名前';
+
+  @override
+  String get importedSoundNameRequired => '名前を入力してください';
+
+  @override
+  String get importedSoundRenameError => '名前を変更できませんでした';
+
+  @override
+  String get importedSoundDelete => '削除';
+
+  @override
+  String get importedSoundDeleteTitle => 'この音源を削除しますか？';
+
+  @override
+  String get importedSoundDeleteDescription =>
+      '使用中のタイマー、アラーム、プリセット、既定音源はデフォルト音へ変更されます。';
+
+  @override
+  String get importedSoundDeleted => '音源を削除しました';
+
+  @override
+  String get importedSoundDeleteError => '音源を削除できませんでした';
+
+  @override
+  String get importedSoundSave => '保存';
+
+  @override
+  String get importedSoundCancel => 'キャンセル';
+
+  @override
   String get settingsSectionDiagnostics => '診断ログ';
 
   @override

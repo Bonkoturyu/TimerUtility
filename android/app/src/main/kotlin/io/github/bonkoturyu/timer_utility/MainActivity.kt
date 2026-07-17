@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.StatFs
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -23,6 +24,7 @@ class MainActivity : FlutterActivity() {
         private const val PERMISSION_CHANNEL = "io.github.bonkoturyu.timer_utility/permission"
         private const val INTERVAL_CHANNEL =
             "io.github.bonkoturyu.timer_utility/interval_notification"
+        private const val STORAGE_CHANNEL = "io.github.bonkoturyu.timer_utility/storage"
     }
 
     /**
@@ -117,6 +119,23 @@ class MainActivity : FlutterActivity() {
                         else {
                             IntervalNotificationScheduler.cancel(this, id)
                             result.success(null)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, STORAGE_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getAvailableBytes" -> {
+                        try {
+                            result.success(StatFs(filesDir.absolutePath).availableBytes)
+                        } catch (error: IllegalArgumentException) {
+                            result.error(
+                                "STORAGE_UNAVAILABLE",
+                                "Unable to read app storage capacity",
+                                null,
+                            )
                         }
                     }
                     else -> result.notImplemented()

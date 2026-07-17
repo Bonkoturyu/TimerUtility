@@ -50,11 +50,16 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `appDatabaseProvider` | function | `AppDatabase` | keepAlive | Drift DB インスタンス |
 | `notificationSchedulerProvider` | function | `NotificationScheduler` | keepAlive | 通知予約 Adapter（Phase 8 で `show()` 即時通知 API 追加） |
 | `intervalNotificationSchedulerProvider` | function | `IntervalNotificationScheduler` | keepAlive | 定間隔通知のNative連鎖予約。Flutterプロセス停止中も次周期を自己再予約 |
-| `alarmSoundPlayerProvider` | function | `AlarmSoundPlayer` | keepAlive | 音再生 Adapter |
+| `alarmSoundPlayerProvider` | function | `AlarmSoundPlayer` | keepAlive | 同梱／取り込み音源の準備済みhandoff再生 Adapter |
 | `timerRepositoryProvider` | function | `TimerRepository` | keepAlive | Timer 永続化（Phase 8 で実装、main.dart で DriftTimerRepository を override） |
 | `presetRepositoryProvider` | function | `PresetRepository` | keepAlive | Preset 永続化 |
 | `alarmRepositoryProvider` | function | `AlarmRepository` | keepAlive | Alarm 永続化（Phase 9.5） |
 | `clockEntryRepositoryProvider` | function | `ClockEntryRepository` | keepAlive | 世界時計の永続化（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
+| `importedSoundRepositoryProvider` | function | `ImportedSoundRepository` | keepAlive | 取り込み音源メタデータ永続化（main.dart で共有DBをoverride） |
+| `importedSoundFileStoreProvider` | function | `ImportedSoundFileStore` | keepAlive | app-private staging／確定／quarantine境界 |
+| `importedSoundReferenceStoreProvider` | function | `ImportedSoundReferenceStore` | keepAlive | Timer／Alarm／Preset参照置換とmetadata削除の単一transaction |
+| `importedSoundMutationCoordinatorProvider` | function | `ImportedSoundMutationCoordinator` | keepAlive | Timer／Alarm／Presetの全write、既定音設定、音源削除をFIFO直列化 |
+| `importedSoundDeletionRegistryProvider` | function | `ImportedSoundDeletionRegistry` | keepAlive | deleting／deleted tombstoneを共有し、queued write実行時に削除済み参照をdefaultへ正規化 |
 | `locationDetectorProvider` | function | `LocationDetector` | keepAlive | GPS → IANA TZ ID 解決（Phase 10.5 で実装済み、失敗時 FlutterTimezone fallback） |
 | `timezoneResolverProvider` | function | `TimezoneResolver` | keepAlive | IANA TZ → wall clock 変換（Phase 10.5 で実装済み、`TzDatabaseTimezoneResolver`、TZ DB は 1 度だけ load） |
 | `permissionManagerProvider` | function | `PermissionManager` | keepAlive | 権限管理 |
@@ -86,6 +91,7 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `permissionNotifierProvider` | Notifier | `PermissionState` | keepAlive | 各権限の取得状態 |
 | `alarmCollectionNotifierProvider` | Notifier | `List<AlarmEntity>` | keepAlive | 指定時刻アラーム CRUD・ON/OFF 切替・予約管理（Phase 9.5） |
 | `clockEntryCollectionNotifierProvider` | Notifier | `ClockEntryCollection` | keepAlive | 世界時計の CRUD・並べ替え・初回起動時の現在地登録（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
+| `importedSoundDeletionControllerProvider` | Notifier | `void` | keepAlive | 同一ID deleteをcoalesceし、共有FIFO内で削除 Saga と4つのNotifier state同期を完結 |
 
 ### Presentation 層（UI 補助）
 
@@ -155,8 +161,10 @@ Phase 3 までの単一 `TimerNotifier` を廃止し、複数タイマーの単�
 - AlarmSoundPlayer による音再生制御
 - ringing 起動時に「自分が引き継ぐ通知」を NotificationScheduler.cancel
   で画面上から除去する。ただし OS Channel 音自体は cancel で止まらないため、
-  固定短音の再生中に AlarmSoundPlayer.prepare を行い、固定ハンドオフ後に
-  play する
+  固定短音の再生中に同梱defaultと選択音源を独立slotへ準備し、選択解決は
+  1000 msで打ち切る。固定3200 msのハンドオフ後は準備済みslotだけを再生する
+- cold launchでCollection復元前でも、payload IDからTimerRepository／
+  AlarmRepositoryを直接参照して保存済みsoundIdを解決する
 - 再生世代により Stop / Snooze / 別タイマー開始後の遅延 play を無効化する
 - start は isPlaying 検査で idempotent（複数経路から呼ばれても OK）
 - Native からの「アラーム発火」イベント受信（payload prefix で起動元判別）
@@ -266,8 +274,17 @@ Notifier 側はこの分岐を意識しない。
        │
        ├─ ref.read(alarmSoundPlayerProvider)
        ├─ ref.read(notificationSchedulerProvider)   // bundled sound cancel
-       ├─ ref.read(timerCollectionNotifierProvider.notifier)
-       └─ ref.read(alarmCollectionNotifierProvider.notifier)   // Phase 9.5
+       ├─ ref.read(timerRepositoryProvider)          // cold launch target
+       └─ ref.read(alarmRepositoryProvider)          // cold launch target
+
+   importedSoundDeletionControllerProvider
+       │
+       ├─ ref.read(importedSoundMutationCoordinatorProvider) // 全writeとの順序境界
+       ├─ ref.read(importedSoundDeletionRegistryProvider)     // deleting/deleted tombstone
+       ├─ ref.read(importedSoundRepositoryProvider)
+       ├─ ref.read(importedSoundFileStoreProvider)
+       ├─ ref.read(importedSoundReferenceStoreProvider)
+       └─ ref.read(timer/alarm/preset/settings notifier) // state-only reconcile
 
    alarmCollectionNotifierProvider                              // Phase 9.5
        │
@@ -461,4 +478,4 @@ lib/application/
 
 ---
 
-最終更新日: 2026-05-01（Phase 8 完了反映: timerCollectionNotifierProvider に統合、family 案廃止、timerServiceProvider / timerRepositoryProvider 配線を明記）
+最終更新日: 2026-07-16（Phase 13-D/E の再生解決・削除 Saga・Notifier 同期を反映）

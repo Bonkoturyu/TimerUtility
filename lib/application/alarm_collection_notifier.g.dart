@@ -7,7 +7,7 @@ part of 'alarm_collection_notifier.dart';
 // **************************************************************************
 
 String _$alarmCollectionNotifierHash() =>
-    r'c53e32a59ad858a1f208929833bf6ce1edd7389f';
+    r'50861de91e8e7c92b4adfa610bf9264cf60a5024';
 
 /// Phase 9.5 の指定時刻アラーム集合の唯一の情報源。
 ///

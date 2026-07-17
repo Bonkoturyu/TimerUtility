@@ -344,6 +344,28 @@ AppBar 両方で再利用。
 | `settingsLanguageLabel` | 言語 | Language | ListTile title (言語手動切替) |
 | `settingsLanguageSystem` | システムに合わせる | Follow system | 言語選択ダイアログの先頭オプション (`localeOverride = null`、F-9 の `localeResolutionCallback` に委譲) |
 | `settingsLanguageDialogTitle` | 言語を選択 | Select language | 言語選択ダイアログタイトル |
+| `importedSoundManageTitle` | 取り込み音源 | Imported sounds | 設定画面の管理導線と管理画面 AppBar |
+| `importedSoundManageDescription` | 端末から追加した音源を管理します | Manage sounds added from your device | 設定画面の管理導線 subtitle |
+| `importedSoundAdd` | 端末から追加 | Add from device | 音源追加ボタン |
+| `importedSoundEmpty` | 取り込み音源はありません。<br>右下のボタンから追加できます。 | No imported sounds.<br>Use the button below to add one. | 管理画面の空表示 |
+| `importedSoundLoadError` | 取り込み音源を読み込めませんでした | Could not load imported sounds | 一覧読込失敗表示 |
+| `importedSoundAdded` | {name} を追加しました | Added {name} | 追加成功 SnackBar (`name` = String) |
+| `importedSoundImportError` | 音源を追加できませんでした | Could not add the sound | 追加失敗 SnackBar |
+| `importedSoundDuplicate` | {name} は追加済みです。既存の音源を選択しました。 | {name} has already been added. Using the existing sound. | 重複追加時 SnackBar (`name` = String) |
+| `importedSoundPreview` | 試聴 | Preview | 試聴ボタン tooltip |
+| `importedSoundPreviewError` | 音源を再生できませんでした | Could not play the sound | 試聴失敗 SnackBar |
+| `importedSoundRename` | 名前を変更 | Rename | 名前変更ボタン tooltip |
+| `importedSoundRenameTitle` | 音源の名前を変更 | Rename sound | 名前変更ダイアログタイトル |
+| `importedSoundNameLabel` | 名前 | Name | 名前入力欄ラベル |
+| `importedSoundNameRequired` | 名前を入力してください | Enter a name | 空の名前に対する入力エラー |
+| `importedSoundRenameError` | 名前を変更できませんでした | Could not rename the sound | 名前変更失敗 SnackBar |
+| `importedSoundDelete` | 削除 | Delete | 削除ボタン tooltip |
+| `importedSoundDeleteTitle` | この音源を削除しますか？ | Delete this sound? | 削除確認ダイアログタイトル |
+| `importedSoundDeleteDescription` | 使用中のタイマー、アラーム、プリセット、既定音源はデフォルト音へ変更されます。 | Timers, alarms, presets, and the default sound using it will change to the default sound. | 削除確認ダイアログ本文 |
+| `importedSoundDeleted` | 音源を削除しました | Sound deleted | 削除成功 SnackBar |
+| `importedSoundDeleteError` | 音源を削除できませんでした | Could not delete the sound | 削除失敗 SnackBar |
+| `importedSoundSave` | 保存 | Save | 名前変更ダイアログの確定ボタン |
+| `importedSoundCancel` | キャンセル | Cancel | 名前変更・削除確認の取消ボタン |
 
 > 個別言語のラベル (日本語 / English / 简体中文 / 繁體中文 / 한국어) は ARB
 > には個別キーを持たず、`SettingsScreen` 内の const Map `_languageDisplayNames`

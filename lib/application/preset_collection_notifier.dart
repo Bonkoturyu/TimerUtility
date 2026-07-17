@@ -4,12 +4,14 @@ import 'package:clock/clock.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../domain/timer/alarm_sound_catalog.dart';
 import '../domain/timer/preset.dart';
 import '../domain/timer/preset_collection.dart';
 import '../domain/timer/preset_exceptions.dart';
 import '../domain/timer/preset_service.dart';
 import '../domain/timer/preset_templates.dart';
 import 'clock_provider.dart';
+import 'imported_sound_mutation_coordinator.dart';
 import 'preset_repository_provider.dart';
 
 part 'preset_collection_notifier.g.dart';
@@ -49,6 +51,7 @@ class ReplaceTemplateResult {
 class PresetCollectionNotifier extends _$PresetCollectionNotifier {
   PresetService? _service;
   String Function()? _idGenerator;
+  final Set<String> _deletedSoundIds = <String>{};
 
   @override
   PresetCollection build() {
@@ -76,7 +79,27 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
     }
     // Double-check: state may have been populated while findAll() awaited.
     if (!state.isEmpty) return;
-    state = PresetCollection.fromList(persisted);
+    state = PresetCollection.fromList(
+      persisted.map(_withDeletedSoundFallback).toList(growable: false),
+    );
+  }
+
+  /// Mirrors a successful DB-level imported-sound deletion in memory only.
+  void reconcileDeletedSound(String soundId) {
+    _deletedSoundIds.add(soundId);
+    ref.read(importedSoundDeletionRegistryProvider).markDeleted(soundId);
+    state = PresetCollection.fromList(
+      state.all.map(_withDeletedSoundFallback).toList(growable: false),
+    );
+  }
+
+  Preset _withDeletedSoundFallback(Preset preset) {
+    return (_deletedSoundIds.contains(preset.soundId) ||
+            ref
+                .read(importedSoundDeletionRegistryProvider)
+                .isDeleted(preset.soundId))
+        ? preset.copyWith(soundId: AlarmSoundCatalog.defaultSound.id)
+        : preset;
   }
 
   /// Add a brand-new preset. Returns the created entity so callers
@@ -89,10 +112,12 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
     required Duration duration,
     String? soundId,
   }) {
-    final Preset created = _serviceInstance().create(
-      label: label,
-      duration: duration,
-      soundId: soundId,
+    final Preset created = _withDeletedSoundFallback(
+      _serviceInstance().create(
+        label: label,
+        duration: duration,
+        soundId: soundId,
+      ),
     );
     state = state.add(created);
     _persist(created);
@@ -109,11 +134,13 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
     Object? soundId = _kSentinel,
   }) {
     final Preset existing = _require(id);
-    final Preset next = _serviceInstance().update(
-      existing,
-      label: label,
-      duration: duration,
-      soundId: soundId,
+    final Preset next = _withDeletedSoundFallback(
+      _serviceInstance().update(
+        existing,
+        label: label,
+        duration: duration,
+        soundId: soundId,
+      ),
     );
     state = state.update(next);
     _persist(next);
@@ -125,7 +152,11 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
     final Preset? existing = state.findById(id);
     if (existing == null) return;
     state = state.remove(id);
-    unawaited(ref.read(presetRepositoryProvider).delete(id));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final repository = ref.read(presetRepositoryProvider);
+    unawaited(coordinator.run(() => repository.delete(id)));
   }
 
   /// Apply a profile from `PresetTemplates`. See [ReplaceTemplateMode]
@@ -160,7 +191,26 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
             )
             .toList(growable: false);
         state = PresetCollection.fromList(next);
-        await ref.read(presetRepositoryProvider).replaceAll(next);
+        final ImportedSoundMutationCoordinator coordinator = ref.read(
+          importedSoundMutationCoordinatorProvider,
+        );
+        final ImportedSoundDeletionRegistry registry = ref.read(
+          importedSoundDeletionRegistryProvider,
+        );
+        final repository = ref.read(presetRepositoryProvider);
+        await coordinator.run(() {
+          final List<Preset> normalized = next
+              .map((Preset preset) {
+                final String? soundId = registry.normalizeDeletedReference(
+                  preset.soundId,
+                );
+                return soundId == preset.soundId
+                    ? preset
+                    : preset.copyWith(soundId: soundId);
+              })
+              .toList(growable: false);
+          return repository.replaceAll(normalized);
+        });
         return const ReplaceTemplateResult(discardedCount: 0);
       case ReplaceTemplateMode.append:
         final int slots = PresetCollection.maxSize - state.size;
@@ -216,7 +266,24 @@ class PresetCollectionNotifier extends _$PresetCollectionNotifier {
   }
 
   void _persist(Preset entity) {
-    unawaited(ref.read(presetRepositoryProvider).upsert(entity));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final ImportedSoundDeletionRegistry registry = ref.read(
+      importedSoundDeletionRegistryProvider,
+    );
+    final repository = ref.read(presetRepositoryProvider);
+    unawaited(
+      coordinator.run(() {
+        final String? soundId = registry.normalizeDeletedReference(
+          entity.soundId,
+        );
+        final Preset normalized = soundId == entity.soundId
+            ? entity
+            : entity.copyWith(soundId: soundId);
+        return repository.upsert(normalized);
+      }),
+    );
   }
 
   /// Sentinel that mirrors `PresetService.update`'s "omitted vs

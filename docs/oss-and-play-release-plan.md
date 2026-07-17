@@ -1,7 +1,7 @@
 # TimerUtility OSS 公開 → Play Store 提出 実装計画
 
 作成日: 2026-05-16
-状態: 承認済 / 実態同期済 (2026-06-19)
+状態: 承認済 / Phase 13 先行方針へ同期済 (2026-07-16)
 関連: [docs/oss-publishing-notes.md](oss-publishing-notes.md) (公開可否・特許リスク監査) / [BACKLOG.md](../BACKLOG.md) (Phase 11 残タスク) / [tasklist.md](../tasklist.md)
 
 ## Context
@@ -11,8 +11,9 @@ TimerUtility (Flutter / Android 16 / Pixel 6a 主ターゲット) は、コア�
 完了済み。Play Store 提出準備 (Phase 11.9 γ) は、Privacy Policy 公開、ja/en の
 ストア素材、release signing 配線、version bump (`1.0.0+2`)、upload keystore
 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了している。
-現在の残作業は Play Console 実画面での Store listing / Data Safety 確定と、
-必要に応じた bundletool / Pixel 6a install 確認。
+残作業は Play Console 実画面での Store listing / Data Safety 確定と、必要に応じた
+bundletool / Pixel 6a install 確認だが、2026-07-16 のユーザー判断で一時保留した。
+現行 `1.0.0+2` は `release/1.0.0` に保持し、Phase 13 は別 feature branch で先行する。
 
 [docs/oss-publishing-notes.md](oss-publishing-notes.md) (2026-05-02) で OSS 公開可・特許リスクなしと監査済。本計画策定セッション (2026-05-16) のリポジトリ実態確認結果:
 
@@ -31,6 +32,7 @@ bundletool / Pixel 6a install 確認のみ進行中、Phase 11.10 は未着手�
 | 項目 | 確定値 |
 | --- | --- |
 | 公開順 | OSS Public 化 → Play 提出 |
+| 開発順（2026-07-16変更） | Phase 13 を先行。Play 提出は `release/1.0.0` から再開 |
 | 署名 | 新規 upload keystore + Play App Signing 加入 |
 | OSS 公開時のアイコン | デフォルト Flutter ロゴのまま |
 | プライバシーポリシー | 同一リポ GitHub Pages (`docs/` 配下) |

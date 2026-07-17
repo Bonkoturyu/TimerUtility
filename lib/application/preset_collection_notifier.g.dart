@@ -7,7 +7,7 @@ part of 'preset_collection_notifier.dart';
 // **************************************************************************
 
 String _$presetCollectionNotifierHash() =>
-    r'dc9c6c9e51a1a5bff244c80699aa378c2b003c31';
+    r'6c7dfb9192be43c65f1e5ccec280c317c0bf1a12';
 
 /// Phase 9 single source of truth for every saved preset.
 ///

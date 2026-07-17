@@ -6,8 +6,9 @@ import '../../application/diagnostic_export_controller.dart';
 import '../../application/diagnostic_settings_notifier.dart';
 import '../../application/settings_notifier.dart';
 import '../../l10n/app_localizations.dart';
-import '../widgets/duration_picker.dart' show soundDisplayName;
+import '../widgets/alarm_sound_name.dart';
 import '../widgets/sound_select_sheet.dart';
+import 'imported_sound_manage_screen.dart';
 import 'licenses_screen.dart';
 
 /// 言語名は **そのロケール自身の表記** で出すのが多言語アプリの慣習
@@ -119,8 +120,17 @@ class SettingsScreen extends ConsumerWidget {
               key: const Key('settings_sound_tile'),
               leading: const Icon(Icons.music_note_outlined),
               title: Text(l.settingsDefaultAlarmSoundLabel),
-              subtitle: Text(soundDisplayName(l, settings.defaultAlarmSoundId)),
+              subtitle: AlarmSoundName(soundId: settings.defaultAlarmSoundId),
               onTap: () => _onSoundTap(context, ref, settings),
+            ),
+            ListTile(
+              key: const Key('settings_imported_sounds_tile'),
+              leading: const Icon(Icons.library_music_outlined),
+              title: Text(l.importedSoundManageTitle),
+              subtitle: Text(l.importedSoundManageDescription),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () =>
+                  context.push(ImportedSoundManageScreen.routeLocation),
             ),
             _SectionHeader(label: l.settingsSectionAbout),
             ListTile(

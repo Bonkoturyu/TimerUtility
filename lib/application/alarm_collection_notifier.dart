@@ -9,11 +9,13 @@ import '../domain/alarm/exceptions.dart';
 import '../domain/alarm/time_of_day_value.dart';
 import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/permission_manager.dart';
+import '../domain/timer/alarm_sound_catalog.dart';
 import '../domain/timer/notification_id_generator.dart';
 import 'alarm_repository_provider.dart';
 import 'alarm_service_provider.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
+import 'imported_sound_mutation_coordinator.dart';
 import 'notification_scheduler_provider.dart';
 import 'notification_strings_provider.dart';
 import 'permission_notifier.dart';
@@ -49,6 +51,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
   static const int maxSize = 50;
 
   static const Uuid _uuid = Uuid();
+  final Set<String> _deletedSoundIds = <String>{};
 
   @override
   List<AlarmEntity> build() {
@@ -83,7 +86,8 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     final DateTime now = ref.read(clockProvider).now();
     final List<AlarmEntity> reconciled = <AlarmEntity>[];
     final List<AlarmEntity> pastDueOnce = <AlarmEntity>[];
-    for (final AlarmEntity a in persisted) {
+    for (final AlarmEntity persistedAlarm in persisted) {
+      final AlarmEntity a = _withDeletedSoundFallback(persistedAlarm);
       if (a.enabled && _isPastDueOnce(a, now)) {
         final AlarmEntity disabled = a.copyWith(enabled: false);
         reconciled.add(disabled);
@@ -166,6 +170,24 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
         );
   }
 
+  /// Mirrors a successful DB-level imported-sound deletion in memory only.
+  void reconcileDeletedSound(String soundId) {
+    _deletedSoundIds.add(soundId);
+    ref.read(importedSoundDeletionRegistryProvider).markDeleted(soundId);
+    state = List<AlarmEntity>.unmodifiable(
+      state.map(_withDeletedSoundFallback),
+    );
+  }
+
+  AlarmEntity _withDeletedSoundFallback(AlarmEntity alarm) {
+    return (_deletedSoundIds.contains(alarm.soundId) ||
+            ref
+                .read(importedSoundDeletionRegistryProvider)
+                .isDeleted(alarm.soundId))
+        ? alarm.copyWith(soundId: AlarmSoundCatalog.defaultSound.id)
+        : alarm;
+  }
+
   /// 新規アラームを作成して永続化、`enabled = true` なら schedule する。
   ///
   /// 戻り値は確定済みの [AlarmEntity] (`id` / `notificationId` / `createdAt`
@@ -186,16 +208,18 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     _validateRepeat(repeat);
 
     final String id = _uuid.v4();
-    final AlarmEntity entity = AlarmEntity(
-      id: id,
-      notificationId: const NotificationIdGenerator().idFor(id),
-      label: label,
-      targetTime: targetTime,
-      repeat: repeat,
-      snoozeMinutes: snoozeMinutes,
-      enabled: enabled,
-      soundId: soundId,
-      createdAt: ref.read(clockProvider).now(),
+    final AlarmEntity entity = _withDeletedSoundFallback(
+      AlarmEntity(
+        id: id,
+        notificationId: const NotificationIdGenerator().idFor(id),
+        label: label,
+        targetTime: targetTime,
+        repeat: repeat,
+        snoozeMinutes: snoozeMinutes,
+        enabled: enabled,
+        soundId: soundId,
+        createdAt: ref.read(clockProvider).now(),
+      ),
     );
 
     state = List<AlarmEntity>.unmodifiable(<AlarmEntity>[...state, entity]);
@@ -219,10 +243,12 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
     _validateSnoozeMinutes(updated.snoozeMinutes);
     _validateRepeat(updated.repeat);
 
-    final AlarmEntity merged = updated.copyWith(
-      // Identity 系は元の値を保持する。UI で書き換えても無視。
-      notificationId: state[index].notificationId,
-      createdAt: state[index].createdAt,
+    final AlarmEntity merged = _withDeletedSoundFallback(
+      updated.copyWith(
+        // Identity 系は元の値を保持する。UI で書き換えても無視。
+        notificationId: state[index].notificationId,
+        createdAt: state[index].createdAt,
+      ),
     );
     final List<AlarmEntity> next = List<AlarmEntity>.from(state)
       ..[index] = merged;
@@ -262,7 +288,11 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
       ..removeAt(index);
     state = List<AlarmEntity>.unmodifiable(next);
     _cancel(removed.notificationId);
-    unawaited(ref.read(alarmRepositoryProvider).delete(id));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final repository = ref.read(alarmRepositoryProvider);
+    unawaited(coordinator.run(() => repository.delete(id)));
     _logAction(id, TimerActionKind.alarmDelete);
   }
 
@@ -313,7 +343,24 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
   // ---------------------------------------------------------------------
 
   void _persist(AlarmEntity entity) {
-    unawaited(ref.read(alarmRepositoryProvider).upsert(entity));
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final ImportedSoundDeletionRegistry registry = ref.read(
+      importedSoundDeletionRegistryProvider,
+    );
+    final repository = ref.read(alarmRepositoryProvider);
+    unawaited(
+      coordinator.run(() {
+        final String? soundId = registry.normalizeDeletedReference(
+          entity.soundId,
+        );
+        final AlarmEntity normalized = soundId == entity.soundId
+            ? entity
+            : entity.copyWith(soundId: soundId);
+        return repository.upsert(normalized);
+      }),
+    );
   }
 
   void _scheduleAlarm(AlarmEntity entity) {

@@ -19,9 +19,11 @@
 
 ## 進行中
 
-### Phase 11.9 サブ PR γ
+### 保留中 — Phase 11.9 サブ PR γ
 
-Play Store 提出準備を進行中。
+Play Store 提出準備は、現行 `main` のコミット `3ae2b95` を
+`release/1.0.0` として remote に保持した状態で一時保留。初回提出を再開する際は
+このブランチの `1.0.0+2` を基点とし、Phase 13 の変更を混入させない。
 
 - [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
 - [ ] Play Console 実画面での Store listing / Data Safety 申告の確定
@@ -35,13 +37,21 @@ Play Store 提出準備を進行中。
 - [x] upload keystore 実体生成 + `android/key.properties` 作成（`android/key.properties` は gitignore 済み。`storeFile` は ASCII パスへ配置）
 - [x] 署名付き AAB ビルド（`flutter build appbundle --release` 成功、`build/app/outputs/bundle/release/app-release.aab`、51.4 MB）
 
-### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
+### Phase 13 — ユーザー取り込み音源（完了）
 
-- [ ] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
+- [x] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
   [音源仕様](docs/assets-spec.md) を実装タスクへ分解する
-- [ ] Domain / Application の利用枠・検証・Repository 境界を設計する
-- [ ] Android ファイル選択、内部コピー、メタデータ永続化、参照置換を実装する
-- [ ] 音源の追加・試聴・改名・削除 UI と自動テスト・Pixel 6a 実機検証を行う
+- [x] **Phase 13-A**: Domain の Entity / 利用枠 / 検証 / Repository 境界と
+  Unit Test を実装する
+- [x] **Phase 13-B**: Drift schema v7、取り込み音源 Repository、migration test
+- [x] **Phase 13-C**: システムファイル選択、形式・実デコード・SHA-256・空き容量検証、内部コピー
+- [x] **Phase 13-D/E**: 同梱・取り込み音源の再生解決、欠損フォールバック、参照一括置換
+- [x] Android ファイル選択、内部コピー、メタデータ永続化、参照置換を実装する
+- [x] **Phase 13-F/G**: 音源の追加・試聴・改名・削除 UI と自動テスト・Pixel 6a 実機検証
+  - 設定から独立した取り込み音源管理画面へ遷移し、一覧・試聴・改名・削除確認を提供する。
+  - 音源選択 sheet に取り込み済み音源と「端末から追加」を表示し、追加成功時はその音源を選択する。
+  - Application 層に一覧・追加・改名の操作を集約し、既存の削除 Saga と同じ FIFO 境界を使う。
+  - Widget Test、静的解析、全テスト後に接続済み Pixel 6a で MP3 / Ogg Vorbis の追加・試聴と既定音源の参照置換を確認済み。WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ。
 
 ### 直近完了・マージ済み
 
@@ -118,8 +128,7 @@ Play Store 提出準備を進行中。
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-15（PR #111〜#114 の完了実態を同期。進行中は Play Console
-実画面での確定、次候補はユーザー取り込み音源）
+最終更新日: 2026-07-17（Phase 13-F/G の管理 UI、自動テスト、Pixel 6a 実機検証を完了）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・
 スプラッシュ生成とストア用 icon / Feature Graphic まで完了し、Pixel 6a

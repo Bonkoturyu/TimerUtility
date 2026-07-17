@@ -17,6 +17,62 @@
 
 ---
 
+## Phase 13 先行と初回リリース候補の分離 (2026-07-16)
+
+Play Store 提出は一時保留し、ユーザー取り込み音源 Phase 13 を先行する方針を
+ユーザー判断で確定した。現行 `main` のコミット `3ae2b95` から次の2ブランチを作成し、
+いずれも `origin` へ push 済み。
+
+- `release/1.0.0`: 初回提出候補 `1.0.0+2` のソースを保持
+- `feature/phase-13-user-imported-sounds`: Phase 13 開発用（現在の作業ブランチ）
+
+Phase 13 の変更は初回提出候補へ混入させず、必要な変更だけを後から `main` へ統合できる。
+Phase 13 は Domain 基盤、Drift 永続化、OS 取り込み、再生統合、参照置換、UI、実機検証の
+順に分割して進める。
+
+Phase 13-A / B では、URI・絶対パスを持たない `ImportedSound`、利用枠ポリシー、
+件数・容量・時間・SHA-256重複・空き容量検証、Repository portを追加した。続いて
+Drift schema v7に `imported_sounds` を追加し、Mapper、Repository、v6→v7 migrationを
+実装した。`flutter analyze --fatal-infos` は0件、全テストは717 passed / 1 skipped。
+
+Phase 13-Cでは、`file_selector` によるOS標準ピッカー、app-private stagingへの
+ストリームコピーとSHA-256、ヘッダー形式判定、`audioplayers`による実デコード・
+再生時間取得、保存先volumeの空き容量取得を実装した。Application serviceが
+検証後のファイル確定とDB upsertを調停し、重複・容量不足・DB失敗時は一時／確定
+ファイルを補償削除する。個別12テストと `flutter analyze --fatal-infos` は成功。
+全テストは734 passed / 1 skipped、`flutter build apk --debug` も成功した。
+
+Phase 13-D/Eでは、取り込み音源IDをInfrastructure内でapp-private絶対パスへ解決し、
+同梱defaultと選択音源を独立した `AudioPlayer` slotで準備するhandoff再生を追加した。
+cold launch時はTimer／Alarm Repositoryから保存済みsoundIdを回収し、未知ID、DB／
+ファイル欠損、デコード失敗、1000 ms期限超過では、3200 ms境界を動かさず同梱defaultへ
+fallbackする。通知IDのraw lookupは音源選択timeout後も継続し、再起動前に永続化したIDを
+cancelする。境界後の再検索は行わず、準備済みslotだけを再生する。
+
+削除はSharedPreferences、物理ファイル、Driftをまたぐため、`.deleting` quarantineを
+用いたSagaとした。順序はquarantine→DB transaction→設定→purgeとし、DB失敗時は
+ファイルを補償復元、設定失敗は次回restoreで永続修復、purge失敗は再削除または起動時
+recoveryへ委ねる。Timer／Alarm／Presetの全writeと設定変更・音源削除は共有FIFOで
+直列化し、同一ID削除をcoalesce、queued writeは削除tombstoneで実行時正規化する。
+recoveryは1件の失敗で後続を止めない。削除再実行と欠損ファイルは冪等。
+
+`flutter analyze --fatal-infos` は0件、全テストは786 passed / 1 skipped、
+`flutter build apk --debug` は成功した。Phase 13-A〜Eを完了し、次はF/Gの
+追加・試聴・改名・削除UIとPixel 6a実機検証。
+
+Phase 13-F/Gでは、設定から取り込み音源管理画面へ遷移し、OSピッカーで選択後、
+確定前の試聴・追加／取消、一覧での試聴停止・改名・削除確認を行うUIを追加した。
+同梱音源と取り込み音源の表示名は共通Widgetで解決し、削除時は既定音源を含む
+既存参照を同梱defaultへ置換する。
+
+`flutter analyze` は0件、対象Widget Test 9件と全テスト802件が成功（1 skipped）。
+Pixel 6a / Android 17 (API 37) ではMP3とOgg Vorbisを選択し、確定前／管理画面の
+試聴でアプリのAudioTrackがactiveになること、登録後の形式・長さ表示、改名、削除、
+既定音源のdefault置換を確認した。WAV / M4A / AACは実機fixture未入手のため、
+形式・デコード経路の自動テストのみ。端末へコピーした試験音源は検証後に削除した。
+
+---
+
 ## ユーザー取り込み音源仕様 + ADR 0006 (2026-07-15)
 
 PR #114 (commit `0d962c1`) で、端末ストレージから任意の音源を取り込む将来機能の
@@ -3105,8 +3161,7 @@ OSS/Play 計画書を現在の実態へ同期した。
 
 ---
 
-最終更新日: 2026-07-15（PR #111 定間隔通知、PR #112 Issue #86、
-PR #114 ユーザー取り込み音源仕様を追記）
+最終更新日: 2026-07-17（Phase 13-F/G の管理 UI・自動テスト・Pixel 6a 実機検証を追記）
 
 過去の更新:
 
