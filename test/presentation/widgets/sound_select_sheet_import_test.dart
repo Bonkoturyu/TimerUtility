@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,9 +21,10 @@ class _PreparedSound extends Fake implements PreparedImportedSound {
 }
 
 class _ImportController extends ImportedSoundManagementController {
-  _ImportController(this.prepareResult);
+  _ImportController(this.prepareResult, {this.confirmGate});
 
   final PrepareImportedSoundResult? prepareResult;
+  final Completer<void>? confirmGate;
   int confirmCalls = 0;
   int cancelCalls = 0;
 
@@ -34,6 +37,7 @@ class _ImportController extends ImportedSoundManagementController {
   @override
   Future<ImportedSound> confirmImport(PreparedImportedSound prepared) async {
     confirmCalls++;
+    await confirmGate?.future;
     return prepared.candidate;
   }
 
@@ -175,6 +179,27 @@ void main() {
     expect(controller.confirmCalls, 1);
     expect(player.stopCalls, greaterThanOrEqualTo(1));
     expect(find.text('candidate'), findsOneWidget);
+  });
+
+  testWidgets('確定処理中にsheetを閉じてもstagingを取消しない', (WidgetTester tester) async {
+    final Completer<void> confirmGate = Completer<void>();
+    final _ImportController controller = _ImportController(
+      _PreparedSound(_sound()),
+      confirmGate: confirmGate,
+    );
+    final _PreviewPlayer player = _PreviewPlayer();
+    await tester.pumpWidget(_harness(controller, player));
+    await _open(tester);
+
+    await tester.tap(find.byKey(const Key('sound_import_candidate_confirm')));
+    await tester.pump();
+    Navigator.of(tester.element(find.byType(SoundSelectSheet))).pop();
+    await tester.pumpAndSettle();
+
+    expect(controller.confirmCalls, 1);
+    expect(controller.cancelCalls, 0);
+    confirmGate.complete();
+    await tester.pump();
   });
 
   testWidgets('候補のキャンセルは試聴を停止してstagingを破棄する', (WidgetTester tester) async {

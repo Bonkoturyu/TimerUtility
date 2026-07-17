@@ -42,12 +42,8 @@ class ImportedSoundManagementController
   }
 
   Future<PrepareImportedSoundResult?> prepareImport() => ref
-      .read(importedSoundMutationCoordinatorProvider)
-      .run(
-        () => ref
-            .read(importedSoundImportServiceProvider)
-            .prepare(ImportedSoundPolicy.standard),
-      );
+      .read(importedSoundImportServiceProvider)
+      .prepare(ImportedSoundPolicy.standard);
 
   Future<ImportedSound> confirmImport(PreparedImportedSound prepared) async {
     final ImportedSound imported = await ref

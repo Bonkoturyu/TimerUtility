@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/domain/sound/imported_sound_exceptions.dart';
 import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/infrastructure/sound/app_private_imported_sound_file_store.dart';
 import 'package:timer_utility/infrastructure/sound/imported_sound_storage_layout.dart';
+
+class _MockIOSink extends Mock implements IOSink {}
 
 void main() {
   late Directory sandbox;
@@ -56,6 +59,42 @@ void main() {
       throwsA(isA<ImportedSoundReadException>()),
     );
 
+    expect(await (await layout.stagedFile('stage-1')).exists(), isFalse);
+  });
+
+  test('close失敗時も元例外を保持して一時ファイルを削除する', () async {
+    final _MockIOSink output = _MockIOSink();
+    int closeCalls = 0;
+    when(() => output.flush()).thenAnswer((_) async {});
+    when(() => output.close()).thenAnswer((_) async {
+      closeCalls++;
+      throw StateError(closeCalls == 1 ? 'primary close' : 'cleanup close');
+    });
+    final AppPrivateImportedSoundFileStore failingStore =
+        AppPrivateImportedSoundFileStore(
+          layout: layout,
+          tokenGenerator: () => 'stage-1',
+          outputSinkFactory: (File file) {
+            file.createSync(recursive: true);
+            return output;
+          },
+        );
+
+    await expectLater(
+      () => failingStore.stage(
+        source: Stream<List<int>>.value(<int>[1]),
+        expectedByteLength: 1,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (StateError error) => error.message,
+          'message',
+          'primary close',
+        ),
+      ),
+    );
+
+    expect(closeCalls, 2);
     expect(await (await layout.stagedFile('stage-1')).exists(), isFalse);
   });
 

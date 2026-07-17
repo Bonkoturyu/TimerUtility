@@ -31,6 +31,20 @@ void main() {
   });
 
   group('AudioplayersImportedSoundProbe', () {
+    for (final int secondByte in <int>[0xf0, 0xf1, 0xf8, 0xf9]) {
+      test(
+        'ADTS syncword 0x${secondByte.toRadixString(16)}をAACと判定する',
+        () async {
+          final result = await probeWith(<int>[
+            0xff,
+            secondByte,
+          ]).probe('token');
+
+          expect(result.format, ImportedSoundFormat.aac);
+        },
+      );
+    }
+
     test('MP3ヘッダーと実デコード結果を返す', () async {
       final result = await probeWith(<int>[0x49, 0x44, 0x33]).probe('token');
 

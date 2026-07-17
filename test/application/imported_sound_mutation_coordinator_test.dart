@@ -1,10 +1,64 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/application/imported_sound_import_service.dart';
+import 'package:timer_utility/application/imported_sound_import_service_provider.dart';
+import 'package:timer_utility/application/imported_sound_management_controller.dart';
 import 'package:timer_utility/application/imported_sound_mutation_coordinator.dart';
+import 'package:timer_utility/application/imported_sound_repository_provider.dart';
+import 'package:timer_utility/domain/ports/imported_sound_repository.dart';
+import 'package:timer_utility/domain/sound/imported_sound.dart';
+import 'package:timer_utility/domain/sound/imported_sound_policy.dart';
+
+class _MockImportedSoundRepository extends Mock
+    implements ImportedSoundRepository {}
+
+class _MockImportedSoundImportService extends Mock
+    implements ImportedSoundImportService {}
 
 void main() {
   group('ImportedSoundMutationCoordinator', () {
+    test('ファイル選択待機中は後続mutationを妨げない', () async {
+      final _MockImportedSoundRepository repository =
+          _MockImportedSoundRepository();
+      final _MockImportedSoundImportService importService =
+          _MockImportedSoundImportService();
+      final Completer<PrepareImportedSoundResult?> prepareGate =
+          Completer<PrepareImportedSoundResult?>();
+      final ImportedSoundMutationCoordinator coordinator =
+          ImportedSoundMutationCoordinator();
+      when(repository.findAll).thenAnswer((_) async => const <ImportedSound>[]);
+      when(
+        () => importService.prepare(ImportedSoundPolicy.standard),
+      ).thenAnswer((_) => prepareGate.future);
+      final ProviderContainer container = ProviderContainer(
+        overrides: <Override>[
+          importedSoundRepositoryProvider.overrideWithValue(repository),
+          importedSoundImportServiceProvider.overrideWithValue(importService),
+          importedSoundMutationCoordinatorProvider.overrideWithValue(
+            coordinator,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(importedSoundManagementControllerProvider.future);
+
+      final Future<PrepareImportedSoundResult?> preparing = container
+          .read(importedSoundManagementControllerProvider.notifier)
+          .prepareImport();
+      bool mutationStarted = false;
+      final Future<void> mutation = coordinator.run(() async {
+        mutationStarted = true;
+      });
+
+      expect(mutationStarted, isTrue);
+      prepareGate.complete(null);
+      expect(await preparing, isNull);
+      await mutation;
+    });
+
     test('操作を登録順に1件ずつ実行する', () async {
       final ImportedSoundMutationCoordinator coordinator =
           ImportedSoundMutationCoordinator();

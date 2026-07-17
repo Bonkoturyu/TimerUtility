@@ -70,9 +70,7 @@ class AudioplayersImportedSoundProbe implements ImportedSoundProbe {
   ImportedSoundFormat _detectFormat(List<int> bytes) {
     if (_startsWith(bytes, <int>[0x49, 0x44, 0x33]) ||
         (bytes.length >= 2 && bytes[0] == 0xff && (bytes[1] & 0xe0) == 0xe0)) {
-      if (bytes.length >= 2 &&
-          bytes[0] == 0xff &&
-          (bytes[1] == 0xf1 || bytes[1] == 0xf9)) {
+      if (bytes.length >= 2 && bytes[0] == 0xff && (bytes[1] & 0xf6) == 0xf0) {
         return ImportedSoundFormat.aac;
       }
       return ImportedSoundFormat.mp3;

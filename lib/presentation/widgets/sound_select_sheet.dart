@@ -59,7 +59,9 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
   void dispose() {
     unawaited(_stopPreviewBestEffort());
     final PreparedImportedSound? prepared = _prepared;
-    if (prepared != null) unawaited(_controller.cancelImport(prepared));
+    if (prepared != null && !_busy) {
+      unawaited(_controller.cancelImport(prepared));
+    }
     super.dispose();
   }
 

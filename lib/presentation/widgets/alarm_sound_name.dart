@@ -20,17 +20,24 @@ class AlarmSoundName extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppLocalizations l = AppLocalizations.of(context);
-    final List<ImportedSound> importedSounds =
-        ref.watch(importedSoundManagementControllerProvider).valueOrNull ??
-        const <ImportedSound>[];
+    final AsyncValue<List<ImportedSound>> importedSoundsState = ref.watch(
+      importedSoundManagementControllerProvider,
+    );
     final String id = soundId ?? AlarmSoundCatalog.defaultSound.id;
 
     if (AlarmSoundCatalog.findById(id) != null) {
       return Text(soundDisplayName(l, id));
     }
-    for (final ImportedSound sound in importedSounds) {
-      if (sound.id == id) return Text(sound.displayName);
-    }
-    return Text(soundDisplayName(l, AlarmSoundCatalog.defaultSound.id));
+    return importedSoundsState.when(
+      data: (List<ImportedSound> importedSounds) {
+        for (final ImportedSound sound in importedSounds) {
+          if (sound.id == id) return Text(sound.displayName);
+        }
+        return Text(soundDisplayName(l, AlarmSoundCatalog.defaultSound.id));
+      },
+      loading: () => const Text('...'),
+      error: (Object error, StackTrace stackTrace) =>
+          Text(soundDisplayName(l, AlarmSoundCatalog.defaultSound.id)),
+    );
   }
 }

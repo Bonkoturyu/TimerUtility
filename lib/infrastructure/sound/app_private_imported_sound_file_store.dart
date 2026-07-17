@@ -11,18 +11,23 @@ import 'imported_sound_file_extension.dart';
 import 'imported_sound_storage_layout.dart';
 
 typedef ImportedSoundTokenGenerator = String Function();
+typedef ImportedSoundOutputSinkFactory = IOSink Function(File file);
 
 String _newImportedSoundToken() => const Uuid().v4();
+IOSink _openImportedSoundOutput(File file) => file.openWrite();
 
 class AppPrivateImportedSoundFileStore implements ImportedSoundFileStore {
   AppPrivateImportedSoundFileStore({
     ImportedSoundStorageLayout? layout,
     ImportedSoundTokenGenerator? tokenGenerator,
+    ImportedSoundOutputSinkFactory? outputSinkFactory,
   }) : _layout = layout ?? ImportedSoundStorageLayout(),
-       _tokenGenerator = tokenGenerator ?? _newImportedSoundToken;
+       _tokenGenerator = tokenGenerator ?? _newImportedSoundToken,
+       _outputSinkFactory = outputSinkFactory ?? _openImportedSoundOutput;
 
   final ImportedSoundStorageLayout _layout;
   final ImportedSoundTokenGenerator _tokenGenerator;
+  final ImportedSoundOutputSinkFactory _outputSinkFactory;
 
   @override
   Future<StagedImportedSoundFile> stage({
@@ -35,12 +40,14 @@ class AppPrivateImportedSoundFileStore implements ImportedSoundFileStore {
     final String token = _tokenGenerator();
     final File staged = await _layout.stagedFile(token);
     await staged.parent.create(recursive: true);
-    final IOSink output = staged.openWrite();
+    final IOSink output = _outputSinkFactory(staged);
     final List<Digest> digests = <Digest>[];
     final ByteConversionSink hashSink = sha256.startChunkedConversion(
       ChunkedConversionSink<Digest>.withCallback(digests.addAll),
     );
     int actualByteLength = 0;
+    bool outputClosed = false;
+    bool hashSinkClosed = false;
     try {
       await for (final List<int> chunk in source) {
         actualByteLength += chunk.length;
@@ -52,7 +59,9 @@ class AppPrivateImportedSoundFileStore implements ImportedSoundFileStore {
       }
       await output.flush();
       await output.close();
+      outputClosed = true;
       hashSink.close();
+      hashSinkClosed = true;
       if (actualByteLength != expectedByteLength || digests.length != 1) {
         throw const ImportedSoundReadException();
       }
@@ -62,9 +71,25 @@ class AppPrivateImportedSoundFileStore implements ImportedSoundFileStore {
         contentHash: digests.single.toString(),
       );
     } catch (_) {
-      await output.close();
-      hashSink.close();
-      if (await staged.exists()) await staged.delete();
+      if (!outputClosed) {
+        try {
+          await output.close();
+        } catch (_) {
+          // Cleanup failure must not mask the original staging failure.
+        }
+      }
+      if (!hashSinkClosed) {
+        try {
+          hashSink.close();
+        } catch (_) {
+          // Cleanup failure must not mask the original staging failure.
+        }
+      }
+      try {
+        if (await staged.exists()) await staged.delete();
+      } catch (_) {
+        // Best-effort cleanup must not mask the original staging failure.
+      }
       rethrow;
     }
   }
