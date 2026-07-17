@@ -27,7 +27,7 @@ final permissionManagerProvider = Provider<PermissionManager>.internal(
 // ignore: unused_element
 typedef PermissionManagerRef = ProviderRef<PermissionManager>;
 String _$permissionNotifierHash() =>
-    r'3309ec928d21410fa81584b00e42272253b57e3d';
+    r'54cc5612f44ebbb60797f25d55f3c038827ac584';
 
 /// Holds the latest known permission state and exposes request actions.
 ///
