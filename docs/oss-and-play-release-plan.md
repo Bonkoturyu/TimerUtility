@@ -26,6 +26,11 @@ TimerUtility (Flutter / Android 16 / Pixel 6a 主ターゲット) は、コア�
 Play Console 実画面での Store listing / Data Safety 確定と、必要に応じた
 bundletool / Pixel 6a install 確認のみ進行中、Phase 11.10 は未着手。
 
+2026-07-24、Google Play Developer 登録完了を機に、Phase 11.10-T2 相当の外部仕様
+裏取り (8 項目) を前倒しで実施済み。結果は「保留論点」セクションと
+[docs/play-store-listing.md §11.2](play-store-listing.md#L382)
+に反映済み。大きな仕様変更・ブロッカーは検出されなかった。
+
 ## 確定方針 (ユーザ承認済)
 
 | 項目 | 確定値 |
@@ -179,9 +184,9 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 
 | # | タスク | 編集対象 | 確認必須 |
 | --- | --- | --- | --- |
-| T1 | Play Console アカウント開設 ($25) + Play App Signing 加入 + アプリ作成 (パッケージ名 = `io.github.bonkoturyu.timer_utility`) | Play Console Web | **必須** |
-| T2 | **WebFetch で公式仕様裏取り** ([CLAUDE.md:25-44](../CLAUDE.md#L25-L44) ソース信用原則): Data Safety フォーム / Play App Signing 加入要件 / Internal Testing 人数・期間 / 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件 / Adaptive Icon monochrome 必須化時期 / 現行要求 target SDK / SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT 事前申請審査の有無 / Pixabay Content License 2024 改定影響 | 読み取りのみ | — |
-| T3 | T2 結果を `docs/play-store-listing.md` に反映、必要なら Phase 11.9 の決定 (targetSdk 固定値・権限申告文言) を差し戻し再修正 | `docs/play-store-listing.md` + 必要時 Native | **必須** |
+| T1 | Play Console アカウント開設 ($25、**2026-07-24 ユーザ実施完了**) + アプリ作成 (パッケージ名 = `io.github.bonkoturyu.timer_utility`)。Play App Signing は aab 初回アップロード時に自動 enroll されるため、能動的な「加入」操作は不要 (T2 参照) | Play Console Web | **必須** |
+| T2 | **WebFetch/WebSearch で公式仕様裏取り** ([CLAUDE.md:25-44](../CLAUDE.md#L25-L44) ソース信用原則) — **✅ 2026-07-24 完了**: Data Safety フォーム / Play App Signing 加入要件 / Internal Testing 人数・期間 / 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件 / Adaptive Icon monochrome 必須化時期 / 現行要求 target SDK / SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT 事前申請審査の有無 / Pixabay Content License 2024 改定影響。結果は「保留論点」セクションと [docs/play-store-listing.md §11.2](play-store-listing.md#L382) 参照 | 読み取りのみ | — |
+| T3 | T2 結果を `docs/play-store-listing.md` に反映 (**✅ 2026-07-24 完了**、§11.2 追記)。大きな乖離なし、Phase 11.9 の決定 (targetSdk / 権限申告文言) の差し戻しは不要と判断 | `docs/play-store-listing.md` + 必要時 Native | **必須** |
 | T4 | [android/app/build.gradle.kts:29-31](../android/app/build.gradle.kts#L29-L31) の `targetSdk = flutter.targetSdkVersion` の実 SDK 版数を確認、Play 要求と乖離があれば明示値固定 | [android/app/build.gradle.kts](../android/app/build.gradle.kts) | **必須** |
 | T5 | aab ビルド → Play Console に手動 upload (Internal Testing track) | — | — |
 | T6 | Internal Testing で 1-3 人 (ユーザ + 親しい人) 配信、最低 3 日動作確認 | — | — |
@@ -227,18 +232,19 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 
 ---
 
-## 保留論点 (Phase 11.10 着手前に裏取り)
+## 保留論点 (Phase 11.10 着手前に裏取り) — 2026-07-24 裏取り完了
 
-CLAUDE.md ソース信用原則に従い、以下は計画段階で断定せず Phase 11.10-T2 で WebFetch:
+CLAUDE.md ソース信用原則に従い WebFetch / WebSearch で確認済み。詳細ソースは
+[docs/play-store-listing.md §11.2](play-store-listing.md#L382)。
 
-1. Data Safety フォームの最新項目構成
-2. Play App Signing の 2026 年加入フロー (新規アプリ強制か任意か)
-3. Internal Testing 人数上限・期間
-4. 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件の Play Console 実画面確認
-5. Adaptive Icon monochrome 必須化時期 (Android 13 themed icon との関係)
-6. 現行 Play 要求 target SDK (Android 14 / 15 / 16 のどれが minimum か)
-7. SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否
-8. Pixabay Content License 2024 改定とアプリ同梱再配布の現行解釈 ([docs/oss-publishing-notes.md:79-81](oss-publishing-notes.md#L79-L81))
+1. ✅ Data Safety フォームの最新項目構成 — データ収集なしのアプリも入力必須。「No」回答 + Privacy Policy URL で「No data collected / No data shared」表示。既存方針のまま提出可
+2. ✅ Play App Signing の 2026 年加入フロー — 新規アプリは aab 初回アップロード時に自動 enroll (quantum-ready hybrid signing)。能動的な「加入」操作は不要
+3. ✅ Internal Testing 人数上限・期間 — 上限 100 人、期間制限の記載なし
+4. ✅ 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件 — 現行値のまま (2023-11 開始 20 人 → 2024-12 に 12 人へ緩和済)。opt-out すると連続日数がリセットされる点に注意
+5. ✅ Adaptive Icon monochrome 必須化時期 — 公式ページ (developer.android.com) では必須ではなく推奨。Android 16 QPR2 以降は未提供でも自動生成。一部ブログの「2025-10-15 必須化」説は公式ページに記載なく却下 (仮説扱い)。本アプリは Phase 11.9-T1/T3 で monochrome 実装済みのため影響なし
+6. ✅ 現行 Play 要求 target SDK — 2025-08-31 以降 API35 以上必須。`flutter.targetSdkVersion` の実値は `FlutterExtension.kt` に `36` とハードコードされておりコード直接確認済み (API36) → クリア
+7. ✅ SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否 — どちらも事前審査ではなく Play Console 上の自己申告 (App content 画面 / Permissions Declaration Form)。restricted permission review 対象は `USE_EXACT_ALARM` のみで、「alarm/timer アプリ」は acceptable use case に明記済み、本アプリは該当
+8. ⚠️ Pixabay Content License 2024 改定とアプリ同梱再配布の現行解釈 ([docs/oss-publishing-notes.md:79-81](oss-publishing-notes.md#L79-L81)) — 「Standalone (単体) 再配布」は禁止だがアプリ内蔵アセットとしてのバンドルは許可範囲という解釈。ただし公式ページ本文は WebFetch が 403 Forbidden で直接取得できず、WebSearch スニペット経由の確認にとどまる (信頼度: 公式ページ本文確認より一段階低い)。公開前に目視で再確認推奨
 
 ---
 
