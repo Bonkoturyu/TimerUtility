@@ -346,22 +346,23 @@ ja / en のみで提出)。
 
 ---
 
-## 11. 未確定項目 (Phase 11.10-T2 で本格裏取り)
+## 11. 外部仕様の確認状況 (2026-07-24 に Phase 11.10-T2 相当を前倒し完了)
 
-[CLAUDE.md](../CLAUDE.md) のソース信用原則に従い、以下は Phase 11.10-T2 で WebFetch
-してから確定:
+[CLAUDE.md](../CLAUDE.md) のソース信用原則に従い、Google Play Developer 登録完了
+(2026-07-24) を機に以下 8 項目を WebFetch / WebSearch で裏取り済み。詳細は §11.2。
+大きな仕様変更・ブロッカーは検出されず、既存の草稿方針のまま提出可と判断。
 
-1. Data Safety フォームの最新項目構成 (2026 年現行)
-2. Play App Signing の 2026 年加入フロー (新規アプリで強制 / 任意)
-3. Internal Testing の人数上限・期間
-4. 新規 Personal developer account 向け Closed Testing 要件の Play Console 実画面確認
-5. Adaptive Icon monochrome layer の必須化時期
-6. 現行 Play 要求 target SDK と Flutter / Gradle の実 targetSdkVersion 解決値の突き合わせ
-7. SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否
-8. Pixabay Content License 2024 改定とアプリ同梱再配布の現行解釈
+1. ✅ Data Safety フォームの最新項目構成 (2026 年現行)
+2. ✅ Play App Signing の 2026 年加入フロー (新規アプリで強制 / 任意)
+3. ✅ Internal Testing の人数上限・期間
+4. ✅ 新規 Personal developer account 向け Closed Testing 要件の Play Console 実画面確認
+5. ✅ Adaptive Icon monochrome layer の必須化時期
+6. ✅ 現行 Play 要求 target SDK と Flutter / Gradle の実 targetSdkVersion 解決値の突き合わせ
+7. ✅ SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否
+8. ⚠️ Pixabay Content License 2024 改定とアプリ同梱再配布の現行解釈 (公式ページ本文取得がブロックされ、スニペット経由の確認にとどまる。公開前に目視再確認推奨)
 
 → これらは [docs/oss-and-play-release-plan.md](oss-and-play-release-plan.md)
-「保留論点」セクションと一致。本ファイルは確定後に該当箇所を上書き予定。
+「保留論点」セクションと一致 (同日付で同期済み)。
 
 ### 11.1 2026-06-17 公式確認済みメモ
 
@@ -377,3 +378,47 @@ ja / en のみで提出)。
   opt-in している必要がある。テスター募集・記録テンプレは
   [closed-test-plan.md](closed-test-plan.md) を使用する。
   参照: <https://support.google.com/googleplay/android-developer/answer/14151465>
+
+### 11.2 2026-07-24 追加確認済みメモ (Phase 11.10-T2 相当)
+
+Google Play Developer 登録完了を機に、残り論点を WebFetch / WebSearch で裏取り。
+
+- Data Safety: データを一切収集しないアプリも申告フォーム入力は必須。「No」回答 +
+  Privacy Policy URL 提示で「No data collected / No data shared」と表示される。
+  §5 の既存方針のまま提出可。
+  参照: <https://support.google.com/googleplay/android-developer/answer/10787469>
+- Play App Signing: 新規アプリは aab 初回アップロード時に「quantum-ready hybrid
+  signing (Google 生成鍵)」へ自動 enroll される。能動的な「加入」操作は不要
+  (独自鍵に変更したい場合のみ Change signing key を使う)。
+  参照: <https://support.google.com/googleplay/android-developer/answer/9842756>
+- Internal Testing: 上限 100 人、期間制限の記載なし。
+  参照: <https://support.google.com/googleplay/android-developer/answer/9845334>
+- Closed Testing (新規 Personal account): 12 testers が 14 日間連続 opt-in と
+  いう現行値を再確認 (2023-11 開始の 20 人から 2024-12 に 12 人へ緩和済の版)。
+  途中で opt-out すると連続日数がリセットされる点に注意。
+  参照: <https://support.google.com/googleplay/android-developer/answer/14151465>
+- Adaptive Icon monochrome layer: 公式ページでは「必須ではない、推奨」。
+  Android 16 QPR2 以降は未提供でも自動生成される。一部ブログは
+  「2025-10-15 必須化」と主張しているが公式ページに同記載はなく、CLAUDE.md
+  ソース信用原則によりブログ側は却下 (仮説扱い)。本アプリは Phase 11.9-T1/T3 で
+  monochrome layer 実装済みのため実務影響なし。
+  参照: <https://developer.android.com/develop/ui/views/launch/icon_design_adaptive>
+- targetSdk 実値: `flutter.targetSdkVersion` の実解決値をコード直接確認
+  (手元 Flutter SDK の `packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt`
+  に `targetSdkVersion: Int = 36` とハードコード)。Play 要求 (2025-08-31 以降
+  API35 以上) を満たす。
+- USE_FULL_SCREEN_INTENT: 事前審査ではなく Play Console App content 画面での
+  自己申告。Alarm/Calling core functionality 申告により 2025-01-22 以降も
+  デフォルト許可対象。
+  参照: <https://support.google.com/googleplay/android-developer/answer/13392821>
+- SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM: 事前審査ではなく Play Console
+  Permissions Declaration Form への自己申告。restricted permission review 対象は
+  `USE_EXACT_ALARM` のみで、「alarm/timer アプリ」は acceptable use case に
+  明記されており本アプリは該当。
+  参照: <https://support.google.com/googleplay/android-developer/answer/9888170>
+- ⚠️ Pixabay Content License: 「Standalone (単体) での再配布・販売」は禁止だが、
+  アプリ内蔵アセットとしてのバンドルは許可範囲内という解釈。ただし公式ページ
+  (`pixabay.com/service/license-summary` / `/terms`) は WebFetch が 403 Forbidden
+  で本文を直接取得できず、WebSearch スニペット経由の確認にとどまる (通常の公式
+  ページ本文確認より信頼度が一段階低い)。公開前にブラウザで目視再確認を推奨。
+  参照 (スニペット経由): <https://pixabay.com/service/license-summary/>
