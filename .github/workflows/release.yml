@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build signed AAB and publish GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.41.8'
+          cache: true
+
+      # android/build.gradle.kts の sourceCompatibility/targetCompatibility (JDK 17) に合わせる。
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
+      # docs/release-signing.md §6 の Secrets 一覧に対応。
+      # storeFile は runner の一時ディレクトリに置き、build 後に必ず削除する。
+      - name: Decode upload keystore
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "${{ runner.temp }}/upload-keystore.jks"
+
+      - name: Write key.properties
+        env:
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=$UPLOAD_STORE_PASSWORD
+          keyPassword=$UPLOAD_KEY_PASSWORD
+          keyAlias=$UPLOAD_KEY_ALIAS
+          storeFile=${{ runner.temp }}/upload-keystore.jks
+          EOF
+
+      - run: flutter build appbundle --release
+
+      # 署名鍵はビルド直後に runner 上から確実に消す (runner は使い捨てだが多層防御として)。
+      - name: Remove signing secrets from runner
+        if: always()
+        run: rm -f android/key.properties "${{ runner.temp }}/upload-keystore.jks"
+
+      # Play Console への自動 upload (fastlane supply 等) は Phase 11.10 完了後の
+      # 継続改善として保留。まずは手動 upload 経路を確立する (docs/release-signing.md §6)。
+      - name: Publish GitHub Release with AAB artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/bundle/release/app-release.aab
+          generate_release_notes: true

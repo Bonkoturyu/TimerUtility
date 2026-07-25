@@ -1,8 +1,9 @@
 # Release Signing 手順 (TimerUtility)
 
 作成日: 2026-05-17 (Phase 11.9 準備、Phase 11.9-T12〜T14 で実施)
-状態: 草稿。Phase 11.10-T2 で Play Console + Android Developers 公式ドキュメントを
-WebFetch して、本書の手順と現行仕様を突き合わせてから確定値に差し替える前提
+状態: 草稿。Phase 11.10-T2 相当の外部仕様裏取りは 2026-07-24 に前倒しで完了
+(詳細は §8)。keytool 推奨値の再確認 / Upload Key Reset フローの現行 URL /
+fastlane supply 連携は Play Console 実画面着手後の課題として残存。
 
 本ファイルは TimerUtility を Google Play Store に署名済みの aab として提出するために
 必要な署名鍵 (upload keystore) の生成・配置・ビルド配線手順を集約する。
@@ -208,15 +209,19 @@ adb install -r app-release.apk
 
 ## 5. Play App Signing 加入 (Play Console 操作、Phase 11.10-T1)
 
-> 以下は知識ベースに基づく草稿。Phase 11.10-T2 で Play Console の現行画面と
-> 突き合わせて確定。
+> 2026-07-24 に公式ドキュメントで確認済み (詳細は §8): **新規アプリは aab 初回
+> アップロード時に「quantum-ready hybrid signing (Google 生成鍵)」へ自動 enroll
+> される**。以下の Option A/B のような能動的な「加入」選択操作は現行 UI には
+> 存在しない前提で読み替える (Option B 相当の「既存鍵の持ち込み」だけ明示操作が
+> 必要)。
 
 1. Play Console にログイン → 「アプリを作成」で新規アプリを登録 (パッケージ名 =
    `io.github.bonkoturyu.timer_utility`、初回はあらゆる項目が空欄)
 2. 「設定」→「アプリの署名」(または「Play App Signing」) を開く
-3. 加入オプション (新規アプリでは強制の場合あり):
-   - **Option A (推奨)**: Play が App Signing Key を生成する。Upload Key だけ
-     開発者が管理 (本書 §2 で生成した `upload-keystore.jks` をそのまま使用)
+3. 加入オプション:
+   - **Option A (採用、実質デフォルト)**: aab 初回アップロードで自動 enroll。
+     Upload Key だけ開発者が管理 (本書 §2 で生成した `upload-keystore.jks` を
+     そのまま使用)
    - Option B: 既存の App Signing Key をアップロードする (Play App Signing
      に乗せる)。古典的な keystore 運用からの移行用、新規アプリでは不要
 4. Upload Key を Play Console に登録:
@@ -270,13 +275,18 @@ CI ジョブ内で:
 
 ---
 
-## 8. 未確定項目 (Phase 11.10-T2 で本格裏取り)
+## 8. 外部仕様の確認状況
 
-[CLAUDE.md](../CLAUDE.md) のソース信用原則に従い、Phase 11.10-T2 で確認:
+[CLAUDE.md](../CLAUDE.md) のソース信用原則に従い確認:
 
-1. Play App Signing は新規アプリで **強制** か **任意** か (本書 §5 では「強制の
-   場合あり」と曖昧記述、確定後に断定文に書き換え)
-2. Upload Key 紛失時の Reset フォームの 2026 年現行 URL / フロー
-3. keytool の推奨パラメータ (`-keysize 4096` / `-validity 9125` 等) の Google
-   推奨値が現行も維持されているか
-4. `fastlane supply` ベースの自動 upload と Play Developer API の現行制約
+1. ✅ (2026-07-24 確認) Play App Signing は新規アプリで **自動 enroll** (aab
+   初回アップロード時に quantum-ready hybrid signing へ自動加入、能動的な
+   「強制/任意」の選択操作は不要)。
+   参照: <https://support.google.com/googleplay/android-developer/answer/9842756>
+2. 未確認: Upload Key 紛失時の Reset フォームの 2026 年現行 URL / フロー
+   (紛失時にのみ必要となるため Play Console 実画面着手後に確認)
+3. 未確認: keytool の推奨パラメータ (`-keysize 4096` / `-validity 9125` 等) の
+   Google 推奨値が現行も維持されているか (低優先度、生成済み keystore は
+   すでに要件を満たす値で作成済み)
+4. 未確認: `fastlane supply` ベースの自動 upload と Play Developer API の
+   現行制約 (Phase 11.10-T9 着手時に確認する方針で保留のまま)
