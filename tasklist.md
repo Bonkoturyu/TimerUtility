@@ -19,12 +19,9 @@
 
 ## 進行中
 
-### Phase 11.9 サブ PR γ
-
-Play Store 提出準備を進行中。
+### Phase 11.9 サブ PR γ — 完了
 
 - [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）
-- [ ] Play Console 実画面での Store listing / Data Safety 申告の確定
 - [x] Pixel 6a スクリーンショット 7 シナリオ（ja、1080×2400、`design/screenshots/phone/ja/` に配置）
 - [x] en スクリーンショット追加撮影要否の確認（英語版 Store listing も初回提出範囲に含める方針のため、追加撮影する）
 - [x] 英語版 Feature Graphic 追加（`design/store/feature-graphic-1024x500-en.png`。日本語コピー入りの既存版は ja 用として維持）
@@ -34,6 +31,19 @@ Play Store 提出準備を進行中。
 - [x] version bump (`1.0.0+2`)
 - [x] upload keystore 実体生成 + `android/key.properties` 作成（`android/key.properties` は gitignore 済み。`storeFile` は ASCII パスへ配置）
 - [x] 署名付き AAB ビルド（`flutter build appbundle --release` 成功、`build/app/outputs/bundle/release/app-release.aab`、51.4 MB）
+
+### Phase 11.10 — Play Console 実画面対応（2026-07-27 進行中）
+
+- [x] Google Play Developer アカウント登録・アカウント確認完了（ユーザー実施）
+- [x] Play Console でアプリ作成（パッケージ名 `io.github.bonkoturyu.timer_utility`、Support contact email = `a.few.dragon.info@gmail.com`）
+- [x] Internal Testing に AAB をアップロードし、Play App Signing 再署名 → Play Store 経由インストール → 起動確認まで Pixel 6a 実機で完了（adb 直接署名版との signature 不一致は `adb uninstall` で解消）
+- [x] Main store listing（ja/en）保存（短い説明・詳しい説明・アイコン・Feature Graphic・スクリーンショット7枚×2言語）
+- [x] コンテンツのレーティング送信（全地域で最年少レーティング確定）
+- [x] ターゲットユーザーおよびコンテンツ送信（13歳以上を対象）
+- [x] データセーフティ送信（「No data collected / No data shared」方針）
+- [x] アプリのコンテンツ申告3件（広告ID=不使用、全画面インテント=目覚まし時計としてインストール時事前付与を希望、正確なアラーム=目覚まし時計）
+- [ ] Closed Testing: 12テスター×14日間連続opt-in の募集開始（[docs/closed-test-plan.md](docs/closed-test-plan.md) に募集文・記録テンプレ用意済み。別の Android アプリのテスター募集とまとめて実施予定のため意図的に保留中）
+- [ ] 本番アクセス申請時の文章質問票への回答（同ファイル「Production access 申請用メモ」に下書きあり）
 
 ### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
 
@@ -118,7 +128,14 @@ Play Store 提出準備を進行中。
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-15（PR #111〜#114 の完了実態を同期。進行中は Play Console
+最終更新日: 2026-07-27（Phase 11.9 サブ PR γ を完了に更新、Phase 11.10 として
+Play Console 実画面対応の進捗を新規セクション化。Developer アカウント登録・
+アプリ作成・Internal Testing 実機確認・Main store listing / コンテンツの
+レーティング / ターゲットユーザー / データセーフティ / アプリのコンテンツ申告
+まで完了、Closed Testing テスター募集待ちで一時停止。doc-only、
+`flutter analyze` / `flutter test` 不要）
+
+過去の更新: 2026-07-15（PR #111〜#114 の完了実態を同期。進行中は Play Console
 実画面での確定、次候補はユーザー取り込み音源）
 
 過去の更新: 2026-06-15（PR #91 の実態へ同期。Phase 11.9 β はアイコン・

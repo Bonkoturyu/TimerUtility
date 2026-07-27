@@ -17,6 +17,68 @@
 
 ---
 
+## Phase 11.10 — Play Console 実画面対応、Closed Testing 待ちで一時停止 (2026-07-27)
+
+Google Play Developer アカウント登録・確認完了を機に、Play Console 実画面での
+提出作業をユーザーと一緒に進めた（すべてブラウザ操作のためユーザー実施、
+Claude はスクリーンショットを見ながら入力値の裏取り・提案を担当）。
+
+- アプリ作成: パッケージ名 `io.github.bonkoturyu.timer_utility`、Support
+  contact email = `a.few.dragon.info@gmail.com`
+- Internal Testing: `build/app/outputs/bundle/release/app-release.aab` を
+  アップロードし、Play App Signing 再署名 → Play Store 経由インストール →
+  起動確認まで Pixel 6a 実機で完了。ローカルで `adb install` していた
+  upload key 直接署名版が残っていたため、Play Store 版インストール時に
+  `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (署名不一致) が発生 →
+  `adb uninstall io.github.bonkoturyu.timer_utility` で解消
+- Main store listing: ja/en とも保存完了。詳しい説明の原文が Markdown 上の
+  読みやすさのため段落内で強制改行されていたのが原因で、Play Console の
+  テキストエリアに貼ると意図しない位置で改行されるバグを発見・修正
+  (`docs/play-store-listing.md` §3 を段落 1 行化に書き換え)。あわせて
+  プライバシー説明文中の「緯度経度の値は端末を離れません」という一般ユーザー
+  向けに分かりにくい表現を「外部に送信することはありません」へ平易化
+- コンテンツのレーティング: カテゴリ「その他のすべてのアプリの種類」、
+  質問票はすべて「いいえ」で回答し、全地域で最年少レーティングを確定
+  (Brazil L / ESRB E / PEGI 3 / USK 0 / IARC Generic 3+ / Russia 3+ / Korea 3+)
+- ターゲットユーザーおよびコンテンツ: 13〜15歳・16〜17歳・18歳以上を選択
+  (5歳以下〜12歳は非選択、ファミリー向けプログラム要件を回避)
+- データセーフティ: 「アプリは対象になる種類のユーザーデータを収集または
+  共有しますか？」に「いいえ」で回答、「No data collected / No data shared」
+  で確定
+- アプリのコンテンツ申告 (要注意 3 件): 広告ID=不使用、全画面インテント=
+  目覚まし時計としてインストール時の権限事前付与を希望、正確なアラーム
+  (`USE_EXACT_ALARM`) =目覚まし時計、いずれも 2026-07-24 の Phase
+  11.10-T2 外部仕様裏取り (PR #117) の内容と一致
+
+**残**: Closed Testing の 12 テスター×14日間連続 opt-in がユーザー側で
+未着手（テスター 0 人)。ユーザーが別途開発中の Android アプリのテスター
+募集とまとめて実施する方針のため、意図的に保留。本番アクセス申請時は追加で
+文章質問票への回答が必要 ([docs/closed-test-plan.md](closed-test-plan.md)
+「Production access 申請用メモ」に下書きあり)。
+
+本セッションでは並行して以下も対応済み:
+
+- Phase 11.9 クローズ条件だった bundletool/Pixel 6a 実機での release 署名
+  経路検証を、`flutter build apk --release` による直接検証で代替実施
+  (署名は同一の `key.properties` 経由 signingConfig のため release 署名の
+  動作確認として同等)
+- `.github/workflows/release.yml` を新規追加 (Phase 11.10-T9、PR #118 main
+  マージ済)。タグ push (`v*.*.*`) で `flutter analyze`/`test` → 署名付き
+  `flutter build appbundle --release` → GitHub Release へ artifact 添付。
+  GitHub Secrets (`UPLOAD_KEYSTORE_BASE64` 等 4 件) は未登録のため初回動作は
+  実際のタグ push 時 (Phase 11.10-T8 本番リリース時) が想定
+- Phase 11.10-T2 の外部仕様裏取り 8 項目 (Data Safety フォーム構成 / Play
+  App Signing 自動 enroll / Internal Testing 上限 / Closed Testing 12人14日
+  要件 / Adaptive Icon monochrome 任意 / targetSdk 実値確認 / 権限自己申告
+  方式 / Pixabay License) を前倒しで実施し `docs/play-store-listing.md` §11
+  / `docs/oss-and-play-release-plan.md` / `docs/release-signing.md` に反映
+  (PR #117 main マージ済)
+
+doc-only の同期部分は `flutter analyze` / `flutter test` 対象外。Play
+Console 実画面操作そのものはコードに影響しないため回帰確認も不要。
+
+---
+
 ## ユーザー取り込み音源仕様 + ADR 0006 (2026-07-15)
 
 PR #114 (commit `0d962c1`) で、端末ストレージから任意の音源を取り込む将来機能の
