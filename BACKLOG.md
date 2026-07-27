@@ -273,14 +273,13 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
     フラグ true でビルドした場合のみ zh / zh-Hant / ko も選択肢に出る。
     18 + 9 件のテストを追加、577 テスト緑 (1 skipped)。Pixel 6a 5 シナリオ
     OK (2026-05-15、詳細は [dev-log](docs/dev-log.md))
-- [~] Play Store 提出準備（Phase 11.9 γ）:
+- [x] Play Store 提出準備（Phase 11.9 γ）:
   `android/key.properties.template` 追加、release signing の
   `android/key.properties` 経由配線、version `1.0.0+2` bump、upload keystore
   実体生成、ローカル `android/key.properties` 作成、署名付き AAB ビルドまで完了。
   GitHub Pages は Source = `main` / `/docs` で公開済み。Privacy Policy 登録用 URL は `https://bonkoturyu.github.io/TimerUtility/privacy-policy`。
   `flutter build appbundle --release` は成功し、生成物は
   `build/app/outputs/bundle/release/app-release.aab` (51.4 MB)。
-  残りは Play Console 実画面での Store listing / Data Safety 確定。
   Pixel 6a スクリーンショット 7 シナリオは ja / 1080×2400 で撮影し、
   `design/screenshots/phone/ja/` に配置済み。英語版 Store listing も初回提出範囲に
   含めるため、英語版 Feature Graphic
@@ -289,6 +288,23 @@ Drift schemaVersion 3 → 4、`TimezoneCatalog` 25 都市プリセット + `Coun
   併せて新規 install 直後の POST_NOTIFICATIONS 初回ダイアログ非表示 follow-up は、
   Timer 追加開始時 / enabled な Alarm 保存時に通知権限要求フローを通す形で修正し、
   Pixel 6a 実機で OS 許可ダイアログ表示を確認済み。
+- [~] Play Console 実画面対応（Phase 11.10、2026-07-27 ユーザ実施）:
+  Google Play Developer アカウント登録・確認完了、アプリ作成完了
+  (パッケージ名 `io.github.bonkoturyu.timer_utility`)。Internal Testing に
+  AAB をアップロードし、Play App Signing 再署名 → Play Store 経由インストール
+  → 起動確認まで Pixel 6a 実機で完了 (adb 直接署名版との signature 不一致に
+  よる `INSTALL_FAILED_UPDATE_INCOMPATIBLE` は都度 `adb uninstall` で解消)。
+  Main store listing (ja/en、短い説明・詳しい説明・アイコン・Feature Graphic・
+  スクリーンショット 7 枚 ×2 言語)、コンテンツのレーティング (全地域最年少
+  レーティング)、ターゲットユーザー (13 歳以上)、データセーフティ
+  (「No data collected / No data shared」) すべて送信済み。アプリのコンテンツ
+  申告 3 件 (広告 ID = 不使用、全画面インテント = 目覚まし時計としてインストール時
+  事前付与を希望、正確なアラーム = 目覚まし時計) も申告済み。
+  残: Closed Testing (新規 Personal developer account のため 12 テスターの
+  14 日間連続 opt-in が必須、[docs/closed-test-plan.md](docs/closed-test-plan.md)
+  参照) のテスター募集がユーザー側で未着手 (別の Android アプリのテスター募集と
+  まとめて実施予定のため意図的に保留)。本番アクセス申請時は追加で文章質問票への
+  回答が必要 (同ファイル「Production access 申請用メモ」に下書きあり)。
 
 **DoD**: 公開可能な品質に到達
 **依存**: Phase 10 / Phase 10.5 完了
@@ -406,16 +422,22 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 | 10.5 | 完了 | 世界時計。全層実装 + main.dart 配線 + l10n + docs 更新。実機検証フィードバック対応 (PageView 循環 / 都市 A-Z / ドット pill 化) は PR #26、システム nav バー回避 (SafeArea bottom) は PR #27 でマージ・実機確認済（2026-05-10、Pixel 6a 6 シナリオ + 上限ガード + ドット nav バー余白すべて OK）、504 テストパス |
 | 11 (HomeScreen PageView) | 完了 | HomeScreen を 4 タブ横 PageView 化、518 テストパス、Pixel 6a 実機検証完了 (2026-05-10) |
 | 11 (ダークモード) | 完了 | `MaterialApp.darkTheme` deepPurple seed + `Brightness.dark`、permission_banners / analog_clock_widget を MD3 semantic role に置換、527 テストパス、Pixel 6a 7 シナリオ実機検証完了 (2026-05-11) |
-| 11 (その他) | 進行中 | 設定画面 4 項目 (PR #36) + CVD 冗長表示 (PR #39) + 言語手動切替 UI (2026-05-14) + 通知 channel 名 i18n (PR #59、2026-05-16) + F-7 Manifest 整形 (PR #59) + A-3 中韓 ARB 本格翻訳 (zh / zh_Hant / ko、2026-05-16) 完了。アプリアイコン / Splash は PR #91 で生成済、Pixel 6a 実機表示確認 OK。Phase 11.9 γ は upload keystore / `android/key.properties` / 署名付き AAB 生成まで完了。残: Play Store 実画面での Store listing / Data Safety 確定 |
+| 11 (その他) | 完了 | 設定画面 4 項目 (PR #36) + CVD 冗長表示 (PR #39) + 言語手動切替 UI (2026-05-14) + 通知 channel 名 i18n (PR #59、2026-05-16) + F-7 Manifest 整形 (PR #59) + A-3 中韓 ARB 本格翻訳 (zh / zh_Hant / ko、2026-05-16) 完了。アプリアイコン / Splash は PR #91 で生成済、Pixel 6a 実機表示確認 OK |
 | 11.8 (OSS 公開) | 完了 (2026-05-27) | T1〜T9 PR #67 main マージ (2026-05-16)、T8.5/T8.6 は 2026-05-27 omit (Privacy team 11 日無反応 + 典型 PII ゼロ確認)、T10 (Public 化) 2026-05-27 ユーザ実施完了。Visibility=PUBLIC、Description 設定済、Topics 9 件設定済、Community Standards 100% (`gh api .../community/profile`)、シークレットウィンドウ Public URL 表示確認済 |
-| 11.9 (Play 提出準備) | β 完了 / γ 進行中 | サブ PR α (**PR #72 main マージ済 2026-05-28**) で applicationId / MethodChannel 移行、Issue #74 fix (**PR #75 main マージ済 2026-05-29**) で Lock 画面 FSI 二重音を解消。β 事前準備 (**PR #77 main マージ済 2026-05-29**) 後、β 本体 **PR #91 main マージ済 (2026-06-14、squash `954eea2`)**: 3 層 adaptive icon、monochrome themed icon、light / dark splash、Play Store 512 px icon、Feature Graphic を作成・生成。PixAI / Hoshino v2 クレジットもアプリ内と notice に反映。`flutter analyze` / `flutter test` (673 passed / 1 skipped) / debug APK build / 翻訳文書チェック成功。Pixel 6a で launcher / themed icon / splash / 表示名 OK。POST_NOTIFICATIONS follow-up も修正 + 実機確認 OK。γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump、upload keystore 実体生成、`android/key.properties` 作成、署名付き AAB ビルドまで完了。GitHub Pages は PR #96 / #97 で公開入口と Jekyll/Liquid エラーを修正し、Privacy Policy URL (`https://bonkoturyu.github.io/TimerUtility/privacy-policy`) を実確認済み。Pixel 6a スクリーンショット 7 シナリオは ja / en とも配置済み。AAB は `build/app/outputs/bundle/release/app-release.aab` (51.4 MB)。残: Play Console 実画面での Store listing / Data Safety 確定。 |
+| 11.9 (Play 提出準備) | 完了 (2026-07-27) | サブ PR α (**PR #72 main マージ済 2026-05-28**) で applicationId / MethodChannel 移行、Issue #74 fix (**PR #75 main マージ済 2026-05-29**) で Lock 画面 FSI 二重音を解消。β 事前準備 (**PR #77 main マージ済 2026-05-29**) 後、β 本体 **PR #91 main マージ済 (2026-06-14、squash `954eea2`)**: 3 層 adaptive icon、monochrome themed icon、light / dark splash、Play Store 512 px icon、Feature Graphic を作成・生成。PixAI / Hoshino v2 クレジットもアプリ内と notice に反映。γ は Privacy Policy 公開、ja/en ストア素材、signing 配線、version bump、upload keystore 実体生成、署名付き AAB ビルドまで完了。GitHub Pages は PR #96 / #97 で公開入口と Jekyll/Liquid エラーを修正し、Privacy Policy URL を実確認済み。詳細は Phase 11.10 行へ継続 |
+| 11.10 (Play Console 実画面対応) | 進行中 (Closed Testing 待ち) | 2026-07-27、Google Play Developer アカウント登録・確認完了、アプリ作成 (`io.github.bonkoturyu.timer_utility`) 完了。Internal Testing で Play App Signing 再署名経由の Play Store インストール・起動を Pixel 6a 実機で確認済み。Main store listing (ja/en)、コンテンツのレーティング、ターゲットユーザー、データセーフティ、アプリのコンテンツ申告 3 件 (広告 ID / 全画面インテント / 正確なアラーム) すべて送信済み。残: Closed Testing の 12 テスター×14 日連続 opt-in (別アプリのテスター募集とまとめて実施予定のため意図的に保留)、本番アクセス申請時の文章質問票回答。詳細は [docs/closed-test-plan.md](docs/closed-test-plan.md) |
 | D (Diagnostic Logging) | 完了 | D-1 (PR #49) / D-2 (PR #52) / D-3 (PR #51) すべて main マージ済、Pixel 6a 4 シナリオ OK (2026-05-15) |
 | 12 | 未着手 | 任意 / iOS 版（Android 版完成後） |
 | 13 | 仕様確定 / 実装未着手 | PR #114 でユーザー取り込み音源仕様と ADR 0006 を確定。Play Store 初回提出後の次候補、Phase 12 との実施順は未確定 |
 
 ---
 
-最終更新日: 2026-07-15（PR #111 定間隔通知、PR #112 Issue #86、PR #113
+最終更新日: 2026-07-27（Play Console 実画面対応の進捗を Phase 11.10 として新設し反映。
+Developer アカウント登録・確認、アプリ作成、Internal Testing 実機確認、Main store
+listing / コンテンツのレーティング / ターゲットユーザー / データセーフティ / アプリの
+コンテンツ申告まで完了、Closed Testing テスター募集待ちで一時停止）
+
+過去の更新: 2026-07-15（PR #111 定間隔通知、PR #112 Issue #86、PR #113
 検証文書同期、PR #114 ユーザー取り込み音源仕様を反映。Play Console 実画面対応を
 Phase 11.9 の残作業、取り込み音源実装を Phase 13 として整理）
 

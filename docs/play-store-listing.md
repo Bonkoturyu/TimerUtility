@@ -56,7 +56,7 @@ Play Console 実画面では項目名や順序が変わる可能性があるた�
 ### 日本語
 
 ```text
-複数タイマー、指定時刻アラーム、世界時計、ロック画面表示対応。Android 16 向けの実用タイマー。
+複数タイマー、指定時刻アラーム、世界時計、ロック画面表示対応。Android 向けの実用タイマー。
 ```
 
 ### English
@@ -71,11 +71,11 @@ Multi-timer, alarms, world clock, and lock-screen alerts for modern Android.
 
 ### 日本語
 
+段落・箇条書きの各項目は改行なしの1行で記載している (Play Console のテキスト
+エリアに貼るとそのまま改行として扱われるため)。空行のみが意図した段落区切り。
+
 ```text
-TimerUtility は、複数のタイマーを同時に動かせる Android 用タイマーアプリです。
-シンプルな見た目でありながら、現代の Android (Android 8 〜 16) で「アラームが
-ちゃんと鳴る」「ロック画面でしっかり気付ける」「端末を再起動しても消えない」
-という基本的な期待にきっちり応える実装を目指しています。
+TimerUtility は、複数のタイマーを同時に動かせる Android 用タイマーアプリです。シンプルな見た目でありながら、現代の Android (Android 8 〜 16) で「アラームがちゃんと鳴る」「ロック画面でしっかり気付ける」「端末を再起動しても消えない」という基本的な期待にきっちり応える実装を目指しています。
 
 【主な機能】
 ■ ストップウォッチ — ラップ記録、ミリ秒精度
@@ -86,77 +86,49 @@ TimerUtility は、複数のタイマーを同時に動かせる Android 用タ�
 ■ カスタムアラーム音 — 3 種類の内蔵音源 + 個別タイマー単位での音源指定
 
 【こだわっている点】
-■ ロック画面でしっかり鳴る — Android 14+ の USE_FULL_SCREEN_INTENT 制約と
-  SCHEDULE_EXACT_ALARM 制約に正面から対応し、Doze モードを回避します。
-■ 再起動後も復元 — 端末を再起動してもタイマーとアラームの予約は自動的に
-  復元されます。
+■ ロック画面でしっかり鳴る — Android 14+ の USE_FULL_SCREEN_INTENT 制約と SCHEDULE_EXACT_ALARM 制約に正面から対応し、Doze モードを回避します。
+■ 再起動後も復元 — 端末を再起動してもタイマーとアラームの予約は自動的に復元されます。
 ■ ダークモード対応 — システム設定に追従、または手動切替が可能。
-■ 色覚多様性 (CVD) への配慮 — 重要度ラベル ([重要] / [推奨] / [補助]) と
-  フォントウェイト差、色帯の幅で形状的にも差別化。
+■ 色覚多様性 (CVD) への配慮 — 重要度ラベル ([重要] / [推奨] / [補助]) とフォントウェイト差、色帯の幅で形状的にも差別化。
 ■ 5 言語対応 — 日本語、英語、中国語 (簡体字 / 繁体字)、韓国語。
-■ ベータテスター向けの診断ログ機能 — 必要なときだけオンにできるトグル付き、
-  位置情報やユーザーが入力したラベル文字列は記録対象から除外。
+■ ベータテスター向けの診断ログ機能 — 必要なときだけオンにできるトグル付き、位置情報やユーザーが入力したラベル文字列は記録対象から除外。
 
 【プライバシー】
-TimerUtility は個人情報を一切収集・送信しません。すべてのデータは端末内に
-のみ保存されます。広告 SDK、解析 SDK、クラッシュレポート SDK は同梱して
-いません。位置情報は世界時計の現在地タイムゾーン推定にのみ一時利用され、
-緯度経度の値は端末を離れません。
+TimerUtility は個人情報を一切収集・送信しません。すべてのデータは端末内にのみ保存されます。広告 SDK、解析 SDK、クラッシュレポート SDK は同梱していません。位置情報は、世界時計で現在地の時刻を表示するためだけに一時的に使用し、外部に送信することはありません。
 詳細: https://bonkoturyu.github.io/TimerUtility/privacy-policy
 
 【オープンソース】
-本アプリは MIT ライセンスのオープンソースとして GitHub で公開されています。
-Flutter + Clean Architecture + Android 16 アラーム制約への対応事例として、
-ソースコード自体が学習・参考資料の役目も果たします。
+本アプリは MIT ライセンスのオープンソースとして GitHub で公開されています。Flutter + Clean Architecture + Android 16 アラーム制約への対応事例として、ソースコード自体が学習・参考資料の役目も果たします。
 リポジトリ: https://github.com/Bonkoturyu/TimerUtility
 ```
 
 ### English
 
 ```text
-TimerUtility is an Android timer app that lets you run multiple timers
-simultaneously. While the interface stays minimal, the implementation aims
-to meet the basic expectations of modern Android (8 through 16): "the alarm
-actually rings," "you notice it on the lock screen," and "it survives a
-reboot."
+TimerUtility is an Android timer app that lets you run multiple timers simultaneously. While the interface stays minimal, the implementation aims to meet the basic expectations of modern Android (8 through 16): "the alarm actually rings," "you notice it on the lock screen," and "it survives a reboot."
 
 [Features]
 - Stopwatch with lap timing and millisecond precision.
-- Multi-timer (up to 10 concurrent). Each timer has its own label, sound,
-  and snooze configuration.
+- Multi-timer (up to 10 concurrent). Each timer has its own label, sound, and snooze configuration.
 - Scheduled alarms with weekday repeat, once mode, and 3/5/10-minute snooze.
-- World clock with up to 6 cities and three display designs (analog,
-  digital, compact) switchable via swipe.
+- World clock with up to 6 cities and three display designs (analog, digital, compact) switchable via swipe.
 - Built-in presets for general use, cooking, and the Pomodoro technique.
 - Three bundled alarm sounds, with per-timer sound selection.
 
 [What we cared about]
-- Reliable lock-screen ringing. Properly handles the Android 14+
-  USE_FULL_SCREEN_INTENT and SCHEDULE_EXACT_ALARM constraints, working
-  around Doze.
-- Survives reboot. Timers and alarms are automatically restored after the
-  device restarts.
+- Reliable lock-screen ringing. Properly handles the Android 14+ USE_FULL_SCREEN_INTENT and SCHEDULE_EXACT_ALARM constraints, working around Doze.
+- Survives reboot. Timers and alarms are automatically restored after the device restarts.
 - Dark mode support, following system settings or set manually.
-- Color-vision-deficiency (CVD) awareness with severity labels
-  ([Critical] / [Recommended] / [Supplementary]), font-weight steps, and
-  color-band width differences so that shape, not color alone, conveys
-  meaning.
-- Five languages: Japanese, English, Chinese (Simplified / Traditional),
-  Korean.
-- Beta tester-friendly diagnostic logging — an opt-in toggle, with location
-  data and user-entered label strings excluded from logs.
+- Color-vision-deficiency (CVD) awareness with severity labels ([Critical] / [Recommended] / [Supplementary]), font-weight steps, and color-band width differences so that shape, not color alone, conveys meaning.
+- Five languages: Japanese, English, Chinese (Simplified / Traditional), Korean.
+- Beta tester-friendly diagnostic logging — an opt-in toggle, with location data and user-entered label strings excluded from logs.
 
 [Privacy]
-TimerUtility collects and transmits no personal information. All data is
-stored only on the device. The App does not bundle any ad, analytics, or
-crash-reporting SDK. Location data is used ephemerally for world-clock
-timezone inference and never leaves the device.
+TimerUtility collects and transmits no personal information. All data is stored only on the device. The App does not bundle any ad, analytics, or crash-reporting SDK. Location data is used ephemerally for world-clock timezone inference and never leaves the device.
 Details: https://bonkoturyu.github.io/TimerUtility/privacy-policy.en
 
 [Open source]
-The App is open source under the MIT license, published on GitHub. The
-source is also intended as a reference implementation of Flutter + Clean
-Architecture + Android 16 alarm constraints handling.
+The App is open source under the MIT license, published on GitHub. The source is also intended as a reference implementation of Flutter + Clean Architecture + Android 16 alarm constraints handling.
 Repository: https://github.com/Bonkoturyu/TimerUtility
 ```
 
