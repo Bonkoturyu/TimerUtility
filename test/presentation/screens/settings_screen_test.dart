@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:timer_utility/application/app_version_provider.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
+import 'package:timer_utility/domain/ports/app_version_reader.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
 import 'package:timer_utility/l10n/app_localizations.dart';
 import 'package:timer_utility/presentation/screens/settings_screen.dart';
@@ -40,7 +42,19 @@ class _MemoryUserPrefs implements UserPreferences {
   }
 }
 
-Widget _harness({UserPreferences? prefs}) {
+/// 実 Reader は platform channel を叩くため、widget test では固定値を返す
+/// stub に差し替える (未 override だと MissingPluginException → 空値 → em
+/// dash になり、表示検証にならない)。
+class _StubAppVersionReader implements AppVersionReader {
+  const _StubAppVersionReader(this.value);
+
+  final AppVersion value;
+
+  @override
+  Future<AppVersion> read() async => value;
+}
+
+Widget _harness({UserPreferences? prefs, AppVersion? appVersion}) {
   final router = GoRouter(
     initialLocation: SettingsScreen.routeLocation,
     routes: <RouteBase>[
@@ -60,6 +74,11 @@ Widget _harness({UserPreferences? prefs}) {
   return ProviderScope(
     overrides: <Override>[
       userPreferencesProvider.overrideWithValue(prefs ?? _MemoryUserPrefs()),
+      appVersionReaderProvider.overrideWithValue(
+        _StubAppVersionReader(
+          appVersion ?? const AppVersion(version: '1.0.0', buildNumber: '2'),
+        ),
+      ),
     ],
     child: MaterialApp.router(
       routerConfig: router,
@@ -87,6 +106,43 @@ void main() {
       expect(find.byKey(const Key('settings_snooze_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_sound_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_licenses_tile')), findsOneWidget);
+      expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+    });
+
+    testWidgets('バージョン行に "1.0.0 (2)" が表示される', (WidgetTester tester) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+      expect(find.text('バージョン'), findsOneWidget);
+      expect(find.text('1.0.0 (2)'), findsOneWidget);
+    });
+
+    // Reader が失敗すると空値が返る。行を消さずに em dash へ落とす。
+    testWidgets('バージョン取得が空値なら em dash を表示する', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _harness(
+          appVersion: const AppVersion(version: '', buildNumber: ''),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+      expect(find.text('—'), findsOneWidget);
+    });
+
+    // バージョン行はライセンス行より上 (「情報」セクションの先頭)。
+    testWidgets('バージョン行はライセンス行より前に描画される', (WidgetTester tester) async {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      final double versionY = tester
+          .getTopLeft(find.byKey(const Key('settings_version_tile')))
+          .dy;
+      final double licensesY = tester
+          .getTopLeft(find.byKey(const Key('settings_licenses_tile')))
+          .dy;
+      expect(versionY, lessThan(licensesY));
     });
 
     testWidgets('テーマ Light 選択で state.themeMode が light に更新される', (
@@ -158,6 +214,12 @@ void main() {
       await tester.pumpWidget(_harness());
       await tester.pumpAndSettle();
 
+      // バージョン行が増えた分だけライセンス行が下がり、800x600 の既定
+      // viewport では折り返しの外に出る。tap 前に可視域へスクロールする。
+      await tester.ensureVisible(
+        find.byKey(const Key('settings_licenses_tile')),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings_licenses_tile')));
       await tester.pumpAndSettle();
 

@@ -21,7 +21,7 @@
   permission severity / 言語切替 / 診断ログの計 33 キーをすべて収録。以後 ARB を変更したら
   本書も同じ commit で同期する (上記「更新ルール」参照)。
 
-最終更新日: 2026-05-16（Phase 11 close out — ARB との一括同期完了、未収録 33 キーを追加 + 末尾の旧 zh/ko 列ロードマップ記述を削除）
+最終更新日: 2026-07-28（設定画面のバージョン表示に伴い `settingsVersionLabel` を 5 言語へ追加。ARB 176 → 177 キー）
 
 ---
 
@@ -334,6 +334,7 @@ AppBar 両方で再利用。
 | `settingsSectionDisplay` | 表示 | Display | セクション見出し |
 | `settingsSectionDefaults` | デフォルト | Defaults | セクション見出し |
 | `settingsSectionAbout` | 情報 | About | セクション見出し |
+| `settingsVersionLabel` | バージョン | Version | ListTile title（subtitle の `1.0.0 (2)` は `package_info_plus` 実行時取得のため非翻訳） |
 | `settingsThemeLabel` | テーマ | Theme | ListTile title |
 | `settingsThemeSystem` | システム | System | SegmentedButton ラベル (ThemeMode.system) |
 | `settingsThemeLight` | ライト | Light | SegmentedButton ラベル (ThemeMode.light) |

@@ -249,6 +249,7 @@
   "settingsSectionDisplay": "Display",
   "settingsSectionDefaults": "Defaults",
   "settingsSectionAbout": "About",
+  "settingsVersionLabel": "Version",
   "settingsThemeLabel": "Theme",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",

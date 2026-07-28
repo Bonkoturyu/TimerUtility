@@ -17,6 +17,57 @@
 
 ---
 
+## 設定画面にアプリバージョン表示を追加 (2026-07-28)
+
+不具合報告時にユーザーが版数を伝えられるよう、設定 →「情報」セクションの
+先頭にバージョン行を追加した。表示は `1.0.0 (2)` 形式 (versionName +
+versionCode)。
+
+**取得方法の判断**: `package_info_plus: ^9.0.1` を追加し、実行時に
+`PackageInfo.fromPlatform()` で読む (ユーザー判断 2026-07-28)。pubspec の
+`version:` を Dart 定数へ書き写す案、`--dart-define` で注入する案も比較したが、
+
+- 手書き定数は pubspec と乖離しうる (バンプ忘れが表示に出ない)
+- `--dart-define` は `flutter run` / `flutter build` / `release.yml` の
+  すべてにフラグを付け忘れると空表示になる
+
+のに対し、実行時取得なら Play App Signing で再署名された配信物でも OS が
+認識している実際の版数がそのまま出る。新規パッケージ追加は CLAUDE.md の
+エスカレーション基準に該当するため、着手前にユーザー確認を取った。
+
+**レイヤー構成**: 既存の port / adapter パターン (`ScreenLockQuery` と同型) に
+合わせた。
+
+- `lib/domain/ports/app_version_reader.dart` — Pure Dart。値オブジェクト
+  `AppVersion` (version / buildNumber) と `display` ゲッタ (`1.0.0 (2)`、
+  buildNumber 空なら version のみ) + `AppVersionReader` port
+- `lib/infrastructure/platform/package_info_app_version_reader.dart` —
+  `package_info_plus` を包む実装。platform 例外は空値へ潰す (バージョン
+  取得の失敗で設定画面を壊さない)
+- `lib/application/app_version_provider.dart` — `appVersionReaderProvider`
+  (差し替え点) と `appVersionProvider` (`keepAlive`、プロセス生存中は不変
+  なので毎回 channel を叩かない)
+- `lib/presentation/screens/settings_screen.dart` — `_VersionTile`。
+  解決前と空値は em dash にフォールバックし行高を一定に保つ
+
+**ARB**: `settingsVersionLabel` を 5 言語に追加 (バージョン / Version / 版本 /
+版本 / 버전)。番号自体は数字と括弧のみなので非翻訳。ARB は 176 → 177 キー、
+`docs/translations.md` も同 commit で同期済 (`check_translations_doc.dart`
+で 177/177 aligned を確認)。
+
+**既存テストへの影響**: 「情報」セクションに 1 行増えた分ライセンス行が
+800x600 の既定 viewport 外へ出て、`ライセンス ListTile タップで /licenses に
+push される` が「タップは通るがナビゲーションが起きない」形で落ちた。
+tap 前に `tester.ensureVisible` を挟んで解消。
+
+**検証**: `flutter analyze --fatal-infos` 0 issues、`flutter test` 697 passed /
+1 skipped (新規 7 件: `AppVersion.display` 4 + widget 3)。
+
+**残**: Pixel 6a 実機で実際の版数が出ることの確認 (widget test は stub 値で
+検証しているため、plugin の実チャネル経路は未検証)。
+
+---
+
 ## Phase 11.10 — Play Console 実画面対応、Closed Testing 待ちで一時停止 (2026-07-27)
 
 Google Play Developer アカウント登録・確認完了を機に、Play Console 実画面での
