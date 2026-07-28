@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Opus 5 委譲"
+  short_description: "境界付き専門タスクをClaude Opus 5へ安全に委譲する"
+  default_prompt: "Use $delegate-to-claude to ask Claude Opus 5 for an independent architecture review."
