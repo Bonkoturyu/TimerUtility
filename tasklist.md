@@ -45,6 +45,19 @@
 - [ ] Closed Testing: 12テスター×14日間連続opt-in の募集開始（[docs/closed-test-plan.md](docs/closed-test-plan.md) に募集文・記録テンプレ用意済み。別の Android アプリのテスター募集とまとめて実施予定のため意図的に保留中）
 - [ ] 本番アクセス申請時の文章質問票への回答（同ファイル「Production access 申請用メモ」に下書きあり）
 
+### 多言語 5 言語の公開ビルド昇格（2026-07-28）
+
+- [x] `ENABLE_EXPERIMENTAL_LOCALES` フラグを撤廃し、zh / zh-Hant / ko を
+  公開ビルドの言語ピッカーへ昇格（ARB は A-3 で作成済みの 176 キー × 5 言語、
+  翻訳の新規作成は不要だった）
+- [x] `supportedLocales` に `zh_Hant_TW` / `zh_Hant_HK` を明示追加（Flutter の
+  `basicLocaleListResolution` は Chinese の country → script 推定を持たないため、
+  scriptCode 無しの `zh_TW` が簡体字に落ちるのを防ぐ）
+- [x] `flutter analyze` 0 issues / `flutter test` 707 passed (1 skipped)
+- [ ] Pixel 6a 実機で 5 言語の切替表示 + 通知チャンネル名の追従を確認（ユーザー実施）
+- [ ] Play Console のストアリスティングに zh / ko を追加するかの判断（アプリ内
+  l10n とは別管理。初回提出は ja / en のみで確定済み）
+
 ### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
 
 - [ ] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
@@ -128,7 +141,13 @@
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-27（Phase 11.9 サブ PR γ を完了に更新、Phase 11.10 として
+最終更新日: 2026-07-28（多言語 5 言語を公開ビルドへ昇格 — `ENABLE_EXPERIMENTAL_LOCALES`
+compile-time フラグを撤廃し、zh / zh-Hant / ko を言語ピッカーに常時表示。
+`supportedLocales` に `zh_Hant_TW` / `zh_Hant_HK` を追加して zh_TW / zh_HK 端末が
+簡体字へ落ちる経路を塞いだ。`flutter analyze` 0 issues / `flutter test` 707 passed
+(1 skipped)。残は Pixel 6a 実機での 5 言語切替確認）
+
+過去の更新: 2026-07-27（Phase 11.9 サブ PR γ を完了に更新、Phase 11.10 として
 Play Console 実画面対応の進捗を新規セクション化。Developer アカウント登録・
 アプリ作成・Internal Testing 実機確認・Main store listing / コンテンツの
 レーティング / ターゲットユーザー / データセーフティ / アプリのコンテンツ申告

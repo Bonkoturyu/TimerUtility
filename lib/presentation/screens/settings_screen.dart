@@ -22,13 +22,6 @@ const Map<String, String> _languageDisplayNames = <String, String>{
   'ko': '한국어',
 };
 
-const List<String> _publicLanguageTagOrder = <String>['ja', 'en'];
-const List<String> _experimentalLanguageTagOrder = <String>[
-  'zh',
-  'zh-Hant',
-  'ko',
-];
-
 /// Phase 11 settings screen.
 ///
 /// Hosts the manual theme override, the manual language override
@@ -211,10 +204,9 @@ class _LanguagePickerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final String effective = initialTag ?? _followSystemSentinel;
-    final List<String> tags = <String>[
-      ..._publicLanguageTagOrder,
-      if (kEnableExperimentalLocales) ..._experimentalLanguageTagOrder,
-    ];
+    // 表示順は `supportedLocaleTags` (settings_notifier) をそのまま使う。
+    // ピッカーの並びと永続化を許可するタグ集合を二重管理しないため。
+    const List<String> tags = supportedLocaleTags;
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,

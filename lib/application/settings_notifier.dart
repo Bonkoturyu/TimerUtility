@@ -16,28 +16,20 @@ part 'settings_notifier.g.dart';
 /// this set fall back to `5` on restore.
 const Set<int> kAllowedDefaultSnoozeMinutes = <int>{5, 10, 15};
 
-/// Compile-time feature flag for experimental locales (zh / zh-Hant / ko).
-/// Public release ships ja + en only; debug builds can opt in with
-/// `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true`. Lives here (not in
-/// `main.dart`) so both the notifier and the settings screen can import
-/// it without re-introducing the `main.dart` ↔ `settings_screen.dart`
-/// cycle (see PR #45 Copilot review).
-const bool kEnableExperimentalLocales = bool.fromEnvironment(
-  'ENABLE_EXPERIMENTAL_LOCALES',
-  defaultValue: false,
-);
-
-const List<String> _publicLocaleTags = <String>['ja', 'en'];
-const List<String> _experimentalLocaleTags = <String>['zh', 'zh-Hant', 'ko'];
-
-/// BCP-47 tags the language picker is allowed to persist. The
-/// experimental tags only appear when the compile-time flag is on; UI
-/// already hides them, but the notifier also drops them on `set` /
-/// `_restore` as a safety net so a stored value from a previous
-/// experimental build can't sneak through on a public build.
-List<String> get supportedLocaleTags => <String>[
-  ..._publicLocaleTags,
-  if (kEnableExperimentalLocales) ..._experimentalLocaleTags,
+/// BCP-47 tags the language picker is allowed to persist, in the order
+/// the picker lists them. Every tag ships in every build — zh / zh-Hant
+/// / ko were behind the `ENABLE_EXPERIMENTAL_LOCALES` compile-time flag
+/// until their ARB files reached full key parity with ja / en.
+///
+/// The notifier still validates against this list on `set` / `_restore`
+/// (defence in depth) so a stored tag from an older build can't resolve
+/// to a locale the app no longer ships.
+const List<String> supportedLocaleTags = <String>[
+  'ja',
+  'en',
+  'zh',
+  'zh-Hant',
+  'ko',
 ];
 
 /// Parse a stored BCP-47 tag into a [Locale]. We hand-roll instead of

@@ -85,32 +85,143 @@ void main() {
       },
     );
 
-    // Production list (`_experimentalSupportedLocales` in main.dart) must
-    // declare zh-Hant via `Locale.fromSubtags(scriptCode: 'Hant')` — not
+    // Production list (`supportedLocales` in main.dart) must declare the
+    // generic zh-Hant via `Locale.fromSubtags(scriptCode: 'Hant')` — not
     // `Locale('zh', 'Hant')` (countryCode form) — so the manual-override
     // path (parseLocaleTag → MaterialApp.locale) and the gen-l10n
     // `lookupAppLocalizations` script-code switch line up.
-    //
-    // Tested via the @visibleForTesting `debugExperimentalSupportedLocales`
-    // export so the assertion runs unconditionally — the public
-    // `supportedLocales` getter is gated on the `kEnableExperimentalLocales`
-    // compile-time flag (default false in `flutter test` and CI), which
-    // would otherwise let a regression slip through silently.
-    test(
-      'debugExperimentalSupportedLocales declares zh_Hant in scriptCode form',
-      () {
-        final Iterable<Locale> zhHant = debugExperimentalSupportedLocales.where(
-          (Locale l) => l.languageCode == 'zh' && l != const Locale('zh'),
-        );
-        expect(
-          zhHant.length,
-          1,
-          reason: 'expected exactly one zh variant beyond Locale("zh")',
-        );
-        final Locale entry = zhHant.first;
-        expect(entry.scriptCode, 'Hant');
-        expect(entry.countryCode, isNull);
-      },
-    );
+    test('supportedLocales declares a script-form generic zh_Hant', () {
+      final Iterable<Locale> generic = supportedLocales.where(
+        (Locale l) =>
+            l.languageCode == 'zh' &&
+            l != const Locale('zh') &&
+            l.countryCode == null,
+      );
+      expect(
+        generic.length,
+        1,
+        reason: 'expected exactly one generic zh variant beyond Locale("zh")',
+      );
+      expect(generic.first.scriptCode, 'Hant');
+    });
+
+    // Every zh entry beyond `Locale('zh')` must carry scriptCode 'Hant',
+    // because `lookupAppLocalizations` switches on scriptCode alone —
+    // a countryCode-only entry would silently load Simplified.
+    test('all non-generic zh entries carry scriptCode Hant', () {
+      final Iterable<Locale> zhVariants = supportedLocales.where(
+        (Locale l) => l.languageCode == 'zh' && l != const Locale('zh'),
+      );
+      expect(zhVariants, isNotEmpty);
+      for (final Locale l in zhVariants) {
+        expect(l.scriptCode, 'Hant', reason: '$l must declare scriptCode');
+      }
+    });
+
+    // `Locale('zh')` must precede the Hant entries: the SDK's
+    // language-only fallback returns the first languageCode match, so a
+    // bare `zh` device has to land on Simplified.
+    test('Locale("zh") precedes every zh_Hant entry', () {
+      final int simplified = supportedLocales.indexOf(const Locale('zh'));
+      final int firstHant = supportedLocales.indexWhere(
+        (Locale l) => l.scriptCode == 'Hant',
+      );
+      expect(simplified, isNonNegative);
+      expect(firstHant, isNonNegative);
+      expect(simplified, lessThan(firstHant));
+    });
+  });
+
+  // The public build ships all five languages; these cases pin the
+  // device-locale → UI-locale resolution against the production list.
+  group('resolveSupportedLocale against the production supportedLocales', () {
+    test('zh (no script/country) resolves to Simplified', () {
+      expect(
+        resolveSupportedLocale(const Locale('zh'), supportedLocales),
+        const Locale('zh'),
+      );
+    });
+
+    test('zh_Hans_CN resolves to Simplified', () {
+      expect(
+        resolveSupportedLocale(
+          const Locale.fromSubtags(
+            languageCode: 'zh',
+            scriptCode: 'Hans',
+            countryCode: 'CN',
+          ),
+          supportedLocales,
+        ),
+        const Locale('zh'),
+      );
+    });
+
+    // Android may report `zh_TW` without a scriptCode. Without the
+    // explicit zh_Hant_TW entry this would fall through to the
+    // language-only match and render Simplified.
+    test('zh_TW (no scriptCode) resolves to a Hant entry', () {
+      final Locale resolved = resolveSupportedLocale(
+        const Locale('zh', 'TW'),
+        supportedLocales,
+      );
+      expect(resolved.scriptCode, 'Hant');
+    });
+
+    test('zh_HK (no scriptCode) resolves to a Hant entry', () {
+      final Locale resolved = resolveSupportedLocale(
+        const Locale('zh', 'HK'),
+        supportedLocales,
+      );
+      expect(resolved.scriptCode, 'Hant');
+    });
+
+    test('zh_Hant_TW resolves to a Hant entry', () {
+      final Locale resolved = resolveSupportedLocale(
+        const Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hant',
+          countryCode: 'TW',
+        ),
+        supportedLocales,
+      );
+      expect(resolved.scriptCode, 'Hant');
+    });
+
+    // Macau reports zh_Hant_MO, which has no dedicated entry — the
+    // language+script lookup has to catch it on the generic zh_Hant.
+    test('zh_Hant_MO falls back to the generic zh_Hant entry', () {
+      expect(
+        resolveSupportedLocale(
+          const Locale.fromSubtags(
+            languageCode: 'zh',
+            scriptCode: 'Hant',
+            countryCode: 'MO',
+          ),
+          supportedLocales,
+        ),
+        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+      );
+    });
+
+    test('ko resolves to ko', () {
+      expect(
+        resolveSupportedLocale(const Locale('ko'), supportedLocales),
+        const Locale('ko'),
+      );
+    });
+
+    test('ko_KR resolves to ko', () {
+      expect(
+        resolveSupportedLocale(const Locale('ko', 'KR'), supportedLocales),
+        const Locale('ko'),
+      );
+    });
+
+    test('unsupported fr still falls back to en', () {
+      expect(
+        resolveSupportedLocale(const Locale('fr'), supportedLocales),
+        const Locale('en'),
+      );
+    });
   });
 }

@@ -355,5 +355,88 @@ void main() {
         expect(prefs.hasLocaleTag(), isFalse);
       },
     );
+
+    test('永続化された "zh" は Locale("zh") に復元される', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'zh'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('zh'),
+      );
+    });
+
+    // scriptCode を保持できないと gen-l10n の
+    // `switch (locale.scriptCode) case 'Hant'` に乗らず簡体字に落ちる。
+    test('永続化された "zh-Hant" は scriptCode 付きで復元される', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'zh-Hant'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final Locale? restored = container
+          .read(settingsNotifierProvider)
+          .localeOverride;
+      expect(restored, isNotNull);
+      expect(restored!.languageCode, 'zh');
+      expect(restored.scriptCode, 'Hant');
+      expect(restored.countryCode, isNull);
+    });
+
+    test('永続化された "ko" は Locale("ko") に復元される', () async {
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{UserPreferenceKeys.localeTag: 'ko'},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('ko'),
+      );
+    });
+
+    test('setLocaleOverride("zh-Hant") は "zh-Hant" を永続化する', () async {
+      final prefs = _MemoryUserPrefs();
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setLocaleOverride('zh-Hant');
+
+      final Locale? applied = container
+          .read(settingsNotifierProvider)
+          .localeOverride;
+      expect(applied?.scriptCode, 'Hant');
+      expect(prefs.localeTag, 'zh-Hant');
+    });
+
+    test('setLocaleOverride("ko") は "ko" を永続化する', () async {
+      final prefs = _MemoryUserPrefs();
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setLocaleOverride('ko');
+
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('ko'),
+      );
+      expect(prefs.localeTag, 'ko');
+    });
+
+    // 公開ビルドで選べる 5 言語がすべて許可タグに載っていること。
+    test('supportedLocaleTags は ja / en / zh / zh-Hant / ko を含む', () {
+      expect(supportedLocaleTags, <String>['ja', 'en', 'zh', 'zh-Hant', 'ko']);
+    });
   });
 }

@@ -204,19 +204,23 @@ void main() {
         find.byKey(const Key('settings_language_option_en')),
         findsOneWidget,
       );
-      // experimental フラグ false (defaultValue) のとき zh / zh-Hant / ko は出ない。
+      // zh / zh-Hant / ko も公開ビルドで選択できる (experimental フラグ撤廃)。
       expect(
         find.byKey(const Key('settings_language_option_zh')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(
         find.byKey(const Key('settings_language_option_zh-Hant')),
-        findsNothing,
+        findsOneWidget,
       );
       expect(
         find.byKey(const Key('settings_language_option_ko')),
-        findsNothing,
+        findsOneWidget,
       );
+      // 言語名は各ロケール自身の表記で出す。
+      expect(find.text('简体中文'), findsOneWidget);
+      expect(find.text('繁體中文'), findsOneWidget);
+      expect(find.text('한국어'), findsOneWidget);
     });
 
     testWidgets('英語を選択すると state.localeOverride が Locale("en") になる', (
