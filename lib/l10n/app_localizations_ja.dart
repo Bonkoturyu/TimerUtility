@@ -501,6 +501,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsSectionAbout => '情報';
 
   @override
+  String get settingsVersionLabel => 'バージョン';
+
+  @override
   String get settingsThemeLabel => 'テーマ';
 
   @override

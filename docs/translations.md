@@ -21,7 +21,9 @@
   permission severity / 言語切替 / 診断ログの計 33 キーをすべて収録。以後 ARB を変更したら
   本書も同じ commit で同期する (上記「更新ルール」参照)。
 
-最終更新日: 2026-05-16（Phase 11 close out — ARB との一括同期完了、未収録 33 キーを追加 + 末尾の旧 zh/ko 列ロードマップ記述を削除）
+最終更新日: 2026-07-28（zh / zh-Hant / ko を公開ビルドへ昇格し
+`ENABLE_EXPERIMENTAL_LOCALES` フラグを撤廃。設定画面のバージョン表示に伴い
+`settingsVersionLabel` を 5 言語へ追加。ARB 176 → 177 キー）
 
 ---
 
@@ -334,6 +336,7 @@ AppBar 両方で再利用。
 | `settingsSectionDisplay` | 表示 | Display | セクション見出し |
 | `settingsSectionDefaults` | デフォルト | Defaults | セクション見出し |
 | `settingsSectionAbout` | 情報 | About | セクション見出し |
+| `settingsVersionLabel` | バージョン | Version | ListTile title（subtitle の `1.0.0 (2)` は `package_info_plus` 実行時取得のため非翻訳） |
 | `settingsThemeLabel` | テーマ | Theme | ListTile title |
 | `settingsThemeSystem` | システム | System | SegmentedButton ラベル (ThemeMode.system) |
 | `settingsThemeLight` | ライト | Light | SegmentedButton ラベル (ThemeMode.light) |
@@ -350,9 +353,11 @@ AppBar 両方で再利用。
 > でハードコード保持している (実装は
 > [lib/presentation/screens/settings_screen.dart](../lib/presentation/screens/settings_screen.dart)
 > L17-23)。各言語名は **そのロケール自身の表記** で出すのが多言語アプリの慣習で、
-> 現在の UI ロケールに依存させないため。Public ビルドでは ja / en の 2 件、
-> `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` ビルドで zh / zh-Hant / ko も
-> 表示される (公開順序は `_publicLanguageTagOrder` / `_experimentalLanguageTagOrder`)。
+> 現在の UI ロケールに依存させないため。公開ビルドで 5 件すべて表示される
+> (2026-07-28 に `ENABLE_EXPERIMENTAL_LOCALES` フラグを撤廃)。表示順は
+> `supportedLocaleTags`
+> ([lib/application/settings_notifier.dart](../lib/application/settings_notifier.dart))
+> が単一のソース。
 
 ### 診断ログ（Phase D）
 

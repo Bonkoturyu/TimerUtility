@@ -535,6 +535,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsSectionAbout => '정보';
 
   @override
+  String get settingsVersionLabel => '버전';
+
+  @override
   String get settingsThemeLabel => '테마';
 
   @override

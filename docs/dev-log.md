@@ -17,6 +17,128 @@
 
 ---
 
+## 設定画面にアプリバージョン表示を追加 (2026-07-28)
+
+不具合報告時にユーザーが版数を伝えられるよう、設定 →「情報」セクションの
+先頭にバージョン行を追加した。表示は `1.0.0 (2)` 形式 (versionName +
+versionCode)。
+
+**取得方法の判断**: `package_info_plus: ^9.0.1` を追加し、実行時に
+`PackageInfo.fromPlatform()` で読む (ユーザー判断 2026-07-28)。pubspec の
+`version:` を Dart 定数へ書き写す案、`--dart-define` で注入する案も比較したが、
+
+- 手書き定数は pubspec と乖離しうる (バンプ忘れが表示に出ない)
+- `--dart-define` は `flutter run` / `flutter build` / `release.yml` の
+  すべてにフラグを付け忘れると空表示になる
+
+のに対し、実行時取得なら Play App Signing で再署名された配信物でも OS が
+認識している実際の版数がそのまま出る。新規パッケージ追加は CLAUDE.md の
+エスカレーション基準に該当するため、着手前にユーザー確認を取った。
+
+**レイヤー構成**: 既存の port / adapter パターン (`ScreenLockQuery` と同型) に
+合わせた。
+
+- `lib/domain/ports/app_version_reader.dart` — Pure Dart。値オブジェクト
+  `AppVersion` (version / buildNumber) と `display` ゲッタ (`1.0.0 (2)`、
+  buildNumber 空なら version のみ) + `AppVersionReader` port
+- `lib/infrastructure/platform/package_info_app_version_reader.dart` —
+  `package_info_plus` を包む実装。platform 例外は空値へ潰す (バージョン
+  取得の失敗で設定画面を壊さない)
+- `lib/application/app_version_provider.dart` — `appVersionReaderProvider`
+  (差し替え点) と `appVersionProvider` (`keepAlive`、プロセス生存中は不変
+  なので毎回 channel を叩かない)。Application → Infrastructure の逆依存を
+  避けるため既定値は throw-on-default とし、`main.dart` の composition root
+  から実 Reader を override
+- `lib/presentation/screens/settings_screen.dart` — `_VersionTile`。
+  解決前と空値は em dash にフォールバックし行高を一定に保つ
+
+**ARB**: `settingsVersionLabel` を 5 言語に追加 (バージョン / Version / 版本 /
+版本 / 버전)。番号自体は数字と括弧のみなので非翻訳。ARB は 176 → 177 キー、
+`docs/translations.md` も同 commit で同期済 (`check_translations_doc.dart`
+で 177/177 aligned を確認)。
+
+**既存テストへの影響**: 「情報」セクションに 1 行増えた分ライセンス行が
+800x600 の既定 viewport 外へ出て、`ライセンス ListTile タップで /licenses に
+push される` が「タップは通るがナビゲーションが起きない」形で落ちた。
+tap 前に `tester.ensureVisible` を挟んで解消。
+
+**レビュー対応**: 実 Reader に `PackageInfo` loader の差し替え点を設け、
+version / buildNumber 変換と例外時の空値フォールバックを直接通す Unit Test
+2 件を追加した。
+
+**検証**: #120 統合後に `flutter analyze --fatal-infos` 0 issues、
+`flutter test` 718 passed / 1 skipped、翻訳 validator 177/177 aligned。
+
+**残**: Pixel 6a 実機で実際の版数が出ることの確認 (widget test は stub 値で
+検証しているため、plugin の実チャネル経路は未検証)。
+## 多言語 5 言語の公開ビルド昇格 — `ENABLE_EXPERIMENTAL_LOCALES` 撤廃 (2026-07-28)
+
+zh (简体中文) / zh-Hant (繁體中文) / ko の 3 ロケールを公開ビルドで選択可能にした。
+ARB 本体は A-3 (PR #61 / 2026-05-16) で作成済みだったが、`bool.fromEnvironment`
+の compile-time フラグ `ENABLE_EXPERIMENTAL_LOCALES` (既定 false) で 3 箇所が
+gate されており、Release では ja / en しか出ていなかった。
+
+**前提の確認** (実装前に裏取りした事実):
+
+- 5 ロケールの ARB キー数は全て 176 で完全一致 (`ConvertFrom-Json` で計数)。
+  翻訳の新規作成は不要
+- gen-l10n 生成物 (`app_localizations_zh.dart` 等) は既に
+  `AppLocalizationsZh` / `AppLocalizationsZhHant` / `AppLocalizationsKo` を
+  含む。フラグは生成には影響しないため `flutter gen-l10n` の再実行も不要
+- Android native リソースも `values-zh` / `values-b+zh+Hant` / `values-ko` が
+  Phase 11.9 サブ PR β で配置済み
+
+**判断**: フラグを `defaultValue: true` に反転させるのではなく **完全撤廃** した。
+どのビルドスクリプトも CI もこのフラグを立てておらず (`.github/workflows/` を
+grep して確認)、翻訳が完全同期した時点で分岐は死んだ複雑性になるため。
+
+**変更点**:
+
+- `lib/application/settings_notifier.dart`: `kEnableExperimentalLocales` と
+  `_publicLocaleTags` / `_experimentalLocaleTags` を削除し、
+  `const List<String> supportedLocaleTags = ['ja','en','zh','zh-Hant','ko']`
+  の単一定数に集約 (getter → const 化。`parseLocaleTag` のバリデーションは維持)
+- `lib/main.dart`: `_publicSupportedLocales` / `_experimentalSupportedLocales` /
+  `@visibleForTesting debugExperimentalSupportedLocales` を廃し、
+  `const List<Locale> supportedLocales` 一本に統合
+- `lib/presentation/screens/settings_screen.dart`: ピッカーの表示順リスト
+  (`_publicLanguageTagOrder` / `_experimentalLanguageTagOrder`) を削除し
+  `supportedLocaleTags` を直接参照。並び順と永続化許可タグの二重管理を解消
+
+**zh の script 解決** (今回追加した対応):
+
+Flutter SDK の `basicLocaleListResolution`
+(`packages/flutter/lib/src/widgets/app.dart` L150-235) を直接読んで確認したところ、
+**Chinese の country → script 推定 (TW/HK/MO → Hant) は実装されていない**。
+`languageCode+scriptCode` / `languageCode+countryCode` / `languageCode` の
+ハッシュ照合のみで、`zh_TW` を scriptCode 無しで受け取ると language-only
+マッチに落ちて `Locale('zh')` = 簡体字になる。そこで supportedLocales に
+`zh_Hant_TW` / `zh_Hant_HK` / `zh_Hant_MO` を明示追加し、language+country
+照合で繁体字へ倒すようにした。生成側の `lookupAppLocalizations` は
+`scriptCode == 'Hant'` だけを見るので、3つの country 変種とも
+`AppLocalizationsZhHant` を読む。
+
+リスト順にも制約がある。`Locale('zh')` は Hant 系エントリより **前** に置く
+必要がある (language-only fallback は最初の languageCode 一致を返すため、
+素の `zh` 端末は簡体字に落ちるのが期待動作)。この不変条件はテストで固定した。
+
+**テスト**: `test/locale_resolution_test.dart` の flag 依存テストを
+production `supportedLocales` 直参照に書き換え、順序不変条件 + zh_TW / zh_HK /
+zh_MO / zh_Hant_MO / zh_Hans_CN / ko_KR の解決先を追加。
+`test/application/settings_notifier_test.dart` に zh / zh-Hant / ko の
+復元・永続化ケースを追加 (特に `zh-Hant` が scriptCode 形式で復元されること)。
+`test/presentation/screens/settings_screen_test.dart` の「zh/ko は出ない」
+アサーションを反転。低い viewport でも言語一覧をスクロールして末尾を選択できる
+Widget Testを追加。
+
+**検証**: #121 統合後に `flutter analyze --fatal-infos` 0 issues、
+`flutter test` 718 passed / 1 skipped。
+
+**残**: Pixel 6a 実機で 5 言語の切替表示と通知チャンネル名の追従を確認する
+(未実施)。Play Console のストアリスティング翻訳 (中国語 / 韓国語の説明文) は
+アプリ内 l10n とは別管理で、本変更のスコープ外。
+---
+
 ## Phase 11.10 — Play Console 実画面対応、Closed Testing 待ちで一時停止 (2026-07-27)
 
 Google Play Developer アカウント登録・確認完了を機に、Play Console 実画面での

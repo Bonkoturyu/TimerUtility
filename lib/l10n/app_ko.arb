@@ -176,6 +176,7 @@
   "settingsSectionDisplay": "표시",
   "settingsSectionDefaults": "기본값",
   "settingsSectionAbout": "정보",
+  "settingsVersionLabel": "버전",
   "settingsThemeLabel": "테마",
   "settingsThemeSystem": "시스템",
   "settingsThemeLight": "라이트",

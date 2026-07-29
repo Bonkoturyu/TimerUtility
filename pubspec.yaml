@@ -52,6 +52,10 @@ dependencies:
   # 確認済 → adapter / test とも無改修。全 654 テスト緑で回帰なしを実証。
   archive: ^4.0.0
   share_plus: ^10.1.4
+  # 設定画面の「バージョン」表示用。pubspec の version を手書き定数へ写すと
+  # 乖離するため、実行時に APK / AAB の versionName + versionCode を読む。
+  # Play App Signing で再署名された配信物でも実際の版数を返す。
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

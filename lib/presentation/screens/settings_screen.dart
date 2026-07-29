@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/app_version_provider.dart';
 import '../../application/diagnostic_export_controller.dart';
 import '../../application/diagnostic_settings_notifier.dart';
 import '../../application/settings_notifier.dart';
+import '../../domain/ports/app_version_reader.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/duration_picker.dart' show soundDisplayName;
 import '../widgets/sound_select_sheet.dart';
@@ -21,13 +23,6 @@ const Map<String, String> _languageDisplayNames = <String, String>{
   'zh-Hant': '繁體中文',
   'ko': '한국어',
 };
-
-const List<String> _publicLanguageTagOrder = <String>['ja', 'en'];
-const List<String> _experimentalLanguageTagOrder = <String>[
-  'zh',
-  'zh-Hant',
-  'ko',
-];
 
 /// Phase 11 settings screen.
 ///
@@ -123,6 +118,7 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => _onSoundTap(context, ref, settings),
             ),
             _SectionHeader(label: l.settingsSectionAbout),
+            const _VersionTile(),
             ListTile(
               key: const Key('settings_licenses_tile'),
               leading: const Icon(Icons.description_outlined),
@@ -211,37 +207,49 @@ class _LanguagePickerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final String effective = initialTag ?? _followSystemSentinel;
-    final List<String> tags = <String>[
-      ..._publicLanguageTagOrder,
-      if (kEnableExperimentalLocales) ..._experimentalLanguageTagOrder,
-    ];
+    // 表示順は `supportedLocaleTags` (settings_notifier) をそのまま使う。
+    // ピッカーの並びと永続化を許可するタグ集合を二重管理しないため。
+    const List<String> tags = supportedLocaleTags;
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(title, style: theme.textTheme.titleMedium),
-          ),
-          // RadioListTile.groupValue/onChanged は Flutter 3.32 以降で
-          // deprecated。`SoundSelectSheet` と同じく ListTile + radio
-          // アイコンで描画し、deprecation を回避しつつスタイルを揃える。
-          _LanguageOptionTile(
-            key: const Key('settings_language_option_system'),
-            label: systemLabel,
-            value: _followSystemSentinel,
-            selected: effective == _followSystemSentinel,
-          ),
-          for (final String tag in tags)
-            _LanguageOptionTile(
-              key: Key('settings_language_option_$tag'),
-              label: _languageDisplayNames[tag] ?? tag,
-              value: tag,
-              selected: effective == tag,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(title, style: theme.textTheme.titleMedium),
             ),
-          const SizedBox(height: 8),
-        ],
+            Flexible(
+              child: ListView(
+                key: const Key('settings_language_options_list'),
+                shrinkWrap: true,
+                children: <Widget>[
+                  // RadioListTile.groupValue/onChanged は Flutter 3.32 以降で
+                  // deprecated。`SoundSelectSheet` と同じく ListTile + radio
+                  // アイコンで描画し、deprecation を回避しつつスタイルを揃える。
+                  _LanguageOptionTile(
+                    key: const Key('settings_language_option_system'),
+                    label: systemLabel,
+                    value: _followSystemSentinel,
+                    selected: effective == _followSystemSentinel,
+                  ),
+                  for (final String tag in tags)
+                    _LanguageOptionTile(
+                      key: Key('settings_language_option_$tag'),
+                      label: _languageDisplayNames[tag] ?? tag,
+                      value: tag,
+                      selected: effective == tag,
+                    ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -273,6 +281,30 @@ class _LanguageOptionTile extends StatelessWidget {
 
 /// Toggle for the diagnostic logging master switch. Mirrors the
 /// [SwitchListTile] pattern used elsewhere in the project.
+/// 「バージョン」行。値は非同期 (platform channel) なので、解決前と
+/// 失敗時は em dash を出して行の高さを一定に保つ。バージョン取得の失敗で
+/// 設定画面が壊れないよう、Reader 側で例外を空値に潰してある。
+class _VersionTile extends ConsumerWidget {
+  const _VersionTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final AsyncValue<AppVersion> version = ref.watch(appVersionProvider);
+    final String display = version.maybeWhen(
+      data: (AppVersion v) => v.display.isEmpty ? '—' : v.display,
+      orElse: () => '—',
+    );
+    return ListTile(
+      key: const Key('settings_version_tile'),
+      leading: const Icon(Icons.info_outline),
+      title: Text(l.settingsVersionLabel),
+      // バージョン番号自体は翻訳対象外 (数字と括弧のみ)。
+      subtitle: Text(display),
+    );
+  }
+}
+
 class _DiagnosticToggleTile extends ConsumerWidget {
   const _DiagnosticToggleTile();
 

@@ -531,6 +531,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionAbout => '关于';
 
   @override
+  String get settingsVersionLabel => '版本';
+
+  @override
   String get settingsThemeLabel => '主题';
 
   @override
@@ -1135,6 +1138,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsSectionAbout => '關於';
+
+  @override
+  String get settingsVersionLabel => '版本';
 
   @override
   String get settingsThemeLabel => '主題';
