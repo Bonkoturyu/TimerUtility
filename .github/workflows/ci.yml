@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # PR: 同一 PR (refs/pull/N/merge) で group を共有し旧 run を自動キャンセル。
 # main: sha を付与して run ごとに unique group とし、キャンセルも直列化もせず
@@ -25,13 +26,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # docs 系のみの変更では Flutter ツールチェーンのセットアップごとスキップする。
       # required check (このジョブ) は step スキップでも success で完了するため
       # branch protection とは干渉しない。
       # 例外: docs/translations.md は tool/check_translations_doc.dart の検査対象
       # のため、単独変更でも CI を実行する。
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: changes
         with:
           # 'every': 変更ファイルが全パターン (否定含む) を満たす場合のみ true
@@ -46,7 +47,7 @@ jobs:
               - '!.gitignore'
             translations_doc:
               - 'docs/translations.md'
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
         with:
           channel: 'stable'
