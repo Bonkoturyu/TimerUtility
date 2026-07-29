@@ -208,32 +208,45 @@ class _LanguagePickerSheet extends StatelessWidget {
     // ピッカーの並びと永続化を許可するタグ集合を二重管理しないため。
     const List<String> tags = supportedLocaleTags;
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(title, style: theme.textTheme.titleMedium),
-          ),
-          // RadioListTile.groupValue/onChanged は Flutter 3.32 以降で
-          // deprecated。`SoundSelectSheet` と同じく ListTile + radio
-          // アイコンで描画し、deprecation を回避しつつスタイルを揃える。
-          _LanguageOptionTile(
-            key: const Key('settings_language_option_system'),
-            label: systemLabel,
-            value: _followSystemSentinel,
-            selected: effective == _followSystemSentinel,
-          ),
-          for (final String tag in tags)
-            _LanguageOptionTile(
-              key: Key('settings_language_option_$tag'),
-              label: _languageDisplayNames[tag] ?? tag,
-              value: tag,
-              selected: effective == tag,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(title, style: theme.textTheme.titleMedium),
             ),
-          const SizedBox(height: 8),
-        ],
+            Flexible(
+              child: ListView(
+                key: const Key('settings_language_options_list'),
+                shrinkWrap: true,
+                children: <Widget>[
+                  // RadioListTile.groupValue/onChanged は Flutter 3.32 以降で
+                  // deprecated。`SoundSelectSheet` と同じく ListTile + radio
+                  // アイコンで描画し、deprecation を回避しつつスタイルを揃える。
+                  _LanguageOptionTile(
+                    key: const Key('settings_language_option_system'),
+                    label: systemLabel,
+                    value: _followSystemSentinel,
+                    selected: effective == _followSystemSentinel,
+                  ),
+                  for (final String tag in tags)
+                    _LanguageOptionTile(
+                      key: Key('settings_language_option_$tag'),
+                      label: _languageDisplayNames[tag] ?? tag,
+                      value: tag,
+                      selected: effective == tag,
+                    ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -223,6 +223,55 @@ void main() {
       expect(find.text('한국어'), findsOneWidget);
     });
 
+    testWidgets('低いviewportでも言語一覧をスクロールして韓国語を選択できる', (
+      WidgetTester tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 360));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      final Finder languageTile = find.byKey(
+        const Key('settings_language_tile'),
+      );
+      await tester.scrollUntilVisible(
+        languageTile,
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(languageTile),
+      );
+
+      await tester.tap(languageTile);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final Finder optionsList = find.byKey(
+        const Key('settings_language_options_list'),
+      );
+      final Finder korean = find.byKey(
+        const Key('settings_language_option_ko'),
+      );
+      await tester.scrollUntilVisible(
+        korean,
+        100,
+        scrollable: find.descendant(
+          of: optionsList,
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.tap(korean);
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(settingsNotifierProvider).localeOverride,
+        const Locale('ko'),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('英語を選択すると state.localeOverride が Locale("en") になる', (
       WidgetTester tester,
     ) async {

@@ -175,6 +175,14 @@ void main() {
       expect(resolved.scriptCode, 'Hant');
     });
 
+    test('zh_MO (no scriptCode) resolves to a Hant entry', () {
+      final Locale resolved = resolveSupportedLocale(
+        const Locale('zh', 'MO'),
+        supportedLocales,
+      );
+      expect(resolved.scriptCode, 'Hant');
+    });
+
     test('zh_Hant_TW resolves to a Hant entry', () {
       final Locale resolved = resolveSupportedLocale(
         const Locale.fromSubtags(
@@ -187,9 +195,9 @@ void main() {
       expect(resolved.scriptCode, 'Hant');
     });
 
-    // Macau reports zh_Hant_MO, which has no dedicated entry — the
-    // language+script lookup has to catch it on the generic zh_Hant.
-    test('zh_Hant_MO falls back to the generic zh_Hant entry', () {
+    // scriptCodeなしのzh_MOを繁体字へ解決するため追加した専用entryへ、
+    // scriptCode付きの端末報告もexact matchする。
+    test('zh_Hant_MO resolves to the dedicated zh_Hant_MO entry', () {
       expect(
         resolveSupportedLocale(
           const Locale.fromSubtags(
@@ -199,7 +207,11 @@ void main() {
           ),
           supportedLocales,
         ),
-        const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+        const Locale.fromSubtags(
+          languageCode: 'zh',
+          scriptCode: 'Hant',
+          countryCode: 'MO',
+        ),
       );
     });
 
