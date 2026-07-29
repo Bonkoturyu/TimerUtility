@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import 'application/alarm_push_reservation.dart';
 import 'application/alarm_repository_provider.dart';
+import 'application/app_version_provider.dart';
 import 'application/clock_entry_repository_provider.dart';
 import 'application/diagnostic_log_exporter_provider.dart';
 import 'application/diagnostic_logger_provider.dart';
@@ -44,6 +45,7 @@ import 'infrastructure/diagnostics/zip_diagnostic_log_exporter_adapter.dart';
 import 'infrastructure/location/location_detector_adapter.dart';
 import 'infrastructure/licenses/bundled_asset_licenses.dart';
 import 'infrastructure/notification/flutter_local_notification_adapter.dart';
+import 'infrastructure/platform/package_info_app_version_reader.dart';
 import 'infrastructure/platform/interval_notification_channel.dart';
 import 'infrastructure/preferences/shared_preferences_user_preferences.dart';
 import 'l10n/app_localizations.dart';
@@ -440,6 +442,9 @@ Future<void> main() async {
       presetRepositoryProvider.overrideWithValue(presetRepo),
       alarmRepositoryProvider.overrideWithValue(alarmRepo),
       clockEntryRepositoryProvider.overrideWithValue(clockRepo),
+      appVersionReaderProvider.overrideWithValue(
+        const PackageInfoAppVersionReader(),
+      ),
       locationDetectorProvider.overrideWithValue(detector),
       timezoneResolverProvider.overrideWithValue(timezoneResolver),
       userPreferencesProvider.overrideWithValue(userPrefs),

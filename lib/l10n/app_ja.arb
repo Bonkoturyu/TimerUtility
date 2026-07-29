@@ -237,6 +237,7 @@
   "settingsSectionDisplay": "表示",
   "settingsSectionDefaults": "デフォルト",
   "settingsSectionAbout": "情報",
+  "settingsVersionLabel": "バージョン",
   "settingsThemeLabel": "テーマ",
   "settingsThemeSystem": "システム",
   "settingsThemeLight": "ライト",

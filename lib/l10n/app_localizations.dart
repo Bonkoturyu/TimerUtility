@@ -1015,6 +1015,12 @@ abstract class AppLocalizations {
   /// **'情報'**
   String get settingsSectionAbout;
 
+  /// No description provided for @settingsVersionLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'バージョン'**
+  String get settingsVersionLabel;
+
   /// No description provided for @settingsThemeLabel.
   ///
   /// In ja, this message translates to:
