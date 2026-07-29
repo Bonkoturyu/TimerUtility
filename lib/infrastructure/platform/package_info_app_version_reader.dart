@@ -14,12 +14,16 @@ import '../../domain/ports/app_version_reader.dart';
 /// not break the settings screen. The empty display renders as a dash
 /// on the presentation side.
 class PackageInfoAppVersionReader implements AppVersionReader {
-  const PackageInfoAppVersionReader();
+  const PackageInfoAppVersionReader({
+    Future<PackageInfo> Function() loadPackageInfo = PackageInfo.fromPlatform,
+  }) : _loadPackageInfo = loadPackageInfo;
+
+  final Future<PackageInfo> Function() _loadPackageInfo;
 
   @override
   Future<AppVersion> read() async {
     try {
-      final PackageInfo info = await PackageInfo.fromPlatform();
+      final PackageInfo info = await _loadPackageInfo();
       return AppVersion(version: info.version, buildNumber: info.buildNumber);
     } catch (_) {
       return const AppVersion(version: '', buildNumber: '');

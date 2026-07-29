@@ -6,10 +6,13 @@ part of 'app_version_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appVersionReaderHash() => r'a7dd62934225815a11265c313862675fbadfe1d8';
+String _$appVersionReaderHash() => r'c7f1194aef1f19c352505fffeae11e6ced6a12f6';
 
-/// Default-bound [AppVersionReader]. Override in tests via
-/// `appVersionReaderProvider.overrideWithValue(StubAppVersionReader(...))`.
+/// 本番では `main()` で Infrastructure 実装へ overrideし、
+/// テストでは stub へ差し替える。
+///
+/// 未override時にApplicationからInfrastructureへ依存しないよう、
+/// repository provider群と同じthrow-on-defaultとする。
 ///
 /// Copied from [appVersionReader].
 @ProviderFor(appVersionReader)

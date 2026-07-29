@@ -2,15 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/ports/app_version_reader.dart';
-import '../infrastructure/platform/package_info_app_version_reader.dart';
 
 part 'app_version_provider.g.dart';
 
-/// Default-bound [AppVersionReader]. Override in tests via
-/// `appVersionReaderProvider.overrideWithValue(StubAppVersionReader(...))`.
+/// 本番では `main()` で Infrastructure 実装へ overrideし、
+/// テストでは stub へ差し替える。
+///
+/// 未override時にApplicationからInfrastructureへ依存しないよう、
+/// repository provider群と同じthrow-on-defaultとする。
 @Riverpod(keepAlive: true)
-AppVersionReader appVersionReader(Ref ref) =>
-    const PackageInfoAppVersionReader();
+AppVersionReader appVersionReader(Ref ref) {
+  throw UnimplementedError(
+    'appVersionReaderProvider must be overridden in main() with the '
+    'package-info adapter (or in tests with a stub).',
+  );
+}
 
 /// The running build's version, shown in the settings "About" section.
 ///
