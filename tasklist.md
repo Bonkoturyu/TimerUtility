@@ -19,6 +19,30 @@
 
 ## 進行中
 
+### Version 1.0.1 リリースパッケージ（2026-07-29）
+
+- [x] `main` から `release/1.0.1` を作成し、`pubspec.yaml` を
+  `1.0.1+3`（versionName `1.0.1` / versionCode `3`）へ更新する
+- [x] 翻訳 validator 177/177 aligned、Dart format 変更 0、
+  `flutter analyze --fatal-infos` 0 issues、`flutter test` 718 passed
+  (1 skipped) を確認する
+- [x] ローカルの upload keystore で署名済み release AAB を生成する
+  (`build/app/outputs/bundle/release/app-release.aab`、53,978,509 bytes、
+  SHA-256 `413BE2F95F9DF12923C647ABC8B1A22338C93035B394CA5576CA9B3098717AB3`)
+- [x] 生成時 Manifest が versionName `1.0.1` / versionCode `3` であることと、
+  AAB 内の `META-INF/UPLOAD.SF` / `UPLOAD.RSA` を確認する
+- [x] GitHub Actions の自動リリースに必要な
+  `UPLOAD_KEYSTORE_BASE64` / `UPLOAD_KEY_ALIAS` /
+  `UPLOAD_KEY_PASSWORD` / `UPLOAD_STORE_PASSWORD` が未登録であることを確認する
+- [x] `ci.yml` の `pull_request` に `ready_for_review` を追加し、利用中の外部
+  Action 5 種を GitHub API で解決した full-length commit SHA へ固定する
+- [ ] Workflow 変更の `main` 反映後、Repository Settings で Actions を
+  selected actions + full-length SHA 必須へ変更する（ユーザー実施）
+- [ ] 外部 fork PR の実行承認を `all external contributors` 必須へ変更する
+  （ユーザー実施。既定 `GITHUB_TOKEN` read-only / PR 承認不可は維持）
+- [ ] Play Console に AAB をアップロードし、署名・versionCode の受入を確認する
+  （ユーザー実施）
+
 ### AI協働・SubAgent基盤整備（2026-07-28）
 
 - [x] 既存3リポジトリのSkill・SubAgent・Opus 5委譲方式を比較し、
@@ -163,7 +187,16 @@
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-28（設定画面にアプリバージョン表示を追加 — `package_info_plus`
+最終更新日: 2026-07-29（Version 1.0.1 release package を作成 —
+`pubspec.yaml` を `1.0.1+3` へ更新し、翻訳整合・format・analyze・全テストを通過。
+ローカル upload keystore で署名済み AAB 53,978,509 bytes を生成し、生成時
+Manifest の versionName `1.0.1` / versionCode `3` と署名エントリを確認。
+GitHub Actions の自動リリース用 Secrets 4 件は未登録、残は Play Console の
+受入確認。公開リポジトリ向けに CI の Draft 解除トリガーと Action 5 種の
+full-length SHA 固定も追加し、残は main 反映後の Actions 許可設定と外部 fork
+PR 承認ポリシー変更）
+
+過去の更新: 2026-07-28（設定画面にアプリバージョン表示を追加 — `package_info_plus`
 を導入し、設定 →「情報」の先頭へ `1.0.0 (2)` 形式の行を追加。port / adapter /
 provider / ARB 5 言語 (`settingsVersionLabel`) を実装。`flutter analyze
 --fatal-infos` 0 issues / `flutter test` 718 passed (1 skipped) /

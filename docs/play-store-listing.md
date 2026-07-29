@@ -136,6 +136,24 @@ Repository: https://github.com/Bonkoturyu/TimerUtility
 
 ## 4. What's new (Release notes、500 文字以内)
 
+### Version 1.0.1
+
+#### 日本語
+
+```text
+- 中国語（簡体字・繁体字）と韓国語をアプリ内の表示言語として追加しました。
+- 繁体字を使用する地域で、端末の言語設定へ正しく追従するよう改善しました。
+- 設定画面の「情報」にアプリのバージョンを表示するようにしました。
+```
+
+#### English
+
+```text
+- Added Simplified Chinese, Traditional Chinese, and Korean as in-app display languages.
+- Improved system-language matching for regions that use Traditional Chinese.
+- Added the app version to the About section in Settings.
+```
+
 ### 初版リリース時 (1.0.0)
 
 #### 日本語
