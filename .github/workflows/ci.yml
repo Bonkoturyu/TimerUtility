@@ -47,13 +47,13 @@ jobs:
               - '!.gitignore'
             translations_doc:
               - 'docs/translations.md'
+      # cache: true は内部で actions/cache@v5 を呼び、full-length SHA 必須設定と
+      # 競合するため使用しない。
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
         with:
           channel: 'stable'
           flutter-version: '3.41.8'
-          # Flutter SDK と pub cache の両方をキャッシュ (pub-cache は cache に追従)
-          cache: true
       - run: flutter pub get
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: dart format --set-exit-if-changed .
