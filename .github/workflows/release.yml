@@ -1,20 +1,76 @@
 name: Release
 
+run-name: Release ${{ inputs.release_tag }} by @${{ github.actor }}
+
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (example: v1.0.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
 jobs:
   build-and-release:
     name: Build signed AAB and publish GitHub Release
+    if: github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: リリース要求を検証
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::リリースWorkflowはmainブランチから実行してください。"
+            exit 1
+          fi
+
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::リリースタグはvMAJOR.MINOR.PATCH形式で入力してください。"
+            exit 1
+          fi
+
+          version_value="$(awk '$1 == "version:" { print $2; exit }' pubspec.yaml)"
+          if [[ ! "$version_value" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+            echo "::error::pubspec.yamlのversionはMAJOR.MINOR.PATCH+BUILD形式である必要があります。"
+            exit 1
+          fi
+
+          expected_tag="v${version_value%%+*}"
+          if [[ "$RELEASE_TAG" != "$expected_tag" ]]; then
+            echo "::error::リリースタグ$RELEASE_TAGはpubspec.yamlのversion $version_value と一致しません（期待値: $expected_tag）。"
+            exit 1
+          fi
+
+          set +e
+          git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1
+          tag_check_status=$?
+          set -e
+
+          case "$tag_check_status" in
+            0)
+              echo "::error::タグ$RELEASE_TAGはすでに存在します。"
+              exit 1
+              ;;
+            2)
+              ;;
+            *)
+              echo "::error::リモートタグを確認できませんでした（終了コード: $tag_check_status）。"
+              exit 1
+              ;;
+          esac
 
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
@@ -34,11 +90,32 @@ jobs:
 
       # docs/release-signing.md §6 の Secrets 一覧に対応。
       # storeFile は runner の一時ディレクトリに置き、build 後に必ず削除する。
+      - name: 署名Secretを検証
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret_name in \
+            UPLOAD_KEYSTORE_BASE64 \
+            UPLOAD_KEY_ALIAS \
+            UPLOAD_KEY_PASSWORD \
+            UPLOAD_STORE_PASSWORD
+          do
+            if [[ -z "${!secret_name-}" ]]; then
+              echo "::error::署名Secret $secret_name が未登録または空です。"
+              exit 1
+            fi
+          done
+
       - name: Decode upload keystore
         env:
           UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
         run: |
-          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "${{ runner.temp }}/upload-keystore.jks"
+          printf '%s' "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > "${{ runner.temp }}/upload-keystore.jks"
+          test -s "${{ runner.temp }}/upload-keystore.jks"
 
       - name: Write key.properties
         env:
@@ -66,4 +143,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: build/app/outputs/bundle/release/app-release.aab
+          tag_name: ${{ inputs.release_tag }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
+          fail_on_unmatched_files: true

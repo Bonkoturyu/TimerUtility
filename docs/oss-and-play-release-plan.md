@@ -192,7 +192,7 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 | T6 | Internal Testing で 1-3 人 (ユーザ + 親しい人) 配信、最低 3 日動作確認 | — | — |
 | T7 | Closed Testing or Open Testing の経路を T2 結果に従い判断・実施 | — | **必須** |
 | T8 | Production Rollout (段階公開 5% → 20% → 50% → 100%) | — | **必須** |
-| T9 | CI 拡張: `.github/workflows/release.yml` 新規 (tag push `v*.*.*` トリガで `flutter build appbundle`、upload key は GitHub Secrets `UPLOAD_KEYSTORE_BASE64` / `UPLOAD_KEY_PASSWORD` 等)。fastlane supply 連携は本 Phase 完了後の継続改善として保留 | [.github/workflows/release.yml](../.github/workflows/release.yml) 新規 | **必須** (`.github/workflows/`) |
+| T9 | **✅ 2026-07-29 実装**: `.github/workflows/release.yml` を所有者限定の `workflow_dispatch` 手動起動として追加。`main` / 入力タグ形式 / `pubspec.yaml` 版数一致 / 既存タグ / 署名 Secrets を事前検証し、署名済み AAB と GitHub Release を作成する。タグ push 自動起動と fastlane supply 連携は採用しない | [.github/workflows/release.yml](../.github/workflows/release.yml) | **必須** (`.github/workflows/`) |
 | T10 | `docs/release-signing.md` に Play App Signing 加入の事後ログ追記 + BACKLOG.md / tasklist.md / docs/dev-log.md に Phase 11.10 完了記録 | `docs/` + ルート md | **必須** (`docs/`) |
 | T11 | (任意) ProGuard/R8 オン化の再検討。オンにする場合は別 PR で `proguard-rules.pro` + 各 OSS の keep ルール + 全実機シナリオ回帰テスト | [android/app/build.gradle.kts](../android/app/build.gradle.kts) + 新規 | **必須** |
 
@@ -201,13 +201,13 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 - Internal Testing で実機 Pixel 6a + テスタ環境で 7 シナリオ全部 OK
 - Data Safety / Content Rating / Target Audience すべて Play Console で「準備完了」
 - Production rollout 開始
-- GitHub Release tag → `release.yml` が aab を artifact 化
+- GitHub Actions から `release.yml` を手動実行し、署名済み AAB 付き Release を作成
 
 ### 検証
 
 1. Internal track の Play Store URL を実機でインストール → アイコン / 起動 / アラーム / 通知ロック画面 7 シナリオ
 2. Play Console Pre-launch report (Firebase Test Lab) で警告ゼロ
-3. GitHub Release tag を切って `release.yml` 動作確認
+3. `main` 反映後、GitHub Actions から `v1.0.1` を指定して `release.yml` を手動実行
 4. Production rollout 5% で 48 時間クラッシュ率を Play Console で監視
 
 ---
@@ -266,4 +266,4 @@ CLAUDE.md ソース信用原則に従い WebFetch / WebSearch で確認済み。
 - [docs/oss-publishing-notes.md](oss-publishing-notes.md)
 - [docs/architecture.md](architecture.md)
 - [BACKLOG.md](../BACKLOG.md) / [tasklist.md](../tasklist.md) / [docs/dev-log.md](dev-log.md)
-- [.github/workflows/release.yml](../.github/workflows/release.yml) (Phase 11.10-T9 で新規追加)
+- [.github/workflows/release.yml](../.github/workflows/release.yml) (Phase 11.10-T9、所有者限定の手動リリース)

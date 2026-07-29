@@ -1,9 +1,10 @@
 # Release Signing 手順 (TimerUtility)
 
 作成日: 2026-05-17 (Phase 11.9 準備、Phase 11.9-T12〜T14 で実施)
-状態: 草稿。Phase 11.10-T2 相当の外部仕様裏取りは 2026-07-24 に前倒しで完了
-(詳細は §8)。keytool 推奨値の再確認 / Upload Key Reset フローの現行 URL /
-fastlane supply 連携は Play Console 実画面着手後の課題として残存。
+状態: 運用中。Phase 11.10-T2 相当の外部仕様裏取りは 2026-07-24 に完了し、
+GitHub Actions の所有者限定手動リリースは 2026-07-29 に実装 (詳細は §6)。
+keytool 推奨値の再確認 / Upload Key Reset フローの現行 URL /
+fastlane supply 連携は継続課題として残存。
 
 本ファイルは TimerUtility を Google Play Store に署名済みの aab として提出するために
 必要な署名鍵 (upload keystore) の生成・配置・ビルド配線手順を集約する。
@@ -180,11 +181,10 @@ android {
 }
 ```
 
-注意: `key.properties` が存在しない CI 環境 (現状の GitHub Actions) では
+注意: `key.properties` が存在しない CI 環境では
 `storeFile` が `null` になり release ビルド時にエラーになる。CI で release
 ビルドを走らせる場合は GitHub Secrets から `key.properties` 相当の値を環境変数で
-受け取り、ビルド直前に動的生成するスクリプトを噛ませる
-(Phase 11.10-T9 `release.yml` で実装予定)。
+受け取り、ビルド直前に動的生成する。Phase 11.10-T9 の `release.yml` で実装済み。
 
 ### 4.2 ローカル動作確認 (Phase 11.9-T17)
 
@@ -239,11 +239,32 @@ Play 側に残っているため、ユーザーのアプリがアップデート
 
 ---
 
-## 6. Phase 11.10 以降の運用 (CI 自動署名)
+## 6. GitHub Actions の手動リリース運用
 
-Phase 11.10-T9 で `.github/workflows/release.yml` を新規追加し、tag push
-(`v*.*.*`) トリガで aab を自動ビルドする予定。署名に必要な情報は GitHub Secrets
-として:
+`.github/workflows/release.yml` はタグ push では起動せず、GitHub Actions の
+`workflow_dispatch` からリポジトリ所有者が明示的に実行する。GitHub の
+「Run workflow」ボタンは対象 Workflow がデフォルトブランチに存在するときに
+利用できる。公式手順:
+<https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow>
+
+実行手順:
+
+1. GitHub の `Actions` → `Release` → `Run workflow` を開く
+2. Branch に `main` を選び、`release_tag` に `v1.0.1` 形式のタグを入力する
+3. `Run workflow` を押す
+4. Workflow が成功すると、実行対象の `main` commit にタグを作り、署名済み AAB を
+  添付した GitHub Release を公開する
+
+Workflow はビルド前に次を検証する。
+
+- 実行者がリポジトリ所有者であること
+- 実行ブランチが `main` であること
+- `release_tag` が `vMAJOR.MINOR.PATCH` 形式であること
+- `pubspec.yaml` の `version: MAJOR.MINOR.PATCH+BUILD` とタグが一致すること
+- 同名のリモートタグが未作成であること
+- 次の署名用 GitHub Secrets 4 件が未登録または空でないこと
+
+署名に必要な情報は GitHub Secrets として登録する:
 
 | Secret 名 | 内容 |
 | --- | --- |
@@ -252,13 +273,15 @@ Phase 11.10-T9 で `.github/workflows/release.yml` を新規追加し、tag push
 | `UPLOAD_KEY_PASSWORD` | key alias パスワード |
 | `UPLOAD_STORE_PASSWORD` | keystore パスワード |
 
-CI ジョブ内で:
+手動リリースジョブ内で:
 
-1. `UPLOAD_KEYSTORE_BASE64` を decode して一時 `.jks` ファイルを生成
-2. 動的に `android/key.properties` を生成
-3. `flutter build appbundle --release` 実行
-4. 生成 aab を GitHub Release の artifact として upload
-5. fastlane supply 連携で Play Console に自動 upload — これは本 Phase 完了後の
+1. `flutter analyze --fatal-infos` と `flutter test` を実行
+2. `UPLOAD_KEYSTORE_BASE64` を decode して一時 `.jks` ファイルを生成
+3. 動的に `android/key.properties` を生成
+4. `flutter build appbundle --release` を実行
+5. 署名情報を runner から削除
+6. 指定タグを実行対象 commit に作成し、生成 AAB を GitHub Release へ添付
+7. fastlane supply 連携で Play Console に自動 upload — これは本 Phase 完了後の
    継続改善として保留 (まず手動 upload 経路を確立する)
 
 ---

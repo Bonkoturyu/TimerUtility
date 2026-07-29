@@ -31,15 +31,19 @@
   SHA-256 `413BE2F95F9DF12923C647ABC8B1A22338C93035B394CA5576CA9B3098717AB3`)
 - [x] 生成時 Manifest が versionName `1.0.1` / versionCode `3` であることと、
   AAB 内の `META-INF/UPLOAD.SF` / `UPLOAD.RSA` を確認する
-- [x] GitHub Actions の自動リリースに必要な
+- [x] GitHub Actions のリリースに必要な
   `UPLOAD_KEYSTORE_BASE64` / `UPLOAD_KEY_ALIAS` /
-  `UPLOAD_KEY_PASSWORD` / `UPLOAD_STORE_PASSWORD` が未登録であることを確認する
+  `UPLOAD_KEY_PASSWORD` / `UPLOAD_STORE_PASSWORD` を登録し、4 件の存在を
+  GitHub API で確認する
 - [x] `ci.yml` の `pull_request` に `ready_for_review` を追加し、利用中の外部
   Action 5 種を GitHub API で解決した full-length commit SHA へ固定する
-- [ ] Workflow 変更の `main` 反映後、Repository Settings で Actions を
-  selected actions + full-length SHA 必須へ変更する（ユーザー実施）
-- [ ] 外部 fork PR の実行承認を `all external contributors` 必須へ変更する
+- [x] Repository Settings で Actions を selected actions +
+  full-length SHA 必須へ変更する（ユーザー実施、GitHub API で反映確認済み）
+- [x] 外部 fork PR の実行承認を `all external contributors` 必須へ変更する
   （ユーザー実施。既定 `GITHUB_TOKEN` read-only / PR 承認不可は維持）
+- [~] `release.yml` をタグ push 自動起動から所有者限定の手動起動へ変更し、
+  main・タグ形式・`pubspec.yaml` 版数・既存タグ・署名 Secret をビルド前に検証する
+  （ローカル実装・検証済み、main 反映と `v1.0.1` 手動実行は未実施）
 - [ ] Play Console に AAB をアップロードし、署名・versionCode の受入を確認する
   （ユーザー実施）
 
@@ -187,14 +191,15 @@
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-29（Version 1.0.1 release package を作成 —
+最終更新日: 2026-07-29（Version 1.0.1 手動リリース準備 —
 `pubspec.yaml` を `1.0.1+3` へ更新し、翻訳整合・format・analyze・全テストを通過。
 ローカル upload keystore で署名済み AAB 53,978,509 bytes を生成し、生成時
 Manifest の versionName `1.0.1` / versionCode `3` と署名エントリを確認。
-GitHub Actions の自動リリース用 Secrets 4 件は未登録、残は Play Console の
-受入確認。公開リポジトリ向けに CI の Draft 解除トリガーと Action 5 種の
-full-length SHA 固定も追加し、残は main 反映後の Actions 許可設定と外部 fork
-PR 承認ポリシー変更）
+GitHub Actions のリリース用 Secrets 4 件を登録し、Actions 許可を selected actions
++ full-length SHA 必須、外部 fork を全員承認必須へ設定。`release.yml` は
+タグ push 自動起動ではなく所有者限定の `workflow_dispatch` 手動起動へ変更し、
+入力タグと版数、既存タグ、Secrets を事前検証する。残は本変更の main 反映後の
+`v1.0.1` 手動実行と Play Console 受入確認）
 
 過去の更新: 2026-07-28（設定画面にアプリバージョン表示を追加 — `package_info_plus`
 を導入し、設定 →「情報」の先頭へ `1.0.0 (2)` 形式の行を追加。port / adapter /
