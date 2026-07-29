@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/domain/sound/imported_sound_exceptions.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 import 'package:timer_utility/infrastructure/audio/audioplayers_adapter.dart';
 
@@ -161,6 +162,27 @@ void main() {
               as AudioContext;
       expect(context.android.usageType, AndroidUsageType.alarm);
       verify(() => player.resume()).called(1);
+    });
+
+    test('取り込み音源のパスが見つからない場合は成功扱いにしない', () async {
+      final AudioplayersAdapter adapter = AudioplayersAdapter(
+        player: player,
+        importedPathLookup: (_) async => null,
+      );
+
+      await expectLater(
+        adapter.playImported('missing'),
+        throwsA(
+          isA<ImportedSoundNotFoundException>().having(
+            (ImportedSoundNotFoundException error) => error.id,
+            'id',
+            'missing',
+          ),
+        ),
+      );
+
+      expect(adapter.isPlaying, isFalse);
+      verifyNever(() => player.resume());
     });
 
     test('取り込みファイル欠損時は準備済みdefaultを再生する', () async {

@@ -18,6 +18,9 @@ class ImportedSoundStorageLayout {
   Future<File> stagedFile(String token) async =>
       File(p.join((await root()).path, '.staging', '$token.tmp'));
 
+  Future<Directory> stagingDirectory() async =>
+      Directory(p.join((await root()).path, '.staging'));
+
   Future<File> committedFile(String soundId, String extension) async =>
       File(p.join((await root()).path, '$soundId.$extension'));
 

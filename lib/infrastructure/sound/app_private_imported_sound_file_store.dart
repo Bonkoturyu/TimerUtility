@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../domain/ports/imported_sound_file_store.dart';
@@ -164,6 +165,41 @@ class AppPrivateImportedSoundFileStore implements ImportedSoundFileStore {
       importedSoundFileExtension(format),
     );
     if (await file.exists()) await file.delete();
+  }
+
+  @override
+  Future<List<String>> findStagedTokens() async {
+    final Directory directory = await _layout.stagingDirectory();
+    if (!await directory.exists()) return const <String>[];
+
+    final List<String> result = <String>[];
+    await for (final FileSystemEntity entry in directory.list()) {
+      if (entry is! File || p.extension(entry.path) != '.tmp') continue;
+      final String token = p.basenameWithoutExtension(entry.path);
+      if (token.isNotEmpty) result.add(token);
+    }
+    return result;
+  }
+
+  @override
+  Future<List<CommittedImportedSoundFile>> findCommitted() async {
+    final Directory directory = await _layout.root();
+    if (!await directory.exists()) {
+      return const <CommittedImportedSoundFile>[];
+    }
+
+    final List<CommittedImportedSoundFile> result =
+        <CommittedImportedSoundFile>[];
+    await for (final FileSystemEntity entry in directory.list()) {
+      if (entry is! File) continue;
+      final ImportedSoundFormat? format = importedSoundFormatFromExtension(
+        p.extension(entry.path).replaceFirst('.', ''),
+      );
+      final String soundId = p.basenameWithoutExtension(entry.path);
+      if (format == null || soundId.isEmpty) continue;
+      result.add(CommittedImportedSoundFile(soundId: soundId, format: format));
+    }
+    return result;
   }
 
   @override

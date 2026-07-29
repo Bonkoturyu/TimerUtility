@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timer_utility/domain/ports/imported_sound_file_store.dart';
 import 'package:timer_utility/domain/sound/imported_sound_exceptions.dart';
 import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/infrastructure/sound/app_private_imported_sound_file_store.dart';
@@ -150,5 +151,20 @@ void main() {
     await store.quarantine('missing', ImportedSoundFormat.mp3);
 
     expect(await store.findQuarantined(), isEmpty);
+  });
+
+  test('復旧用にstagingと確定ファイルを列挙する', () async {
+    final File staged = await layout.stagedFile('stage-orphan');
+    await staged.create(recursive: true);
+    final File committed = await layout.committedFile('sound-1', 'mp3');
+    await committed.create(recursive: true);
+    final File unsupported = await layout.committedFile('ignored', 'txt');
+    await unsupported.create(recursive: true);
+
+    expect(await store.findStagedTokens(), <String>['stage-orphan']);
+    final List<CommittedImportedSoundFile> files = await store.findCommitted();
+    expect(files, hasLength(1));
+    expect(files.single.soundId, 'sound-1');
+    expect(files.single.format, ImportedSoundFormat.mp3);
   });
 }

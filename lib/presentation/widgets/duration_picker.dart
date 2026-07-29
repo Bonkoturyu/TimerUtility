@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
+import '../../domain/sound/imported_sound.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Resolve a localized display name for the given alarm sound id.
@@ -227,22 +228,32 @@ class _DurationPickerWheelsState extends State<DurationPickerWheels> {
   }
 }
 
-/// Dropdown bound to `AlarmSoundCatalog.all`. Auto-scales as the
-/// catalog grows (Phase 11 plans up to ~10 sounds), no hard-coded
-/// list of 3.
+/// Dropdown for bundled and user-imported alarm sounds.
 class SoundDropdown extends StatelessWidget {
   const SoundDropdown({
     super.key,
     required this.value,
     required this.onChanged,
+    this.importedSounds = const <ImportedSound>[],
   });
 
   final String value;
   final ValueChanged<String> onChanged;
+  final List<ImportedSound> importedSounds;
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l = AppLocalizations.of(context);
+    final List<ImportedSound> selectableImportedSounds = importedSounds
+        .where(
+          (ImportedSound sound) => AlarmSoundCatalog.findById(sound.id) == null,
+        )
+        .toList(growable: false);
+    final bool hasCurrentValue =
+        AlarmSoundCatalog.findById(value) != null ||
+        selectableImportedSounds.any(
+          (ImportedSound sound) => sound.id == value,
+        );
     return DropdownButton<String>(
       isExpanded: true,
       value: value,
@@ -255,6 +266,13 @@ class SoundDropdown extends StatelessWidget {
             value: s.id,
             child: Text(soundDisplayName(l, s.id)),
           ),
+        for (final ImportedSound sound in selectableImportedSounds)
+          DropdownMenuItem<String>(
+            value: sound.id,
+            child: Text(sound.displayName),
+          ),
+        if (!hasCurrentValue)
+          DropdownMenuItem<String>(value: value, child: Text(value)),
       ],
     );
   }

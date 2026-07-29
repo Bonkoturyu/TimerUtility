@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/sound/imported_sound.dart';
 import '../../domain/timer/preset.dart';
 import '../../l10n/app_localizations.dart';
 import 'duration_picker.dart' show DurationPickerWheels, SoundDropdown;
@@ -36,10 +37,12 @@ class PresetEditSheet extends StatefulWidget {
     super.key,
     this.editing,
     required this.defaultSoundId,
+    this.importedSounds = const <ImportedSound>[],
   });
 
   final Preset? editing;
   final String defaultSoundId;
+  final List<ImportedSound> importedSounds;
 
   @override
   State<PresetEditSheet> createState() => _PresetEditSheetState();
@@ -123,6 +126,7 @@ class _PresetEditSheetState extends State<PresetEditSheet> {
                   child: SoundDropdown(
                     key: const Key('preset_edit_sound'),
                     value: _soundId,
+                    importedSounds: widget.importedSounds,
                     onChanged: (String v) => setState(() => _soundId = v),
                   ),
                 ),

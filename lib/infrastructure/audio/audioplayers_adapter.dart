@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 
 import '../../domain/ports/alarm_sound_player.dart';
+import '../../domain/sound/imported_sound_exceptions.dart';
 import '../../domain/timer/alarm_sound.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 
@@ -97,8 +98,11 @@ class AudioplayersAdapter
     final int generation = ++_selectionGeneration;
     return _enqueue(() async {
       final ImportedAlarmSoundPathLookup? lookup = _importedPathLookup;
-      final String? path = lookup == null ? null : await lookup(soundId);
-      if (path == null || generation != _selectionGeneration) return;
+      if (generation != _selectionGeneration) return;
+      if (lookup == null) throw ImportedSoundNotFoundException(soundId);
+      final String? path = await lookup(soundId);
+      if (generation != _selectionGeneration) return;
+      if (path == null) throw ImportedSoundNotFoundException(soundId);
       final bool ready = await _prepareSource(
         _player,
         DeviceFileSource(path),

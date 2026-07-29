@@ -60,6 +60,8 @@ void main() {
     when(
       () => fileStore.purgeQuarantined('imported', ImportedSoundFormat.mp3),
     ).thenAnswer((_) async {});
+    when(() => fileStore.findStagedTokens()).thenAnswer((_) async => const []);
+    when(() => fileStore.findCommitted()).thenAnswer((_) async => const []);
     when(() => fileStore.findQuarantined()).thenAnswer((_) async => const []);
     when(
       () => referenceStore.replaceReferencesAndDeleteMetadata(
@@ -231,6 +233,40 @@ void main() {
   });
 
   group('ImportedSoundRecoveryService', () {
+    test('中断したstagingとメタデータのない確定ファイルを削除する', () async {
+      when(
+        () => fileStore.findStagedTokens(),
+      ).thenAnswer((_) async => const <String>['stage-orphan']);
+      when(() => fileStore.discard('stage-orphan')).thenAnswer((_) async {});
+      when(() => fileStore.findCommitted()).thenAnswer(
+        (_) async => const <CommittedImportedSoundFile>[
+          CommittedImportedSoundFile(
+            soundId: 'orphan',
+            format: ImportedSoundFormat.aac,
+          ),
+          CommittedImportedSoundFile(
+            soundId: 'imported',
+            format: ImportedSoundFormat.mp3,
+          ),
+        ],
+      );
+      when(() => repository.findById('orphan')).thenAnswer((_) async => null);
+      when(
+        () => fileStore.delete('orphan', ImportedSoundFormat.aac),
+      ).thenAnswer((_) async {});
+
+      await ImportedSoundRecoveryService(
+        repository: repository,
+        fileStore: fileStore,
+      ).recover();
+
+      verify(() => fileStore.discard('stage-orphan')).called(1);
+      verify(
+        () => fileStore.delete('orphan', ImportedSoundFormat.aac),
+      ).called(1);
+      verifyNever(() => fileStore.delete('imported', ImportedSoundFormat.mp3));
+    });
+
     test('metadataの有無に応じて復元または破棄する', () async {
       when(() => fileStore.findQuarantined()).thenAnswer(
         (_) async => const <QuarantinedImportedSoundFile>[

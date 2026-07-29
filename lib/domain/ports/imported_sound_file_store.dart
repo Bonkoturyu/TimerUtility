@@ -25,6 +25,16 @@ class QuarantinedImportedSoundFile {
   final ImportedSoundFormat format;
 }
 
+class CommittedImportedSoundFile {
+  const CommittedImportedSoundFile({
+    required this.soundId,
+    required this.format,
+  });
+
+  final String soundId;
+  final ImportedSoundFormat format;
+}
+
 /// Manages imported sound bytes in app-private storage.
 abstract class ImportedSoundFileStore {
   Future<StagedImportedSoundFile> stage({
@@ -48,6 +58,12 @@ abstract class ImportedSoundFileStore {
   Future<void> restoreQuarantined(String soundId, ImportedSoundFormat format);
 
   Future<void> purgeQuarantined(String soundId, ImportedSoundFormat format);
+
+  /// Returns opaque tokens left behind by interrupted import preparation.
+  Future<List<String>> findStagedTokens();
+
+  /// Returns files that have reached their committed storage location.
+  Future<List<CommittedImportedSoundFile>> findCommitted();
 
   Future<List<QuarantinedImportedSoundFile>> findQuarantined();
 }
