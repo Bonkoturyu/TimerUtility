@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -5,10 +7,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/alarm_sound_player.dart';
 import '../domain/timer/alarm_sound.dart';
+import '../domain/timer/alarm_sound_catalog.dart';
+import 'alarm_repository_provider.dart';
 import 'alarm_sound_player_provider.dart';
 import 'clock_provider.dart';
 import 'diagnostic_logger_provider.dart';
 import 'notification_scheduler_provider.dart';
+import 'timer_repository_provider.dart';
 
 part 'alarm_ringing_notifier.freezed.dart';
 part 'alarm_ringing_notifier.g.dart';
@@ -23,6 +28,15 @@ part 'alarm_ringing_notifier.g.dart';
 final Provider<Duration> alarmSoundHandoffDelayProvider = Provider<Duration>(
   (Ref ref) => const Duration(milliseconds: 3200),
 );
+
+/// Maximum time allowed for selected-source resolution and preparation.
+///
+/// A cold-start repository lookup may continue beyond this boundary so its
+/// persisted notification id can still be cancelled. Only sound selection
+/// falls back at the deadline. The bundled fallback is prepared independently,
+/// so expiry never moves the fixed 3200 ms handoff boundary.
+final Provider<Duration> alarmSoundSelectionTimeoutProvider =
+    Provider<Duration>((Ref ref) => const Duration(milliseconds: 1000));
 
 /// 鳴動の起動元 (Phase 9.5、ADR 0005 の payload prefix 方針に対応)。
 /// - `timer`: 既存のカウントダウンタイマーが満了して鳴った場合
@@ -94,7 +108,8 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   /// cancellation or keyguard state.
   Future<void> start({
     required String timerId,
-    required AlarmSound sound,
+    AlarmSound? sound,
+    String? soundId,
     required int notificationId,
     AlarmSource source = AlarmSource.timer,
   }) async {
@@ -105,12 +120,16 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     if (state.isPlaying) {
       return;
     }
+    if (sound == null && soundId == null && timerId == 'unknown') {
+      soundId = AlarmSoundCatalog.defaultSound.id;
+    }
     final int generation = ++_playbackGeneration;
+    final String? knownSoundId = soundId ?? sound?.id;
     state = state.copyWith(
       isPlaying: true,
       snoozeRequested: false,
       currentTimerId: timerId,
-      currentSoundId: sound.id,
+      currentSoundId: knownSoundId,
       currentSource: source,
     );
     // Plan の確定仕様: 通知発火ログは AlarmRingingNotifier.start で出す
@@ -135,9 +154,70 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
       ref.read(alarmSoundHandoffDelayProvider),
     );
     final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
-    await ref.read(notificationSchedulerProvider).cancel(notificationId);
-    if (!_isCurrent(generation, timerId)) return;
-    await player.prepare(sound);
+    final Duration selectionTimeout = ref.read(
+      alarmSoundSelectionTimeoutProvider,
+    );
+    // Keep the repository lookup alive beyond the sound-selection deadline.
+    // Cold launch does not have an in-memory notification id; discarding this
+    // future at the timeout would leave the persisted OS notification active.
+    final Future<_AlarmRingingTarget> rawTarget =
+        _resolveTarget(
+          timerId: timerId,
+          source: source,
+          knownSoundId: knownSoundId,
+          knownNotificationId: notificationId,
+        ).catchError(
+          (Object _) => _AlarmRingingTarget(
+            soundId: knownSoundId ?? AlarmSoundCatalog.defaultSound.id,
+            notificationId: notificationId,
+          ),
+        );
+    final Future<String> selectedSoundId = rawTarget
+        .then((_AlarmRingingTarget resolved) => resolved.soundId)
+        .timeout(
+          selectionTimeout,
+          onTimeout: () => AlarmSoundCatalog.defaultSound.id,
+        )
+        .catchError((Object _) => AlarmSoundCatalog.defaultSound.id);
+    unawaited(
+      selectedSoundId
+          .then((String resolvedSoundId) {
+            if (!_isCurrent(generation, timerId)) return;
+            state = state.copyWith(currentSoundId: resolvedSoundId);
+          })
+          .catchError((Object _) {}),
+    );
+    unawaited(
+      rawTarget
+          .then((_AlarmRingingTarget resolved) async {
+            if (resolved.notificationId < 0) return;
+            // This notification belongs to the start request that initiated
+            // the lookup. Dismissal may make the playback generation stale
+            // before a cold-start repository lookup completes, but the OS
+            // notification still requires cleanup.
+            await ref
+                .read(notificationSchedulerProvider)
+                .cancel(resolved.notificationId);
+          })
+          .catchError((Object _) {}),
+    );
+    AlarmSound? legacyPrepared;
+    final HandoffAlarmSoundPlayer? handoffPlayer =
+        player is HandoffAlarmSoundPlayer
+        ? player as HandoffAlarmSoundPlayer
+        : null;
+    if (handoffPlayer != null) {
+      await handoffPlayer.prepareForHandoff(
+        requestedSoundId: selectedSoundId,
+        selectionTimeout: selectionTimeout,
+      );
+    } else {
+      final String resolvedId = await selectedSoundId;
+      legacyPrepared =
+          AlarmSoundCatalog.findById(resolvedId) ??
+          AlarmSoundCatalog.defaultSound;
+      await player.prepare(legacyPrepared);
+    }
     if (!_isCurrent(generation, timerId)) return;
     await handoffWindow;
     if (!_isCurrent(generation, timerId)) return;
@@ -161,7 +241,17 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
             action: TimerActionKind.alarmPlaybackStart,
           ),
         );
-    await player.play(sound);
+    if (handoffPlayer != null) {
+      await handoffPlayer.playPrepared();
+    } else {
+      await player.play(legacyPrepared ?? AlarmSoundCatalog.defaultSound);
+    }
+    if (_isCurrent(generation, timerId) && !player.isPlaying) {
+      // Both selected and default can fail at the platform resume boundary.
+      // Keep Notifier state truthful so a subsequent start may retry instead
+      // of being dropped by the idempotence guard.
+      state = state.copyWith(isPlaying: false);
+    }
     // Second race window (beyond the pre-play guard on L151): stop() /
     // snoozeRequested() can flip the state back to idle *during* the
     // `await play(sound)` async gap. If that happened, the player is now
@@ -171,6 +261,38 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     if (!_isCurrent(generation, timerId) && !state.isPlaying) {
       await player.stop();
     }
+  }
+
+  Future<_AlarmRingingTarget> _resolveTarget({
+    required String timerId,
+    required AlarmSource source,
+    required String? knownSoundId,
+    required int knownNotificationId,
+  }) async {
+    if (knownSoundId != null && knownNotificationId >= 0) {
+      return _AlarmRingingTarget(
+        soundId: knownSoundId,
+        notificationId: knownNotificationId,
+      );
+    }
+    if (source == AlarmSource.alarm) {
+      final alarm = await ref.read(alarmRepositoryProvider).findById(timerId);
+      return _AlarmRingingTarget(
+        soundId:
+            knownSoundId ?? alarm?.soundId ?? AlarmSoundCatalog.defaultSound.id,
+        notificationId: knownNotificationId >= 0
+            ? knownNotificationId
+            : alarm?.notificationId ?? knownNotificationId,
+      );
+    }
+    final timer = await ref.read(timerRepositoryProvider).findById(timerId);
+    return _AlarmRingingTarget(
+      soundId:
+          knownSoundId ?? timer?.soundId ?? AlarmSoundCatalog.defaultSound.id,
+      notificationId: knownNotificationId >= 0
+          ? knownNotificationId
+          : timer?.notificationId ?? knownNotificationId,
+    );
   }
 
   bool _isCurrent(int generation, String timerId) =>
@@ -199,4 +321,14 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     state = state.copyWith(isPlaying: false, snoozeRequested: true);
     await ref.read(alarmSoundPlayerProvider).stop();
   }
+}
+
+class _AlarmRingingTarget {
+  const _AlarmRingingTarget({
+    required this.soundId,
+    required this.notificationId,
+  });
+
+  final String soundId;
+  final int notificationId;
 }

@@ -23,3 +23,34 @@ abstract class AlarmSoundPlayer {
   /// adapter is disposed.
   Future<void> dispose();
 }
+
+/// Optional alarm-handoff capability used by the production player.
+///
+/// Kept separate from [AlarmSoundPlayer] so bundled-only adapters and test
+/// doubles retain the Phase 5 contract unchanged.
+abstract class HandoffAlarmSoundPlayer {
+  Future<void> prepareForHandoff({
+    required Future<String> requestedSoundId,
+    required Duration selectionTimeout,
+  });
+
+  /// Plays exactly the source selected by [prepareForHandoff], without a
+  /// second repository lookup after the fixed handoff boundary.
+  Future<void> playPrepared();
+}
+
+/// Optional preview capability for app-private imported audio.
+///
+/// [soundId] is the stable Domain identifier, never a file path. Keeping this
+/// separate preserves the original bundled-only player contract for existing
+/// adapters and test doubles.
+abstract class ImportedSoundPreviewPlayer {
+  Future<void> playImported(String soundId);
+}
+
+/// Optional preview capability for a validated, uncommitted staging copy.
+///
+/// [stagingToken] is opaque storage identity, never a file path or URI.
+abstract class StagedImportedSoundPreviewPlayer {
+  Future<void> playStaged(String stagingToken);
+}

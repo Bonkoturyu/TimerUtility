@@ -4,8 +4,11 @@ import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/ports/imported_sound_repository.dart';
 import '../domain/ports/user_preferences.dart';
 import '../domain/timer/alarm_sound_catalog.dart';
+import 'imported_sound_mutation_coordinator.dart';
+import 'imported_sound_repository_provider.dart';
 import 'user_preferences_provider.dart';
 
 part 'settings_notifier.freezed.dart';
@@ -106,14 +109,31 @@ class SettingsState with _$SettingsState {
 /// script/region disambiguation.
 @Riverpod(keepAlive: true)
 class SettingsNotifier extends _$SettingsNotifier {
+  int _restoreGeneration = 0;
+  final Set<String> _deletedSoundIds = <String>{};
+  bool _disposed = false;
+
   @override
   SettingsState build() {
-    Future<void>.microtask(_restore);
+    _disposed = false;
+    final UserPreferences preferences = ref.read(userPreferencesProvider);
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final ImportedSoundDeletionRegistry registry = ref.read(
+      importedSoundDeletionRegistryProvider,
+    );
+    ref.onDispose(() => _disposed = true);
+    Future<void>.microtask(() => _restore(preferences, coordinator, registry));
     return SettingsState.defaults();
   }
 
-  Future<void> _restore() async {
-    final UserPreferences prefs = ref.read(userPreferencesProvider);
+  Future<void> _restore(
+    UserPreferences prefs,
+    ImportedSoundMutationCoordinator coordinator,
+    ImportedSoundDeletionRegistry registry,
+  ) async {
+    final int restoreGeneration = _restoreGeneration;
     final int? storedTheme = await prefs.getInt(UserPreferenceKeys.themeMode);
     final int? storedSnooze = await prefs.getInt(
       UserPreferenceKeys.defaultSnoozeMinutes,
@@ -140,23 +160,50 @@ class SettingsNotifier extends _$SettingsNotifier {
             kAllowedDefaultSnoozeMinutes.contains(storedSnooze))
         ? storedSnooze
         : defaults.defaultSnoozeMinutes;
-    final String soundId =
-        (storedSound != null && AlarmSoundCatalog.findById(storedSound) != null)
-        ? storedSound
-        : defaults.defaultAlarmSoundId;
     final Locale? localeOverride = storedLocale == null
         ? defaults.localeOverride
         : parseLocaleTag(storedLocale);
 
-    state = SettingsState(
-      themeMode: themeMode,
-      localeOverride: localeOverride,
-      defaultSnoozeMinutes: snooze,
-      defaultAlarmSoundId: soundId,
-    );
+    if (_disposed) return;
+    await coordinator.run(() async {
+      if (_disposed || restoreGeneration != _restoreGeneration) return;
+      final ImportedSoundRepository? repository =
+          storedSound != null &&
+              AlarmSoundCatalog.findById(storedSound) == null &&
+              !registry.isUnavailable(storedSound)
+          ? ref.read(importedSoundRepositoryProvider)
+          : null;
+      final bool isKnown =
+          storedSound != null &&
+          await _isKnownSoundId(storedSound, registry, repository);
+      if (_disposed || restoreGeneration != _restoreGeneration) return;
+      final bool remainsAvailable =
+          isKnown && !registry.isUnavailable(storedSound);
+      final String soundId = remainsAvailable
+          ? storedSound
+          : defaults.defaultAlarmSoundId;
+      state = SettingsState(
+        themeMode: themeMode,
+        localeOverride: localeOverride,
+        defaultSnoozeMinutes: snooze,
+        defaultAlarmSoundId: soundId,
+      );
+
+      if (storedSound != null && storedSound != soundId) {
+        try {
+          await prefs.setString(
+            UserPreferenceKeys.defaultAlarmSoundId,
+            soundId,
+          );
+        } catch (_) {
+          // Startup remains available. A later restore retries the repair.
+        }
+      }
+    });
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
+    _restoreGeneration++;
     state = state.copyWith(themeMode: mode);
     await ref
         .read(userPreferencesProvider)
@@ -171,6 +218,7 @@ class SettingsNotifier extends _$SettingsNotifier {
         'must be one of $kAllowedDefaultSnoozeMinutes',
       );
     }
+    _restoreGeneration++;
     state = state.copyWith(defaultSnoozeMinutes: minutes);
     await ref
         .read(userPreferencesProvider)
@@ -178,13 +226,31 @@ class SettingsNotifier extends _$SettingsNotifier {
   }
 
   Future<void> setDefaultAlarmSoundId(String soundId) async {
-    if (AlarmSoundCatalog.findById(soundId) == null) {
-      throw ArgumentError.value(soundId, 'soundId', 'unknown alarm sound id');
-    }
-    state = state.copyWith(defaultAlarmSoundId: soundId);
-    await ref
-        .read(userPreferencesProvider)
-        .setString(UserPreferenceKeys.defaultAlarmSoundId, soundId);
+    final ImportedSoundMutationCoordinator coordinator = ref.read(
+      importedSoundMutationCoordinatorProvider,
+    );
+    final ImportedSoundDeletionRegistry registry = ref.read(
+      importedSoundDeletionRegistryProvider,
+    );
+    final ImportedSoundRepository? repository =
+        AlarmSoundCatalog.findById(soundId) == null
+        ? ref.read(importedSoundRepositoryProvider)
+        : null;
+    final UserPreferences preferences = ref.read(userPreferencesProvider);
+    await coordinator.run(() async {
+      if (!await _isKnownSoundId(soundId, registry, repository)) {
+        throw ArgumentError.value(soundId, 'soundId', 'unknown alarm sound id');
+      }
+      if (registry.isUnavailable(soundId)) {
+        throw ArgumentError.value(soundId, 'soundId', 'unknown alarm sound id');
+      }
+      _restoreGeneration++;
+      state = state.copyWith(defaultAlarmSoundId: soundId);
+      await preferences.setString(
+        UserPreferenceKeys.defaultAlarmSoundId,
+        soundId,
+      );
+    });
   }
 
   /// Persist the user's manual locale choice. `null` means "follow the
@@ -194,6 +260,7 @@ class SettingsNotifier extends _$SettingsNotifier {
   /// already hides experimental options on public builds, so this is
   /// the belt-and-braces.
   Future<void> setLocaleOverride(String? tag) async {
+    _restoreGeneration++;
     final UserPreferences prefs = ref.read(userPreferencesProvider);
     if (tag == null) {
       state = state.copyWith(localeOverride: null);
@@ -208,5 +275,32 @@ class SettingsNotifier extends _$SettingsNotifier {
     }
     state = state.copyWith(localeOverride: locale);
     await prefs.setString(UserPreferenceKeys.localeTag, tag);
+  }
+
+  /// Mirrors a successful deletion whose preference write already completed.
+  void reconcileDeletedSound(String soundId) {
+    _deletedSoundIds.add(soundId);
+    ref.read(importedSoundDeletionRegistryProvider).markDeleted(soundId);
+    if (state.defaultAlarmSoundId == soundId) {
+      state = state.copyWith(
+        defaultAlarmSoundId: AlarmSoundCatalog.defaultSound.id,
+      );
+    }
+  }
+
+  Future<bool> _isKnownSoundId(
+    String soundId,
+    ImportedSoundDeletionRegistry registry,
+    ImportedSoundRepository? repository,
+  ) async {
+    if (_deletedSoundIds.contains(soundId) || registry.isUnavailable(soundId)) {
+      return false;
+    }
+    if (AlarmSoundCatalog.findById(soundId) != null) return true;
+    if (repository == null) return false;
+    final bool exists = await repository.findById(soundId) != null;
+    return exists &&
+        !_deletedSoundIds.contains(soundId) &&
+        !registry.isUnavailable(soundId);
   }
 }

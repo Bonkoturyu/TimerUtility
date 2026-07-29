@@ -2096,6 +2096,489 @@ class ClockEntriesCompanion extends UpdateCompanion<ClockEntryRow> {
   }
 }
 
+class $ImportedSoundsTable extends ImportedSounds
+    with TableInfo<$ImportedSoundsTable, ImportedSoundRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ImportedSoundsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _formatMeta = const VerificationMeta('format');
+  @override
+  late final GeneratedColumn<String> format = GeneratedColumn<String>(
+    'format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _byteLengthMeta = const VerificationMeta(
+    'byteLength',
+  );
+  @override
+  late final GeneratedColumn<int> byteLength = GeneratedColumn<int>(
+    'byte_length',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationMsMeta = const VerificationMeta(
+    'durationMs',
+  );
+  @override
+  late final GeneratedColumn<int> durationMs = GeneratedColumn<int>(
+    'duration_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentHashMeta = const VerificationMeta(
+    'contentHash',
+  );
+  @override
+  late final GeneratedColumn<String> contentHash = GeneratedColumn<String>(
+    'content_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _createdAtUtcMsMeta = const VerificationMeta(
+    'createdAtUtcMs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUtcMs = GeneratedColumn<int>(
+    'created_at_utc_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    format,
+    byteLength,
+    durationMs,
+    contentHash,
+    createdAtUtcMs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'imported_sounds';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ImportedSoundRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('format')) {
+      context.handle(
+        _formatMeta,
+        format.isAcceptableOrUnknown(data['format']!, _formatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formatMeta);
+    }
+    if (data.containsKey('byte_length')) {
+      context.handle(
+        _byteLengthMeta,
+        byteLength.isAcceptableOrUnknown(data['byte_length']!, _byteLengthMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_byteLengthMeta);
+    }
+    if (data.containsKey('duration_ms')) {
+      context.handle(
+        _durationMsMeta,
+        durationMs.isAcceptableOrUnknown(data['duration_ms']!, _durationMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_durationMsMeta);
+    }
+    if (data.containsKey('content_hash')) {
+      context.handle(
+        _contentHashMeta,
+        contentHash.isAcceptableOrUnknown(
+          data['content_hash']!,
+          _contentHashMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentHashMeta);
+    }
+    if (data.containsKey('created_at_utc_ms')) {
+      context.handle(
+        _createdAtUtcMsMeta,
+        createdAtUtcMs.isAcceptableOrUnknown(
+          data['created_at_utc_ms']!,
+          _createdAtUtcMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUtcMsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ImportedSoundRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ImportedSoundRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      format: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}format'],
+      )!,
+      byteLength: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}byte_length'],
+      )!,
+      durationMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_ms'],
+      )!,
+      contentHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_hash'],
+      )!,
+      createdAtUtcMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_utc_ms'],
+      )!,
+    );
+  }
+
+  @override
+  $ImportedSoundsTable createAlias(String alias) {
+    return $ImportedSoundsTable(attachedDatabase, alias);
+  }
+}
+
+class ImportedSoundRow extends DataClass
+    implements Insertable<ImportedSoundRow> {
+  final String id;
+  final String displayName;
+  final String format;
+  final int byteLength;
+  final int durationMs;
+  final String contentHash;
+  final int createdAtUtcMs;
+  const ImportedSoundRow({
+    required this.id,
+    required this.displayName,
+    required this.format,
+    required this.byteLength,
+    required this.durationMs,
+    required this.contentHash,
+    required this.createdAtUtcMs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['display_name'] = Variable<String>(displayName);
+    map['format'] = Variable<String>(format);
+    map['byte_length'] = Variable<int>(byteLength);
+    map['duration_ms'] = Variable<int>(durationMs);
+    map['content_hash'] = Variable<String>(contentHash);
+    map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs);
+    return map;
+  }
+
+  ImportedSoundsCompanion toCompanion(bool nullToAbsent) {
+    return ImportedSoundsCompanion(
+      id: Value(id),
+      displayName: Value(displayName),
+      format: Value(format),
+      byteLength: Value(byteLength),
+      durationMs: Value(durationMs),
+      contentHash: Value(contentHash),
+      createdAtUtcMs: Value(createdAtUtcMs),
+    );
+  }
+
+  factory ImportedSoundRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ImportedSoundRow(
+      id: serializer.fromJson<String>(json['id']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      format: serializer.fromJson<String>(json['format']),
+      byteLength: serializer.fromJson<int>(json['byteLength']),
+      durationMs: serializer.fromJson<int>(json['durationMs']),
+      contentHash: serializer.fromJson<String>(json['contentHash']),
+      createdAtUtcMs: serializer.fromJson<int>(json['createdAtUtcMs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'displayName': serializer.toJson<String>(displayName),
+      'format': serializer.toJson<String>(format),
+      'byteLength': serializer.toJson<int>(byteLength),
+      'durationMs': serializer.toJson<int>(durationMs),
+      'contentHash': serializer.toJson<String>(contentHash),
+      'createdAtUtcMs': serializer.toJson<int>(createdAtUtcMs),
+    };
+  }
+
+  ImportedSoundRow copyWith({
+    String? id,
+    String? displayName,
+    String? format,
+    int? byteLength,
+    int? durationMs,
+    String? contentHash,
+    int? createdAtUtcMs,
+  }) => ImportedSoundRow(
+    id: id ?? this.id,
+    displayName: displayName ?? this.displayName,
+    format: format ?? this.format,
+    byteLength: byteLength ?? this.byteLength,
+    durationMs: durationMs ?? this.durationMs,
+    contentHash: contentHash ?? this.contentHash,
+    createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+  );
+  ImportedSoundRow copyWithCompanion(ImportedSoundsCompanion data) {
+    return ImportedSoundRow(
+      id: data.id.present ? data.id.value : this.id,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      format: data.format.present ? data.format.value : this.format,
+      byteLength: data.byteLength.present
+          ? data.byteLength.value
+          : this.byteLength,
+      durationMs: data.durationMs.present
+          ? data.durationMs.value
+          : this.durationMs,
+      contentHash: data.contentHash.present
+          ? data.contentHash.value
+          : this.contentHash,
+      createdAtUtcMs: data.createdAtUtcMs.present
+          ? data.createdAtUtcMs.value
+          : this.createdAtUtcMs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportedSoundRow(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('format: $format, ')
+          ..write('byteLength: $byteLength, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('contentHash: $contentHash, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    format,
+    byteLength,
+    durationMs,
+    contentHash,
+    createdAtUtcMs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ImportedSoundRow &&
+          other.id == this.id &&
+          other.displayName == this.displayName &&
+          other.format == this.format &&
+          other.byteLength == this.byteLength &&
+          other.durationMs == this.durationMs &&
+          other.contentHash == this.contentHash &&
+          other.createdAtUtcMs == this.createdAtUtcMs);
+}
+
+class ImportedSoundsCompanion extends UpdateCompanion<ImportedSoundRow> {
+  final Value<String> id;
+  final Value<String> displayName;
+  final Value<String> format;
+  final Value<int> byteLength;
+  final Value<int> durationMs;
+  final Value<String> contentHash;
+  final Value<int> createdAtUtcMs;
+  final Value<int> rowid;
+  const ImportedSoundsCompanion({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.format = const Value.absent(),
+    this.byteLength = const Value.absent(),
+    this.durationMs = const Value.absent(),
+    this.contentHash = const Value.absent(),
+    this.createdAtUtcMs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ImportedSoundsCompanion.insert({
+    required String id,
+    required String displayName,
+    required String format,
+    required int byteLength,
+    required int durationMs,
+    required String contentHash,
+    required int createdAtUtcMs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       displayName = Value(displayName),
+       format = Value(format),
+       byteLength = Value(byteLength),
+       durationMs = Value(durationMs),
+       contentHash = Value(contentHash),
+       createdAtUtcMs = Value(createdAtUtcMs);
+  static Insertable<ImportedSoundRow> custom({
+    Expression<String>? id,
+    Expression<String>? displayName,
+    Expression<String>? format,
+    Expression<int>? byteLength,
+    Expression<int>? durationMs,
+    Expression<String>? contentHash,
+    Expression<int>? createdAtUtcMs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (displayName != null) 'display_name': displayName,
+      if (format != null) 'format': format,
+      if (byteLength != null) 'byte_length': byteLength,
+      if (durationMs != null) 'duration_ms': durationMs,
+      if (contentHash != null) 'content_hash': contentHash,
+      if (createdAtUtcMs != null) 'created_at_utc_ms': createdAtUtcMs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ImportedSoundsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? displayName,
+    Value<String>? format,
+    Value<int>? byteLength,
+    Value<int>? durationMs,
+    Value<String>? contentHash,
+    Value<int>? createdAtUtcMs,
+    Value<int>? rowid,
+  }) {
+    return ImportedSoundsCompanion(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      format: format ?? this.format,
+      byteLength: byteLength ?? this.byteLength,
+      durationMs: durationMs ?? this.durationMs,
+      contentHash: contentHash ?? this.contentHash,
+      createdAtUtcMs: createdAtUtcMs ?? this.createdAtUtcMs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (format.present) {
+      map['format'] = Variable<String>(format.value);
+    }
+    if (byteLength.present) {
+      map['byte_length'] = Variable<int>(byteLength.value);
+    }
+    if (durationMs.present) {
+      map['duration_ms'] = Variable<int>(durationMs.value);
+    }
+    if (contentHash.present) {
+      map['content_hash'] = Variable<String>(contentHash.value);
+    }
+    if (createdAtUtcMs.present) {
+      map['created_at_utc_ms'] = Variable<int>(createdAtUtcMs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ImportedSoundsCompanion(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('format: $format, ')
+          ..write('byteLength: $byteLength, ')
+          ..write('durationMs: $durationMs, ')
+          ..write('contentHash: $contentHash, ')
+          ..write('createdAtUtcMs: $createdAtUtcMs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2103,6 +2586,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PresetsTable presets = $PresetsTable(this);
   late final $AlarmsTable alarms = $AlarmsTable(this);
   late final $ClockEntriesTable clockEntries = $ClockEntriesTable(this);
+  late final $ImportedSoundsTable importedSounds = $ImportedSoundsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2112,6 +2596,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     presets,
     alarms,
     clockEntries,
+    importedSounds,
   ];
 }
 
@@ -3144,6 +3629,260 @@ typedef $$ClockEntriesTableProcessedTableManager =
       ClockEntryRow,
       PrefetchHooks Function()
     >;
+typedef $$ImportedSoundsTableCreateCompanionBuilder =
+    ImportedSoundsCompanion Function({
+      required String id,
+      required String displayName,
+      required String format,
+      required int byteLength,
+      required int durationMs,
+      required String contentHash,
+      required int createdAtUtcMs,
+      Value<int> rowid,
+    });
+typedef $$ImportedSoundsTableUpdateCompanionBuilder =
+    ImportedSoundsCompanion Function({
+      Value<String> id,
+      Value<String> displayName,
+      Value<String> format,
+      Value<int> byteLength,
+      Value<int> durationMs,
+      Value<String> contentHash,
+      Value<int> createdAtUtcMs,
+      Value<int> rowid,
+    });
+
+class $$ImportedSoundsTableFilterComposer
+    extends Composer<_$AppDatabase, $ImportedSoundsTable> {
+  $$ImportedSoundsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get byteLength => $composableBuilder(
+    column: $table.byteLength,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ImportedSoundsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ImportedSoundsTable> {
+  $$ImportedSoundsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get byteLength => $composableBuilder(
+    column: $table.byteLength,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ImportedSoundsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ImportedSoundsTable> {
+  $$ImportedSoundsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<int> get byteLength => $composableBuilder(
+    column: $table.byteLength,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationMs => $composableBuilder(
+    column: $table.durationMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contentHash => $composableBuilder(
+    column: $table.contentHash,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtUtcMs => $composableBuilder(
+    column: $table.createdAtUtcMs,
+    builder: (column) => column,
+  );
+}
+
+class $$ImportedSoundsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ImportedSoundsTable,
+          ImportedSoundRow,
+          $$ImportedSoundsTableFilterComposer,
+          $$ImportedSoundsTableOrderingComposer,
+          $$ImportedSoundsTableAnnotationComposer,
+          $$ImportedSoundsTableCreateCompanionBuilder,
+          $$ImportedSoundsTableUpdateCompanionBuilder,
+          (
+            ImportedSoundRow,
+            BaseReferences<
+              _$AppDatabase,
+              $ImportedSoundsTable,
+              ImportedSoundRow
+            >,
+          ),
+          ImportedSoundRow,
+          PrefetchHooks Function()
+        > {
+  $$ImportedSoundsTableTableManager(
+    _$AppDatabase db,
+    $ImportedSoundsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ImportedSoundsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ImportedSoundsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ImportedSoundsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> format = const Value.absent(),
+                Value<int> byteLength = const Value.absent(),
+                Value<int> durationMs = const Value.absent(),
+                Value<String> contentHash = const Value.absent(),
+                Value<int> createdAtUtcMs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ImportedSoundsCompanion(
+                id: id,
+                displayName: displayName,
+                format: format,
+                byteLength: byteLength,
+                durationMs: durationMs,
+                contentHash: contentHash,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String displayName,
+                required String format,
+                required int byteLength,
+                required int durationMs,
+                required String contentHash,
+                required int createdAtUtcMs,
+                Value<int> rowid = const Value.absent(),
+              }) => ImportedSoundsCompanion.insert(
+                id: id,
+                displayName: displayName,
+                format: format,
+                byteLength: byteLength,
+                durationMs: durationMs,
+                contentHash: contentHash,
+                createdAtUtcMs: createdAtUtcMs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ImportedSoundsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ImportedSoundsTable,
+      ImportedSoundRow,
+      $$ImportedSoundsTableFilterComposer,
+      $$ImportedSoundsTableOrderingComposer,
+      $$ImportedSoundsTableAnnotationComposer,
+      $$ImportedSoundsTableCreateCompanionBuilder,
+      $$ImportedSoundsTableUpdateCompanionBuilder,
+      (
+        ImportedSoundRow,
+        BaseReferences<_$AppDatabase, $ImportedSoundsTable, ImportedSoundRow>,
+      ),
+      ImportedSoundRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3156,4 +3895,6 @@ class $AppDatabaseManager {
       $$AlarmsTableTableManager(_db, _db.alarms);
   $$ClockEntriesTableTableManager get clockEntries =>
       $$ClockEntriesTableTableManager(_db, _db.clockEntries);
+  $$ImportedSoundsTableTableManager get importedSounds =>
+      $$ImportedSoundsTableTableManager(_db, _db.importedSounds);
 }

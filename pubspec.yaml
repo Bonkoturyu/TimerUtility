@@ -1,7 +1,7 @@
 name: timer_utility
 description: "Stopwatch and timer app for Android 16"
 publish_to: 'none'
-version: 1.0.1+3
+version: 1.1.0+4
 homepage: https://github.com/Bonkoturyu/TimerUtility
 repository: https://github.com/Bonkoturyu/TimerUtility
 issue_tracker: https://github.com/Bonkoturyu/TimerUtility/issues
@@ -42,6 +42,11 @@ dependencies:
   # path separator を吸収する。flutter_localizations / drift 経由で
   # transitive に入っているので `any` で SDK 整合を取る。
   path: any
+  # Phase 13: OS標準ファイルピッカーからユーザー音源を1件選択する。
+  # endorsed Android implementationを含むFlutter公式pluginを使用する。
+  file_selector: ^1.1.0
+  # Phase 13: 内容SHA-256をストリーム計算し、同一音源の重複登録を防ぐ。
+  crypto: ^3.0.7
   # Phase D-3: diagnostic ログを zip にまとめて OS Share Sheet に渡す。
   # archive は Pure Dart (Native plugin 不要)、share_plus は manifest
   # auto-merge で FileProvider を自動宣言する。

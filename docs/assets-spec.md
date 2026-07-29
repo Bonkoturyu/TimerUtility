@@ -266,6 +266,8 @@ class AlarmSoundCatalog {
 実装時の自動テストと実機計測で決定する。
 
 取り込み音源は初期実装では OS バックアップおよび端末移行の対象外とする。
+Android 11 以前は `res/xml/backup_rules.xml`、Android 12 以降は
+`res/xml/data_extraction_rules.xml` で `file/imported_sounds` を明示的に除外する。
 アプリをアンインストールした場合、内部コピーとメタデータは削除される。将来対応する
 場合は、音源本体の容量、購入済み買い切り権限の復元、権利責任を含めて別途設計する。
 

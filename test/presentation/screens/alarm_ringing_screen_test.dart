@@ -105,6 +105,28 @@ class _InMemoryTimerRepository implements TimerRepository {
   }
 }
 
+class _DelayedColdTimerRepository implements TimerRepository {
+  _DelayedColdTimerRepository(this.entity, this.lookupDelay);
+
+  final TimerEntity entity;
+  final Duration lookupDelay;
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<List<TimerEntity>> findAll() async => <TimerEntity>[];
+
+  @override
+  Future<TimerEntity?> findById(String id) async {
+    await Future<void>.delayed(lookupDelay);
+    return id == entity.id ? entity : null;
+  }
+
+  @override
+  Future<void> upsert(TimerEntity entity) async {}
+}
+
 NotificationScheduler _stubScheduler() {
   final scheduler = _MockNotificationScheduler();
   when(
@@ -136,16 +158,24 @@ Widget _harness(
   TimerEntity? seedRinging,
   bool screenLocked = false,
   Duration handoffDelay = Duration.zero,
+  Duration selectionTimeout = const Duration(seconds: 1),
   _StubKeyguardOverrideController? keyguard,
+  TimerRepository? repository,
+  NotificationScheduler? scheduler,
+  String? payload,
 }) {
-  final NotificationScheduler scheduler = _stubScheduler();
-  final _InMemoryTimerRepository repo = _InMemoryTimerRepository();
+  final NotificationScheduler notificationScheduler =
+      scheduler ?? _stubScheduler();
+  final _InMemoryTimerRepository inMemoryRepo = _InMemoryTimerRepository();
   if (seedRinging != null) {
-    repo._store[seedRinging.id] = seedRinging;
+    inMemoryRepo._store[seedRinging.id] = seedRinging;
   }
+  final TimerRepository repo = repository ?? inMemoryRepo;
 
   final router = GoRouter(
-    initialLocation: '/alarm-ringing',
+    initialLocation: payload == null
+        ? '/alarm-ringing'
+        : '/alarm-ringing?payload=${Uri.encodeQueryComponent(payload)}',
     routes: <RouteBase>[
       GoRoute(
         path: '/',
@@ -160,7 +190,7 @@ Widget _harness(
       GoRoute(
         path: '/alarm-ringing',
         builder: (BuildContext context, GoRouterState state) =>
-            const AlarmRingingScreen(),
+            AlarmRingingScreen(payload: state.uri.queryParameters['payload']),
       ),
     ],
   );
@@ -169,11 +199,12 @@ Widget _harness(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       alarmSoundHandoffDelayProvider.overrideWithValue(handoffDelay),
+      alarmSoundSelectionTimeoutProvider.overrideWithValue(selectionTimeout),
       clockProvider.overrideWithValue(Clock(() => now ?? DateTime(2026, 1, 1))),
       keyguardOverrideControllerProvider.overrideWithValue(
         keyguard ?? _StubKeyguardOverrideController(),
       ),
-      notificationSchedulerProvider.overrideWithValue(scheduler),
+      notificationSchedulerProvider.overrideWithValue(notificationScheduler),
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),
       ),
@@ -248,6 +279,54 @@ void main() {
         expect(ringing.currentSoundId, 'default');
       },
     );
+
+    testWidgets('cold timerは1秒超のDB応答後も保存済みnotificationIdをcancelする', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      final scheduler = _stubScheduler();
+      final persisted = TimerEntity(
+        id: 'timer-slow-cold',
+        notificationId: 24680,
+        label: 'Slow cold timer',
+        duration: const Duration(minutes: 1),
+        endAt: null,
+        pausedRemaining: null,
+        status: TimerStatus.ringing,
+        createdAt: DateTime.utc(2026, 7, 16),
+        soundId: 'late-imported-sound',
+      );
+
+      await tester.pumpWidget(
+        _harness(
+          player,
+          payload: 'timer:${persisted.id}',
+          repository: _DelayedColdTimerRepository(
+            persisted,
+            const Duration(milliseconds: 1100),
+          ),
+          scheduler: scheduler,
+          selectionTimeout: const Duration(seconds: 1),
+        ),
+      );
+      await tester.pump();
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(player.playCalls, 1, reason: '音源選択はdefaultへ期限内fallbackする');
+      verifyNever(() => scheduler.cancel(persisted.notificationId));
+
+      await tester.pump(const Duration(milliseconds: 100));
+      verify(() => scheduler.cancel(persisted.notificationId)).called(1);
+
+      final BuildContext context = tester.element(
+        find.byType(AlarmRingingScreen),
+      );
+      final container = ProviderScope.containerOf(context);
+      expect(
+        container.read(alarmRingingNotifierProvider).currentSoundId,
+        AlarmSoundCatalog.defaultSound.id,
+      );
+    });
 
     testWidgets('start is idempotent — second start while playing is a no-op', (
       WidgetTester tester,

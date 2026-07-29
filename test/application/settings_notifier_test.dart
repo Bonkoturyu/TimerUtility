@@ -1,9 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timer_utility/application/imported_sound_repository_provider.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
+import 'package:timer_utility/domain/ports/imported_sound_repository.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
+import 'package:timer_utility/domain/sound/imported_sound.dart';
+import 'package:timer_utility/domain/sound/imported_sound_format.dart';
+import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 
 /// In-memory [UserPreferences] used for SettingsNotifier unit tests.
 /// 既存テストの `_MemoryUserPrefs` パターンを踏襲し、Phase 11 で追加した
@@ -54,9 +61,60 @@ class _MemoryUserPrefs implements UserPreferences {
   bool hasLocaleTag() => _strings.containsKey(UserPreferenceKeys.localeTag);
 }
 
-ProviderContainer _makeContainer(UserPreferences prefs) {
+class _MemoryImportedSoundRepository implements ImportedSoundRepository {
+  _MemoryImportedSoundRepository([
+    Iterable<ImportedSound> sounds = const <ImportedSound>[],
+  ]) : _sounds = <String, ImportedSound>{
+         for (final ImportedSound sound in sounds) sound.id: sound,
+       };
+
+  final Map<String, ImportedSound> _sounds;
+  Completer<ImportedSound?>? findByIdGate;
+
+  @override
+  Future<void> delete(String id) async => _sounds.remove(id);
+
+  @override
+  Future<List<ImportedSound>> findAll() async => _sounds.values.toList();
+
+  @override
+  Future<ImportedSound?> findByContentHash(String contentHash) async {
+    for (final ImportedSound sound in _sounds.values) {
+      if (sound.contentHash == contentHash) return sound;
+    }
+    return null;
+  }
+
+  @override
+  Future<ImportedSound?> findById(String id) async =>
+      findByIdGate?.future ?? _sounds[id];
+
+  @override
+  Future<void> upsert(ImportedSound sound) async => _sounds[sound.id] = sound;
+}
+
+ImportedSound _importedSound(String id) => ImportedSound.create(
+  id: id,
+  displayName: 'Imported sound',
+  format: ImportedSoundFormat.mp3,
+  byteLength: 1024,
+  duration: const Duration(seconds: 3),
+  contentHash:
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  createdAt: DateTime.utc(2026, 7, 16),
+);
+
+ProviderContainer _makeContainer(
+  UserPreferences prefs, {
+  ImportedSoundRepository? importedSoundRepository,
+}) {
   final container = ProviderContainer(
-    overrides: <Override>[userPreferencesProvider.overrideWithValue(prefs)],
+    overrides: <Override>[
+      userPreferencesProvider.overrideWithValue(prefs),
+      importedSoundRepositoryProvider.overrideWithValue(
+        importedSoundRepository ?? _MemoryImportedSoundRepository(),
+      ),
+    ],
   );
   addTearDown(container.dispose);
   return container;
@@ -175,6 +233,62 @@ void main() {
         container.read(settingsNotifierProvider).defaultAlarmSoundId,
         'default',
       );
+      expect(prefs.alarmSoundId, AlarmSoundCatalog.defaultSound.id);
+    });
+
+    test('取り込み音源IDを復元できる', () async {
+      final ImportedSound sound = _importedSound('imported-restore');
+      final prefs = _MemoryUserPrefs(
+        strings: <String, String>{
+          UserPreferenceKeys.defaultAlarmSoundId: sound.id,
+        },
+      );
+      final container = _makeContainer(
+        prefs,
+        importedSoundRepository: _MemoryImportedSoundRepository(<ImportedSound>[
+          sound,
+        ]),
+      );
+
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(settingsNotifierProvider).defaultAlarmSoundId,
+        sound.id,
+      );
+    });
+
+    test('遅延restore中に削除された音源IDだけをfallbackして他設定を復元する', () async {
+      final ImportedSound sound = _importedSound('imported-delayed');
+      final repository = _MemoryImportedSoundRepository(<ImportedSound>[sound])
+        ..findByIdGate = Completer<ImportedSound?>();
+      final prefs = _MemoryUserPrefs(
+        ints: <String, int>{
+          UserPreferenceKeys.themeMode: ThemeMode.dark.index,
+          UserPreferenceKeys.defaultSnoozeMinutes: 10,
+        },
+        strings: <String, String>{
+          UserPreferenceKeys.defaultAlarmSoundId: sound.id,
+        },
+      );
+      final container = _makeContainer(
+        prefs,
+        importedSoundRepository: repository,
+      );
+
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      container
+          .read(settingsNotifierProvider.notifier)
+          .reconcileDeletedSound(sound.id);
+      repository.findByIdGate!.complete(sound);
+      await Future<void>.delayed(Duration.zero);
+
+      final SettingsState state = container.read(settingsNotifierProvider);
+      expect(state.defaultAlarmSoundId, AlarmSoundCatalog.defaultSound.id);
+      expect(state.themeMode, ThemeMode.dark);
+      expect(state.defaultSnoozeMinutes, 10);
     });
   });
 
@@ -264,6 +378,57 @@ void main() {
             .setDefaultAlarmSoundId('bogus'),
         throwsA(isA<ArgumentError>()),
       );
+    });
+
+    test('setDefaultAlarmSoundIdは取り込み音源IDを受理する', () async {
+      final ImportedSound sound = _importedSound('imported-setter');
+      final prefs = _MemoryUserPrefs();
+      final container = _makeContainer(
+        prefs,
+        importedSoundRepository: _MemoryImportedSoundRepository(<ImportedSound>[
+          sound,
+        ]),
+      );
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setDefaultAlarmSoundId(sound.id);
+
+      expect(
+        container.read(settingsNotifierProvider).defaultAlarmSoundId,
+        sound.id,
+      );
+      expect(prefs.alarmSoundId, sound.id);
+    });
+
+    test('取り込み音源確認直後の削除でもsetterは削除IDを保存しない', () async {
+      final ImportedSound sound = _importedSound('imported-race');
+      final repository = _MemoryImportedSoundRepository(<ImportedSound>[sound])
+        ..findByIdGate = Completer<ImportedSound?>();
+      final prefs = _MemoryUserPrefs();
+      final ProviderContainer container = _makeContainer(
+        prefs,
+        importedSoundRepository: repository,
+      );
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      final Future<void> setting = container
+          .read(settingsNotifierProvider.notifier)
+          .setDefaultAlarmSoundId(sound.id);
+      repository.findByIdGate!.complete(sound);
+      container
+          .read(settingsNotifierProvider.notifier)
+          .reconcileDeletedSound(sound.id);
+
+      await expectLater(setting, throwsArgumentError);
+      expect(
+        container.read(settingsNotifierProvider).defaultAlarmSoundId,
+        AlarmSoundCatalog.defaultSound.id,
+      );
+      expect(prefs.alarmSoundId, isNot(sound.id));
     });
   });
 

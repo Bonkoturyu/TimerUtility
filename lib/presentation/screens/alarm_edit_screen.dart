@@ -12,11 +12,9 @@ import '../../domain/alarm/day_of_week.dart';
 import '../../domain/alarm/exceptions.dart';
 import '../../domain/alarm/time_of_day_value.dart';
 import '../../domain/ports/user_preferences.dart';
-import '../../domain/timer/alarm_sound.dart';
-import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/alarm_delete_confirm_dialog.dart';
-import '../widgets/duration_picker.dart' show soundDisplayName;
+import '../widgets/alarm_sound_name.dart';
 import '../widgets/sound_select_sheet.dart';
 import '../widgets/weekday_selector.dart';
 
@@ -404,7 +402,7 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
                         vertical: 12,
                         horizontal: 8,
                       ),
-                      child: Text(soundDisplayName(l, _resolvedSoundId)),
+                      child: AlarmSoundName(soundId: _soundId),
                     ),
                   ),
                 ),
@@ -428,12 +426,6 @@ class _AlarmEditScreenState extends ConsumerState<AlarmEditScreen> {
             ),
     );
   }
-
-  String get _resolvedSoundId =>
-      (_soundId != null &&
-          AlarmSoundCatalog.all.any((AlarmSound s) => s.id == _soundId))
-      ? _soundId!
-      : AlarmSoundCatalog.defaultSound.id;
 
   String _formatTime(TimeOfDayValue v) {
     final String hh = v.hour.toString().padLeft(2, '0');

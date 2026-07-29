@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/imported_sound_management_controller.dart';
 import '../../application/preset_collection_notifier.dart';
 import '../../application/settings_notifier.dart';
 import '../../application/user_preferences_provider.dart';
 import '../../domain/ports/user_preferences.dart';
+import '../../domain/sound/imported_sound.dart';
 import '../../domain/timer/preset.dart';
 import '../../domain/timer/preset_exceptions.dart';
 import '../../domain/timer/preset_templates.dart';
 import '../../l10n/app_localizations.dart';
-import '../widgets/duration_picker.dart' show soundDisplayName;
+import '../widgets/alarm_sound_name.dart';
 import '../widgets/preset_delete_confirm_dialog.dart';
 import '../widgets/preset_edit_sheet.dart';
 import '../widgets/preset_label_formatter.dart';
@@ -37,6 +39,12 @@ class PresetManageScreen extends ConsumerWidget {
     final List<Preset> presets = ref
         .watch(presetCollectionNotifierProvider)
         .all;
+    final String defaultSoundId = ref
+        .watch(settingsNotifierProvider)
+        .defaultAlarmSoundId;
+    final List<ImportedSound> importedSounds =
+        ref.watch(importedSoundManagementControllerProvider).valueOrNull ??
+        const <ImportedSound>[];
 
     return Scaffold(
       appBar: AppBar(
@@ -83,27 +91,36 @@ class PresetManageScreen extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (BuildContext context, int index) {
                 final Preset p = presets[index];
-                return _PresetCard(preset: p);
+                return _PresetCard(
+                  preset: p,
+                  importedSounds: importedSounds,
+                  defaultSoundId: defaultSoundId,
+                );
               },
             ),
       floatingActionButton: FloatingActionButton(
         key: const Key('preset_manage_add_fab'),
-        onPressed: () => _onAdd(context, ref),
+        onPressed: () => _onAdd(context, ref, importedSounds, defaultSoundId),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Future<void> _onAdd(BuildContext context, WidgetRef ref) async {
+  Future<void> _onAdd(
+    BuildContext context,
+    WidgetRef ref,
+    List<ImportedSound> importedSounds,
+    String defaultSoundId,
+  ) async {
     final AppLocalizations l = AppLocalizations.of(context);
     final notifier = ref.read(presetCollectionNotifierProvider.notifier);
-    final String defaultSoundId = ref
-        .read(settingsNotifierProvider)
-        .defaultAlarmSoundId;
     final result = await showModalBottomSheet<PresetEditResult>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => PresetEditSheet(defaultSoundId: defaultSoundId),
+      builder: (_) => PresetEditSheet(
+        defaultSoundId: defaultSoundId,
+        importedSounds: importedSounds,
+      ),
     );
     if (result == null) return;
     try {
@@ -221,8 +238,14 @@ class PresetManageScreen extends ConsumerWidget {
 }
 
 class _PresetCard extends ConsumerWidget {
-  const _PresetCard({required this.preset});
+  const _PresetCard({
+    required this.preset,
+    required this.importedSounds,
+    required this.defaultSoundId,
+  });
   final Preset preset;
+  final List<ImportedSound> importedSounds;
+  final String defaultSoundId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -283,11 +306,7 @@ class _PresetCard extends ConsumerWidget {
                 // ripple after closing the SoundSelectSheet caused a
                 // visible AppBar-area flicker on real devices.
                 IgnorePointer(
-                  child: Chip(
-                    label: Text(
-                      soundDisplayName(l, preset.soundId ?? 'default'),
-                    ),
-                  ),
+                  child: Chip(label: AlarmSoundName(soundId: preset.soundId)),
                 ),
               ],
             ),
@@ -299,7 +318,7 @@ class _PresetCard extends ConsumerWidget {
                   key: Key('preset_card_${preset.id}_edit'),
                   tooltip: l.presetEditTitleEdit,
                   icon: const Icon(Icons.edit),
-                  onPressed: () => _onEdit(context, ref, notifier),
+                  onPressed: () => _onEdit(context, notifier),
                 ),
                 IconButton(
                   key: Key('preset_card_${preset.id}_sound'),
@@ -335,20 +354,19 @@ class _PresetCard extends ConsumerWidget {
 
   Future<void> _onEdit(
     BuildContext context,
-    WidgetRef ref,
     PresetCollectionNotifier notifier,
   ) async {
     // 編集モードでは widget.editing.soundId が優先されるため、defaultSoundId
     // は実際には使われない。設定画面の現在値を素直に渡してパス自体を
     // 共通化する。
-    final String defaultSoundId = ref
-        .read(settingsNotifierProvider)
-        .defaultAlarmSoundId;
     final result = await showModalBottomSheet<PresetEditResult>(
       context: context,
       isScrollControlled: true,
-      builder: (_) =>
-          PresetEditSheet(editing: preset, defaultSoundId: defaultSoundId),
+      builder: (_) => PresetEditSheet(
+        editing: preset,
+        defaultSoundId: defaultSoundId,
+        importedSounds: importedSounds,
+      ),
     );
     if (result == null) return;
     notifier.update(

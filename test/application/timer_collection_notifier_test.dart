@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart' show AppLifecycleState;
@@ -7,6 +9,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/interval_notification_scheduler_provider.dart';
+import 'package:timer_utility/application/imported_sound_mutation_coordinator.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
@@ -14,6 +17,7 @@ import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/interval_notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
+import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 import 'package:timer_utility/domain/timer/exceptions.dart';
 import 'package:timer_utility/domain/timer/timer_collection.dart';
 import 'package:timer_utility/domain/timer/timer_entity.dart';
@@ -28,6 +32,8 @@ class _MockIntervalScheduler extends Mock
 
 class _InMemoryRepo implements TimerRepository {
   final Map<String, TimerEntity> store = <String, TimerEntity>{};
+  int upsertCalls = 0;
+  Completer<List<TimerEntity>>? findAllGate;
 
   @override
   Future<void> delete(String id) async {
@@ -35,13 +41,15 @@ class _InMemoryRepo implements TimerRepository {
   }
 
   @override
-  Future<List<TimerEntity>> findAll() async => store.values.toList();
+  Future<List<TimerEntity>> findAll() async =>
+      findAllGate?.future ?? store.values.toList();
 
   @override
   Future<TimerEntity?> findById(String id) async => store[id];
 
   @override
   Future<void> upsert(TimerEntity entity) async {
+    upsertCalls++;
     store[entity.id] = entity;
   }
 }
@@ -76,6 +84,8 @@ ProviderContainer _makeContainer({
   required TimerRepository repo,
   required NotificationScheduler scheduler,
   IntervalNotificationScheduler? intervalScheduler,
+  ImportedSoundMutationCoordinator? mutationCoordinator,
+  ImportedSoundDeletionRegistry? deletionRegistry,
 }) {
   return ProviderContainer(
     overrides: <Override>[
@@ -85,6 +95,14 @@ ProviderContainer _makeContainer({
       if (intervalScheduler != null)
         intervalNotificationSchedulerProvider.overrideWithValue(
           intervalScheduler,
+        ),
+      if (mutationCoordinator != null)
+        importedSoundMutationCoordinatorProvider.overrideWithValue(
+          mutationCoordinator,
+        ),
+      if (deletionRegistry != null)
+        importedSoundDeletionRegistryProvider.overrideWithValue(
+          deletionRegistry,
         ),
       testNotificationStringsOverride(),
       permissionNotifierProvider.overrideWith(
@@ -115,6 +133,186 @@ void main() {
   setUpAll(() {
     registerFallbackValue(DateTime.utc(2026));
     registerFallbackValue(const Duration(minutes: 1));
+  });
+
+  group('TimerCollectionNotifier imported sound reconciliation', () {
+    test('削除中にqueueされたupsertは成功後にdefaultへ正規化する', () async {
+      final ImportedSoundMutationCoordinator coordinator =
+          ImportedSoundMutationCoordinator();
+      final ImportedSoundDeletionRegistry registry =
+          ImportedSoundDeletionRegistry();
+      final Completer<void> gate = Completer<void>();
+      final Future<void> blocker = coordinator.run(() => gate.future);
+      final _InMemoryRepo repo = _InMemoryRepo();
+      final ProviderContainer container = _makeContainer(
+        clock: Clock(() => DateTime.utc(2026, 5, 1, 12)),
+        repo: repo,
+        scheduler: _stubScheduler(),
+        mutationCoordinator: coordinator,
+        deletionRegistry: registry,
+      );
+      addTearDown(container.dispose);
+      final TimerCollectionNotifier notifier = container.read(
+        timerCollectionNotifierProvider.notifier,
+      );
+
+      final TimerEntity created = notifier.create(
+        label: 'Queued',
+        duration: const Duration(minutes: 1),
+        soundId: 'imported-target',
+      );
+      registry.markDeleted('imported-target');
+      notifier.reconcileDeletedSound('imported-target');
+      gate.complete();
+      await blocker;
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        repo.store[created.id]?.soundId,
+        AlarmSoundCatalog.defaultSound.id,
+      );
+      expect(
+        container
+            .read(timerCollectionNotifierProvider)
+            .findById(created.id)
+            ?.soundId,
+        AlarmSoundCatalog.defaultSound.id,
+      );
+    });
+
+    test('削除中にqueueされたupsertは削除失敗時に元の音源を保持する', () async {
+      final ImportedSoundMutationCoordinator coordinator =
+          ImportedSoundMutationCoordinator();
+      final ImportedSoundDeletionRegistry registry =
+          ImportedSoundDeletionRegistry()..markDeleting('imported-target');
+      final Completer<void> gate = Completer<void>();
+      final Future<void> blocker = coordinator.run(() => gate.future);
+      final _InMemoryRepo repo = _InMemoryRepo();
+      final ProviderContainer container = _makeContainer(
+        clock: Clock(() => DateTime.utc(2026, 5, 1, 12)),
+        repo: repo,
+        scheduler: _stubScheduler(),
+        mutationCoordinator: coordinator,
+        deletionRegistry: registry,
+      );
+      addTearDown(container.dispose);
+      final TimerCollectionNotifier notifier = container.read(
+        timerCollectionNotifierProvider.notifier,
+      );
+
+      final TimerEntity created = notifier.create(
+        label: 'Queued',
+        duration: const Duration(minutes: 1),
+        soundId: 'imported-target',
+      );
+      registry.clearDeleting('imported-target');
+      gate.complete();
+      await blocker;
+      await Future<void>.delayed(Duration.zero);
+
+      expect(repo.store[created.id]?.soundId, 'imported-target');
+      expect(
+        container
+            .read(timerCollectionNotifierProvider)
+            .findById(created.id)
+            ?.soundId,
+        'imported-target',
+      );
+    });
+
+    test('対象音だけを default に置換し、他の状態を維持して永続化しない', () async {
+      final DateTime now = DateTime.utc(2026, 5, 1, 12);
+      final TimerEntity target = TimerEntity(
+        id: 'target',
+        notificationId: 10,
+        label: 'Target',
+        duration: const Duration(minutes: 5),
+        endAt: null,
+        pausedRemaining: null,
+        status: TimerStatus.idle,
+        createdAt: now,
+        intervalNotificationEnabled: true,
+        soundId: 'imported-target',
+      );
+      final TimerEntity untouched = TimerEntity(
+        id: 'untouched',
+        notificationId: 11,
+        label: 'Untouched',
+        duration: const Duration(minutes: 10),
+        endAt: null,
+        pausedRemaining: null,
+        status: TimerStatus.idle,
+        createdAt: now.add(const Duration(minutes: 1)),
+        soundId: 'imported-other',
+      );
+      final repo = _InMemoryRepo()
+        ..store.addAll(<String, TimerEntity>{
+          target.id: target,
+          untouched.id: untouched,
+        });
+      final Map<String, TimerEntity> persistedBefore = Map.of(repo.store);
+      final container = _makeContainer(
+        clock: Clock.fixed(now),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+
+      container.read(timerCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      container
+          .read(timerCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      await Future<void>.value();
+
+      final TimerCollection state = container.read(
+        timerCollectionNotifierProvider,
+      );
+      expect(
+        state.findById(target.id),
+        target.copyWith(soundId: AlarmSoundCatalog.defaultSound.id),
+      );
+      expect(state.findById(untouched.id), untouched);
+      expect(repo.upsertCalls, 0);
+      expect(repo.store, persistedBefore);
+    });
+
+    test('遅延restoreの古いsnapshotから削除済み音源IDを復活させない', () async {
+      final DateTime now = DateTime.utc(2026, 5, 1, 12);
+      final TimerEntity target = TimerEntity(
+        id: 'delayed-target',
+        notificationId: 12,
+        label: 'Delayed',
+        duration: const Duration(minutes: 5),
+        endAt: null,
+        pausedRemaining: null,
+        status: TimerStatus.idle,
+        createdAt: now,
+        soundId: 'imported-target',
+      );
+      final repo = _InMemoryRepo()
+        ..findAllGate = Completer<List<TimerEntity>>();
+      final container = _makeContainer(
+        clock: Clock.fixed(now),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+
+      container.read(timerCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      container
+          .read(timerCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      repo.findAllGate!.complete(<TimerEntity>[target]);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(timerCollectionNotifierProvider).findById(target.id),
+        target.copyWith(soundId: AlarmSoundCatalog.defaultSound.id),
+      );
+    });
   });
 
   test('定間隔通知を有効にしたタイマーはNative周期予約を使用する', () async {
@@ -202,6 +400,46 @@ void main() {
   });
 
   group('TimerCollectionNotifier basic CRUD', () {
+    test('findAll待機中のcreateを古いrestore snapshotで上書きしない', () async {
+      final DateTime now = DateTime.utc(2026, 5, 1, 12);
+      final _InMemoryRepo repo = _InMemoryRepo()
+        ..findAllGate = Completer<List<TimerEntity>>();
+      final ProviderContainer container = _makeContainer(
+        clock: Clock.fixed(now),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+      final TimerCollectionNotifier notifier = container.read(
+        timerCollectionNotifierProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      final TimerEntity created = notifier.create(
+        label: 'New',
+        duration: const Duration(minutes: 1),
+      );
+      repo.findAllGate!.complete(<TimerEntity>[
+        TimerEntity(
+          id: 'old',
+          notificationId: 9,
+          label: 'Old',
+          duration: const Duration(minutes: 2),
+          endAt: null,
+          pausedRemaining: null,
+          status: TimerStatus.idle,
+          createdAt: now.subtract(const Duration(days: 1)),
+        ),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+
+      final TimerCollection state = container.read(
+        timerCollectionNotifierProvider,
+      );
+      expect(state.findById(created.id), created);
+      expect(state.findById('old'), isNull);
+    });
+
     test('build() starts with an empty collection', () async {
       final repo = _InMemoryRepo();
       final container = _makeContainer(

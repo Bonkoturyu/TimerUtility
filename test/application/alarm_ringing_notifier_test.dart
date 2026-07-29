@@ -6,17 +6,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timer_utility/application/alarm_ringing_notifier.dart';
 import 'package:timer_utility/application/alarm_sound_player_provider.dart';
+import 'package:timer_utility/application/alarm_repository_provider.dart';
 import 'package:timer_utility/application/diagnostic_logger_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
+import 'package:timer_utility/application/timer_repository_provider.dart';
+import 'package:timer_utility/domain/alarm/alarm_entity.dart';
+import 'package:timer_utility/domain/alarm/alarm_repeat.dart';
+import 'package:timer_utility/domain/alarm/time_of_day_value.dart';
 import 'package:timer_utility/domain/diagnostics/diagnostic_event.dart';
 import 'package:timer_utility/domain/diagnostics/diagnostic_logger.dart';
+import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/diagnostic_sink.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
+import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
+import 'package:timer_utility/domain/timer/timer_entity.dart';
+import 'package:timer_utility/domain/timer/timer_status.dart';
 
 class _StubAlarmSoundPlayer implements AlarmSoundPlayer {
   bool _isPlaying = false;
@@ -87,8 +96,41 @@ class _BlockingAlarmSoundPlayer implements AlarmSoundPlayer {
   }
 }
 
+class _CapturingHandoffPlayer extends _StubAlarmSoundPlayer
+    implements HandoffAlarmSoundPlayer {
+  String? requestedSoundId;
+  int handoffPrepareCalls = 0;
+  int playPreparedCalls = 0;
+
+  @override
+  Future<void> prepareForHandoff({
+    required Future<String> requestedSoundId,
+    required Duration selectionTimeout,
+  }) async {
+    handoffPrepareCalls++;
+    this.requestedSoundId = await requestedSoundId;
+  }
+
+  @override
+  Future<void> playPrepared() async {
+    playPreparedCalls++;
+    _isPlaying = true;
+  }
+}
+
+class _SilentHandoffPlayer extends _CapturingHandoffPlayer {
+  @override
+  Future<void> playPrepared() async {
+    playPreparedCalls++;
+  }
+}
+
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
+
+class _MockTimerRepository extends Mock implements TimerRepository {}
+
+class _MockAlarmRepository extends Mock implements AlarmRepository {}
 
 /// Stub [ScreenLockQuery] for tests. Issue #74 fix: `AlarmRingingNotifier.start`
 /// reads this to pick the cancel→play delay (500 ms unlocked / 1800 ms locked).
@@ -119,6 +161,9 @@ _container(
   bool screenLocked = false,
   DiagnosticSink? diagnosticSink,
   Duration handoffDelay = Duration.zero,
+  Duration selectionTimeout = const Duration(seconds: 1),
+  TimerRepository? timerRepository,
+  AlarmRepository? alarmRepository,
 }) {
   final scheduler = _MockNotificationScheduler();
   when(() => scheduler.cancel(any())).thenAnswer((_) async {});
@@ -138,7 +183,12 @@ _container(
     overrides: <Override>[
       alarmSoundPlayerProvider.overrideWithValue(player),
       alarmSoundHandoffDelayProvider.overrideWithValue(handoffDelay),
+      alarmSoundSelectionTimeoutProvider.overrideWithValue(selectionTimeout),
       notificationSchedulerProvider.overrideWithValue(scheduler),
+      if (timerRepository != null)
+        timerRepositoryProvider.overrideWithValue(timerRepository),
+      if (alarmRepository != null)
+        alarmRepositoryProvider.overrideWithValue(alarmRepository),
       screenLockQueryProvider.overrideWithValue(
         _StubScreenLockQuery(locked: screenLocked),
       ),
@@ -207,6 +257,199 @@ void main() {
       verify(() => h.scheduler.cancel(1234)).called(1);
     });
 
+    test(
+      'cold timer launch resolves the persisted imported sound id',
+      () async {
+        final TimerRepository repository = _MockTimerRepository();
+        when(() => repository.findById('timer-cold')).thenAnswer(
+          (_) async => TimerEntity(
+            id: 'timer-cold',
+            notificationId: 4321,
+            label: 'Cold timer',
+            duration: const Duration(minutes: 1),
+            endAt: null,
+            pausedRemaining: null,
+            status: TimerStatus.ringing,
+            createdAt: DateTime.utc(2026, 7, 16),
+            soundId: 'imported-cold-timer',
+          ),
+        );
+        final player = _CapturingHandoffPlayer();
+        final h = _container(player, timerRepository: repository);
+
+        await h.container
+            .read(alarmRingingNotifierProvider.notifier)
+            .start(
+              timerId: 'timer-cold',
+              notificationId: -1,
+              source: AlarmSource.timer,
+            );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(player.requestedSoundId, 'imported-cold-timer');
+        expect(player.handoffPrepareCalls, 1);
+        expect(player.playPreparedCalls, 1);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentSoundId,
+          'imported-cold-timer',
+        );
+        verify(() => h.scheduler.cancel(4321)).called(1);
+      },
+    );
+
+    test(
+      'cold alarm launch resolves the persisted imported sound id',
+      () async {
+        final AlarmRepository repository = _MockAlarmRepository();
+        when(() => repository.findById('alarm-cold')).thenAnswer(
+          (_) async => AlarmEntity(
+            id: 'alarm-cold',
+            notificationId: 9876,
+            label: 'Cold alarm',
+            targetTime: const TimeOfDayValue.unsafe(hour: 7, minute: 30),
+            repeat: const AlarmRepeatOnce(),
+            snoozeMinutes: 5,
+            enabled: true,
+            createdAt: DateTime.utc(2026, 7, 16),
+            soundId: 'imported-cold-alarm',
+          ),
+        );
+        final player = _CapturingHandoffPlayer();
+        final h = _container(player, alarmRepository: repository);
+
+        await h.container
+            .read(alarmRingingNotifierProvider.notifier)
+            .start(
+              timerId: 'alarm-cold',
+              notificationId: -1,
+              source: AlarmSource.alarm,
+            );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(player.requestedSoundId, 'imported-cold-alarm');
+        expect(player.handoffPrepareCalls, 1);
+        expect(player.playPreparedCalls, 1);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentSoundId,
+          'imported-cold-alarm',
+        );
+        verify(() => h.scheduler.cancel(9876)).called(1);
+      },
+    );
+
+    test('音源選択timeout後もcold lookupを継続し、保存済み通知IDをcancelする', () {
+      fakeAsync((FakeAsync async) {
+        final Completer<TimerEntity?> lookup = Completer<TimerEntity?>();
+        final TimerRepository repository = _MockTimerRepository();
+        when(
+          () => repository.findById('timer-slow-cold'),
+        ).thenAnswer((_) => lookup.future);
+        final player = _CapturingHandoffPlayer();
+        final h = _container(
+          player,
+          timerRepository: repository,
+          selectionTimeout: const Duration(seconds: 1),
+        );
+
+        unawaited(
+          h.container
+              .read(alarmRingingNotifierProvider.notifier)
+              .start(
+                timerId: 'timer-slow-cold',
+                notificationId: -1,
+                source: AlarmSource.timer,
+              ),
+        );
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(milliseconds: 999));
+        async.flushMicrotasks();
+        expect(player.requestedSoundId, isNull);
+        verifyNever(() => h.scheduler.cancel(any()));
+
+        async.elapse(const Duration(milliseconds: 1));
+        async.flushMicrotasks();
+        expect(player.requestedSoundId, AlarmSoundCatalog.defaultSound.id);
+        expect(player.playPreparedCalls, 1);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentSoundId,
+          AlarmSoundCatalog.defaultSound.id,
+        );
+        verifyNever(() => h.scheduler.cancel(any()));
+
+        lookup.complete(
+          TimerEntity(
+            id: 'timer-slow-cold',
+            notificationId: 24680,
+            label: 'Slow cold timer',
+            duration: const Duration(minutes: 1),
+            endAt: null,
+            pausedRemaining: null,
+            status: TimerStatus.ringing,
+            createdAt: DateTime.utc(2026, 7, 16),
+            soundId: 'late-imported-sound',
+          ),
+        );
+        async.flushMicrotasks();
+
+        verify(() => h.scheduler.cancel(24680)).called(1);
+        expect(
+          h.container.read(alarmRingingNotifierProvider).currentSoundId,
+          AlarmSoundCatalog.defaultSound.id,
+          reason: 'deadline後に到着した音源へ再ハンドオフしない',
+        );
+      });
+    });
+
+    for (final bool snooze in <bool>[false, true]) {
+      test(
+        'cold lookup完了前に${snooze ? 'snooze' : 'stop'}しても保存済み通知IDをcancelする',
+        () {
+          fakeAsync((FakeAsync async) {
+            final Completer<TimerEntity?> lookup = Completer<TimerEntity?>();
+            final TimerRepository repository = _MockTimerRepository();
+            when(
+              () => repository.findById('timer-dismissed-cold'),
+            ).thenAnswer((_) => lookup.future);
+            final player = _CapturingHandoffPlayer();
+            final h = _container(player, timerRepository: repository);
+            final AlarmRingingNotifier notifier = h.container.read(
+              alarmRingingNotifierProvider.notifier,
+            );
+
+            unawaited(
+              notifier.start(
+                timerId: 'timer-dismissed-cold',
+                notificationId: -1,
+                source: AlarmSource.timer,
+              ),
+            );
+            async.flushMicrotasks();
+
+            unawaited(snooze ? notifier.snoozeRequested() : notifier.stop());
+            async.flushMicrotasks();
+
+            lookup.complete(
+              TimerEntity(
+                id: 'timer-dismissed-cold',
+                notificationId: 24681,
+                label: 'Dismissed cold timer',
+                duration: const Duration(minutes: 1),
+                endAt: null,
+                pausedRemaining: null,
+                status: TimerStatus.ringing,
+                createdAt: DateTime.utc(2026, 7, 16),
+                soundId: 'late-imported-sound',
+              ),
+            );
+            async.flushMicrotasks();
+
+            verify(() => h.scheduler.cancel(24681)).called(1);
+          });
+        },
+      );
+    }
+
     test('stop resets state and tells the player to stop', () async {
       final player = _StubAlarmSoundPlayer();
       final h = _container(player);
@@ -227,6 +470,23 @@ void main() {
       expect(state.currentTimerId, isNull);
       expect(state.currentSoundId, isNull);
       expect(state.snoozeRequested, isFalse);
+      expect(player.stopCalls, 1);
+    });
+
+    test('prepared slotを再生できない場合はisPlayingをfalseへ戻す', () async {
+      final player = _SilentHandoffPlayer();
+      final h = _container(player);
+
+      await h.container
+          .read(alarmRingingNotifierProvider.notifier)
+          .start(
+            timerId: 'timer-silent',
+            soundId: AlarmSoundCatalog.defaultSound.id,
+            notificationId: 123,
+          );
+
+      expect(h.container.read(alarmRingingNotifierProvider).isPlaying, isFalse);
+      expect(player.playPreparedCalls, 1);
       expect(player.stopCalls, 1);
     });
 

@@ -383,19 +383,24 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 
 ---
 
-## Phase 13（将来）: ユーザー取り込み音源
+## Phase 13（完了 2026-07-17）: ユーザー取り込み音源
 
 - [x] 対応形式、利用枠、容量・時間・件数、空き容量、参照整合性を仕様化
 - [x] ADR 0006 で内部コピー、買い切り枠、Domain 境界、失敗補償方針を確定
-- [ ] 実装タスク分解と Domain / Application / Infrastructure 境界の詳細設計
-- [ ] Android システムファイルピッカー、形式検証、内部コピー、メタデータ永続化
-- [ ] Timer / Alarm / Preset / デフォルト設定の参照置換と欠損時フォールバック
-- [ ] 音源の追加・試聴・改名・削除 UI
-- [ ] Unit / Widget Test と Pixel 6a 実機検証
+- [x] 実装タスク分解と Domain / Application / Infrastructure 境界の詳細設計
+- [x] Domain の Entity、利用枠、検証サービス、Repository port と Unit Test
+- [x] Drift schema v7、取り込み音源メタデータ Repository、v6→v7 migration test
+- [x] Android システムファイルピッカー、形式・実デコード・SHA-256・空き容量検証、内部コピー
+- [x] Timer / Alarm / Preset / デフォルト設定の参照置換と欠損時フォールバック
+- [x] 音源の追加・試聴・改名・削除 UI
+- [x] Unit / Widget Test と Pixel 6a 実機検証（MP3 / Ogg Vorbis、API 37）
 
 **DoD**: 通常枠の取り込み音源を安全に登録・管理・鳴動でき、失敗時にも既存参照と
 内部ファイルの整合性が保たれる
-**依存**: Phase 11.9 完了。Phase 12 との実施順は着手時に決定
+**依存**: Phase 11.9 のソース・署名付き AAB 作成まで完了済み。
+Play Console 実画面確定と Phase 11.10 は依存条件から外し、2026-07-16 のユーザー判断で
+Phase 13 を先行する。初回提出候補 `1.0.0+2` は `release/1.0.0` に保持し、
+Phase 13 は `feature/phase-13-user-imported-sounds` で開発する。Phase 12 は Phase 13 後に再検討
 **参照**: [docs/assets-spec.md](docs/assets-spec.md),
 [docs/adr/0006-user-imported-sound-policy.md](docs/adr/0006-user-imported-sound-policy.md)
 
@@ -428,11 +433,14 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 | 11.10 (Play Console 実画面対応) | 進行中 (Closed Testing 待ち) | 2026-07-27、Google Play Developer アカウント登録・確認完了、アプリ作成 (`io.github.bonkoturyu.timer_utility`) 完了。Internal Testing で Play App Signing 再署名経由の Play Store インストール・起動を Pixel 6a 実機で確認済み。Main store listing (ja/en)、コンテンツのレーティング、ターゲットユーザー、データセーフティ、アプリのコンテンツ申告 3 件 (広告 ID / 全画面インテント / 正確なアラーム) すべて送信済み。残: Closed Testing の 12 テスター×14 日連続 opt-in (別アプリのテスター募集とまとめて実施予定のため意図的に保留)、本番アクセス申請時の文章質問票回答。詳細は [docs/closed-test-plan.md](docs/closed-test-plan.md) |
 | D (Diagnostic Logging) | 完了 | D-1 (PR #49) / D-2 (PR #52) / D-3 (PR #51) すべて main マージ済、Pixel 6a 4 シナリオ OK (2026-05-15) |
 | 12 | 未着手 | 任意 / iOS 版（Android 版完成後） |
-| 13 | 仕様確定 / 実装未着手 | PR #114 でユーザー取り込み音源仕様と ADR 0006 を確定。Play Store 初回提出後の次候補、Phase 12 との実施順は未確定 |
+| 13 | 完了 | PR #114 で仕様と ADR 0006 を確定。PR #116 の Domain、永続化、安全な内部取り込み、再生、参照置換、管理 UI を現行 main へ統合し、未解決レビュー2件も修正。`flutter analyze` 0件、全テスト 841 passed / 1 skipped、`1.1.0+4` 署名付き AAB build 成功。Pixel 6a / API 37 で MP3 / Ogg Vorbis の追加・試聴・管理と既定音源の削除時置換を確認済み（WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ） |
 
 ---
 
-最終更新日: 2026-07-27（Play Console 実画面対応の進捗を Phase 11.10 として新設し反映。
+最終更新日: 2026-07-29（PR #116 のユーザー取り込み音源を現行 main へ統合し、
+Phase 13 を完了として反映。Play Console 実画面対応は Closed Testing 待ちを継続）
+
+過去の更新: 2026-07-27（Play Console 実画面対応の進捗を Phase 11.10 として新設し反映。
 Developer アカウント登録・確認、アプリ作成、Internal Testing 実機確認、Main store
 listing / コンテンツのレーティング / ターゲットユーザー / データセーフティ / アプリの
 コンテンツ申告まで完了、Closed Testing テスター募集待ちで一時停止）
@@ -440,6 +448,8 @@ listing / コンテンツのレーティング / ターゲットユーザー / �
 過去の更新: 2026-07-15（PR #111 定間隔通知、PR #112 Issue #86、PR #113
 検証文書同期、PR #114 ユーザー取り込み音源仕様を反映。Play Console 実画面対応を
 Phase 11.9 の残作業、取り込み音源実装を Phase 13 として整理）
+
+過去の更新: 2026-07-17（Phase 13 の管理 UI、自動テスト、Pixel 6a 実機検証を完了）
 
 過去の更新: 2026-05-29（計画ファイルを実態に同期 — branch `docs/sync-plan-files-after-72-75`。BACKLOG.md / tasklist.md が 2026-05-27 で停止し PR #72・#75 を「main merge 待ち」と誤記したままだったため実態反映。`gh pr list` で両者マージ済を確認: #72 (Phase 11.9 サブ PR α) 2026-05-28、#75 (Issue #74 fix) 2026-05-29 squash `dcac842`。進捗サマリ表 Phase 11.9 行を「α・#74 fix マージ済 → 次 β」に更新、tasklist.md の進行中 2 件を直近マージ済みへ移動 + 次の着手単位 = サブ PR β を明記、docs/dev-log.md #75 セクション末尾をマージ完了に更新。doc-only。作業ツリーの 15 生成ファイル modified 表示は LF→CRLF eol 差のみで内容差分ゼロ、コミット対象外）
 

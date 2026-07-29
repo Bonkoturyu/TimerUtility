@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +17,7 @@ import 'package:timer_utility/domain/alarm/time_of_day_value.dart';
 import 'package:timer_utility/domain/ports/alarm_repository.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/permission_manager.dart';
+import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
 
 import '../helpers/test_notification_strings.dart';
 
@@ -22,6 +25,8 @@ class _MockScheduler extends Mock implements NotificationScheduler {}
 
 class _InMemoryAlarmRepo implements AlarmRepository {
   final Map<String, AlarmEntity> store = <String, AlarmEntity>{};
+  int upsertCalls = 0;
+  Completer<List<AlarmEntity>>? findAllGate;
 
   @override
   Future<void> delete(String id) async {
@@ -29,13 +34,15 @@ class _InMemoryAlarmRepo implements AlarmRepository {
   }
 
   @override
-  Future<List<AlarmEntity>> findAll() async => store.values.toList();
+  Future<List<AlarmEntity>> findAll() async =>
+      findAllGate?.future ?? store.values.toList();
 
   @override
   Future<AlarmEntity?> findById(String id) async => store[id];
 
   @override
   Future<void> upsert(AlarmEntity entity) async {
+    upsertCalls++;
     store[entity.id] = entity;
   }
 }
@@ -95,6 +102,104 @@ ProviderContainer _makeContainer({
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime.utc(2026));
+  });
+
+  group('AlarmCollectionNotifier imported sound reconciliation', () {
+    test('対象音だけを default に置換し、他の状態を維持して永続化しない', () async {
+      final DateTime now = DateTime.utc(2026, 5, 4, 6);
+      final AlarmEntity target = AlarmEntity(
+        id: 'target',
+        notificationId: 20,
+        label: 'Target',
+        targetTime: const TimeOfDayValue.unsafe(hour: 7, minute: 0),
+        repeat: const AlarmRepeatOnce(),
+        snoozeMinutes: 10,
+        enabled: false,
+        createdAt: now,
+        soundId: 'imported-target',
+      );
+      final AlarmEntity untouched = AlarmEntity(
+        id: 'untouched',
+        notificationId: 21,
+        label: 'Untouched',
+        targetTime: const TimeOfDayValue.unsafe(hour: 8, minute: 30),
+        repeat: const AlarmRepeatOnce(),
+        snoozeMinutes: 15,
+        enabled: false,
+        createdAt: now.add(const Duration(minutes: 1)),
+        soundId: 'imported-other',
+      );
+      final repo = _InMemoryAlarmRepo()
+        ..store.addAll(<String, AlarmEntity>{
+          target.id: target,
+          untouched.id: untouched,
+        });
+      final Map<String, AlarmEntity> persistedBefore = Map.of(repo.store);
+      final container = _makeContainer(
+        clock: Clock.fixed(now),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+
+      container.read(alarmCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      container
+          .read(alarmCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      await Future<void>.value();
+
+      final List<AlarmEntity> state = container.read(
+        alarmCollectionNotifierProvider,
+      );
+      expect(
+        state.firstWhere((AlarmEntity alarm) => alarm.id == target.id),
+        target.copyWith(soundId: AlarmSoundCatalog.defaultSound.id),
+      );
+      expect(
+        state.firstWhere((AlarmEntity alarm) => alarm.id == untouched.id),
+        untouched,
+      );
+      expect(repo.upsertCalls, 0);
+      expect(repo.store, persistedBefore);
+    });
+
+    test('遅延restoreの古いsnapshotから削除済み音源IDを復活させない', () async {
+      final DateTime now = DateTime.utc(2026, 5, 4, 6);
+      final AlarmEntity target = AlarmEntity(
+        id: 'delayed-target',
+        notificationId: 22,
+        label: 'Delayed',
+        targetTime: const TimeOfDayValue.unsafe(hour: 8, minute: 0),
+        repeat: const AlarmRepeatOnce(),
+        snoozeMinutes: 5,
+        enabled: false,
+        createdAt: now,
+        soundId: 'imported-target',
+      );
+      final repo = _InMemoryAlarmRepo()
+        ..findAllGate = Completer<List<AlarmEntity>>();
+      final container = _makeContainer(
+        clock: Clock.fixed(now),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+
+      container.read(alarmCollectionNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      container
+          .read(alarmCollectionNotifierProvider.notifier)
+          .reconcileDeletedSound('imported-target');
+      repo.findAllGate!.complete(<AlarmEntity>[target]);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(alarmCollectionNotifierProvider).single.soundId,
+        AlarmSoundCatalog.defaultSound.id,
+      );
+    });
   });
 
   group('AlarmCollectionNotifier basic CRUD', () {
