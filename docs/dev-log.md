@@ -17,6 +17,35 @@
 
 ---
 
+## PR #116 ユーザー取り込み音源を現行 main へ統合 (2026-07-29)
+
+`release/1.1.0` は PR #116 の単一コミットを保持していたが、現行 `main` より
+8コミット古かったため、release branch を直接マージせず、最新 `main` から作成した
+統合ブランチへ機能コミットを移植した。バージョン表示、多言語公開、Play Console
+進捗、AI協働基盤、所有者限定の手動 Release Workflow を維持して競合を解消した。
+
+PR #116 に残っていた未解決レビュー2件は、コードと自動テストで裏取りして対応した。
+
+- cold launch の Repository lookup 中に Stop / Snooze されても、後から解決した
+  通知 ID の `cancel()` は再生世代と独立して完了させる。
+- picker が返した `byteLength` を利用枠と先に比較し、上限超過ファイルは
+  app-private staging へのストリームコピー前に拒否する。
+
+版数は Minor 更新として `1.1.0+4` にした。検証結果は次のとおり。
+
+- `dart format --output=none --set-exit-if-changed .`: 338 files、変更なし
+- 翻訳 validator: ARB / `docs/translations.md` 199 keys aligned
+- `flutter analyze --fatal-infos`: 0 issues
+- `flutter test`: 841 passed / 1 skipped
+- `flutter build appbundle --release`: 成功
+  - 54,276,347 bytes
+  - SHA-256:
+    `D0F0D992605A18F717056EFB5D5FF3D2CBE812558E74D37246EDBCB2B6315C86`
+  - Manifest: versionName `1.1.0` / versionCode `4`
+  - 署名: `META-INF/UPLOAD.SF` / `META-INF/UPLOAD.RSA`
+
+---
+
 ## 設定画面にアプリバージョン表示を追加 (2026-07-28)
 
 不具合報告時にユーザーが版数を伝えられるよう、設定 →「情報」セクションの

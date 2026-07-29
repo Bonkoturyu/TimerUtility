@@ -137,6 +137,8 @@ Widget _harness({
 void main() {
   group('SettingsScreen', () {
     testWidgets('3 セクションヘッダと各 ListTile が描画される', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(_harness());
       await tester.pumpAndSettle();
 
@@ -178,6 +180,8 @@ void main() {
 
     // バージョン行はライセンス行より上 (「情報」セクションの先頭)。
     testWidgets('バージョン行はライセンス行より前に描画される', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(_harness());
       await tester.pumpAndSettle();
 

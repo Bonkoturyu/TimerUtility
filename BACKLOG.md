@@ -433,7 +433,7 @@ Phase 13 は `feature/phase-13-user-imported-sounds` で開発する。Phase 12 
 | 11.10 (Play Console 実画面対応) | 進行中 (Closed Testing 待ち) | 2026-07-27、Google Play Developer アカウント登録・確認完了、アプリ作成 (`io.github.bonkoturyu.timer_utility`) 完了。Internal Testing で Play App Signing 再署名経由の Play Store インストール・起動を Pixel 6a 実機で確認済み。Main store listing (ja/en)、コンテンツのレーティング、ターゲットユーザー、データセーフティ、アプリのコンテンツ申告 3 件 (広告 ID / 全画面インテント / 正確なアラーム) すべて送信済み。残: Closed Testing の 12 テスター×14 日連続 opt-in (別アプリのテスター募集とまとめて実施予定のため意図的に保留)、本番アクセス申請時の文章質問票回答。詳細は [docs/closed-test-plan.md](docs/closed-test-plan.md) |
 | D (Diagnostic Logging) | 完了 | D-1 (PR #49) / D-2 (PR #52) / D-3 (PR #51) すべて main マージ済、Pixel 6a 4 シナリオ OK (2026-05-15) |
 | 12 | 未着手 | 任意 / iOS 版（Android 版完成後） |
-| 13 | 完了 | PR #114 で仕様と ADR 0006 を確定。Domain、永続化、安全な内部取り込み、再生、参照置換、管理 UI を実装。`flutter analyze` 0件、全テスト 802 passed / 1 skipped。Pixel 6a / API 37 で MP3 / Ogg Vorbis の追加・試聴・管理と既定音源の削除時置換を確認済み（WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ） |
+| 13 | 完了 | PR #114 で仕様と ADR 0006 を確定。PR #116 の Domain、永続化、安全な内部取り込み、再生、参照置換、管理 UI を現行 main へ統合し、未解決レビュー2件も修正。`flutter analyze` 0件、全テスト 841 passed / 1 skipped、`1.1.0+4` 署名付き AAB build 成功。Pixel 6a / API 37 で MP3 / Ogg Vorbis の追加・試聴・管理と既定音源の削除時置換を確認済み（WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ） |
 
 ---
 

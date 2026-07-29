@@ -73,6 +73,12 @@ class ImportedSoundImportService {
     final SelectedImportedSoundFile? selected = await _picker.pickOne();
     if (selected == null) return null;
 
+    // The picker already provides the source size. Reject files outside the
+    // active entitlement before streaming them into app-private storage.
+    if (selected.byteLength > policy.maxFileBytes) {
+      throw const ImportedSoundFileSizeLimitException();
+    }
+
     final int availableBytes = await _storageCapacityReader.getAvailableBytes();
     if (availableBytes < ImportedSoundValidator.minimumRemainingStorageBytes ||
         availableBytes - selected.byteLength <

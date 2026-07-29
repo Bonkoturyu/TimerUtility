@@ -19,17 +19,17 @@
 
 ## 進行中
 
-### Version 1.0.1 リリースパッケージ（2026-07-29）
+### Version 1.1.0 リリースパッケージ（2026-07-29）
 
-- [x] `main` から `release/1.0.1` を作成し、`pubspec.yaml` を
-  `1.0.1+3`（versionName `1.0.1` / versionCode `3`）へ更新する
-- [x] 翻訳 validator 177/177 aligned、Dart format 変更 0、
-  `flutter analyze --fatal-infos` 0 issues、`flutter test` 718 passed
+- [x] PR #116 のユーザー取り込み音源を最新 `main` へ統合し、`pubspec.yaml` を
+  `1.1.0+4`（versionName `1.1.0` / versionCode `4`）へ更新する
+- [x] 翻訳 validator 199/199 aligned、Dart format 変更 0、
+  `flutter analyze --fatal-infos` 0 issues、`flutter test` 841 passed
   (1 skipped) を確認する
 - [x] ローカルの upload keystore で署名済み release AAB を生成する
-  (`build/app/outputs/bundle/release/app-release.aab`、53,978,509 bytes、
-  SHA-256 `413BE2F95F9DF12923C647ABC8B1A22338C93035B394CA5576CA9B3098717AB3`)
-- [x] 生成時 Manifest が versionName `1.0.1` / versionCode `3` であることと、
+  (`build/app/outputs/bundle/release/app-release.aab`、54,276,347 bytes、
+  SHA-256 `D0F0D992605A18F717056EFB5D5FF3D2CBE812558E74D37246EDBCB2B6315C86`)
+- [x] 生成時 Manifest が versionName `1.1.0` / versionCode `4` であることと、
   AAB 内の `META-INF/UPLOAD.SF` / `UPLOAD.RSA` を確認する
 - [x] GitHub Actions のリリースに必要な
   `UPLOAD_KEYSTORE_BASE64` / `UPLOAD_KEY_ALIAS` /
@@ -41,10 +41,12 @@
   full-length SHA 必須へ変更する（ユーザー実施、GitHub API で反映確認済み）
 - [x] 外部 fork PR の実行承認を `all external contributors` 必須へ変更する
   （ユーザー実施。既定 `GITHUB_TOKEN` read-only / PR 承認不可は維持）
-- [~] `release.yml` をタグ push 自動起動から所有者限定の手動起動へ変更し、
+- [x] `release.yml` をタグ push 自動起動から所有者限定の手動起動へ変更し、
   main・タグ形式・`pubspec.yaml` 版数・既存タグ・署名 Secret をビルド前に検証する
   （Flutter SDK は公式 archive + 固定 SHA-256 でセットアップ。ローカル実装・
-  検証済み、main 反映と `v1.0.1` 手動実行は未実施）
+  検証済み、PR #124 で main 反映済み）
+- [ ] 統合完了後、GitHub Actions から `v1.1.0` を手動実行し、
+  GitHub Release と署名付き AAB を作成する
 - [ ] Play Console に AAB をアップロードし、署名・versionCode の受入を確認する
   （ユーザー実施）
 
@@ -125,6 +127,9 @@
   - 音源選択 sheet に取り込み済み音源と「端末から追加」を表示し、追加成功時はその音源を選択する。
   - Application 層に一覧・追加・改名の操作を集約し、既存の削除 Saga と同じ FIFO 境界を使う。
   - Widget Test、静的解析、全テスト後に接続済み Pixel 6a で MP3 / Ogg Vorbis の追加・試聴と既定音源の参照置換を確認済み。WAV / M4A / AAC は実機 fixture 未入手のため自動テストのみ。
+- [x] PR #116 の未解決レビュー2件を統合時に解消する
+  - Stop / Snooze 後も cold lookup で解決した OS 通知 ID のキャンセルを継続する。
+  - 利用枠を超える音源は app-private staging へのコピー前に拒否する。
 
 ### 直近完了・マージ済み
 

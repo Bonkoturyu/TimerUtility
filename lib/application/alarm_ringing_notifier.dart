@@ -190,8 +190,11 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
     unawaited(
       rawTarget
           .then((_AlarmRingingTarget resolved) async {
-            if (!_isCurrent(generation, timerId)) return;
             if (resolved.notificationId < 0) return;
+            // This notification belongs to the start request that initiated
+            // the lookup. Dismissal may make the playback generation stale
+            // before a cold-start repository lookup completes, but the OS
+            // notification still requires cleanup.
             await ref
                 .read(notificationSchedulerProvider)
                 .cancel(resolved.notificationId);

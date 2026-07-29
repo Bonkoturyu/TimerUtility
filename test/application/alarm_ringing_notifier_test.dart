@@ -401,6 +401,55 @@ void main() {
       });
     });
 
+    for (final bool snooze in <bool>[false, true]) {
+      test(
+        'cold lookup完了前に${snooze ? 'snooze' : 'stop'}しても保存済み通知IDをcancelする',
+        () {
+          fakeAsync((FakeAsync async) {
+            final Completer<TimerEntity?> lookup = Completer<TimerEntity?>();
+            final TimerRepository repository = _MockTimerRepository();
+            when(
+              () => repository.findById('timer-dismissed-cold'),
+            ).thenAnswer((_) => lookup.future);
+            final player = _CapturingHandoffPlayer();
+            final h = _container(player, timerRepository: repository);
+            final AlarmRingingNotifier notifier = h.container.read(
+              alarmRingingNotifierProvider.notifier,
+            );
+
+            unawaited(
+              notifier.start(
+                timerId: 'timer-dismissed-cold',
+                notificationId: -1,
+                source: AlarmSource.timer,
+              ),
+            );
+            async.flushMicrotasks();
+
+            unawaited(snooze ? notifier.snoozeRequested() : notifier.stop());
+            async.flushMicrotasks();
+
+            lookup.complete(
+              TimerEntity(
+                id: 'timer-dismissed-cold',
+                notificationId: 24681,
+                label: 'Dismissed cold timer',
+                duration: const Duration(minutes: 1),
+                endAt: null,
+                pausedRemaining: null,
+                status: TimerStatus.ringing,
+                createdAt: DateTime.utc(2026, 7, 16),
+                soundId: 'late-imported-sound',
+              ),
+            );
+            async.flushMicrotasks();
+
+            verify(() => h.scheduler.cancel(24681)).called(1);
+          });
+        },
+      );
+    }
+
     test('stop resets state and tells the player to stop', () async {
       final player = _StubAlarmSoundPlayer();
       final h = _container(player);

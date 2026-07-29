@@ -191,6 +191,31 @@ void main() {
       );
     });
 
+    test('上限超過ファイルは内部コピー前に拒否する', () async {
+      when(() => picker.pickOne()).thenAnswer(
+        (_) async => SelectedImportedSoundFile(
+          name: 'too_large.mp3',
+          mimeType: 'audio/mpeg',
+          byteLength: ImportedSoundPolicy.standard.maxFileBytes + 1,
+          openRead: () => const Stream<List<int>>.empty(),
+        ),
+      );
+
+      await expectLater(
+        service.prepare(ImportedSoundPolicy.standard),
+        throwsA(isA<ImportedSoundFileSizeLimitException>()),
+      );
+
+      verifyNever(() => capacityReader.getAvailableBytes());
+      verifyNever(
+        () => fileStore.stage(
+          source: any(named: 'source'),
+          expectedByteLength: any(named: 'expectedByteLength'),
+        ),
+      );
+      verifyNever(() => probe.probe(any()));
+    });
+
     test('重複内容は確定せずstagingを破棄して既存音源を返す', () async {
       final ImportedSound existing = ImportedSound.create(
         id: 'existing',
