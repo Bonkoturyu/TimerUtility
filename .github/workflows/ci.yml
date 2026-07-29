@@ -47,13 +47,29 @@ jobs:
               - '!.gitignore'
             translations_doc:
               - 'docs/translations.md'
-      # cache: true は内部で actions/cache@v5 を呼び、full-length SHA 必須設定と
-      # 競合するため使用しない。
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+      # subosito/flutter-action は内部で actions/cache@v5 を参照するため、
+      # full-length SHA 必須設定と両立しない。公式 SDK archive を checksum 検証して使う。
+      - name: Flutter SDKをセットアップ
+        env:
+          FLUTTER_ARCHIVE_URL: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.8-stable.tar.xz
+          FLUTTER_ARCHIVE_SHA256: 0c7e47fc39ef86290b41707d687bdca7f82b277267a6ef74717f8e88ac423de1
+        run: |
+          set -euo pipefail
+          archive_path="$RUNNER_TEMP/flutter_linux_3.41.8-stable.tar.xz"
+          flutter_root="$RUNNER_TEMP/flutter"
+
+          curl --fail --location --retry 3 --retry-all-errors \
+            --silent --show-error \
+            "$FLUTTER_ARCHIVE_URL" \
+            --output "$archive_path"
+          echo "$FLUTTER_ARCHIVE_SHA256  $archive_path" | sha256sum --check --strict
+          tar --extract --xz --file "$archive_path" --directory "$RUNNER_TEMP"
+          rm --force "$archive_path"
+
+          echo "$flutter_root/bin" >> "$GITHUB_PATH"
+          "$flutter_root/bin/flutter" config --no-analytics
+          "$flutter_root/bin/flutter" --version
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
-        with:
-          channel: 'stable'
-          flutter-version: '3.41.8'
       - run: flutter pub get
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: dart format --set-exit-if-changed .

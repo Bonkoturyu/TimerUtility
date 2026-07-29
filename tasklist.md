@@ -43,7 +43,8 @@
   （ユーザー実施。既定 `GITHUB_TOKEN` read-only / PR 承認不可は維持）
 - [~] `release.yml` をタグ push 自動起動から所有者限定の手動起動へ変更し、
   main・タグ形式・`pubspec.yaml` 版数・既存タグ・署名 Secret をビルド前に検証する
-  （ローカル実装・検証済み、main 反映と `v1.0.1` 手動実行は未実施）
+  （Flutter SDK は公式 archive + 固定 SHA-256 でセットアップ。ローカル実装・
+  検証済み、main 反映と `v1.0.1` 手動実行は未実施）
 - [ ] Play Console に AAB をアップロードし、署名・versionCode の受入を確認する
   （ユーザー実施）
 

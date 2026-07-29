@@ -275,13 +275,16 @@ Workflow はビルド前に次を検証する。
 
 手動リリースジョブ内で:
 
-1. `flutter analyze --fatal-infos` と `flutter test` を実行
-2. `UPLOAD_KEYSTORE_BASE64` を decode して一時 `.jks` ファイルを生成
-3. 動的に `android/key.properties` を生成
-4. `flutter build appbundle --release` を実行
-5. 署名情報を runner から削除
-6. 指定タグを実行対象 commit に作成し、生成 AAB を GitHub Release へ添付
-7. fastlane supply 連携で Play Console に自動 upload — これは本 Phase 完了後の
+1. Google 公式の Flutter 3.41.8 Linux SDK archive を取得し、固定 SHA-256
+   (`0c7e47fc39ef86290b41707d687bdca7f82b277267a6ef74717f8e88ac423de1`)
+   と照合してから展開
+2. `flutter analyze --fatal-infos` と `flutter test` を実行
+3. `UPLOAD_KEYSTORE_BASE64` を decode して一時 `.jks` ファイルを生成
+4. 動的に `android/key.properties` を生成
+5. `flutter build appbundle --release` を実行
+6. 署名情報を runner から削除
+7. 指定タグを実行対象 commit に作成し、生成 AAB を GitHub Release へ添付
+8. fastlane supply 連携で Play Console に自動 upload — これは本 Phase 完了後の
    継続改善として保留 (まず手動 upload 経路を確立する)
 
 ---
