@@ -414,7 +414,7 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 | 6 | 完了 | 6a/6b/6c 実装 + 実機 3 パターン全部 OK（Pixel 6a / Android 16、2026-04-30）、126 テストパス。docs 整理で完全クローズ (2026-05-13、4 ch 採用見送り確定 + `clearShowWhenLocked` 後付け文書化) |
 | 7 | 完了 | スヌーズ + カスタム時間タイマー UI 完了（2026-05-01）、162 テストパス、Pixel 6a 動作確認済 |
 | 8 | 完了 | 複数タイマー (上限 10) + Drift 永続化 + 起動時復元、180 テストパス、Pixel 6a 6 シナリオ検証済（2026-05-02） |
-| 8.5 | 完了（土台のみ、本番翻訳は Phase 11） | ローカライズ土台 (flutter_localizations + gen-l10n + 日英 ARB)。中韓は `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で内部対応可能（2026-05-02、180 テストパス） |
+| 8.5 | 完了（土台のみ、本番翻訳は Phase 11） | ローカライズ土台 (flutter_localizations + gen-l10n + 日英 ARB)。中韓は `--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で内部対応可能（2026-05-02、180 テストパス）。※ 2026-07-28 に zh / zh-Hant / ko を公開ビルドへ昇格し、同フラグは撤廃済み |
 | 8.5 follow-up | 完了 | アラーム再鳴動時の二重音修正 (Channel `timer_alarm_v6` + `start()` で cancel→500ms→play 順序、2026-05-02、Pixel 6a 6 シナリオ単音化確認済) |
 | 9 | 完了 | プリセット機能 + テンプレート差し替え + ♪ ボタン + ラベル併記、275 テストパス、Pixel 6a 10 シナリオ + フィードバック 6 件反映済（2026-05-02） |
 | 9.5 | 完了 | 指定時刻アラーム機能。全レイヤー実装 + AlarmListScreen + go_router 配線 + HomeScreen 3 本柱導線、Pixel 6a 4 シナリオ検証済（PR #11 / #13 で発覚 5 件 fix 込み、2026-05-04） |

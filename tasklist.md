@@ -49,10 +49,24 @@
 
 - [x] `package_info_plus` を追加し、設定 →「情報」の先頭に `1.0.0 (2)` 形式の
   バージョン行を追加（port / adapter / provider / ARB 5 言語）
-- [x] `flutter analyze --fatal-infos` 0 issues / `flutter test` 697 passed (1 skipped)
+- [x] #120 統合後に `flutter analyze --fatal-infos` 0 issues /
+  `flutter test` 718 passed (1 skipped) / 翻訳 validator 177/177 aligned
 - [ ] Pixel 6a 実機で実際の版数が表示されることを確認（widget test は stub 値のため、
   plugin の実チャネル経路は未検証）
+### 多言語 5 言語の公開ビルド昇格（2026-07-28）
 
+- [x] `ENABLE_EXPERIMENTAL_LOCALES` フラグを撤廃し、zh / zh-Hant / ko を
+  公開ビルドの言語ピッカーへ昇格（ARB は A-3 で作成済みの 176 キー × 5 言語、
+  翻訳の新規作成は不要だった）
+- [x] `supportedLocales` に `zh_Hant_TW` / `zh_Hant_HK` / `zh_Hant_MO` を
+  明示追加（Flutter の
+  `basicLocaleListResolution` は Chinese の country → script 推定を持たないため、
+  scriptCode 無しの繁体字地域が簡体字に落ちるのを防ぐ）
+- [x] #121 統合後に `flutter analyze --fatal-infos` 0 issues /
+  `flutter test` 718 passed (1 skipped)
+- [ ] Pixel 6a 実機で 5 言語の切替表示 + 通知チャンネル名の追従を確認（ユーザー実施）
+- [ ] Play Console のストアリスティングに zh / ko を追加するかの判断（アプリ内
+  l10n とは別管理。初回提出は ja / en のみで確定済み）
 ### 次候補 — ユーザー取り込み音源（Play Store 初回提出後）
 
 - [ ] [ADR 0006](docs/adr/0006-user-imported-sound-policy.md) と
@@ -139,8 +153,15 @@
 最終更新日: 2026-07-28（設定画面にアプリバージョン表示を追加 — `package_info_plus`
 を導入し、設定 →「情報」の先頭へ `1.0.0 (2)` 形式の行を追加。port / adapter /
 provider / ARB 5 言語 (`settingsVersionLabel`) を実装。`flutter analyze
---fatal-infos` 0 issues / `flutter test` 697 passed (1 skipped)。残は Pixel 6a
-実機での実版数表示確認）
+--fatal-infos` 0 issues / `flutter test` 718 passed (1 skipped) /
+翻訳 validator 177/177 aligned。残は Pixel 6a 実機での実版数表示確認）
+
+過去の更新: 2026-07-28（多言語 5 言語を公開ビルドへ昇格 —
+`ENABLE_EXPERIMENTAL_LOCALES`
+compile-time フラグを撤廃し、zh / zh-Hant / ko を言語ピッカーに常時表示。
+`supportedLocales` に `zh_Hant_TW` / `zh_Hant_HK` / `zh_Hant_MO` を追加して、
+scriptCode なしの繁体字地域が簡体字へ落ちる経路を塞いだ。残は Pixel 6a
+実機での 5 言語切替確認）
 
 過去の更新: 2026-07-27（Phase 11.9 サブ PR γ を完了に更新、Phase 11.10 として
 Play Console 実画面対応の進捗を新規セクション化。Developer アカウント登録・
