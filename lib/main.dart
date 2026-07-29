@@ -59,29 +59,33 @@ import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/stopwatch_screen.dart';
 import 'presentation/screens/timer_list_screen.dart';
 
-const List<Locale> _publicSupportedLocales = <Locale>[
+/// Locales shipped in every build (public release included).
+///
+/// Ordering matters for `basicLocaleListResolution`:
+///
+/// - `Locale('zh')` must precede the `Hant` entries. The SDK's
+///   language-only fallback takes the **first** entry whose
+///   `languageCode` matches, so a bare `zh` device (no script, no
+///   country) lands on Simplified — the more widely used script.
+/// - `zh_Hant_TW` / `zh_Hant_HK` / `zh_Hant_MO` exist because
+///   `basicLocaleListResolution` does **not** infer script from country
+///   for Chinese (verified against the Flutter SDK source: it only
+///   hashes languageCode / +scriptCode / +countryCode). A device that
+///   reports `zh_TW`, `zh_HK`, or `zh_MO` without a scriptCode would
+///   otherwise fall through to the language-only match and get Simplified.
+///   With these entries
+///   the language+country lookup resolves to Traditional. The generated
+///   `lookupAppLocalizations` keys off `scriptCode == 'Hant'`, so all three
+///   country variants load `AppLocalizationsZhHant`.
+const List<Locale> supportedLocales = <Locale>[
   Locale('ja'),
   Locale('en'),
-];
-
-const List<Locale> _experimentalSupportedLocales = <Locale>[
   Locale('zh'),
   Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+  Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant', countryCode: 'TW'),
+  Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant', countryCode: 'HK'),
+  Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant', countryCode: 'MO'),
   Locale('ko'),
-];
-
-/// Exposed for tests so the locale-form invariant for `zh_Hant`
-/// (scriptCode form, not countryCode form — see PR #61 / Copilot review)
-/// can be verified independently of the `kEnableExperimentalLocales`
-/// compile-time flag, which would otherwise hide the list from the
-/// default `flutter test` run.
-@visibleForTesting
-const List<Locale> debugExperimentalSupportedLocales =
-    _experimentalSupportedLocales;
-
-List<Locale> get supportedLocales => <Locale>[
-  ..._publicSupportedLocales,
-  if (kEnableExperimentalLocales) ..._experimentalSupportedLocales,
 ];
 
 /// Resolve a device locale to one of [supported], falling back to

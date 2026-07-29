@@ -27,8 +27,8 @@ Flutter 製のストップウォッチ + タイマー + アラーム + 世界時
 - **世界時計**: 最大 6 都市、3 デザイン (PageView 切替)、初回 GPS で現在地登録、
   拒否時は `FlutterTimezone` fallback
 - **プリセット**: 一般 / 料理 / Pomodoro の 6 件 × 3 テンプレ、♪ ボタンで音源差替
-- **多言語対応**: ja / en (Public)、`--dart-define=ENABLE_EXPERIMENTAL_LOCALES=true` で
-  zh / zh-Hant / ko も内部対応
+- **多言語対応**: ja / en / zh-Hans (简体中文) / zh-Hant (繁體中文) / ko の 5 言語を
+  公開ビルドに同梱。設定画面から手動切替、既定は OS ロケール追従
 - **ダークモード**: `MaterialApp.darkTheme` + MD3 semantic role 化済
 - **CVD (色覚多様性) 対応**: バナーに重大度ラベル `[重要]` / `[推奨]` / `[補助]` 併記
 - **診断ログ**: 設定画面でトグル → JSON Lines をローテーション → zip で OS Share Sheet
@@ -126,11 +126,8 @@ dart run build_runner build --delete-conflicting-outputs
 flutter run -d <device-id>
 ```
 
-実験的な多言語 (zh / zh-Hant / ko) を有効化したい場合:
-
-```sh
-flutter run --dart-define=ENABLE_EXPERIMENTAL_LOCALES=true
-```
+多言語 (ja / en / zh / zh-Hant / ko) は公開ビルドに同梱済みで、`--dart-define`
+等の追加フラグは不要。設定画面の「言語」から手動切替できる。
 
 ### テスト + 静的解析
 
@@ -141,7 +138,7 @@ flutter test
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) と同じチェックがローカルで
-走る。`flutter test` は 642 件 (1 skipped) すべて緑になる前提。
+走る。`flutter test` は 707 件 (1 skipped) すべて緑になる前提。
 
 ### Release build (任意)
 
