@@ -19,6 +19,19 @@
 
 ## 進行中
 
+### AI協働・SubAgent基盤整備（2026-07-28）
+
+- [x] 既存3リポジトリのSkill・SubAgent・Opus 5委譲方式を比較し、
+  TimerUtility向けの役割分担と検証境界を確定する
+- [x] `hard-task-protocol` と `delegate-to-claude` をrepo Skillとして追加する
+- [x] 既存 `impl-helper` を `.codex/config.toml` へ登録し、同時委譲上限を設定する
+- [x] `docs/ai-collaboration.md` を正本として、`CLAUDE.md` / `AGENTS.md` と
+  旧 `docs/opus-startup-prompt.md` の導線を同期する
+- [x] Skill validator、Claudeランチャー自己テスト、Codex設定、差分・文書を検証する
+- [x] Opus 5へ読み取り専用レビューを委譲する
+  （Claude側のセッション上限によりレビュー本文は未取得。2026-07-29 03:40 JST
+  リセットと構造化 `token_limit` 応答を確認し、ポリシーどおり再試行なし）
+
 ### Phase 11.9 サブ PR γ — 完了
 
 - [x] Privacy Policy の GitHub Pages 公開（Source = `main` / `/docs`、PR #96 / #97 で `docs/index.md` 追加 + Jekyll/Liquid build error 修正済。登録用 URL: `https://bonkoturyu.github.io/TimerUtility/privacy-policy`）

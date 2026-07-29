@@ -194,6 +194,20 @@ Auto 起動中の Codex は以下に厳格に従うこと。
 
 ---
 
+## AI 協働 / SubAgent
+
+- 詳細な役割分担と委譲境界の正典は `docs/ai-collaboration.md`
+- 3 手順以上、複数ファイル横断、または未知を含む作業では
+  `.agents/skills/hard-task-protocol/SKILL.md` を使用する
+- メインエージェントが要件、Plan、設計判断、統合、最終検証を所有する
+- 同時に動かす SubAgent は 1 つまでとし、再帰委譲と同一ファイルの同時編集を禁止する
+- Opus 5 は `.agents/skills/delegate-to-claude/SKILL.md` 経由で、
+  境界付きの調査、設計批評、レビュー、検証に限って使用する
+- 委譲は権限を拡張しない。Git / PR 制約とエスカレーション基準は
+  すべての委譲先にも適用する
+
+---
+
 ## ドキュメント参照ガイド
 
 | 作業内容 | 参照先 |
@@ -208,6 +222,7 @@ Auto 起動中の Codex は以下に厳格に従うこと。
 | テスト戦略・自動化範囲 | `docs/testing-strategy.md` |
 | 権限取得フロー | `docs/permissions.md` |
 | 同梱音源仕様 | `docs/assets-spec.md` |
+| AI 協働・SubAgent・Opus 5 委譲 | `docs/ai-collaboration.md` |
 | 過去の意思決定の経緯 | `docs/adr/*.md` |
 
 ---

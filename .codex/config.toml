@@ -1,0 +1,10 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+# メインエージェント以外に同時実行できる SubAgent は 1 つまでとする。
+# 再帰委譲の禁止は AGENTS.md と docs/ai-collaboration.md で規定する。
+[agents]
+max_concurrent_threads_per_session = 1
+
+[agents.impl-helper]
+description = "仕様が明確な実装・テスト・機械的編集を担当し、設計判断はメインエージェントへ返す"
+config_file = "agents/impl-helper.toml"

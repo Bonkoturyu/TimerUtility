@@ -1,0 +1,4 @@
+interface:
+  display_name: "難タスク実行プロトコル"
+  short_description: "複雑なリポジトリ作業を検証可能な境界へ分解して進める"
+  default_prompt: "Use $hard-task-protocol to plan and execute this complex repository task with explicit verification boundaries."
