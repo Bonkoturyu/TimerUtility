@@ -163,6 +163,7 @@ Widget _harness(
   TimerRepository? repository,
   NotificationScheduler? scheduler,
   String? payload,
+  double textScaleFactor = 1,
 }) {
   final NotificationScheduler notificationScheduler =
       scheduler ?? _stubScheduler();
@@ -219,6 +220,12 @@ Widget _harness(
       locale: const Locale('ja'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: const <Locale>[Locale('ja'), Locale('en')],
+      builder: (BuildContext context, Widget? child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScaleFactor)),
+        child: child!,
+      ),
     ),
   );
 }
@@ -296,6 +303,45 @@ void main() {
       expect(label.overflow, TextOverflow.ellipsis);
       expect(label.textAlign, TextAlign.center);
     });
+
+    testWidgets(
+      'keeps Stop and Snooze reachable on a short screen with large text',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(320, 400);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final player = _StubAlarmSoundPlayer();
+        final String longLabel = List<String>.filled(50, 'A').join();
+        await tester.pumpWidget(
+          _harness(
+            player,
+            seedRinging: _seedRinging(label: longLabel),
+            textScaleFactor: 3,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 600));
+
+        expect(tester.takeException(), isNull);
+
+        final Finder stopButton = find.byKey(const Key('alarm_stop_button'));
+        final Finder snoozeButton = find.byKey(
+          const Key('alarm_snooze_button'),
+        );
+        expect(stopButton, findsOneWidget);
+        expect(snoozeButton, findsOneWidget);
+
+        await tester.ensureVisible(stopButton);
+        await tester.pumpAndSettle();
+        expect(stopButton.hitTestable(), findsOneWidget);
+
+        await tester.ensureVisible(snoozeButton);
+        await tester.pumpAndSettle();
+        expect(snoozeButton.hitTestable(), findsOneWidget);
+      },
+    );
 
     testWidgets(
       'AppBar has no back button while the alarm is ringing — Stop / Snooze are the only exits',
