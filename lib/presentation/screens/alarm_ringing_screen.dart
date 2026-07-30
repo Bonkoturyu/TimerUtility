@@ -15,6 +15,7 @@ import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
+import '../../domain/timer/timer_status.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Phase 8 ringing screen. Reads the currently ringing timer from
@@ -167,11 +168,45 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     return (AlarmSource.timer, payload);
   }
 
+  String? _watchActiveLabel({
+    required AlarmSource? source,
+    required String? sourceId,
+  }) {
+    if (sourceId == null) return null;
+
+    String? label;
+    if (source == AlarmSource.alarm) {
+      final List<AlarmEntity> alarms = ref.watch(
+        alarmCollectionNotifierProvider,
+      );
+      for (final AlarmEntity alarm in alarms) {
+        if (alarm.id == sourceId) {
+          label = alarm.label;
+          break;
+        }
+      }
+    } else {
+      final timers = ref.watch(timerCollectionNotifierProvider);
+      TimerEntity? timer = timers.findById(sourceId);
+      if (timer == null && sourceId == 'unknown') {
+        for (final TimerEntity candidate in timers.all) {
+          if (candidate.status == TimerStatus.ringing) {
+            timer = candidate;
+            break;
+          }
+        }
+      }
+      label = timer?.label;
+    }
+    return label == null || label.isEmpty ? null : label;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
     final collection = ref.read(timerCollectionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
+    final ThemeData theme = Theme.of(context);
     // Stop / Snooze 押下時の分岐は、現在 ringing 中の AlarmRingingState の
     // currentSource を見る (build 直前に Notifier に source を保存済)。
     // null の場合は Phase 8 までの「タイマーのみ」path にフォールバック。
@@ -181,6 +216,10 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     final String? activeSourceId = ref
         .watch(alarmRingingNotifierProvider)
         .currentTimerId;
+    final String? activeLabel = _watchActiveLabel(
+      source: activeSource,
+      sourceId: activeSourceId,
+    );
 
     // Block hardware back / system back gesture / AppBar back button
     // while the alarm is ringing — accidentally dismissing an alarm by
@@ -208,7 +247,23 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 48),
+                if (activeLabel == null)
+                  const SizedBox(height: 48)
+                else ...<Widget>[
+                  const SizedBox(height: 16),
+                  Text(
+                    activeLabel,
+                    key: const Key('alarm_ringing_label'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[

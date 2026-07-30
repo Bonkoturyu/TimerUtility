@@ -284,6 +284,8 @@ void main() {
       final ringing = container.read(alarmRingingNotifierProvider);
       expect(ringing.currentSource, AlarmSource.alarm);
       expect(ringing.currentTimerId, 'alarm-1');
+      expect(find.byKey(const Key('alarm_ringing_label')), findsOneWidget);
+      expect(find.text('Wake up'), findsOneWidget);
     });
 
     testWidgets('cold alarmは1秒超のDB応答後も保存済みnotificationIdをcancelする', (

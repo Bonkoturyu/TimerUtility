@@ -225,20 +225,76 @@ Widget _harness(
 
 void main() {
   group('AlarmRingingScreen', () {
-    testWidgets('shows title, label, and Stop / Snooze buttons', (
+    testWidgets(
+      'shows title and Stop / Snooze buttons without unresolved label',
+      (WidgetTester tester) async {
+        final player = _StubAlarmSoundPlayer();
+        await tester.pumpWidget(_harness(player));
+        await tester.pumpAndSettle();
+        // Drain the 500ms cancel→play delay AlarmRingingNotifier.start
+        // schedules so no Timer is left pending at teardown.
+        await tester.pump(const Duration(milliseconds: 600));
+
+        expect(find.byKey(const Key('alarm_ringing_title')), findsOneWidget);
+        expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
+        expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
+        expect(find.byKey(const Key('alarm_ringing_label')), findsNothing);
+      },
+    );
+
+    testWidgets('shows timer label between title and action buttons', (
       WidgetTester tester,
     ) async {
       final player = _StubAlarmSoundPlayer();
-      await tester.pumpWidget(_harness(player));
+      await tester.pumpWidget(
+        _harness(player, seedRinging: _seedRinging(label: 'Tea timer')),
+      );
       await tester.pumpAndSettle();
-      // Drain the 500ms cancel→play delay AlarmRingingNotifier.start
-      // schedules so no Timer is left pending at teardown.
       await tester.pump(const Duration(milliseconds: 600));
 
-      expect(find.byKey(const Key('alarm_ringing_title')), findsOneWidget);
-      expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
-      expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
+      final Finder title = find.byKey(const Key('alarm_ringing_title'));
+      final Finder label = find.byKey(const Key('alarm_ringing_label'));
+      final Finder stopButton = find.byKey(const Key('alarm_stop_button'));
+
+      expect(label, findsOneWidget);
+      expect(find.text('Tea timer'), findsOneWidget);
+      expect(
+        tester.getBottomLeft(title).dy,
+        lessThan(tester.getTopLeft(label).dy),
+      );
+      expect(
+        tester.getBottomLeft(label).dy,
+        lessThan(tester.getTopLeft(stopButton).dy),
+      );
+    });
+
+    testWidgets('hides an empty timer label', (WidgetTester tester) async {
+      final player = _StubAlarmSoundPlayer();
+      await tester.pumpWidget(_harness(player, seedRinging: _seedRinging()));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
+
       expect(find.byKey(const Key('alarm_ringing_label')), findsNothing);
+    });
+
+    testWidgets('limits a long timer label to two centered ellipsis lines', (
+      WidgetTester tester,
+    ) async {
+      final player = _StubAlarmSoundPlayer();
+      final String longLabel = List<String>.filled(50, 'A').join();
+      await tester.pumpWidget(
+        _harness(player, seedRinging: _seedRinging(label: longLabel)),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      final Text label = tester.widget<Text>(
+        find.byKey(const Key('alarm_ringing_label')),
+      );
+      expect(label.data, longLabel);
+      expect(label.maxLines, 2);
+      expect(label.overflow, TextOverflow.ellipsis);
+      expect(label.textAlign, TextAlign.center);
     });
 
     testWidgets(
@@ -575,10 +631,10 @@ void main() {
   });
 }
 
-TimerEntity _seedRinging() => TimerEntity(
+TimerEntity _seedRinging({String label = ''}) => TimerEntity(
   id: 'ringing-1',
   notificationId: 42,
-  label: '',
+  label: label,
   duration: const Duration(seconds: 5),
   endAt: null,
   pausedRemaining: null,
