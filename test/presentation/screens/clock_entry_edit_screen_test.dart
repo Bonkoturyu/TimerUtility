@@ -219,7 +219,7 @@ void main() {
     });
 
     testWidgets(
-      'ReorderableListView.onReorder を呼ぶと notifier.reorder で順序が swap される',
+      'ReorderableListView.onReorderItem を呼ぶと notifier.reorder で順序が swap される',
       (WidgetTester tester) async {
         await setLargeSurface(tester);
         await tester.pumpWidget(
@@ -243,12 +243,12 @@ void main() {
         );
 
         // ReorderableListView の物理 drag は long-press + offset の組み合わせで
-        // flaky になりやすいため、widget の onReorder callback を直接呼ぶ。
-        // Flutter の post-removal 規約で oldIndex=0 → newIndex=2 を渡すと、
-        // screen 側で newIndex -= 1 補正が走り notifier.reorder(0, 1) になる。
+        // flaky になりやすいため、widget の onReorderItem callback を直接呼ぶ。
+        // onReorderItem は削除後の移動先 index を渡すので、
+        // oldIndex=0 → newIndex=1 が notifier.reorder(0, 1) になる。
         final ReorderableListView reorderable = tester
             .widget<ReorderableListView>(find.byType(ReorderableListView));
-        reorderable.onReorder(0, 2);
+        reorderable.onReorderItem!(0, 1);
         await tester.pumpAndSettle();
 
         expect(

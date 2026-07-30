@@ -71,11 +71,9 @@ class ClockEntryEditScreen extends ConsumerWidget {
           Expanded(
             child: ReorderableListView.builder(
               itemCount: pinned.length,
-              onReorder: (int oldIndex, int newIndex) {
-                // Translate Flutter's post-removal `newIndex` convention
-                // into the destination index that
-                // `ClockEntryCollection.reorder` expects.
-                if (newIndex > oldIndex) newIndex -= 1;
+              // onReorderItem は削除後のリストに対する移動先 index を渡すため、
+              // ClockEntryCollection.reorder の規約とそのまま一致する。
+              onReorderItem: (int oldIndex, int newIndex) {
                 if (oldIndex == newIndex) return;
                 ref
                     .read(clockEntryCollectionNotifierProvider.notifier)

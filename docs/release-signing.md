@@ -275,8 +275,8 @@ Workflow はビルド前に次を検証する。
 
 手動リリースジョブ内で:
 
-1. Google 公式の Flutter 3.41.8 Linux SDK archive を取得し、固定 SHA-256
-   (`0c7e47fc39ef86290b41707d687bdca7f82b277267a6ef74717f8e88ac423de1`)
+1. Google 公式の Flutter 3.44.8 Linux SDK archive を取得し、固定 SHA-256
+   (`672089e001571a9fbb209a495c583580c0c6c73ef98999264ba07fa93ace332d`)
    と照合してから展開
 2. `flutter analyze --fatal-infos` と `flutter test` を実行
 3. `UPLOAD_KEYSTORE_BASE64` を decode して一時 `.jks` ファイルを生成

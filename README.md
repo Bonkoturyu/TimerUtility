@@ -99,8 +99,8 @@ unlock, check the **"Phase 6 implementation retrospective"** notes in
 
 - Dart SDK `^3.11.5` (`pubspec.yaml` の `environment.sdk` 制約)。`dart --version`
   または `flutter --version` の `Tools • Dart x.y.z` 行で 3.11.5 以上を確認。
-  CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は Flutter `3.41.8`
-  (Dart 3.11.x 同梱) を使用
+  CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は Flutter `3.44.8`
+  (Dart 3.12.2 同梱) を使用
 - Android SDK Platform 36 (Android 16) + build-tools
 - JDK 17
 

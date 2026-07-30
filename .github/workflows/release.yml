@@ -76,11 +76,11 @@ jobs:
       # full-length SHA 必須設定と両立しない。公式 SDK archive を checksum 検証して使う。
       - name: Flutter SDKをセットアップ
         env:
-          FLUTTER_ARCHIVE_URL: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.8-stable.tar.xz
-          FLUTTER_ARCHIVE_SHA256: 0c7e47fc39ef86290b41707d687bdca7f82b277267a6ef74717f8e88ac423de1
+          FLUTTER_ARCHIVE_URL: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.8-stable.tar.xz
+          FLUTTER_ARCHIVE_SHA256: 672089e001571a9fbb209a495c583580c0c6c73ef98999264ba07fa93ace332d
         run: |
           set -euo pipefail
-          archive_path="$RUNNER_TEMP/flutter_linux_3.41.8-stable.tar.xz"
+          archive_path="$RUNNER_TEMP/flutter_linux_3.44.8-stable.tar.xz"
           flutter_root="$RUNNER_TEMP/flutter"
 
           curl --fail --location --retry 3 --retry-all-errors \

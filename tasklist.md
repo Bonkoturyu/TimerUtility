@@ -19,6 +19,27 @@
 
 ## 進行中
 
+### Version 1.1.1 Flutter / Android 15 互換性更新（2026-07-30）
+
+- [x] Flutter SDK を `3.41.8` から `3.44.8` へ更新し、Android 15 以上で
+  `setStatusBarColor` / `setNavigationBarColor` /
+  `setNavigationBarDividerColor` を呼ばない上流修正を取り込む
+- [x] CI / Release Workflow の公式 Linux SDK archive URL と固定 SHA-256、
+  README、署名手順を Flutter `3.44.8` / Dart `3.12.2` へ同期する
+- [x] `pubspec.yaml` を `1.1.1+5`
+  （versionName `1.1.1` / versionCode `5`）へ更新する
+- [x] Flutter `3.44.8` の Gradle 移行で自動生成された互換フラグ
+  (`android.builtInKotlin=false` / `android.newDsl=false`) を固定する
+- [x] 翻訳 validator 199/199 aligned、Dart format 338 files / 0 changed、
+  `flutter analyze --fatal-infos` 0 issues、`flutter test` 846 passed
+  (1 skipped) を確認する
+- [x] 署名済み release AAB を生成し、versionName `1.1.1` /
+  versionCode `5` / targetSdk `36` と署名を確認する
+  (`build/app/outputs/bundle/release/app-release.aab`、66,472,408 bytes、
+  SHA-256 `6FCE98B4CA9CA8E7E70EFEEFD02DBCB79C1F271729C379F25ECBCA56DDB99F7E`)
+- [ ] クローズドテストへ `1.1.1 (5)` をアップロードし、Play Console の
+  エッジツーエッジ非推奨 API 警告が解消するか確認する（ユーザー実施）
+
 ### Version 1.1.0 リリースパッケージ（2026-07-29）
 
 - [x] PR #116 のユーザー取り込み音源を最新 `main` へ統合し、`pubspec.yaml` を
@@ -45,10 +66,10 @@
   main・タグ形式・`pubspec.yaml` 版数・既存タグ・署名 Secret をビルド前に検証する
   （Flutter SDK は公式 archive + 固定 SHA-256 でセットアップ。ローカル実装・
   検証済み、PR #124 で main 反映済み）
-- [ ] 統合完了後、GitHub Actions から `v1.1.0` を手動実行し、
+- [x] 統合完了後、GitHub Actions から `v1.1.0` を手動実行し、
   GitHub Release と署名付き AAB を作成する
-- [ ] Play Console に AAB をアップロードし、署名・versionCode の受入を確認する
-  （ユーザー実施）
+- [x] Play Console のクローズドテストに AAB をアップロードし、
+  versionName `1.1.0` / versionCode `4` の受入を確認する（ユーザー実施）
 
 ### AI協働・SubAgent基盤整備（2026-07-28）
 
