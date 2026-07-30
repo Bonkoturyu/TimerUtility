@@ -19,6 +19,19 @@
 
 ## 進行中
 
+### Version 1.1.2 Android edge-to-edge 後方互換対応（2026-07-30）
+
+- [x] AndroidX Core を `1.17.0` へ固定し、`MainActivity.onCreate()` で
+  `WindowCompat.enableEdgeToEdge(window)` を呼び出す
+- [x] `pubspec.yaml` を `1.1.2+6`
+  （versionName `1.1.2` / versionCode `6`）へ更新する
+- [x] Flutter `3.44.8` で静的解析、全テスト、署名済み release AAB build と
+  AndroidX Core `1.17.0` への依存解決を確認する
+- [ ] API 28 / 34 / 35 / 36 で通常画面・アラーム画面、ジェスチャー / 3 ボタン、
+  light / dark の表示崩れがないことを確認する（ユーザー実施）
+- [ ] `1.1.2 (6)` の AAB をクローズドテストへアップロードし、Play Console の
+  edge-to-edge 後方互換警告が解消するか確認する（ユーザー実施）
+
 ### Version 1.1.1 Flutter / Android 15 互換性更新（2026-07-30）
 
 - [x] Flutter SDK を `3.41.8` から `3.44.8` へ更新し、Android 15 以上で
@@ -37,8 +50,9 @@
   versionCode `5` / targetSdk `36` と署名を確認する
   (`build/app/outputs/bundle/release/app-release.aab`、66,472,408 bytes、
   SHA-256 `6FCE98B4CA9CA8E7E70EFEEFD02DBCB79C1F271729C379F25ECBCA56DDB99F7E`)
-- [ ] クローズドテストへ `1.1.1 (5)` をアップロードし、Play Console の
-  エッジツーエッジ非推奨 API 警告が解消するか確認する（ユーザー実施）
+- [x] クローズドテストへ `1.1.1 (5)` をアップロードし、Play Console の
+  エッジツーエッジ非推奨 API 警告が解消したことを確認する（ユーザー実施）。
+  後方互換警告は残ったため、上記 follow-up で対応する
 
 ### Version 1.1.0 リリースパッケージ（2026-07-29）
 

@@ -252,6 +252,11 @@ Android 15 以降、デフォルトで edge-to-edge が強制適用される。
 
 ### 対応
 
+- `MainActivity.onCreate()` で `WindowCompat.enableEdgeToEdge(window)` を呼び、
+  Android 14 以前にも後方互換な edge-to-edge 設定を適用する
+- AndroidX Core は `WindowCompat.enableEdgeToEdge` が追加された `1.17.0` 以上を使う
+- Flutter では `SystemUiMode.edgeToEdge` が既定。Android 15 以上では OS 側でも
+  edge-to-edge が強制されるため、opt-out 属性は追加しない
 - `MaterialApp` レベルで全画面 `SafeArea` ラップ
 - `theme` で `useMaterial3: true` 推奨
 - システムバーの色 / アイコン色は `SystemUiOverlayStyle` で調整
