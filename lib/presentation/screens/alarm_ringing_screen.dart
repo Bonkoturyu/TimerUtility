@@ -15,6 +15,7 @@ import '../../domain/alarm/exceptions.dart';
 import '../../domain/timer/alarm_sound_catalog.dart';
 import '../../domain/timer/snooze_calculator.dart';
 import '../../domain/timer/timer_entity.dart';
+import '../../domain/timer/timer_status.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Phase 8 ringing screen. Reads the currently ringing timer from
@@ -167,11 +168,45 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     return (AlarmSource.timer, payload);
   }
 
+  String? _watchActiveLabel({
+    required AlarmSource? source,
+    required String? sourceId,
+  }) {
+    if (sourceId == null) return null;
+
+    String? label;
+    if (source == AlarmSource.alarm) {
+      final List<AlarmEntity> alarms = ref.watch(
+        alarmCollectionNotifierProvider,
+      );
+      for (final AlarmEntity alarm in alarms) {
+        if (alarm.id == sourceId) {
+          label = alarm.label;
+          break;
+        }
+      }
+    } else {
+      final timers = ref.watch(timerCollectionNotifierProvider);
+      TimerEntity? timer = timers.findById(sourceId);
+      if (timer == null && sourceId == 'unknown') {
+        for (final TimerEntity candidate in timers.all) {
+          if (candidate.status == TimerStatus.ringing) {
+            timer = candidate;
+            break;
+          }
+        }
+      }
+      label = timer?.label;
+    }
+    return label == null || label.isEmpty ? null : label;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
     final collection = ref.read(timerCollectionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
+    final ThemeData theme = Theme.of(context);
     // Stop / Snooze 押下時の分岐は、現在 ringing 中の AlarmRingingState の
     // currentSource を見る (build 直前に Notifier に source を保存済)。
     // null の場合は Phase 8 までの「タイマーのみ」path にフォールバック。
@@ -181,6 +216,10 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
     final String? activeSourceId = ref
         .watch(alarmRingingNotifierProvider)
         .currentTimerId;
+    final String? activeLabel = _watchActiveLabel(
+      source: activeSource,
+      sourceId: activeSourceId,
+    );
 
     // Block hardware back / system back gesture / AppBar back button
     // while the alarm is ringing — accidentally dismissing an alarm by
@@ -194,99 +233,135 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
           automaticallyImplyLeading: false,
           title: Text(l.alarmAppBarTitle),
         ),
-        body: Center(
+        body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  l.alarmTimesUp,
-                  key: const Key('alarm_ringing_title'),
-                  style: const TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          l.alarmTimesUp,
+                          key: const Key('alarm_ringing_title'),
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (activeLabel == null)
+                          const SizedBox(height: 48)
+                        else ...<Widget>[
+                          const SizedBox(height: 16),
+                          Text(
+                            activeLabel,
+                            key: const Key('alarm_ringing_label'),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                        OverflowBar(
+                          alignment: MainAxisAlignment.spaceEvenly,
+                          overflowAlignment: OverflowBarAlignment.center,
+                          overflowSpacing: 16,
+                          children: <Widget>[
+                            FilledButton(
+                              key: const Key('alarm_stop_button'),
+                              onPressed: () async {
+                                await ringingNotifier.stop();
+                                if (activeSource == AlarmSource.alarm &&
+                                    activeSourceId != null) {
+                                  // Phase 9.5: alarm 由来 → AlarmCollectionNotifier に
+                                  // 委譲。once は enabled=false 化、weekly は次回曜日に
+                                  // 自動進行する。
+                                  // cold-start で AlarmCollectionNotifier の load が
+                                  // まだ完了していない / すでに削除済みの場合に
+                                  // AlarmNotFoundException が飛ぶことがあるが、
+                                  // 鳴動停止は既に完了しているので no-op で抜ける。
+                                  try {
+                                    await ref
+                                        .read(
+                                          alarmCollectionNotifierProvider
+                                              .notifier,
+                                        )
+                                        .onFiredStop(activeSourceId);
+                                  } on AlarmNotFoundException {
+                                    // 何もしない: 通知音は止まっているのでユーザは
+                                    // 画面を抜けられる。weekly の次回 schedule が
+                                    // 載らない可能性があるが、次回起動時の load 後に
+                                    // 反映される。
+                                  }
+                                } else {
+                                  // Phase 8 までの既存 path: TimerCollection の
+                                  // ringing を cancelled に落とす。
+                                  final TimerEntity? ringing = collection
+                                      .findRinging();
+                                  if (ringing != null) {
+                                    collection.cancel(ringing.id);
+                                  }
+                                }
+                                if (!context.mounted) return;
+                                // 重要: ringingNotifier.stop() で state.currentSource
+                                // が null にリセットされた **後** に _leaveAlarmScreen
+                                // が走るため、内部で ref.read しても source 判別不能。
+                                // build 時にクロージャ済みの activeSource を引数で
+                                // 渡して fallback 行き先を決める (2026-05-04 シナリオ
+                                // 4 再検証で発覚)。
+                                _leaveAlarmScreen(
+                                  context,
+                                  source: activeSource,
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  l.alarmStop,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                            OutlinedButton(
+                              key: const Key('alarm_snooze_button'),
+                              onPressed: () {
+                                if (activeSource == AlarmSource.alarm &&
+                                    activeSourceId != null) {
+                                  _onAlarmSnoozeTap(context, activeSourceId);
+                                } else {
+                                  _onSnoozeTap(context);
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  l.alarmSnooze,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    FilledButton(
-                      key: const Key('alarm_stop_button'),
-                      onPressed: () async {
-                        await ringingNotifier.stop();
-                        if (activeSource == AlarmSource.alarm &&
-                            activeSourceId != null) {
-                          // Phase 9.5: alarm 由来 → AlarmCollectionNotifier に
-                          // 委譲。once は enabled=false 化、weekly は次回曜日に
-                          // 自動進行する。
-                          // cold-start で AlarmCollectionNotifier の load が
-                          // まだ完了していない / すでに削除済みの場合に
-                          // AlarmNotFoundException が飛ぶことがあるが、
-                          // 鳴動停止は既に完了しているので no-op で抜ける。
-                          try {
-                            await ref
-                                .read(alarmCollectionNotifierProvider.notifier)
-                                .onFiredStop(activeSourceId);
-                          } on AlarmNotFoundException {
-                            // 何もしない: 通知音は止まっているのでユーザは
-                            // 画面を抜けられる。weekly の次回 schedule が
-                            // 載らない可能性があるが、次回起動時の load 後に
-                            // 反映される。
-                          }
-                        } else {
-                          // Phase 8 までの既存 path: TimerCollection の
-                          // ringing を cancelled に落とす。
-                          final TimerEntity? ringing = collection.findRinging();
-                          if (ringing != null) {
-                            collection.cancel(ringing.id);
-                          }
-                        }
-                        if (!context.mounted) return;
-                        // 重要: ringingNotifier.stop() で state.currentSource
-                        // が null にリセットされた **後** に _leaveAlarmScreen
-                        // が走るため、内部で ref.read しても source 判別不能。
-                        // build 時にクロージャ済みの activeSource を引数で
-                        // 渡して fallback 行き先を決める (2026-05-04 シナリオ
-                        // 4 再検証で発覚)。
-                        _leaveAlarmScreen(context, source: activeSource);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        child: Text(
-                          l.alarmStop,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                    OutlinedButton(
-                      key: const Key('alarm_snooze_button'),
-                      onPressed: () {
-                        if (activeSource == AlarmSource.alarm &&
-                            activeSourceId != null) {
-                          _onAlarmSnoozeTap(context, activeSourceId);
-                        } else {
-                          _onSnoozeTap(context);
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        child: Text(
-                          l.alarmSnooze,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                );
+              },
             ),
           ),
         ),
