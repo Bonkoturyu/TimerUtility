@@ -517,6 +517,71 @@ void main() {
     });
   });
 
+  group('TimerCollectionNotifier changeDuration', () {
+    test('inactive timer duration is updated and persisted', () async {
+      final repo = _InMemoryRepo();
+      final scheduler = _stubScheduler();
+      final container = _makeContainer(
+        clock: Clock.fixed(DateTime(2026, 5, 1)),
+        repo: repo,
+        scheduler: scheduler,
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(timerCollectionNotifierProvider.notifier);
+      final TimerEntity created = notifier.create(
+        label: '',
+        duration: const Duration(minutes: 1),
+      );
+
+      notifier.changeDuration(created.id, const Duration(minutes: 4));
+      await Future<void>.delayed(Duration.zero);
+
+      final TimerEntity changed = container
+          .read(timerCollectionNotifierProvider)
+          .findById(created.id)!;
+      expect(changed.duration, const Duration(minutes: 4));
+      expect(repo.store[created.id]?.duration, const Duration(minutes: 4));
+      verifyNever(
+        () => scheduler.schedule(
+          notificationId: any(named: 'notificationId'),
+          fireAt: any(named: 'fireAt'),
+          title: any(named: 'title'),
+          body: any(named: 'body'),
+          exact: any(named: 'exact'),
+          payload: any(named: 'payload'),
+        ),
+      );
+    });
+
+    test('running timer rejects duration changes without mutating state', () {
+      final repo = _InMemoryRepo();
+      final container = _makeContainer(
+        clock: Clock.fixed(DateTime(2026, 5, 1)),
+        repo: repo,
+        scheduler: _stubScheduler(),
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(timerCollectionNotifierProvider.notifier);
+      final TimerEntity created = notifier.create(
+        label: '',
+        duration: const Duration(minutes: 1),
+      );
+      notifier.start(created.id);
+
+      expect(
+        () => notifier.changeDuration(created.id, const Duration(minutes: 2)),
+        throwsStateError,
+      );
+      final TimerEntity running = container
+          .read(timerCollectionNotifierProvider)
+          .findById(created.id)!;
+      expect(running.status, TimerStatus.running);
+      expect(running.duration, const Duration(minutes: 1));
+
+      notifier.cancel(created.id);
+    });
+  });
+
   group('TimerCollectionNotifier start / pause / resume', () {
     test(
       'start transitions idle → running and schedules a notification',

@@ -153,6 +153,19 @@ Widget _harness(_InMemoryRepo repo, {Iterable<Preset>? presetSeed}) {
   );
 }
 
+TimerEntity _timerForStatus(TimerStatus status) => TimerEntity(
+  id: 't-1',
+  notificationId: 1,
+  label: 'Tea',
+  duration: const Duration(minutes: 1),
+  endAt: status == TimerStatus.running ? DateTime(2026, 5, 1, 12, 1) : null,
+  pausedRemaining: status == TimerStatus.paused
+      ? const Duration(seconds: 20)
+      : null,
+  status: status,
+  createdAt: DateTime(2026, 5, 1),
+);
+
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026));
@@ -265,6 +278,71 @@ void main() {
     );
     // Stop the ticker so the test ends cleanly.
     container.read(timerCollectionNotifierProvider.notifier).cancel('t-1');
+  });
+
+  for (final TimerStatus status in <TimerStatus>[
+    TimerStatus.idle,
+    TimerStatus.paused,
+    TimerStatus.completed,
+    TimerStatus.cancelled,
+  ]) {
+    testWidgets('duration edit is visible while timer is $status', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(_InMemoryRepo(<TimerEntity>[_timerForStatus(status)])),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('timer_card_t-1_edit_duration')),
+        findsOneWidget,
+      );
+    });
+  }
+
+  for (final TimerStatus status in <TimerStatus>[
+    TimerStatus.running,
+    TimerStatus.ringing,
+  ]) {
+    testWidgets('duration edit is hidden while timer is $status', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        _harness(_InMemoryRepo(<TimerEntity>[_timerForStatus(status)])),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('timer_card_t-1_edit_duration')),
+        findsNothing,
+      );
+    });
+  }
+
+  testWidgets('paused timer edit starts from remaining time and keeps paused', (
+    WidgetTester tester,
+  ) async {
+    final repo = _InMemoryRepo(<TimerEntity>[
+      _timerForStatus(TimerStatus.paused),
+    ]);
+    await tester.pumpWidget(_harness(repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('timer_card_t-1_edit_duration')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('duration_picker_confirm')));
+    await tester.pumpAndSettle();
+
+    final BuildContext context = tester.element(find.byType(TimerListScreen));
+    final container = ProviderScope.containerOf(context);
+    final TimerEntity changed = container
+        .read(timerCollectionNotifierProvider)
+        .findById('t-1')!;
+    expect(changed.status, TimerStatus.paused);
+    expect(changed.duration, const Duration(seconds: 20));
+    expect(changed.pausedRemaining, const Duration(seconds: 20));
+    expect(repo.store['t-1']?.duration, const Duration(seconds: 20));
   });
 
   testWidgets('Delete button removes the card', (tester) async {

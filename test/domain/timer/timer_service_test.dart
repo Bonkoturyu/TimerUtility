@@ -413,6 +413,96 @@ void main() {
     });
   });
 
+  group('TimerService.changeDuration', () {
+    test(
+      'idle / completed / cancelled preserve status and change duration',
+      () {
+        final now = _MutableNow(DateTime(2026, 1, 1, 12));
+        final svc = _service(now);
+        final idle = svc.createIdle(
+          label: '',
+          duration: const Duration(minutes: 1),
+        );
+
+        for (final TimerStatus status in <TimerStatus>[
+          TimerStatus.idle,
+          TimerStatus.completed,
+          TimerStatus.cancelled,
+        ]) {
+          final changed = svc.changeDuration(
+            idle.copyWith(status: status),
+            const Duration(minutes: 3),
+          );
+
+          expect(changed.status, status);
+          expect(changed.duration, const Duration(minutes: 3));
+          expect(changed.endAt, isNull);
+          expect(changed.pausedRemaining, isNull);
+        }
+      },
+    );
+
+    test('paused replaces configured and remaining duration', () {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final svc = _service(now);
+      final paused = svc
+          .start(
+            svc.createIdle(label: '', duration: const Duration(minutes: 5)),
+          )
+          .copyWith(
+            endAt: null,
+            pausedRemaining: const Duration(minutes: 2),
+            status: TimerStatus.paused,
+          );
+
+      final changed = svc.changeDuration(paused, const Duration(minutes: 8));
+
+      expect(changed.status, TimerStatus.paused);
+      expect(changed.duration, const Duration(minutes: 8));
+      expect(changed.pausedRemaining, const Duration(minutes: 8));
+    });
+
+    test('running and ringing reject duration changes', () {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final svc = _service(now);
+      final idle = svc.createIdle(
+        label: '',
+        duration: const Duration(minutes: 1),
+      );
+      final running = svc.start(idle);
+
+      expect(
+        () => svc.changeDuration(running, const Duration(minutes: 2)),
+        throwsStateError,
+      );
+      expect(
+        () => svc.changeDuration(
+          idle.copyWith(status: TimerStatus.ringing),
+          const Duration(minutes: 2),
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('rejects zero and durations over 99 hours', () {
+      final now = _MutableNow(DateTime(2026, 1, 1, 12));
+      final svc = _service(now);
+      final idle = svc.createIdle(
+        label: '',
+        duration: const Duration(minutes: 1),
+      );
+
+      expect(
+        () => svc.changeDuration(idle, Duration.zero),
+        throwsArgumentError,
+      );
+      expect(
+        () => svc.changeDuration(idle, const Duration(hours: 99, seconds: 1)),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('TimerService.remaining', () {
     test('running returns endAt - now', () {
       final now = _MutableNow(DateTime(2026, 1, 1, 12));

@@ -290,6 +290,13 @@ class _TimerCard extends ConsumerWidget {
       TimerStatus.cancelled => entity.duration,
       TimerStatus.ringing => Duration.zero,
     };
+    final bool canEditDuration = switch (entity.status) {
+      TimerStatus.idle ||
+      TimerStatus.paused ||
+      TimerStatus.completed ||
+      TimerStatus.cancelled => true,
+      TimerStatus.running || TimerStatus.ringing => false,
+    };
     const DurationFormatter formatter = DurationFormatter();
 
     return Card(
@@ -326,6 +333,13 @@ class _TimerCard extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (canEditDuration)
+                  IconButton(
+                    key: Key('timer_card_${entity.id}_edit_duration'),
+                    tooltip: l.durationPickerTitle,
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => _onChangeDuration(context, ref),
+                  ),
                 Chip(label: Text(_localizedStatus(l, entity.status))),
               ],
             ),
@@ -367,6 +381,21 @@ class _TimerCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onChangeDuration(BuildContext context, WidgetRef ref) async {
+    final Duration initial = entity.status == TimerStatus.paused
+        ? entity.pausedRemaining!
+        : entity.duration;
+    final Duration? picked = await showModalBottomSheet<Duration>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => DurationPicker(initial: initial),
+    );
+    if (picked == null || !context.mounted) return;
+    ref
+        .read(timerCollectionNotifierProvider.notifier)
+        .changeDuration(entity.id, picked);
   }
 
   Future<void> _onChangeSound(BuildContext context, WidgetRef ref) async {

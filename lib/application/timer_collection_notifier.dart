@@ -246,6 +246,20 @@ class TimerCollectionNotifier extends _$TimerCollectionNotifier
     _logAction(id, TimerActionKind.reset);
   }
 
+  /// Changes the configured duration only while the timer is inactive.
+  ///
+  /// [TimerService] owns the status restriction. No notification reschedule
+  /// is needed because running and ringing timers are rejected.
+  void changeDuration(String id, Duration duration) {
+    final TimerEntity current = _require(id);
+    final TimerEntity next = ref
+        .read(timerServiceProvider)
+        .changeDuration(current, duration);
+    state = state.update(next);
+    _persist(next);
+    _logAction(id, TimerActionKind.changeDuration);
+  }
+
   /// Re-arm a `ringing` timer for [snoozeMinutes] more minutes.
   void snooze(String id, int snoozeMinutes) {
     final TimerEntity current = _require(id);
