@@ -97,6 +97,9 @@
 | `alarmTimesUp` | 時間です！ | Time's up! | 大見出し |
 | `alarmStop` | 停止 | Stop | プライマリ |
 | `alarmVoiceStopListening` | 音声停止を待機中（「停止」と話してください） | Listening for “Stop” | 端末内音声認識の待機状態 |
+| `alarmVoiceStopModelDownloadRequired` | この言語の端末内音声モデルが必要です | An on-device speech model is required for this language | モデル未取得状態 |
+| `alarmVoiceStopModelDownloadPending` | 端末内音声モデルを準備しています | Preparing the on-device speech model | モデル取得待ち状態 |
+| `alarmVoiceStopLanguageUnsupported` | この言語は端末内音声認識に対応していません | This language is not supported for on-device speech recognition | 言語非対応状態 |
 | `alarmVoiceStopUnavailable` | 端末内の音声停止を利用できません | On-device voice stop is unavailable | 認識不可／権限エラー状態 |
 | `alarmSnooze` | スヌーズ | Snooze | セカンダリ |
 | `alarmSnoozePickerTitle` | スヌーズ時間を選択 | Choose snooze duration | bottom sheet タイトル |
@@ -353,6 +356,10 @@ AppBar 両方で再利用。
 | `settingsVoiceStopDescription` | 鳴動中だけ端末内で音声を認識します。音声は保存・送信されません。 | Recognize a voice command on-device only while an alarm is ringing. Audio is never saved or sent. | 無効時 subtitle |
 | `settingsVoiceStopEnabledDescription` | 「停止」と話すとタイマーまたはアラームを停止します。 | Say “Stop” to stop the ringing timer or alarm. | 有効時 subtitle |
 | `settingsVoiceStopChecking` | 端末内音声認識を確認しています… | Checking on-device speech recognition… | 利用可否確認中 |
+| `settingsVoiceStopModelDownloadRequired` | この言語の端末内音声モデルが必要です。有効にすると取得を開始します。 | An on-device speech model is required for this language. Enabling this feature starts the download. | モデル取得前 subtitle |
+| `settingsVoiceStopModelDownloadPending` | 端末内音声モデルを準備しています。完了後に利用できます。 | The on-device speech model is being prepared. Voice stop will be available when it finishes. | モデル取得待ち subtitle |
+| `settingsVoiceStopModelDownloadStarted` | 端末内音声モデルの取得を開始しました。完了後に利用できます。 | The on-device speech model download has started. Voice stop will be available when it finishes. | モデル取得開始 SnackBar |
+| `settingsVoiceStopLanguageUnsupported` | この言語は端末内音声認識に対応していません。 | This language is not supported for on-device speech recognition. | 言語非対応 subtitle |
 | `settingsVoiceStopUnavailable` | この端末では端末内音声認識を利用できません。 | On-device speech recognition is unavailable on this device. | 利用不可 subtitle |
 | `settingsVoiceStopPermissionDenied` | 音声停止にはマイク権限が必要です。 | Microphone permission is required for voice stop. | 権限拒否 SnackBar |
 | `settingsOpenAppSettings` | 設定を開く | Open settings | permanently denied 時の SnackBar action |

@@ -145,6 +145,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alarmVoiceStopListening => 'Listening for “Stop”';
 
   @override
+  String get alarmVoiceStopModelDownloadRequired =>
+      'An on-device speech model is required for this language';
+
+  @override
+  String get alarmVoiceStopModelDownloadPending =>
+      'Preparing the on-device speech model';
+
+  @override
+  String get alarmVoiceStopLanguageUnsupported =>
+      'This language is not supported for on-device speech recognition';
+
+  @override
   String get alarmVoiceStopUnavailable => 'On-device voice stop is unavailable';
 
   @override
@@ -611,6 +623,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsVoiceStopChecking =>
       'Checking on-device speech recognition…';
+
+  @override
+  String get settingsVoiceStopModelDownloadRequired =>
+      'An on-device speech model is required for this language. Enabling this feature starts the download.';
+
+  @override
+  String get settingsVoiceStopModelDownloadPending =>
+      'The on-device speech model is being prepared. Voice stop will be available when it finishes.';
+
+  @override
+  String get settingsVoiceStopModelDownloadStarted =>
+      'The on-device speech model download has started. Voice stop will be available when it finishes.';
+
+  @override
+  String get settingsVoiceStopLanguageUnsupported =>
+      'This language is not supported for on-device speech recognition.';
 
   @override
   String get settingsVoiceStopUnavailable =>

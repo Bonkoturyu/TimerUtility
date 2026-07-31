@@ -7,12 +7,13 @@ import 'package:timer_utility/application/on_device_voice_stop_controller.dart';
 import 'package:timer_utility/domain/ports/on_device_speech_recognizer.dart';
 
 class _FakeRecognizer implements OnDeviceSpeechRecognizer {
-  _FakeRecognizer({this.available = true});
+  _FakeRecognizer({this.support = OnDeviceSpeechSupportStatus.ready});
 
-  final bool available;
+  final OnDeviceSpeechSupportStatus support;
   final StreamController<OnDeviceSpeechEvent> controller =
       StreamController<OnDeviceSpeechEvent>.broadcast(sync: true);
   int startCalls = 0;
+  int downloadCalls = 0;
   int cancelCalls = 0;
   String? localeTag;
 
@@ -20,7 +21,23 @@ class _FakeRecognizer implements OnDeviceSpeechRecognizer {
   Stream<OnDeviceSpeechEvent> get events => controller.stream;
 
   @override
-  Future<bool> isAvailable() async => available;
+  Future<bool> isAvailable() async =>
+      support != OnDeviceSpeechSupportStatus.unavailable;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => support;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {
+    downloadCalls++;
+    return OnDeviceSpeechSupportStatus.downloadPending;
+  }
 
   @override
   Future<void> startListening({
@@ -55,7 +72,9 @@ ProviderContainer _container(_FakeRecognizer recognizer) {
 
 void main() {
   test('端末内認識がなければ unavailable で開始しない', () async {
-    final _FakeRecognizer recognizer = _FakeRecognizer(available: false);
+    final _FakeRecognizer recognizer = _FakeRecognizer(
+      support: OnDeviceSpeechSupportStatus.unavailable,
+    );
     final ProviderContainer container = _container(recognizer);
 
     await container
@@ -67,6 +86,52 @@ void main() {
       OnDeviceVoiceStopStatus.unavailable,
     );
     expect(recognizer.startCalls, 0);
+  });
+
+  test('言語だけのロケールをモデル用の具体的な locale に正規化する', () async {
+    final _FakeRecognizer recognizer = _FakeRecognizer();
+    final ProviderContainer container = _container(recognizer);
+
+    await container
+        .read(onDeviceVoiceStopControllerProvider.notifier)
+        .start(localeTag: 'ja');
+
+    expect(recognizer.localeTag, 'ja-JP');
+  });
+
+  test('モデル未取得ならダウンロードを要求して準備中を表示する', () async {
+    final _FakeRecognizer recognizer = _FakeRecognizer(
+      support: OnDeviceSpeechSupportStatus.downloadRequired,
+    );
+    final ProviderContainer container = _container(recognizer);
+
+    await container
+        .read(onDeviceVoiceStopControllerProvider.notifier)
+        .start(localeTag: 'ja');
+
+    expect(recognizer.downloadCalls, 1);
+    expect(recognizer.startCalls, 0);
+    expect(
+      container.read(onDeviceVoiceStopControllerProvider).status,
+      OnDeviceVoiceStopStatus.modelDownloadPending,
+    );
+  });
+
+  test('端末内認識が言語非対応なら認識を開始しない', () async {
+    final _FakeRecognizer recognizer = _FakeRecognizer(
+      support: OnDeviceSpeechSupportStatus.unsupported,
+    );
+    final ProviderContainer container = _container(recognizer);
+
+    await container
+        .read(onDeviceVoiceStopControllerProvider.notifier)
+        .start(localeTag: 'ja');
+
+    expect(recognizer.startCalls, 0);
+    expect(
+      container.read(onDeviceVoiceStopControllerProvider).status,
+      OnDeviceVoiceStopStatus.languageUnsupported,
+    );
   });
 
   test('許可済み端末では指定ロケールで短時間認識を開始する', () async {

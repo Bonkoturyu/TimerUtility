@@ -99,6 +99,11 @@ class _VoiceStopSettingsNotifier extends SettingsNotifier {
 }
 
 class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
+  _StubOnDeviceSpeechRecognizer({
+    this.support = OnDeviceSpeechSupportStatus.ready,
+  });
+
+  final OnDeviceSpeechSupportStatus support;
   final StreamController<OnDeviceSpeechEvent> controller =
       StreamController<OnDeviceSpeechEvent>.broadcast(sync: true);
   int startCalls = 0;
@@ -108,6 +113,18 @@ class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
 
   @override
   Future<bool> isAvailable() async => true;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => support;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => OnDeviceSpeechSupportStatus.downloadPending;
 
   @override
   Future<void> startListening({
@@ -574,6 +591,27 @@ void main() {
       expect(player.stopCalls, greaterThanOrEqualTo(1));
       expect(find.text('home-stub'), findsOneWidget);
       expect(find.byType(AlarmRingingScreen), findsNothing);
+    });
+
+    testWidgets('音声モデルの取得中は準備中メッセージと手動操作を表示する', (WidgetTester tester) async {
+      final player = _StubAlarmSoundPlayer();
+      final recognizer = _StubOnDeviceSpeechRecognizer(
+        support: OnDeviceSpeechSupportStatus.downloadRequired,
+      );
+      addTearDown(recognizer.dispose);
+      await tester.pumpWidget(
+        _harness(
+          player,
+          seedRinging: _seedRinging(label: 'Tea timer'),
+          voiceRecognizer: recognizer,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('端末内音声モデルを準備しています'), findsOneWidget);
+      expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
+      expect(recognizer.startCalls, 0);
     });
 
     testWidgets(

@@ -142,6 +142,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmVoiceStopListening => '正在等待语音停止指令（请说“停止”）';
 
   @override
+  String get alarmVoiceStopModelDownloadRequired => '此语言需要设备端语音模型';
+
+  @override
+  String get alarmVoiceStopModelDownloadPending => '正在准备设备端语音模型';
+
+  @override
+  String get alarmVoiceStopLanguageUnsupported => '设备端语音识别不支持此语言';
+
+  @override
   String get alarmVoiceStopUnavailable => '无法使用设备端语音停止';
 
   @override
@@ -587,6 +596,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsVoiceStopChecking => '正在检查设备端语音识别…';
 
   @override
+  String get settingsVoiceStopModelDownloadRequired =>
+      '此语言需要设备端语音模型。启用此功能后将开始下载。';
+
+  @override
+  String get settingsVoiceStopModelDownloadPending => '正在准备设备端语音模型。完成后即可使用。';
+
+  @override
+  String get settingsVoiceStopModelDownloadStarted => '已开始下载设备端语音模型。完成后即可使用。';
+
+  @override
+  String get settingsVoiceStopLanguageUnsupported => '设备端语音识别不支持此语言。';
+
+  @override
   String get settingsVoiceStopUnavailable => '此设备无法使用设备端语音识别。';
 
   @override
@@ -848,6 +870,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get alarmVoiceStopListening => '正在等待語音停止指令（請說「停止」）';
+
+  @override
+  String get alarmVoiceStopModelDownloadRequired => '此語言需要裝置端語音模型';
+
+  @override
+  String get alarmVoiceStopModelDownloadPending => '正在準備裝置端語音模型';
+
+  @override
+  String get alarmVoiceStopLanguageUnsupported => '裝置端語音辨識不支援此語言';
 
   @override
   String get alarmVoiceStopUnavailable => '無法使用裝置端語音停止';
@@ -1294,6 +1325,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsVoiceStopChecking => '正在檢查裝置端語音辨識…';
+
+  @override
+  String get settingsVoiceStopModelDownloadRequired =>
+      '此語言需要裝置端語音模型。啟用此功能後將開始下載。';
+
+  @override
+  String get settingsVoiceStopModelDownloadPending => '正在準備裝置端語音模型。完成後即可使用。';
+
+  @override
+  String get settingsVoiceStopModelDownloadStarted => '已開始下載裝置端語音模型。完成後即可使用。';
+
+  @override
+  String get settingsVoiceStopLanguageUnsupported => '裝置端語音辨識不支援此語言。';
 
   @override
   String get settingsVoiceStopUnavailable => '此裝置無法使用裝置端語音辨識。';

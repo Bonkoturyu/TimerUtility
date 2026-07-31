@@ -9,7 +9,10 @@ import '../../application/microphone_permission_provider.dart';
 import '../../application/on_device_speech_recognizer_provider.dart';
 import '../../application/settings_notifier.dart';
 import '../../domain/ports/app_version_reader.dart';
+import '../../domain/ports/on_device_speech_recognizer.dart';
 import '../../domain/ports/permission_manager.dart';
+import '../../domain/voice/on_device_speech_locale.dart';
+import '../../domain/voice/voice_stop_command_matcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/alarm_sound_name.dart';
 import '../widgets/sound_select_sheet.dart';
@@ -214,17 +217,47 @@ class _OnDeviceVoiceStopTile extends ConsumerWidget {
         (SettingsState state) => state.onDeviceVoiceStopEnabled,
       ),
     );
-    final AsyncValue<bool> availability = ref.watch(
-      onDeviceSpeechRecognitionAvailableProvider,
+    final String localeTag = resolveOnDeviceSpeechLocaleTag(
+      Localizations.localeOf(context).toLanguageTag(),
     );
-    final bool supported = availability.asData?.value ?? false;
+    final AsyncValue<OnDeviceSpeechSupportStatus> availability = ref.watch(
+      onDeviceSpeechRecognitionSupportProvider(localeTag),
+    );
+    final OnDeviceSpeechSupportStatus? support = availability.asData?.value;
+    final bool supported =
+        support == OnDeviceSpeechSupportStatus.ready ||
+        support == OnDeviceSpeechSupportStatus.downloadRequired ||
+        support == OnDeviceSpeechSupportStatus.downloadPending;
     final String subtitle = switch (availability) {
-      AsyncLoading<bool>() => l.settingsVoiceStopChecking,
-      AsyncError<bool>() => l.settingsVoiceStopUnavailable,
-      AsyncData<bool>(value: false) => l.settingsVoiceStopUnavailable,
-      AsyncData<bool>(value: true) when enabled =>
+      AsyncLoading<OnDeviceSpeechSupportStatus>() =>
+        l.settingsVoiceStopChecking,
+      AsyncError<OnDeviceSpeechSupportStatus>() =>
+        l.settingsVoiceStopUnavailable,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.downloadRequired,
+      ) =>
+        l.settingsVoiceStopModelDownloadRequired,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.downloadPending,
+      ) =>
+        l.settingsVoiceStopModelDownloadPending,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.unsupported,
+      ) =>
+        l.settingsVoiceStopLanguageUnsupported,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.unavailable,
+      ) =>
+        l.settingsVoiceStopUnavailable,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.ready,
+      )
+          when enabled =>
         l.settingsVoiceStopEnabledDescription,
-      AsyncData<bool>(value: true) => l.settingsVoiceStopDescription,
+      AsyncData<OnDeviceSpeechSupportStatus>(
+        value: OnDeviceSpeechSupportStatus.ready,
+      ) =>
+        l.settingsVoiceStopDescription,
       _ => l.settingsVoiceStopUnavailable,
     };
 
@@ -237,7 +270,7 @@ class _OnDeviceVoiceStopTile extends ConsumerWidget {
       // 端末内認識が後から利用不可になっても、保存済みの ON 設定は
       // ユーザーが必ず解除できるようにする。
       onChanged: enabled || supported
-          ? (bool next) => _setEnabled(context, ref, next)
+          ? (bool next) => _setEnabled(context, ref, next, localeTag)
           : null,
     );
   }
@@ -246,6 +279,7 @@ class _OnDeviceVoiceStopTile extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     bool enabled,
+    String localeTag,
   ) async {
     final SettingsNotifier settings = ref.read(
       settingsNotifierProvider.notifier,
@@ -262,13 +296,47 @@ class _OnDeviceVoiceStopTile extends ConsumerWidget {
       status = await manager.request();
     }
     if (!context.mounted) return;
+    final AppLocalizations l = AppLocalizations.of(context);
     if (status == DomainPermissionStatus.granted ||
         status == DomainPermissionStatus.notRequired) {
-      await settings.setOnDeviceVoiceStopEnabled(true);
+      final OnDeviceSpeechRecognizer recognizer = ref.read(
+        onDeviceSpeechRecognizerProvider,
+      );
+      OnDeviceSpeechSupportStatus support = await recognizer.checkSupport(
+        localeTag: localeTag,
+        biasingPhrases: VoiceStopCommandMatcher.biasingPhrases,
+      );
+      if (support == OnDeviceSpeechSupportStatus.downloadRequired) {
+        support = await recognizer.requestModelDownload(
+          localeTag: localeTag,
+          biasingPhrases: VoiceStopCommandMatcher.biasingPhrases,
+        );
+      }
+      if (!context.mounted) return;
+      if (support == OnDeviceSpeechSupportStatus.ready ||
+          support == OnDeviceSpeechSupportStatus.downloadPending) {
+        await settings.setOnDeviceVoiceStopEnabled(true);
+        if (!context.mounted) return;
+        ref.invalidate(onDeviceSpeechRecognitionSupportProvider(localeTag));
+        if (support == OnDeviceSpeechSupportStatus.downloadPending) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.settingsVoiceStopModelDownloadStarted)),
+          );
+        }
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            support == OnDeviceSpeechSupportStatus.unsupported
+                ? l.settingsVoiceStopLanguageUnsupported
+                : l.settingsVoiceStopUnavailable,
+          ),
+        ),
+      );
       return;
     }
 
-    final AppLocalizations l = AppLocalizations.of(context);
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
       SnackBar(

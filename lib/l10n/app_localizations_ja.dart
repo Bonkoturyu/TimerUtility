@@ -137,6 +137,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmVoiceStopListening => '音声停止を待機中（「停止」と話してください）';
 
   @override
+  String get alarmVoiceStopModelDownloadRequired => 'この言語の端末内音声モデルが必要です';
+
+  @override
+  String get alarmVoiceStopModelDownloadPending => '端末内音声モデルを準備しています';
+
+  @override
+  String get alarmVoiceStopLanguageUnsupported => 'この言語は端末内音声認識に対応していません';
+
+  @override
   String get alarmVoiceStopUnavailable => '端末内の音声停止を利用できません';
 
   @override
@@ -556,6 +565,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsVoiceStopChecking => '端末内音声認識を確認しています…';
+
+  @override
+  String get settingsVoiceStopModelDownloadRequired =>
+      'この言語の端末内音声モデルが必要です。有効にすると取得を開始します。';
+
+  @override
+  String get settingsVoiceStopModelDownloadPending =>
+      '端末内音声モデルを準備しています。完了後に利用できます。';
+
+  @override
+  String get settingsVoiceStopModelDownloadStarted =>
+      '端末内音声モデルの取得を開始しました。完了後に利用できます。';
+
+  @override
+  String get settingsVoiceStopLanguageUnsupported => 'この言語は端末内音声認識に対応していません。';
 
   @override
   String get settingsVoiceStopUnavailable => 'この端末では端末内音声認識を利用できません。';

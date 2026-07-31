@@ -28,6 +28,7 @@ enum OnDeviceSpeechErrorKind {
   recognizerBusy,
   microphonePermissionDenied,
   languageUnavailable,
+  languageUnsupported,
   unavailable,
   other,
 }
@@ -38,12 +39,36 @@ final class OnDeviceSpeechError extends OnDeviceSpeechEvent {
   final OnDeviceSpeechErrorKind kind;
 }
 
+enum OnDeviceSpeechSupportStatus {
+  ready,
+  downloadRequired,
+  downloadPending,
+  unsupported,
+  unavailable,
+}
+
 /// Pure Dart boundary for Android's API 31+ on-device SpeechRecognizer.
 abstract interface class OnDeviceSpeechRecognizer {
   Stream<OnDeviceSpeechEvent> get events;
 
   /// Returns true only when Android exposes a dedicated on-device engine.
   Future<bool> isAvailable();
+
+  /// Checks whether the requested language model can be used immediately.
+  ///
+  /// API 31-32 implementations may report [OnDeviceSpeechSupportStatus.ready]
+  /// when an on-device engine exists because Android cannot preflight model
+  /// availability before API 33.
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  });
+
+  /// Requests Android to download the requested on-device language model.
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  });
 
   /// Starts one short recognition session.
   ///

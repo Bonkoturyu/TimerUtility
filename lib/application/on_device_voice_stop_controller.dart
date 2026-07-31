@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/ports/on_device_speech_recognizer.dart';
+import '../domain/voice/on_device_speech_locale.dart';
 import '../domain/voice/voice_stop_command_matcher.dart';
 import 'on_device_speech_recognizer_provider.dart';
 
@@ -13,6 +14,9 @@ enum OnDeviceVoiceStopStatus {
   starting,
   listening,
   commandDetected,
+  modelDownloadRequired,
+  modelDownloadPending,
+  languageUnsupported,
   unavailable,
   microphonePermissionDenied,
   error,
@@ -52,7 +56,7 @@ class OnDeviceVoiceStopController extends _$OnDeviceVoiceStopController {
   Timer? _retryTimer;
   bool _active = false;
   int _generation = 0;
-  String _localeTag = 'ja';
+  String _localeTag = 'ja-JP';
 
   @override
   OnDeviceVoiceStopState build() {
@@ -71,16 +75,33 @@ class OnDeviceVoiceStopController extends _$OnDeviceVoiceStopController {
     if (_active) return;
     _active = true;
     final int generation = ++_generation;
-    _localeTag = localeTag;
+    _localeTag = resolveOnDeviceSpeechLocaleTag(localeTag);
     state = state.copyWith(status: OnDeviceVoiceStopStatus.starting);
 
-    if (!await _recognizer.isAvailable()) {
-      if (!_isCurrent(generation)) return;
-      _active = false;
-      state = state.copyWith(status: OnDeviceVoiceStopStatus.unavailable);
-      return;
+    final OnDeviceSpeechSupportStatus support = await _recognizer.checkSupport(
+      localeTag: _localeTag,
+      biasingPhrases: VoiceStopCommandMatcher.biasingPhrases,
+    );
+    if (!_isCurrent(generation)) return;
+    switch (support) {
+      case OnDeviceSpeechSupportStatus.ready:
+        await _beginSession(generation);
+      case OnDeviceSpeechSupportStatus.downloadRequired:
+        await _requestModelDownload(generation);
+      case OnDeviceSpeechSupportStatus.downloadPending:
+        _active = false;
+        state = state.copyWith(
+          status: OnDeviceVoiceStopStatus.modelDownloadPending,
+        );
+      case OnDeviceSpeechSupportStatus.unsupported:
+        _active = false;
+        state = state.copyWith(
+          status: OnDeviceVoiceStopStatus.languageUnsupported,
+        );
+      case OnDeviceSpeechSupportStatus.unavailable:
+        _active = false;
+        state = state.copyWith(status: OnDeviceVoiceStopStatus.unavailable);
     }
-    await _beginSession(generation);
   }
 
   Future<void> stop() async {
@@ -104,6 +125,37 @@ class OnDeviceVoiceStopController extends _$OnDeviceVoiceStopController {
       if (!_isCurrent(generation)) return;
       _active = false;
       state = state.copyWith(status: OnDeviceVoiceStopStatus.error);
+    }
+  }
+
+  Future<void> _requestModelDownload(int generation) async {
+    final OnDeviceSpeechSupportStatus status = await _recognizer
+        .requestModelDownload(
+          localeTag: _localeTag,
+          biasingPhrases: VoiceStopCommandMatcher.biasingPhrases,
+        );
+    if (!_isCurrent(generation)) return;
+    switch (status) {
+      case OnDeviceSpeechSupportStatus.ready:
+        await _beginSession(generation);
+      case OnDeviceSpeechSupportStatus.downloadRequired:
+        _active = false;
+        state = state.copyWith(
+          status: OnDeviceVoiceStopStatus.modelDownloadRequired,
+        );
+      case OnDeviceSpeechSupportStatus.downloadPending:
+        _active = false;
+        state = state.copyWith(
+          status: OnDeviceVoiceStopStatus.modelDownloadPending,
+        );
+      case OnDeviceSpeechSupportStatus.unsupported:
+        _active = false;
+        state = state.copyWith(
+          status: OnDeviceVoiceStopStatus.languageUnsupported,
+        );
+      case OnDeviceSpeechSupportStatus.unavailable:
+        _active = false;
+        state = state.copyWith(status: OnDeviceVoiceStopStatus.unavailable);
     }
   }
 
@@ -140,6 +192,15 @@ class OnDeviceVoiceStopController extends _$OnDeviceVoiceStopController {
             status: OnDeviceVoiceStopStatus.microphonePermissionDenied,
           );
         case OnDeviceSpeechErrorKind.languageUnavailable:
+          _active = false;
+          state = state.copyWith(
+            status: OnDeviceVoiceStopStatus.modelDownloadRequired,
+          );
+        case OnDeviceSpeechErrorKind.languageUnsupported:
+          _active = false;
+          state = state.copyWith(
+            status: OnDeviceVoiceStopStatus.languageUnsupported,
+          );
         case OnDeviceSpeechErrorKind.unavailable:
           _active = false;
           state = state.copyWith(status: OnDeviceVoiceStopStatus.unavailable);

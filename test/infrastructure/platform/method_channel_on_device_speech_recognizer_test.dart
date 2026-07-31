@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timer_utility/domain/ports/on_device_speech_recognizer.dart';
 import 'package:timer_utility/infrastructure/platform/method_channel_on_device_speech_recognizer.dart';
 
 void main() {
@@ -17,9 +18,45 @@ void main() {
           calls.add(call);
           return switch (call.method) {
             'isAvailable' => true,
+            'checkSupport' => 'ready',
+            'requestModelDownload' => 'download_pending',
             _ => null,
           };
         });
+  });
+
+  test('checkSupport は locale と bias phrase を渡して状態を復元する', () async {
+    final MethodChannelOnDeviceSpeechRecognizer recognizer =
+        MethodChannelOnDeviceSpeechRecognizer(channel: channel);
+
+    final status = await recognizer.checkSupport(
+      localeTag: 'ja-JP',
+      biasingPhrases: const <String>['停止'],
+    );
+
+    expect(status, OnDeviceSpeechSupportStatus.ready);
+    expect(calls.single.method, 'checkSupport');
+    expect(calls.single.arguments, <String, Object>{
+      'localeTag': 'ja-JP',
+      'biasingPhrases': <String>['停止'],
+    });
+
+    await recognizer.dispose();
+  });
+
+  test('requestModelDownload は準備中状態を復元する', () async {
+    final MethodChannelOnDeviceSpeechRecognizer recognizer =
+        MethodChannelOnDeviceSpeechRecognizer(channel: channel);
+
+    final status = await recognizer.requestModelDownload(
+      localeTag: 'ja-JP',
+      biasingPhrases: const <String>['停止'],
+    );
+
+    expect(status, OnDeviceSpeechSupportStatus.downloadPending);
+    expect(calls.single.method, 'requestModelDownload');
+
+    await recognizer.dispose();
   });
 
   tearDown(() {

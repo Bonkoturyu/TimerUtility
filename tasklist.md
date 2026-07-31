@@ -28,6 +28,11 @@
 - [x] 音声・認識候補を保存・送信・診断ログ記録しないことを Privacy Policy /
   Data Safety / 権限仕様へ反映する
 - [x] Unit / Widget / MethodChannel test、静的解析、全テスト、Android build を通す
+- [x] UI locale を端末音声モデル用 BCP 47 tag（例: `ja-JP`）へ正規化し、
+  API 33+ では認識開始前にモデルの利用可否を確認する
+- [x] 未取得モデルのダウンロード要求と、準備中 / 言語非対応を区別した UI を追加する
+- [x] locale 正規化、モデル状態、MethodChannel、設定 / 鳴動画面の回帰テストを追加し、
+  静的解析・全テスト・Android build を通す
 - [ ] Pixel 実機で日本語停止、無関係語、手動 Stop / Snooze、権限拒否、
   ロック画面起動を確認する（ユーザー実施）
 

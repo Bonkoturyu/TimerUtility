@@ -95,9 +95,18 @@ class _StubAppVersionReader implements AppVersionReader {
 }
 
 class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
-  const _StubOnDeviceSpeechRecognizer({required this.available});
+  _StubOnDeviceSpeechRecognizer({
+    required this.available,
+    OnDeviceSpeechSupportStatus? support,
+  }) : support =
+           support ??
+           (available
+               ? OnDeviceSpeechSupportStatus.ready
+               : OnDeviceSpeechSupportStatus.unavailable);
 
   final bool available;
+  final OnDeviceSpeechSupportStatus support;
+  int downloadCalls = 0;
 
   @override
   Stream<OnDeviceSpeechEvent> get events =>
@@ -105,6 +114,21 @@ class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
 
   @override
   Future<bool> isAvailable() async => available;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => support;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {
+    downloadCalls++;
+    return OnDeviceSpeechSupportStatus.downloadPending;
+  }
 
   @override
   Future<void> startListening({
@@ -148,6 +172,7 @@ Widget _harness({
   List<ImportedSound> importedSounds = const <ImportedSound>[],
   String? settingsSoundId,
   bool voiceRecognitionAvailable = false,
+  OnDeviceSpeechRecognizer? voiceRecognizer,
   MicrophonePermissionManager? microphonePermissionManager,
 }) {
   final router = GoRouter(
@@ -178,7 +203,8 @@ Widget _harness({
         () => _ImportedSoundController(importedSounds),
       ),
       onDeviceSpeechRecognizerProvider.overrideWithValue(
-        _StubOnDeviceSpeechRecognizer(available: voiceRecognitionAvailable),
+        voiceRecognizer ??
+            _StubOnDeviceSpeechRecognizer(available: voiceRecognitionAvailable),
       ),
       microphonePermissionManagerProvider.overrideWithValue(
         microphonePermissionManager ??
@@ -253,6 +279,45 @@ void main() {
         isTrue,
       );
       expect(microphone.requestCalls, 0);
+    });
+
+    testWidgets('モデル未取得なら有効化時にダウンロードを要求する', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final recognizer = _StubOnDeviceSpeechRecognizer(
+        available: true,
+        support: OnDeviceSpeechSupportStatus.downloadRequired,
+      );
+      await tester.pumpWidget(
+        _harness(
+          voiceRecognizer: recognizer,
+          microphonePermissionManager: _StubMicrophonePermissionManager(
+            DomainPermissionStatus.granted,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder tile = find.byKey(const Key('settings_voice_stop_tile'));
+      await tester.scrollUntilVisible(
+        tile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(tile),
+      );
+      await tester.tap(
+        find.descendant(of: tile, matching: find.byType(Switch)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(recognizer.downloadCalls, 1);
+      expect(
+        container.read(settingsNotifierProvider).onDeviceVoiceStopEnabled,
+        isTrue,
+      );
+      expect(find.textContaining('音声モデルの取得を開始しました'), findsOneWidget);
     });
 
     testWidgets('マイク許可が拒否された場合は音声停止を有効化しない', (WidgetTester tester) async {

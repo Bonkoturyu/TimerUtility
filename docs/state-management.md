@@ -66,6 +66,7 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `microphonePermissionManagerProvider` | function | `MicrophonePermissionManager` | keepAlive | 任意の音声停止機能に限定したマイク権限管理 |
 | `onDeviceSpeechRecognizerProvider` | function | `OnDeviceSpeechRecognizer` | keepAlive | API 31+ 端末内音声認識 MethodChannel adapter |
 | `onDeviceSpeechRecognitionAvailableProvider` | FutureProvider | `bool` | autoDispose | 設定画面向け端末内認識利用可否 |
+| `onDeviceSpeechRecognitionSupportProvider(localeTag)` | FutureProvider.family | `OnDeviceSpeechSupportStatus` | autoDispose | API 33+ の言語モデル状態（利用可 / 取得要 / 準備中 / 非対応） |
 | `loggerProvider` | function | `Logger` | keepAlive | ロガー |
 | `notificationIdGeneratorProvider` | function | `NotificationIdGenerator` | keepAlive | OS 通知 ID 生成 |
 | `userPreferencesProvider` | function | `UserPreferences` | keepAlive | `shared_preferences` の薄ラッパ。`getBool` / `setBool` / `getInt` / `setInt` / `remove` を提供 (Phase 11 で `getInt` / `setInt` を追加し `lastHomePageIndex` を扱えるよう拡張) |

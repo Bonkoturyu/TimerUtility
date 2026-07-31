@@ -544,6 +544,17 @@ class _VoiceStopStatus extends StatelessWidget {
     final bool listening =
         state.status == OnDeviceVoiceStopStatus.starting ||
         state.status == OnDeviceVoiceStopStatus.listening;
+    final String message = switch (state.status) {
+      OnDeviceVoiceStopStatus.starting || OnDeviceVoiceStopStatus.listening =>
+        localizations.alarmVoiceStopListening,
+      OnDeviceVoiceStopStatus.modelDownloadRequired =>
+        localizations.alarmVoiceStopModelDownloadRequired,
+      OnDeviceVoiceStopStatus.modelDownloadPending =>
+        localizations.alarmVoiceStopModelDownloadPending,
+      OnDeviceVoiceStopStatus.languageUnsupported =>
+        localizations.alarmVoiceStopLanguageUnsupported,
+      _ => localizations.alarmVoiceStopUnavailable,
+    };
     return Semantics(
       liveRegion: true,
       child: Row(
@@ -552,14 +563,7 @@ class _VoiceStopStatus extends StatelessWidget {
         children: <Widget>[
           Icon(listening ? Icons.mic : Icons.mic_off_outlined),
           const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              listening
-                  ? localizations.alarmVoiceStopListening
-                  : localizations.alarmVoiceStopUnavailable,
-              textAlign: TextAlign.center,
-            ),
-          ),
+          Flexible(child: Text(message, textAlign: TextAlign.center)),
         ],
       ),
     );

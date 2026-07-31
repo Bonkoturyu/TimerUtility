@@ -343,6 +343,24 @@ abstract class AppLocalizations {
   /// **'音声停止を待機中（「停止」と話してください）'**
   String get alarmVoiceStopListening;
 
+  /// No description provided for @alarmVoiceStopModelDownloadRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語の端末内音声モデルが必要です'**
+  String get alarmVoiceStopModelDownloadRequired;
+
+  /// No description provided for @alarmVoiceStopModelDownloadPending.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルを準備しています'**
+  String get alarmVoiceStopModelDownloadPending;
+
+  /// No description provided for @alarmVoiceStopLanguageUnsupported.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語は端末内音声認識に対応していません'**
+  String get alarmVoiceStopLanguageUnsupported;
+
   /// No description provided for @alarmVoiceStopUnavailable.
   ///
   /// In ja, this message translates to:
@@ -1122,6 +1140,30 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'端末内音声認識を確認しています…'**
   String get settingsVoiceStopChecking;
+
+  /// No description provided for @settingsVoiceStopModelDownloadRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語の端末内音声モデルが必要です。有効にすると取得を開始します。'**
+  String get settingsVoiceStopModelDownloadRequired;
+
+  /// No description provided for @settingsVoiceStopModelDownloadPending.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルを準備しています。完了後に利用できます。'**
+  String get settingsVoiceStopModelDownloadPending;
+
+  /// No description provided for @settingsVoiceStopModelDownloadStarted.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルの取得を開始しました。完了後に利用できます。'**
+  String get settingsVoiceStopModelDownloadStarted;
+
+  /// No description provided for @settingsVoiceStopLanguageUnsupported.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語は端末内音声認識に対応していません。'**
+  String get settingsVoiceStopLanguageUnsupported;
 
   /// No description provided for @settingsVoiceStopUnavailable.
   ///

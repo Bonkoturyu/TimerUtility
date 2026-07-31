@@ -33,15 +33,47 @@ class MethodChannelOnDeviceSpeechRecognizer
   }
 
   @override
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {
+    try {
+      final String? status = await _channel.invokeMethod<String>(
+        'checkSupport',
+        _speechArguments(localeTag, biasingPhrases),
+      );
+      return _mapSupportStatus(status);
+    } catch (_) {
+      return OnDeviceSpeechSupportStatus.unavailable;
+    }
+  }
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {
+    try {
+      final String? status = await _channel.invokeMethod<String>(
+        'requestModelDownload',
+        _speechArguments(localeTag, biasingPhrases),
+      );
+      return _mapSupportStatus(status);
+    } catch (_) {
+      return OnDeviceSpeechSupportStatus.unavailable;
+    }
+  }
+
+  @override
   Future<void> startListening({
     required String localeTag,
     required List<String> biasingPhrases,
   }) async {
     try {
-      await _channel.invokeMethod<void>('startListening', <String, Object>{
-        'localeTag': localeTag,
-        'biasingPhrases': biasingPhrases,
-      });
+      await _channel.invokeMethod<void>(
+        'startListening',
+        _speechArguments(localeTag, biasingPhrases),
+      );
     } on PlatformException catch (error) {
       final OnDeviceSpeechErrorKind kind = switch (error.code) {
         'MICROPHONE_PERMISSION_DENIED' =>
@@ -61,6 +93,23 @@ class MethodChannelOnDeviceSpeechRecognizer
       }
     }
   }
+
+  Map<String, Object> _speechArguments(
+    String localeTag,
+    List<String> biasingPhrases,
+  ) => <String, Object>{
+    'localeTag': localeTag,
+    'biasingPhrases': biasingPhrases,
+  };
+
+  OnDeviceSpeechSupportStatus _mapSupportStatus(String? status) =>
+      switch (status) {
+        'ready' => OnDeviceSpeechSupportStatus.ready,
+        'download_required' => OnDeviceSpeechSupportStatus.downloadRequired,
+        'download_pending' => OnDeviceSpeechSupportStatus.downloadPending,
+        'unsupported' => OnDeviceSpeechSupportStatus.unsupported,
+        _ => OnDeviceSpeechSupportStatus.unavailable,
+      };
 
   @override
   Future<void> cancelListening() async {
@@ -112,6 +161,7 @@ class MethodChannelOnDeviceSpeechRecognizer
     'microphone_permission_denied' =>
       OnDeviceSpeechErrorKind.microphonePermissionDenied,
     'language_unavailable' => OnDeviceSpeechErrorKind.languageUnavailable,
+    'language_unsupported' => OnDeviceSpeechErrorKind.languageUnsupported,
     'unavailable' => OnDeviceSpeechErrorKind.unavailable,
     _ => OnDeviceSpeechErrorKind.other,
   };
