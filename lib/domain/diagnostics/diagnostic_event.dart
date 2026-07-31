@@ -40,6 +40,7 @@ enum TimerActionKind {
   snooze,
   delete,
   changeSound,
+  changeDuration,
   // Stopwatch only
   lap,
   // Alarm

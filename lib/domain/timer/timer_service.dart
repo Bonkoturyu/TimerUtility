@@ -47,12 +47,7 @@ class TimerService {
     String? soundId,
     bool intervalNotificationEnabled = false,
   }) {
-    if (duration <= Duration.zero) {
-      throw ArgumentError.value(duration, 'duration', 'must be > 0');
-    }
-    if (duration > maxDuration) {
-      throw ArgumentError.value(duration, 'duration', 'must be <= 99 hours');
-    }
+    _validateDuration(duration);
     if (label.length > maxLabelLength) {
       throw ArgumentError.value(
         label,
@@ -73,6 +68,36 @@ class TimerService {
       intervalNotificationEnabled: intervalNotificationEnabled,
       soundId: soundId,
     );
+  }
+
+  /// Changes the configured duration while the timer is not active.
+  ///
+  /// A paused timer keeps its paused state but replaces both the configured
+  /// duration and remaining duration, so the next resume starts from the new
+  /// value. Running and ringing timers cannot be edited.
+  TimerEntity changeDuration(TimerEntity entity, Duration duration) {
+    _validateDuration(duration);
+    return switch (entity.status) {
+      TimerStatus.idle ||
+      TimerStatus.completed ||
+      TimerStatus.cancelled => entity.copyWith(duration: duration),
+      TimerStatus.paused => entity.copyWith(
+        duration: duration,
+        pausedRemaining: duration,
+      ),
+      TimerStatus.running || TimerStatus.ringing => throw StateError(
+        'Cannot change duration from ${entity.status}',
+      ),
+    };
+  }
+
+  void _validateDuration(Duration duration) {
+    if (duration <= Duration.zero) {
+      throw ArgumentError.value(duration, 'duration', 'must be > 0');
+    }
+    if (duration > maxDuration) {
+      throw ArgumentError.value(duration, 'duration', 'must be <= 99 hours');
+    }
   }
 
   /// Begin or restart counting down.

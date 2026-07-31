@@ -19,6 +19,17 @@
 
 ## 進行中
 
+### 非稼働タイマーの設定時間変更（2026-07-31）
+
+- [x] `idle` / `paused` / `completed` / `cancelled` だけ設定時間を変更できる
+  Domain API を追加し、`running` / `ringing` は拒否する
+- [x] `paused` の変更時は `duration` と `pausedRemaining` を同じ選択値へ更新し、
+  一時停止状態を維持する
+- [x] タイマーカードの数値横に、編集可能状態だけ時間編集ボタンを表示する
+- [x] Domain / Notifier / Widget Test、翻訳整合性、静的解析、全テストを通す
+- [ ] Pixel 実機で待機中 / 一時停止中 / リセット前の編集と、実行中 / 鳴動中の
+  編集不可を確認する（ユーザー実施）
+
 ### 端末内音声認識による鳴動停止（2026-07-30）
 
 - [x] API 31+ の `createOnDeviceSpeechRecognizer()` のみを使用し、
