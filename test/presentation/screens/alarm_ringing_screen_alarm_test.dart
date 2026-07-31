@@ -13,6 +13,7 @@ import 'package:timer_utility/application/keyguard_override_controller_provider.
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/permission_notifier.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
+import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/alarm/alarm_entity.dart';
 import 'package:timer_utility/domain/alarm/alarm_repeat.dart';
@@ -147,6 +148,11 @@ class _GrantedPermissionNotifier extends PermissionNotifier {
   );
 }
 
+class _VoiceStopDisabledSettingsNotifier extends SettingsNotifier {
+  @override
+  SettingsState build() => SettingsState.defaults();
+}
+
 NotificationScheduler _stubScheduler() {
   final s = _MockNotificationScheduler();
   when(
@@ -236,6 +242,9 @@ Widget _harness(
       timerRepositoryProvider.overrideWithValue(_InMemoryTimerRepo()),
       permissionNotifierProvider.overrideWith(
         () => _GrantedPermissionNotifier(),
+      ),
+      settingsNotifierProvider.overrideWith(
+        _VoiceStopDisabledSettingsNotifier.new,
       ),
     ],
     child: MaterialApp.router(

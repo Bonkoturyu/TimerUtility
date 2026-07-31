@@ -87,6 +87,10 @@ class UserPreferenceKeys {
   /// Unsupported / malformed tags also fall back to null on restore.
   static const String localeTag = 'localeTag';
 
+  /// Optional hands-free stop command. The recognizer is on-device only;
+  /// absent / false keeps microphone access completely disabled.
+  static const String onDeviceVoiceStopEnabled = 'onDeviceVoiceStopEnabled';
+
   /// Diagnostic logging master switch (Phase D-1, F-10 follow-up). Debug
   /// builds default to `true` and Release builds default to `false`
   /// (resolved in `main.dart`); an explicit user toggle persists here

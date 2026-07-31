@@ -63,6 +63,10 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `locationDetectorProvider` | function | `LocationDetector` | keepAlive | GPS → IANA TZ ID 解決（Phase 10.5 で実装済み、失敗時 FlutterTimezone fallback） |
 | `timezoneResolverProvider` | function | `TimezoneResolver` | keepAlive | IANA TZ → wall clock 変換（Phase 10.5 で実装済み、`TzDatabaseTimezoneResolver`、TZ DB は 1 度だけ load） |
 | `permissionManagerProvider` | function | `PermissionManager` | keepAlive | 権限管理 |
+| `microphonePermissionManagerProvider` | function | `MicrophonePermissionManager` | keepAlive | 任意の音声停止機能に限定したマイク権限管理 |
+| `onDeviceSpeechRecognizerProvider` | function | `OnDeviceSpeechRecognizer` | keepAlive | API 31+ 端末内音声認識 MethodChannel adapter |
+| `onDeviceSpeechRecognitionAvailableProvider` | FutureProvider | `bool` | autoDispose | 設定画面向け端末内認識利用可否 |
+| `onDeviceSpeechRecognitionSupportProvider(localeTag)` | FutureProvider.family | `OnDeviceSpeechSupportStatus` | autoDispose | API 33+ の言語モデル状態（利用可 / 取得要 / 準備中 / 非対応） |
 | `loggerProvider` | function | `Logger` | keepAlive | ロガー |
 | `notificationIdGeneratorProvider` | function | `NotificationIdGenerator` | keepAlive | OS 通知 ID 生成 |
 | `userPreferencesProvider` | function | `UserPreferences` | keepAlive | `shared_preferences` の薄ラッパ。`getBool` / `setBool` / `getInt` / `setInt` / `remove` を提供 (Phase 11 で `getInt` / `setInt` を追加し `lastHomePageIndex` を扱えるよう拡張) |
@@ -92,6 +96,7 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `alarmCollectionNotifierProvider` | Notifier | `List<AlarmEntity>` | keepAlive | 指定時刻アラーム CRUD・ON/OFF 切替・予約管理（Phase 9.5） |
 | `clockEntryCollectionNotifierProvider` | Notifier | `ClockEntryCollection` | keepAlive | 世界時計の CRUD・並べ替え・初回起動時の現在地登録（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
 | `importedSoundDeletionControllerProvider` | Notifier | `void` | keepAlive | 同一ID deleteをcoalesceし、共有FIFO内で削除 Saga と4つのNotifier state同期を完結 |
+| `onDeviceVoiceStopControllerProvider` | Notifier | `OnDeviceVoiceStopState` | autoDispose | 鳴動画面表示中だけ短時間認識を再試行し、厳密一致した停止コマンドを一度だけ通知 |
 
 ### Presentation 層（UI 補助）
 

@@ -6,7 +6,7 @@ part of 'settings_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$settingsNotifierHash() => r'c8770897564c745328789401cc1fc5623339cc0a';
+String _$settingsNotifierHash() => r'07f05395c27eab3a7dc5eb94e082410edd896111';
 
 /// Phase 11 settings notifier.
 ///

@@ -337,6 +337,36 @@ abstract class AppLocalizations {
   /// **'停止'**
   String get alarmStop;
 
+  /// No description provided for @alarmVoiceStopListening.
+  ///
+  /// In ja, this message translates to:
+  /// **'音声停止を待機中（「停止」と話してください）'**
+  String get alarmVoiceStopListening;
+
+  /// No description provided for @alarmVoiceStopModelDownloadRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語の端末内音声モデルが必要です'**
+  String get alarmVoiceStopModelDownloadRequired;
+
+  /// No description provided for @alarmVoiceStopModelDownloadPending.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルを準備しています'**
+  String get alarmVoiceStopModelDownloadPending;
+
+  /// No description provided for @alarmVoiceStopLanguageUnsupported.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語は端末内音声認識に対応していません'**
+  String get alarmVoiceStopLanguageUnsupported;
+
+  /// No description provided for @alarmVoiceStopUnavailable.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内の音声停止を利用できません'**
+  String get alarmVoiceStopUnavailable;
+
   /// No description provided for @alarmSnooze.
   ///
   /// In ja, this message translates to:
@@ -1009,6 +1039,12 @@ abstract class AppLocalizations {
   /// **'デフォルト'**
   String get settingsSectionDefaults;
 
+  /// No description provided for @settingsSectionVoiceControl.
+  ///
+  /// In ja, this message translates to:
+  /// **'音声操作'**
+  String get settingsSectionVoiceControl;
+
   /// No description provided for @settingsSectionAbout.
   ///
   /// In ja, this message translates to:
@@ -1080,6 +1116,72 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'言語を選択'**
   String get settingsLanguageDialogTitle;
+
+  /// No description provided for @settingsVoiceStopLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'音声で停止'**
+  String get settingsVoiceStopLabel;
+
+  /// No description provided for @settingsVoiceStopDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'鳴動中だけ端末内で音声を認識します。音声は保存・送信されません。'**
+  String get settingsVoiceStopDescription;
+
+  /// No description provided for @settingsVoiceStopEnabledDescription.
+  ///
+  /// In ja, this message translates to:
+  /// **'「停止」と話すとタイマーまたはアラームを停止します。'**
+  String get settingsVoiceStopEnabledDescription;
+
+  /// No description provided for @settingsVoiceStopChecking.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声認識を確認しています…'**
+  String get settingsVoiceStopChecking;
+
+  /// No description provided for @settingsVoiceStopModelDownloadRequired.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語の端末内音声モデルが必要です。有効にすると取得を開始します。'**
+  String get settingsVoiceStopModelDownloadRequired;
+
+  /// No description provided for @settingsVoiceStopModelDownloadPending.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルを準備しています。完了後に利用できます。'**
+  String get settingsVoiceStopModelDownloadPending;
+
+  /// No description provided for @settingsVoiceStopModelDownloadStarted.
+  ///
+  /// In ja, this message translates to:
+  /// **'端末内音声モデルの取得を開始しました。完了後に利用できます。'**
+  String get settingsVoiceStopModelDownloadStarted;
+
+  /// No description provided for @settingsVoiceStopLanguageUnsupported.
+  ///
+  /// In ja, this message translates to:
+  /// **'この言語は端末内音声認識に対応していません。'**
+  String get settingsVoiceStopLanguageUnsupported;
+
+  /// No description provided for @settingsVoiceStopUnavailable.
+  ///
+  /// In ja, this message translates to:
+  /// **'この端末では端末内音声認識を利用できません。'**
+  String get settingsVoiceStopUnavailable;
+
+  /// No description provided for @settingsVoiceStopPermissionDenied.
+  ///
+  /// In ja, this message translates to:
+  /// **'音声停止にはマイク権限が必要です。'**
+  String get settingsVoiceStopPermissionDenied;
+
+  /// No description provided for @settingsOpenAppSettings.
+  ///
+  /// In ja, this message translates to:
+  /// **'設定を開く'**
+  String get settingsOpenAppSettings;
 
   /// No description provided for @importedSoundManageTitle.
   ///

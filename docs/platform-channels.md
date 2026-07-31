@@ -36,7 +36,33 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 
 ## 実装済み Channel
 
-実装済み Channel は権限制御用、定間隔通知用、保存容量取得用の3本。
+実装済み Channel は権限制御用、定間隔通知用、保存容量取得用、端末内音声認識用の4本。
+
+### `io.github.bonkoturyu.timer_utility/on_device_speech` (MethodChannel)
+
+Android API 31+ の端末内音声認識だけを使用する。Native 側は
+`SpeechRecognizer.createOnDeviceSpeechRecognizer()` のみを呼び、
+利用不可時に通常の `createSpeechRecognizer()` へフォールバックしない。
+
+| Method / callback | 引数 | 戻り値 | 用途 |
+| --- | --- | --- | --- |
+| `isAvailable` | なし | `bool` | API 31+ かつ端末内認識エンジンが利用可能か確認 |
+| `checkSupport` | `localeTag`, `biasingPhrases` | `ready` / `download_required` / `download_pending` / `unsupported` / `unavailable` | API 33+ では指定言語の端末内モデル状態を事前確認。API 31–32 はエンジンがあれば `ready` |
+| `requestModelDownload` | `localeTag`, `biasingPhrases` | 上記と同じ状態文字列 | API 33+ の `triggerModelDownload()` で指定言語モデルの取得を要求 |
+| `startListening` | `localeTag`, `biasingPhrases` | `null` | 鳴動画面表示中の短時間認識を開始 |
+| `cancelListening` | なし | `null` | 現在の認識セッションを破棄 |
+| `destroy` | なし | `null` | `SpeechRecognizer.destroy()` を呼びリソースを解放 |
+| `onReady` | なし | Dart callback | 認識準備完了 |
+| `onFinalResult` | `hypotheses`, `confidenceScores` | Dart callback | 最終候補を一時的に通知 |
+| `onError` | `code` | Dart callback | timeout / no match / busy / permission / unavailable 等 |
+
+`RECORD_AUDIO` は設定画面でユーザーが音声停止を有効化する時だけ要求する。
+音声・認識候補は永続化もログ出力もせず、画面の autoDispose controller 終了時に
+認識セッションをキャンセルする。
+Flutter の言語だけの locale は、Android の音声モデルに対応する具体的な BCP 47 tag
+（`ja-JP` / `en-US` / `ko-KR` / `zh-CN` / `zh-TW`）へ正規化してから渡す。
+API 33+ では `RecognitionSupport` の installed / pending / supported リストを確認し、
+モデル未取得のままマイクを開始しない。
 
 ### `io.github.bonkoturyu.timer_utility/storage` (MethodChannel)
 

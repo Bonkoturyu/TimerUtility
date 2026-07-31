@@ -1,7 +1,7 @@
 # Privacy Policy (TimerUtility)
 
-Last updated: 2026-06-20
-Version: 1.0 (final version for Play Store submission)
+Last updated: 2026-07-30
+Version: 1.1
 Canonical version: [docs/privacy-policy.md](privacy-policy.md) (Japanese)
 This document: English translation
 
@@ -20,6 +20,8 @@ handles, and — more importantly — what it does not.
 - No advertising SDK, analytics SDK, or crash-reporting SDK is bundled.
 - Location data is used only ephemerally for world-clock timezone inference;
   it never leaves the device and is not persisted.
+- Microphone audio is used ephemerally only for opt-in, on-device voice-stop
+  recognition. It is never recorded, stored, or transmitted.
 
 ---
 
@@ -31,8 +33,8 @@ The App does **not** collect any of the following:
 - Personally identifying information (name, email, phone, address, date of birth)
 - Account identifiers (Google account, social media accounts)
 - Device identifiers (IMEI, advertising ID, ANDROID_ID)
-- Access to contacts / calendar / photos / microphone / camera (these
-  permissions are not requested)
+- Access to contacts / calendar / photos / camera
+- Collection, storage, or transmission of audio data
 - App usage statistics, crash reports, or analytics data
 - Payment / billing information (no in-app purchases are implemented)
 
@@ -54,6 +56,11 @@ device to support its features, and is **never transmitted off the device**.
 
 All of this data is fully removed when the App is uninstalled (standard Android
 OS behavior).
+
+Microphone input is not stored. It is passed transiently to Android's on-device
+speech recognizer only while the user-enabled voice-stop feature and the
+alarm/timer ringing screen are active. Recognition candidates are discarded
+after command matching and are never written to diagnostic logs.
 
 ---
 
@@ -78,12 +85,13 @@ timezone in the world-clock feature.
 
 ## 5. Permission rationale
 
-The eight permissions declared in [AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml)
+The nine permissions declared in [AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml)
 are used solely as follows.
 
 | Permission | Purpose | When prompted |
 | --- | --- | --- |
 | `ACCESS_COARSE_LOCATION` | Current-location timezone inference in world clock (see §4) | OS dialog during "Add current location" |
+| `RECORD_AUDIO` | Stop a ringing alarm/timer using opt-in, on-device speech recognition | OS dialog when voice stop is enabled in Settings |
 | `POST_NOTIFICATIONS` | Display timer / alarm notifications (required on Android 13+) | OS dialog when the first timer/alarm is created |
 | `SCHEDULE_EXACT_ALARM` | Exact-time alarm delivery (avoids Doze) | Settings deep-link on Android 14+ |
 | `USE_EXACT_ALARM` | Alternative permission auto-granted to clock/alarm-category apps on Android 14+ | Auto-granted (no user prompt) |

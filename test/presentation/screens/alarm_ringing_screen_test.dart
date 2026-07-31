@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,12 +12,15 @@ import 'package:timer_utility/application/alarm_sound_player_provider.dart';
 import 'package:timer_utility/application/clock_provider.dart';
 import 'package:timer_utility/application/keyguard_override_controller_provider.dart';
 import 'package:timer_utility/application/notification_scheduler_provider.dart';
+import 'package:timer_utility/application/on_device_speech_recognizer_provider.dart';
 import 'package:timer_utility/application/screen_lock_query_provider.dart';
+import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/timer_collection_notifier.dart';
 import 'package:timer_utility/application/timer_repository_provider.dart';
 import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
 import 'package:timer_utility/domain/ports/keyguard_override_controller.dart';
 import 'package:timer_utility/domain/ports/notification_scheduler.dart';
+import 'package:timer_utility/domain/ports/on_device_speech_recognizer.dart';
 import 'package:timer_utility/domain/ports/screen_lock_query.dart';
 import 'package:timer_utility/domain/ports/timer_repository.dart';
 import 'package:timer_utility/domain/timer/alarm_sound.dart';
@@ -81,6 +86,59 @@ class _StubKeyguardOverrideController implements KeyguardOverrideController {
   Future<void> clearShowWhenLocked() async {
     clearCalls++;
   }
+}
+
+class _VoiceStopSettingsNotifier extends SettingsNotifier {
+  _VoiceStopSettingsNotifier({required this.enabled});
+
+  final bool enabled;
+
+  @override
+  SettingsState build() =>
+      SettingsState.defaults().copyWith(onDeviceVoiceStopEnabled: enabled);
+}
+
+class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
+  _StubOnDeviceSpeechRecognizer({
+    this.support = OnDeviceSpeechSupportStatus.ready,
+  });
+
+  final OnDeviceSpeechSupportStatus support;
+  final StreamController<OnDeviceSpeechEvent> controller =
+      StreamController<OnDeviceSpeechEvent>.broadcast(sync: true);
+  int startCalls = 0;
+
+  @override
+  Stream<OnDeviceSpeechEvent> get events => controller.stream;
+
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> checkSupport({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => support;
+
+  @override
+  Future<OnDeviceSpeechSupportStatus> requestModelDownload({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async => OnDeviceSpeechSupportStatus.downloadPending;
+
+  @override
+  Future<void> startListening({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {
+    startCalls++;
+  }
+
+  @override
+  Future<void> cancelListening() async {}
+
+  @override
+  Future<void> dispose() async => controller.close();
 }
 
 /// In-memory [TimerRepository] used by every harness so the
@@ -164,6 +222,7 @@ Widget _harness(
   NotificationScheduler? scheduler,
   String? payload,
   double textScaleFactor = 1,
+  _StubOnDeviceSpeechRecognizer? voiceRecognizer,
 }) {
   final NotificationScheduler notificationScheduler =
       scheduler ?? _stubScheduler();
@@ -211,6 +270,12 @@ Widget _harness(
       ),
       testNotificationStringsOverride(),
       timerRepositoryProvider.overrideWithValue(repo),
+      settingsNotifierProvider.overrideWith(
+        () => _VoiceStopSettingsNotifier(enabled: voiceRecognizer != null),
+      ),
+      if (voiceRecognizer != null) ...<Override>[
+        onDeviceSpeechRecognizerProvider.overrideWithValue(voiceRecognizer),
+      ],
     ],
     // Force Japanese so existing assertions for "スヌーズ時間を選択"
     // remain stable; the alarm screen text now resolves through
@@ -498,6 +563,55 @@ void main() {
       expect(collection.findById('ringing-1')?.status, TimerStatus.cancelled);
       expect(find.text('home-stub'), findsOneWidget);
       expect(find.byType(AlarmRingingScreen), findsNothing);
+    });
+
+    testWidgets('端末内音声で「停止」を認識すると鳴動を停止してホームへ戻る', (WidgetTester tester) async {
+      final player = _StubAlarmSoundPlayer();
+      final recognizer = _StubOnDeviceSpeechRecognizer();
+      addTearDown(recognizer.dispose);
+      await tester.pumpWidget(
+        _harness(
+          player,
+          seedRinging: _seedRinging(label: 'Tea timer'),
+          voiceRecognizer: recognizer,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
+
+      expect(find.byKey(const Key('alarm_voice_stop_status')), findsOneWidget);
+      expect(find.text('音声停止を待機中（「停止」と話してください）'), findsOneWidget);
+      expect(recognizer.startCalls, 1);
+
+      recognizer.controller.add(
+        const OnDeviceSpeechResult(hypotheses: <String>['停止']),
+      );
+      await tester.pumpAndSettle();
+
+      expect(player.stopCalls, greaterThanOrEqualTo(1));
+      expect(find.text('home-stub'), findsOneWidget);
+      expect(find.byType(AlarmRingingScreen), findsNothing);
+    });
+
+    testWidgets('音声モデルの取得中は準備中メッセージと手動操作を表示する', (WidgetTester tester) async {
+      final player = _StubAlarmSoundPlayer();
+      final recognizer = _StubOnDeviceSpeechRecognizer(
+        support: OnDeviceSpeechSupportStatus.downloadRequired,
+      );
+      addTearDown(recognizer.dispose);
+      await tester.pumpWidget(
+        _harness(
+          player,
+          seedRinging: _seedRinging(label: 'Tea timer'),
+          voiceRecognizer: recognizer,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('端末内音声モデルを準備しています'), findsOneWidget);
+      expect(find.byKey(const Key('alarm_stop_button')), findsOneWidget);
+      expect(find.byKey(const Key('alarm_snooze_button')), findsOneWidget);
+      expect(recognizer.startCalls, 0);
     });
 
     testWidgets(

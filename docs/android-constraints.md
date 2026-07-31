@@ -276,6 +276,24 @@ Android 15 以降、デフォルトで edge-to-edge が強制適用される。
 
 ---
 
+## 端末内音声停止（Android 12 / API 31+）
+
+- `SpeechRecognizer.isOnDeviceRecognitionAvailable()` が true の端末だけ設定を有効化できる
+- `SpeechRecognizer.createOnDeviceSpeechRecognizer()` のみを使用し、クラウド認識へ
+  フォールバックしない
+- 認識は鳴動画面が表示されている間の短時間セッションに限定し、常駐 Service /
+  Foreground Service は使用しない
+- `RECORD_AUDIO` は機能をオンにする時だけ要求する
+- Flutter の language-only locale を音声モデル用の具体的な BCP 47 tag
+  （例: `ja` → `ja-JP`）へ正規化する
+- API 33+ は `checkRecognitionSupport()` で指定言語モデルを事前確認し、
+  未取得なら `triggerModelDownload()` を要求する。取得待ち / 言語非対応は
+  マイクを開始せず、鳴動画面に状態を表示する
+- API 31–32 はモデル状態の事前確認 API がないため、端末内エンジンの有無だけを確認する
+- Stop / Snooze の手動操作を常に残し、端末内認識が利用できない端末でも鳴動機能を維持する
+
+---
+
 ## マニフェスト雛形
 
 `android/app/src/main/AndroidManifest.xml` に必要な宣言:
@@ -300,6 +318,9 @@ Android 15 以降、デフォルトで edge-to-edge が強制適用される。
 
     <!-- バイブ -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ユーザーが有効化した端末内音声停止 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application ...>
         <activity
