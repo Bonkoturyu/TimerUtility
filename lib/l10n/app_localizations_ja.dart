@@ -134,6 +134,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alarmStop => '停止';
 
   @override
+  String get alarmVoiceStopListening => '音声停止を待機中（「停止」と話してください）';
+
+  @override
+  String get alarmVoiceStopUnavailable => '端末内の音声停止を利用できません';
+
+  @override
   String get alarmSnooze => 'スヌーズ';
 
   @override
@@ -498,6 +504,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsSectionDefaults => 'デフォルト';
 
   @override
+  String get settingsSectionVoiceControl => '音声操作';
+
+  @override
   String get settingsSectionAbout => '情報';
 
   @override
@@ -534,6 +543,28 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsLanguageDialogTitle => '言語を選択';
+
+  @override
+  String get settingsVoiceStopLabel => '音声で停止';
+
+  @override
+  String get settingsVoiceStopDescription => '鳴動中だけ端末内で音声を認識します。音声は保存・送信されません。';
+
+  @override
+  String get settingsVoiceStopEnabledDescription =>
+      '「停止」と話すとタイマーまたはアラームを停止します。';
+
+  @override
+  String get settingsVoiceStopChecking => '端末内音声認識を確認しています…';
+
+  @override
+  String get settingsVoiceStopUnavailable => 'この端末では端末内音声認識を利用できません。';
+
+  @override
+  String get settingsVoiceStopPermissionDenied => '音声停止にはマイク権限が必要です。';
+
+  @override
+  String get settingsOpenAppSettings => '設定を開く';
 
   @override
   String get importedSoundManageTitle => '取り込み音源';

@@ -21,9 +21,8 @@
   permission severity / 言語切替 / 診断ログの計 33 キーをすべて収録。以後 ARB を変更したら
   本書も同じ commit で同期する (上記「更新ルール」参照)。
 
-最終更新日: 2026-07-28（zh / zh-Hant / ko を公開ビルドへ昇格し
-`ENABLE_EXPERIMENTAL_LOCALES` フラグを撤廃。設定画面のバージョン表示に伴い
-`settingsVersionLabel` を 5 言語へ追加。ARB 176 → 177 キー）
+最終更新日: 2026-07-30（端末内音声認識による鳴動停止の表示文言を
+5 言語へ追加。ARB 199 → 209 キー）
 
 ---
 
@@ -97,6 +96,8 @@
 | `alarmAppBarTitle` | アラーム | Alarm | AppBar |
 | `alarmTimesUp` | 時間です！ | Time's up! | 大見出し |
 | `alarmStop` | 停止 | Stop | プライマリ |
+| `alarmVoiceStopListening` | 音声停止を待機中（「停止」と話してください） | Listening for “Stop” | 端末内音声認識の待機状態 |
+| `alarmVoiceStopUnavailable` | 端末内の音声停止を利用できません | On-device voice stop is unavailable | 認識不可／権限エラー状態 |
 | `alarmSnooze` | スヌーズ | Snooze | セカンダリ |
 | `alarmSnoozePickerTitle` | スヌーズ時間を選択 | Choose snooze duration | bottom sheet タイトル |
 | `alarmSnoozeMinutes` | {minutes} 分 | {% raw %}{minutes, plural, =1{1 minute} other{{minutes} minutes}}{% endraw %} | bottom sheet オプション（ja は固定形式） |
@@ -335,6 +336,7 @@ AppBar 両方で再利用。
 | `settingsAppBarTitle` | 設定 | Settings | AppBar |
 | `settingsSectionDisplay` | 表示 | Display | セクション見出し |
 | `settingsSectionDefaults` | デフォルト | Defaults | セクション見出し |
+| `settingsSectionVoiceControl` | 音声操作 | Voice control | セクション見出し |
 | `settingsSectionAbout` | 情報 | About | セクション見出し |
 | `settingsVersionLabel` | バージョン | Version | ListTile title（subtitle の `1.0.0 (2)` は `package_info_plus` 実行時取得のため非翻訳） |
 | `settingsThemeLabel` | テーマ | Theme | ListTile title |
@@ -347,6 +349,13 @@ AppBar 両方で再利用。
 | `settingsLanguageLabel` | 言語 | Language | ListTile title (言語手動切替) |
 | `settingsLanguageSystem` | システムに合わせる | Follow system | 言語選択ダイアログの先頭オプション (`localeOverride = null`、F-9 の `localeResolutionCallback` に委譲) |
 | `settingsLanguageDialogTitle` | 言語を選択 | Select language | 言語選択ダイアログタイトル |
+| `settingsVoiceStopLabel` | 音声で停止 | Stop by voice | 端末内音声停止トグル title |
+| `settingsVoiceStopDescription` | 鳴動中だけ端末内で音声を認識します。音声は保存・送信されません。 | Recognize a voice command on-device only while an alarm is ringing. Audio is never saved or sent. | 無効時 subtitle |
+| `settingsVoiceStopEnabledDescription` | 「停止」と話すとタイマーまたはアラームを停止します。 | Say “Stop” to stop the ringing timer or alarm. | 有効時 subtitle |
+| `settingsVoiceStopChecking` | 端末内音声認識を確認しています… | Checking on-device speech recognition… | 利用可否確認中 |
+| `settingsVoiceStopUnavailable` | この端末では端末内音声認識を利用できません。 | On-device speech recognition is unavailable on this device. | 利用不可 subtitle |
+| `settingsVoiceStopPermissionDenied` | 音声停止にはマイク権限が必要です。 | Microphone permission is required for voice stop. | 権限拒否 SnackBar |
+| `settingsOpenAppSettings` | 設定を開く | Open settings | permanently denied 時の SnackBar action |
 | `importedSoundManageTitle` | 取り込み音源 | Imported sounds | 設定画面の管理導線と管理画面 AppBar |
 | `importedSoundManageDescription` | 端末から追加した音源を管理します | Manage sounds added from your device | 設定画面の管理導線 subtitle |
 | `importedSoundAdd` | 端末から追加 | Add from device | 音源追加ボタン |

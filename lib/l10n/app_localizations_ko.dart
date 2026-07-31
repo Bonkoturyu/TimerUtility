@@ -139,6 +139,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get alarmStop => '정지';
 
   @override
+  String get alarmVoiceStopListening => '음성 정지 대기 중(“정지”라고 말하세요)';
+
+  @override
+  String get alarmVoiceStopUnavailable => '기기 내 음성 정지를 사용할 수 없습니다';
+
+  @override
   String get alarmSnooze => '다시 알림';
 
   @override
@@ -532,6 +538,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsSectionDefaults => '기본값';
 
   @override
+  String get settingsSectionVoiceControl => '음성 제어';
+
+  @override
   String get settingsSectionAbout => '정보';
 
   @override
@@ -568,6 +577,29 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsLanguageDialogTitle => '언어 선택';
+
+  @override
+  String get settingsVoiceStopLabel => '음성으로 정지';
+
+  @override
+  String get settingsVoiceStopDescription =>
+      '알람이 울리는 동안에만 기기 내에서 음성을 인식합니다. 음성은 저장되거나 전송되지 않습니다.';
+
+  @override
+  String get settingsVoiceStopEnabledDescription =>
+      '“정지”라고 말하면 울리는 타이머 또는 알람을 정지합니다.';
+
+  @override
+  String get settingsVoiceStopChecking => '기기 내 음성 인식을 확인하는 중…';
+
+  @override
+  String get settingsVoiceStopUnavailable => '이 기기에서는 기기 내 음성 인식을 사용할 수 없습니다.';
+
+  @override
+  String get settingsVoiceStopPermissionDenied => '음성 정지에는 마이크 권한이 필요합니다.';
+
+  @override
+  String get settingsOpenAppSettings => '설정 열기';
 
   @override
   String get importedSoundManageTitle => '가져온 사운드';

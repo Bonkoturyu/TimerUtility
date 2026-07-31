@@ -17,6 +17,7 @@ Phase 4 / Phase 6 着手前に必ず本ドキュメントを参照すること�
 | `RECEIVE_BOOT_COMPLETED` | 全バージョン | マニフェスト宣言のみ | ★ Phase 10 で必要 |
 | `VIBRATE` | 全バージョン | マニフェスト宣言のみ | ★★ 必須 |
 | `ACCESS_COARSE_LOCATION` | 全バージョン | ランタイム要求 | ★ 任意（Phase 10.5 世界時計、初回起動の現在地検出のみ） |
+| `RECORD_AUDIO` | 全バージョン | ランタイム要求 | ★ 任意（端末内音声停止のみ） |
 | バッテリー最適化除外 | 全バージョン | 設定画面誘導 | ★ 推奨（メーカー対策） |
 
 ---
@@ -38,9 +39,21 @@ Phase 4 / Phase 6 着手前に必ず本ドキュメントを参照すること�
 | USE_FULL_SCREEN_INTENT | 初回タイマー作成時 |
 | バッテリー最適化除外 | 初回タイマー作成時 or タイマーが期待通り動かなかった旨をユーザーが報告した時 |
 | ACCESS_COARSE_LOCATION | 初回時計画面起動時のみ（現在地時計を 1 度だけ自動登録するため）。一度許可 / 拒否したら以降は再要求しない |
+| RECORD_AUDIO | 設定画面でユーザーが「端末内音声で停止」を有効化した時のみ |
 
 ストップウォッチ機能のみを使うユーザーには通知系権限の要求をしない設計とする。
 時計機能を使わないユーザーにも位置情報権限を要求しない（時計タブを開いた瞬間が初回トリガー）。
+音声停止を有効化しないユーザーにはマイク権限を要求しない。
+
+### 端末内音声停止
+
+1. 設定画面で端末内認識の利用可否を確認する。
+2. 利用可能な端末でトグルをオンにした時だけ `RECORD_AUDIO` を要求する。
+3. 許可時のみ設定を永続化し、拒否時はトグルをオフのまま保つ。
+4. 認識は AlarmRingingScreen の表示中だけ行い、画面終了時にキャンセルする。
+5. Android API 31+ の `createOnDeviceSpeechRecognizer()` のみ使用し、
+   クラウド認識や通常 recognizer へフォールバックしない。
+6. 音声、認識候補、停止コマンドを保存・送信・診断ログ記録しない。
 
 ---
 
@@ -417,6 +430,9 @@ Phase 6b で `PermissionState` に `fullScreenIntent` フィールドを追加�
 
 <!-- Phase 10.5 で追加予定（世界時計の現在地検出） -->
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+<!-- 設定で有効化した端末内音声停止 -->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
 ```
 
 **追加・変更時は CLAUDE.md の規約に従いユーザー確認必須**。

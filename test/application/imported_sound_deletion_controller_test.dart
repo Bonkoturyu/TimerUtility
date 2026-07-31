@@ -103,6 +103,7 @@ void main() {
     ).thenAnswer((_) => lookupGate.future);
     when(() => preferences.getString(any())).thenAnswer((_) async => null);
     when(() => preferences.getInt(any())).thenAnswer((_) async => null);
+    when(() => preferences.getBool(any())).thenAnswer((_) async => null);
     when(
       () => fileStore.quarantine('imported', ImportedSoundFormat.mp3),
     ).thenAnswer((_) async {});

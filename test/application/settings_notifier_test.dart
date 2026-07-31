@@ -58,6 +58,8 @@ class _MemoryUserPrefs implements UserPreferences {
   int get snoozeMinutes => _ints[UserPreferenceKeys.defaultSnoozeMinutes] ?? -1;
   String? get alarmSoundId => _strings[UserPreferenceKeys.defaultAlarmSoundId];
   String? get localeTag => _strings[UserPreferenceKeys.localeTag];
+  bool get voiceStopEnabled =>
+      _bools[UserPreferenceKeys.onDeviceVoiceStopEnabled] ?? false;
   bool hasLocaleTag() => _strings.containsKey(UserPreferenceKeys.localeTag);
 }
 
@@ -128,6 +130,7 @@ void main() {
       expect(s.localeOverride, isNull);
       expect(s.defaultSnoozeMinutes, 5);
       expect(s.defaultAlarmSoundId, 'default');
+      expect(s.onDeviceVoiceStopEnabled, isFalse);
     });
   });
 
@@ -157,6 +160,9 @@ void main() {
 
     test('永続化された値が読み込まれる', () async {
       final prefs = _MemoryUserPrefs(
+        bools: <String, bool>{
+          UserPreferenceKeys.onDeviceVoiceStopEnabled: true,
+        },
         ints: <String, int>{
           UserPreferenceKeys.themeMode: ThemeMode.dark.index,
           UserPreferenceKeys.defaultSnoozeMinutes: 10,
@@ -175,6 +181,7 @@ void main() {
       expect(s.themeMode, ThemeMode.dark);
       expect(s.defaultSnoozeMinutes, 10);
       expect(s.defaultAlarmSoundId, 'gentle');
+      expect(s.onDeviceVoiceStopEnabled, isTrue);
     });
 
     test('範囲外 themeMode (-1 / 99) は system に fallback', () async {
@@ -293,6 +300,23 @@ void main() {
   });
 
   group('SettingsNotifier mutators', () {
+    test('setOnDeviceVoiceStopEnabled は state と prefs を更新する', () async {
+      final prefs = _MemoryUserPrefs();
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setOnDeviceVoiceStopEnabled(true);
+
+      expect(
+        container.read(settingsNotifierProvider).onDeviceVoiceStopEnabled,
+        isTrue,
+      );
+      expect(prefs.voiceStopEnabled, isTrue);
+    });
+
     test('setThemeMode は state と UserPreferences を更新する', () async {
       final prefs = _MemoryUserPrefs();
       final container = _makeContainer(prefs);

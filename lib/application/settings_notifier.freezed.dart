@@ -21,6 +21,7 @@ mixin _$SettingsState {
   Locale? get localeOverride => throw _privateConstructorUsedError;
   int get defaultSnoozeMinutes => throw _privateConstructorUsedError;
   String get defaultAlarmSoundId => throw _privateConstructorUsedError;
+  bool get onDeviceVoiceStopEnabled => throw _privateConstructorUsedError;
 
   /// Create a copy of SettingsState
   /// with the given fields replaced by the non-null parameter values.
@@ -41,6 +42,7 @@ abstract class $SettingsStateCopyWith<$Res> {
     Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
+    bool onDeviceVoiceStopEnabled,
   });
 }
 
@@ -63,6 +65,7 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
     Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
+    Object? onDeviceVoiceStopEnabled = null,
   }) {
     return _then(
       _value.copyWith(
@@ -82,6 +85,10 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
                 ? _value.defaultAlarmSoundId
                 : defaultAlarmSoundId // ignore: cast_nullable_to_non_nullable
                       as String,
+            onDeviceVoiceStopEnabled: null == onDeviceVoiceStopEnabled
+                ? _value.onDeviceVoiceStopEnabled
+                : onDeviceVoiceStopEnabled // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -102,6 +109,7 @@ abstract class _$$SettingsStateImplCopyWith<$Res>
     Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
+    bool onDeviceVoiceStopEnabled,
   });
 }
 
@@ -123,6 +131,7 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
     Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
+    Object? onDeviceVoiceStopEnabled = null,
   }) {
     return _then(
       _$SettingsStateImpl(
@@ -142,6 +151,10 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
             ? _value.defaultAlarmSoundId
             : defaultAlarmSoundId // ignore: cast_nullable_to_non_nullable
                   as String,
+        onDeviceVoiceStopEnabled: null == onDeviceVoiceStopEnabled
+            ? _value.onDeviceVoiceStopEnabled
+            : onDeviceVoiceStopEnabled // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -155,6 +168,7 @@ class _$SettingsStateImpl implements _SettingsState {
     required this.localeOverride,
     required this.defaultSnoozeMinutes,
     required this.defaultAlarmSoundId,
+    required this.onDeviceVoiceStopEnabled,
   });
 
   @override
@@ -165,10 +179,12 @@ class _$SettingsStateImpl implements _SettingsState {
   final int defaultSnoozeMinutes;
   @override
   final String defaultAlarmSoundId;
+  @override
+  final bool onDeviceVoiceStopEnabled;
 
   @override
   String toString() {
-    return 'SettingsState(themeMode: $themeMode, localeOverride: $localeOverride, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId)';
+    return 'SettingsState(themeMode: $themeMode, localeOverride: $localeOverride, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId, onDeviceVoiceStopEnabled: $onDeviceVoiceStopEnabled)';
   }
 
   @override
@@ -183,7 +199,12 @@ class _$SettingsStateImpl implements _SettingsState {
             (identical(other.defaultSnoozeMinutes, defaultSnoozeMinutes) ||
                 other.defaultSnoozeMinutes == defaultSnoozeMinutes) &&
             (identical(other.defaultAlarmSoundId, defaultAlarmSoundId) ||
-                other.defaultAlarmSoundId == defaultAlarmSoundId));
+                other.defaultAlarmSoundId == defaultAlarmSoundId) &&
+            (identical(
+                  other.onDeviceVoiceStopEnabled,
+                  onDeviceVoiceStopEnabled,
+                ) ||
+                other.onDeviceVoiceStopEnabled == onDeviceVoiceStopEnabled));
   }
 
   @override
@@ -193,6 +214,7 @@ class _$SettingsStateImpl implements _SettingsState {
     localeOverride,
     defaultSnoozeMinutes,
     defaultAlarmSoundId,
+    onDeviceVoiceStopEnabled,
   );
 
   /// Create a copy of SettingsState
@@ -210,6 +232,7 @@ abstract class _SettingsState implements SettingsState {
     required final Locale? localeOverride,
     required final int defaultSnoozeMinutes,
     required final String defaultAlarmSoundId,
+    required final bool onDeviceVoiceStopEnabled,
   }) = _$SettingsStateImpl;
 
   @override
@@ -220,6 +243,8 @@ abstract class _SettingsState implements SettingsState {
   int get defaultSnoozeMinutes;
   @override
   String get defaultAlarmSoundId;
+  @override
+  bool get onDeviceVoiceStopEnabled;
 
   /// Create a copy of SettingsState
   /// with the given fields replaced by the non-null parameter values.

@@ -81,6 +81,7 @@ TimerUtility は、複数のタイマーを同時に動かせる Android 用タ�
 ■ ストップウォッチ — ラップ記録、ミリ秒精度
 ■ 複数タイマー — 最大 10 本まで同時稼働。それぞれにラベル、音源、スヌーズ設定
 ■ 指定時刻アラーム — 曜日繰り返し、once モード、3 / 5 / 10 分スヌーズ
+■ 端末内音声停止 — 設定で有効化すると、鳴動中に「停止」と話して止められます。音声は保存・送信しません。
 ■ 世界時計 — 最大 6 都市、アナログ・デジタル・コンパクトの 3 デザインを切替表示
 ■ プリセット — 一般 / 料理 / Pomodoro の 3 テンプレートを内蔵
 ■ カスタムアラーム音 — 3 種類の内蔵音源 + 個別タイマー単位での音源指定
@@ -111,6 +112,7 @@ TimerUtility is an Android timer app that lets you run multiple timers simultane
 - Stopwatch with lap timing and millisecond precision.
 - Multi-timer (up to 10 concurrent). Each timer has its own label, sound, and snooze configuration.
 - Scheduled alarms with weekday repeat, once mode, and 3/5/10-minute snooze.
+- Optional on-device voice stop for ringing alarms and timers. Audio is never stored or transmitted.
 - World clock with up to 6 cities and three display designs (analog, digital, compact) switchable via swipe.
 - Built-in presets for general use, cooking, and the Pomodoro technique.
 - Three bundled alarm sounds, with per-timer sound selection.
@@ -199,6 +201,7 @@ Thank you for trying TimerUtility.
 | Do you provide a way for users to request their data to be deleted? | **N/A** (収集なし) | 同上 |
 | Approximate location | **Not collected** (端末内のみで一時利用、緯度経度は端末外に送信しない、永続化しない) | [docs/privacy-policy.md](privacy-policy.md) §4 |
 | Crash logs / diagnostics | **Not collected** (診断ログはユーザー明示オン時のみ端末内に保存、Share Sheet 経由のユーザー操作でのみ外部に渡る、自動送信なし) | [docs/privacy-policy.md](privacy-policy.md) §6 |
+| Voice or sound recordings | **Not collected** (マイク入力は端末内認識へ一時的に渡すだけで、録音・保存・送信・ログ記録を行わない) | [docs/privacy-policy.md](privacy-policy.md) §3 |
 
 → Data Safety フォームの結論: 「No data collected」「No data shared」両方申告。
 

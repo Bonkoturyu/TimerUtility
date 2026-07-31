@@ -139,6 +139,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmStop => '停止';
 
   @override
+  String get alarmVoiceStopListening => '正在等待语音停止指令（请说“停止”）';
+
+  @override
+  String get alarmVoiceStopUnavailable => '无法使用设备端语音停止';
+
+  @override
   String get alarmSnooze => '稍后提醒';
 
   @override
@@ -528,6 +534,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionDefaults => '默认值';
 
   @override
+  String get settingsSectionVoiceControl => '语音控制';
+
+  @override
   String get settingsSectionAbout => '关于';
 
   @override
@@ -564,6 +573,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLanguageDialogTitle => '选择语言';
+
+  @override
+  String get settingsVoiceStopLabel => '通过语音停止';
+
+  @override
+  String get settingsVoiceStopDescription => '仅在响铃时使用设备端语音识别。音频不会被保存或发送。';
+
+  @override
+  String get settingsVoiceStopEnabledDescription => '说“停止”即可停止正在响铃的定时器或闹钟。';
+
+  @override
+  String get settingsVoiceStopChecking => '正在检查设备端语音识别…';
+
+  @override
+  String get settingsVoiceStopUnavailable => '此设备无法使用设备端语音识别。';
+
+  @override
+  String get settingsVoiceStopPermissionDenied => '语音停止需要麦克风权限。';
+
+  @override
+  String get settingsOpenAppSettings => '打开设置';
 
   @override
   String get importedSoundManageTitle => '导入的声音';
@@ -815,6 +845,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get alarmStop => '停止';
+
+  @override
+  String get alarmVoiceStopListening => '正在等待語音停止指令（請說「停止」）';
+
+  @override
+  String get alarmVoiceStopUnavailable => '無法使用裝置端語音停止';
 
   @override
   String get alarmSnooze => '貪睡';
@@ -1207,6 +1243,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get settingsSectionDefaults => '預設值';
 
   @override
+  String get settingsSectionVoiceControl => '語音控制';
+
+  @override
   String get settingsSectionAbout => '關於';
 
   @override
@@ -1243,6 +1282,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsLanguageDialogTitle => '選擇語言';
+
+  @override
+  String get settingsVoiceStopLabel => '透過語音停止';
+
+  @override
+  String get settingsVoiceStopDescription => '僅在響鈴時使用裝置端語音辨識。音訊不會被儲存或傳送。';
+
+  @override
+  String get settingsVoiceStopEnabledDescription => '說「停止」即可停止正在響鈴的計時器或鬧鐘。';
+
+  @override
+  String get settingsVoiceStopChecking => '正在檢查裝置端語音辨識…';
+
+  @override
+  String get settingsVoiceStopUnavailable => '此裝置無法使用裝置端語音辨識。';
+
+  @override
+  String get settingsVoiceStopPermissionDenied => '語音停止需要麥克風權限。';
+
+  @override
+  String get settingsOpenAppSettings => '開啟設定';
 
   @override
   String get importedSoundManageTitle => '匯入的音效';

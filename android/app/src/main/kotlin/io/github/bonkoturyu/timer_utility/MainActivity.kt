@@ -28,6 +28,8 @@ class MainActivity : FlutterActivity() {
         private const val STORAGE_CHANNEL = "io.github.bonkoturyu.timer_utility/storage"
     }
 
+    private var onDeviceSpeechRecognizerHandler: OnDeviceSpeechRecognizerHandler? = null
+
     /**
      * Sets the keyguard-override flags when the device is currently
      * locked. Called from both `onCreate` (cold-launch via FSI) and
@@ -75,6 +77,10 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        onDeviceSpeechRecognizerHandler = OnDeviceSpeechRecognizerHandler(
+            this,
+            flutterEngine.dartExecutor.binaryMessenger,
+        )
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PERMISSION_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -146,6 +152,12 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    override fun onDestroy() {
+        onDeviceSpeechRecognizerHandler?.dispose()
+        onDeviceSpeechRecognizerHandler = null
+        super.onDestroy()
     }
 
     /**

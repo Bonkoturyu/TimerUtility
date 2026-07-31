@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,8 +7,13 @@ import 'package:go_router/go_router.dart';
 import 'package:timer_utility/application/app_version_provider.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/imported_sound_management_controller.dart';
+import 'package:timer_utility/application/microphone_permission_provider.dart';
+import 'package:timer_utility/application/on_device_speech_recognizer_provider.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
 import 'package:timer_utility/domain/ports/app_version_reader.dart';
+import 'package:timer_utility/domain/ports/microphone_permission_manager.dart';
+import 'package:timer_utility/domain/ports/on_device_speech_recognizer.dart';
+import 'package:timer_utility/domain/ports/permission_manager.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
 import 'package:timer_utility/domain/sound/imported_sound.dart';
 import 'package:timer_utility/domain/sound/imported_sound_format.dart';
@@ -87,11 +94,61 @@ class _StubAppVersionReader implements AppVersionReader {
   Future<AppVersion> read() async => value;
 }
 
+class _StubOnDeviceSpeechRecognizer implements OnDeviceSpeechRecognizer {
+  const _StubOnDeviceSpeechRecognizer({required this.available});
+
+  final bool available;
+
+  @override
+  Stream<OnDeviceSpeechEvent> get events =>
+      const Stream<OnDeviceSpeechEvent>.empty();
+
+  @override
+  Future<bool> isAvailable() async => available;
+
+  @override
+  Future<void> startListening({
+    required String localeTag,
+    required List<String> biasingPhrases,
+  }) async {}
+
+  @override
+  Future<void> cancelListening() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _StubMicrophonePermissionManager implements MicrophonePermissionManager {
+  _StubMicrophonePermissionManager(this.status);
+
+  DomainPermissionStatus status;
+  int requestCalls = 0;
+  int openSettingsCalls = 0;
+
+  @override
+  Future<DomainPermissionStatus> check() async => status;
+
+  @override
+  Future<DomainPermissionStatus> request() async {
+    requestCalls++;
+    return status;
+  }
+
+  @override
+  Future<bool> openAppSettings() async {
+    openSettingsCalls++;
+    return true;
+  }
+}
+
 Widget _harness({
   UserPreferences? prefs,
   AppVersion? appVersion,
   List<ImportedSound> importedSounds = const <ImportedSound>[],
   String? settingsSoundId,
+  bool voiceRecognitionAvailable = false,
+  MicrophonePermissionManager? microphonePermissionManager,
 }) {
   final router = GoRouter(
     initialLocation: SettingsScreen.routeLocation,
@@ -120,6 +177,13 @@ Widget _harness({
       importedSoundManagementControllerProvider.overrideWith(
         () => _ImportedSoundController(importedSounds),
       ),
+      onDeviceSpeechRecognizerProvider.overrideWithValue(
+        _StubOnDeviceSpeechRecognizer(available: voiceRecognitionAvailable),
+      ),
+      microphonePermissionManagerProvider.overrideWithValue(
+        microphonePermissionManager ??
+            _StubMicrophonePermissionManager(DomainPermissionStatus.denied),
+      ),
       if (settingsSoundId != null)
         settingsNotifierProvider.overrideWith(
           () => _SettingsSoundNotifier(settingsSoundId),
@@ -136,7 +200,7 @@ Widget _harness({
 
 void main() {
   group('SettingsScreen', () {
-    testWidgets('3 セクションヘッダと各 ListTile が描画される', (WidgetTester tester) async {
+    testWidgets('4 セクションヘッダと各 ListTile が描画される', (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(_harness());
@@ -147,6 +211,7 @@ void main() {
       // 確認する (一意性は不要)。
       expect(find.text('表示'), findsWidgets);
       expect(find.text('デフォルト'), findsWidgets);
+      expect(find.text('音声操作'), findsOneWidget);
       expect(find.text('情報'), findsWidgets);
 
       expect(find.byKey(const Key('settings_theme_tile')), findsOneWidget);
@@ -154,13 +219,116 @@ void main() {
       expect(find.byKey(const Key('settings_sound_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_licenses_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+      expect(find.byKey(const Key('settings_voice_stop_tile')), findsOneWidget);
+    });
+
+    testWidgets('端末内認識とマイク許可が利用可能なら音声停止を有効化できる', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final microphone = _StubMicrophonePermissionManager(
+        DomainPermissionStatus.granted,
+      );
+      await tester.pumpWidget(
+        _harness(
+          voiceRecognitionAvailable: true,
+          microphonePermissionManager: microphone,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder tile = find.byKey(const Key('settings_voice_stop_tile'));
+      await tester.scrollUntilVisible(
+        tile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(tile),
+      );
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(settingsNotifierProvider).onDeviceVoiceStopEnabled,
+        isTrue,
+      );
+      expect(microphone.requestCalls, 0);
+    });
+
+    testWidgets('マイク許可が拒否された場合は音声停止を有効化しない', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final microphone = _StubMicrophonePermissionManager(
+        DomainPermissionStatus.permanentlyDenied,
+      );
+      await tester.pumpWidget(
+        _harness(
+          voiceRecognitionAvailable: true,
+          microphonePermissionManager: microphone,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder tile = find.byKey(const Key('settings_voice_stop_tile'));
+      await tester.scrollUntilVisible(
+        tile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(tile),
+      );
+      await tester.tap(tile);
+      await tester.pump();
+
+      expect(
+        container.read(settingsNotifierProvider).onDeviceVoiceStopEnabled,
+        isFalse,
+      );
+      expect(find.text('音声停止にはマイク権限が必要です。'), findsOneWidget);
+    });
+
+    testWidgets('保存済みONの端末内認識が利用不可でも音声停止を解除できる', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final prefs = _MemoryUserPrefs();
+      await prefs.setBool(UserPreferenceKeys.onDeviceVoiceStopEnabled, true);
+      await tester.pumpWidget(
+        _harness(prefs: prefs, voiceRecognitionAvailable: false),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder tile = find.byKey(const Key('settings_voice_stop_tile'));
+      await tester.scrollUntilVisible(
+        tile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(tile),
+      );
+      expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(settingsNotifierProvider).onDeviceVoiceStopEnabled,
+        isFalse,
+      );
     });
 
     testWidgets('バージョン行に "1.0.0 (2)" が表示される', (WidgetTester tester) async {
       await tester.pumpWidget(_harness());
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+      final Finder versionTile = find.byKey(const Key('settings_version_tile'));
+      await tester.scrollUntilVisible(
+        versionTile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(versionTile, findsOneWidget);
       expect(find.text('バージョン'), findsOneWidget);
       expect(find.text('1.0.0 (2)'), findsOneWidget);
     });
@@ -174,7 +342,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
+      final Finder versionTile = find.byKey(const Key('settings_version_tile'));
+      await tester.scrollUntilVisible(
+        versionTile,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(versionTile, findsOneWidget);
       expect(find.text('—'), findsOneWidget);
     });
 

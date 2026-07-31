@@ -19,6 +19,18 @@
 
 ## 進行中
 
+### 端末内音声認識による鳴動停止（2026-07-30）
+
+- [x] API 31+ の `createOnDeviceSpeechRecognizer()` のみを使用し、
+  クラウド認識へフォールバックしない Native / MethodChannel 境界を実装する
+- [x] 設定画面に既定 OFF のトグルを追加し、有効化時だけマイク権限を要求する
+- [x] AlarmRingingScreen 表示中だけ認識し、「停止」等の厳密一致で既存 Stop 処理を呼ぶ
+- [x] 音声・認識候補を保存・送信・診断ログ記録しないことを Privacy Policy /
+  Data Safety / 権限仕様へ反映する
+- [x] Unit / Widget / MethodChannel test、静的解析、全テスト、Android build を通す
+- [ ] Pixel 実機で日本語停止、無関係語、手動 Stop / Snooze、権限拒否、
+  ロック画面起動を確認する（ユーザー実施）
+
 ### アラーム鳴動画面のラベル表示（2026-07-30）
 
 - [x] Timer / 時刻指定アラームの設定ラベルを「時間です」の直下に表示する

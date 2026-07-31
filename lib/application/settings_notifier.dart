@@ -74,6 +74,7 @@ class SettingsState with _$SettingsState {
     required Locale? localeOverride,
     required int defaultSnoozeMinutes,
     required String defaultAlarmSoundId,
+    required bool onDeviceVoiceStopEnabled,
   }) = _SettingsState;
 
   /// Initial values used both before the persisted state is read and
@@ -84,6 +85,7 @@ class SettingsState with _$SettingsState {
     localeOverride: null,
     defaultSnoozeMinutes: 5,
     defaultAlarmSoundId: AlarmSoundCatalog.defaultSound.id,
+    onDeviceVoiceStopEnabled: false,
   );
 }
 
@@ -144,6 +146,9 @@ class SettingsNotifier extends _$SettingsNotifier {
     final String? storedLocale = await prefs.getString(
       UserPreferenceKeys.localeTag,
     );
+    final bool? storedVoiceStop = await prefs.getBool(
+      UserPreferenceKeys.onDeviceVoiceStopEnabled,
+    );
 
     // フォールバック値は SettingsState.defaults() を唯一の情報源にして
     // ハードコード重複を避ける (Gemini review #36)。将来 defaults() の
@@ -187,6 +192,8 @@ class SettingsNotifier extends _$SettingsNotifier {
         localeOverride: localeOverride,
         defaultSnoozeMinutes: snooze,
         defaultAlarmSoundId: soundId,
+        onDeviceVoiceStopEnabled:
+            storedVoiceStop ?? defaults.onDeviceVoiceStopEnabled,
       );
 
       if (storedSound != null && storedSound != soundId) {
@@ -208,6 +215,14 @@ class SettingsNotifier extends _$SettingsNotifier {
     await ref
         .read(userPreferencesProvider)
         .setInt(UserPreferenceKeys.themeMode, mode.index);
+  }
+
+  Future<void> setOnDeviceVoiceStopEnabled(bool enabled) async {
+    _restoreGeneration++;
+    state = state.copyWith(onDeviceVoiceStopEnabled: enabled);
+    await ref
+        .read(userPreferencesProvider)
+        .setBool(UserPreferenceKeys.onDeviceVoiceStopEnabled, enabled);
   }
 
   Future<void> setDefaultSnoozeMinutes(int minutes) async {

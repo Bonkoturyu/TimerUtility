@@ -9,6 +9,8 @@ import '../../application/alarm_collection_notifier.dart';
 import '../../application/alarm_push_reservation.dart';
 import '../../application/alarm_ringing_notifier.dart';
 import '../../application/keyguard_override_controller_provider.dart';
+import '../../application/on_device_voice_stop_controller.dart';
+import '../../application/settings_notifier.dart';
 import '../../application/timer_collection_notifier.dart';
 import '../../domain/alarm/alarm_entity.dart';
 import '../../domain/alarm/exceptions.dart';
@@ -50,6 +52,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
   /// disposed. The notifier lives in the keepAlive container, so it
   /// outlives this widget (Review #5).
   late final AlarmPushReservation _pushReservation;
+  bool _stopInProgress = false;
 
   @override
   void initState() {
@@ -203,8 +206,6 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ringingNotifier = ref.read(alarmRingingNotifierProvider.notifier);
-    final collection = ref.read(timerCollectionNotifierProvider.notifier);
     final AppLocalizations l = AppLocalizations.of(context);
     final ThemeData theme = Theme.of(context);
     // Stop / Snooze 押下時の分岐は、現在 ringing 中の AlarmRingingState の
@@ -220,6 +221,41 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       source: activeSource,
       sourceId: activeSourceId,
     );
+    final bool voiceStopEnabled = ref.watch(
+      settingsNotifierProvider.select(
+        (SettingsState state) => state.onDeviceVoiceStopEnabled,
+      ),
+    );
+    final OnDeviceVoiceStopState voiceStopState = ref.watch(
+      onDeviceVoiceStopControllerProvider,
+    );
+    ref.listen<int>(
+      onDeviceVoiceStopControllerProvider.select(
+        (OnDeviceVoiceStopState state) => state.commandSequence,
+      ),
+      (int? previous, int next) {
+        if (next <= (previous ?? 0)) return;
+        unawaited(
+          _stopAndLeave(
+            context,
+            source: activeSource,
+            sourceId: activeSourceId,
+          ),
+        );
+      },
+    );
+    if (voiceStopEnabled &&
+        voiceStopState.status == OnDeviceVoiceStopStatus.idle) {
+      final String localeTag = Localizations.localeOf(context).toLanguageTag();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(onDeviceVoiceStopControllerProvider.notifier)
+              .start(localeTag: localeTag),
+        );
+      });
+    }
 
     // Block hardware back / system back gesture / AppBar back button
     // while the alarm is ringing — accidentally dismissing an alarm by
@@ -271,6 +307,13 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                           ),
                           const SizedBox(height: 40),
                         ],
+                        if (voiceStopEnabled) ...<Widget>[
+                          _VoiceStopStatus(
+                            state: voiceStopState,
+                            localizations: l,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                         OverflowBar(
                           alignment: MainAxisAlignment.spaceEvenly,
                           overflowAlignment: OverflowBarAlignment.center,
@@ -278,51 +321,11 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
                           children: <Widget>[
                             FilledButton(
                               key: const Key('alarm_stop_button'),
-                              onPressed: () async {
-                                await ringingNotifier.stop();
-                                if (activeSource == AlarmSource.alarm &&
-                                    activeSourceId != null) {
-                                  // Phase 9.5: alarm 由来 → AlarmCollectionNotifier に
-                                  // 委譲。once は enabled=false 化、weekly は次回曜日に
-                                  // 自動進行する。
-                                  // cold-start で AlarmCollectionNotifier の load が
-                                  // まだ完了していない / すでに削除済みの場合に
-                                  // AlarmNotFoundException が飛ぶことがあるが、
-                                  // 鳴動停止は既に完了しているので no-op で抜ける。
-                                  try {
-                                    await ref
-                                        .read(
-                                          alarmCollectionNotifierProvider
-                                              .notifier,
-                                        )
-                                        .onFiredStop(activeSourceId);
-                                  } on AlarmNotFoundException {
-                                    // 何もしない: 通知音は止まっているのでユーザは
-                                    // 画面を抜けられる。weekly の次回 schedule が
-                                    // 載らない可能性があるが、次回起動時の load 後に
-                                    // 反映される。
-                                  }
-                                } else {
-                                  // Phase 8 までの既存 path: TimerCollection の
-                                  // ringing を cancelled に落とす。
-                                  final TimerEntity? ringing = collection
-                                      .findRinging();
-                                  if (ringing != null) {
-                                    collection.cancel(ringing.id);
-                                  }
-                                }
-                                if (!context.mounted) return;
-                                // 重要: ringingNotifier.stop() で state.currentSource
-                                // が null にリセットされた **後** に _leaveAlarmScreen
-                                // が走るため、内部で ref.read しても source 判別不能。
-                                // build 時にクロージャ済みの activeSource を引数で
-                                // 渡して fallback 行き先を決める (2026-05-04 シナリオ
-                                // 4 再検証で発覚)。
-                                _leaveAlarmScreen(
-                                  context,
-                                  source: activeSource,
-                                );
-                              },
+                              onPressed: () => _stopAndLeave(
+                                context,
+                                source: activeSource,
+                                sourceId: activeSourceId,
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,
@@ -367,6 +370,36 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _stopAndLeave(
+    BuildContext context, {
+    required AlarmSource? source,
+    required String? sourceId,
+  }) async {
+    if (_stopInProgress) return;
+    _stopInProgress = true;
+    await ref.read(alarmRingingNotifierProvider.notifier).stop();
+    if (source == AlarmSource.alarm && sourceId != null) {
+      // once は disabled、weekly は次回曜日へ進める。cold-start の load
+      // 未完了や削除済み alarm は、音声停止済みなので安全に no-op とする。
+      try {
+        await ref
+            .read(alarmCollectionNotifierProvider.notifier)
+            .onFiredStop(sourceId);
+      } on AlarmNotFoundException {
+        // no-op
+      }
+    } else {
+      final collection = ref.read(timerCollectionNotifierProvider.notifier);
+      final TimerEntity? ringing = collection.findRinging();
+      if (ringing != null) {
+        collection.cancel(ringing.id);
+      }
+    }
+    if (!context.mounted) return;
+    // stop() は source を idle に戻すため、呼び出し前に捕捉した値を使う。
+    _leaveAlarmScreen(context, source: source);
   }
 
   Future<void> _onSnoozeTap(BuildContext context) async {
@@ -497,5 +530,38 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen> {
       return;
     }
     GoRouter.of(context).go('/');
+  }
+}
+
+class _VoiceStopStatus extends StatelessWidget {
+  const _VoiceStopStatus({required this.state, required this.localizations});
+
+  final OnDeviceVoiceStopState state;
+  final AppLocalizations localizations;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool listening =
+        state.status == OnDeviceVoiceStopStatus.starting ||
+        state.status == OnDeviceVoiceStopStatus.listening;
+    return Semantics(
+      liveRegion: true,
+      child: Row(
+        key: const Key('alarm_voice_stop_status'),
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(listening ? Icons.mic : Icons.mic_off_outlined),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              listening
+                  ? localizations.alarmVoiceStopListening
+                  : localizations.alarmVoiceStopUnavailable,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

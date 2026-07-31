@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../application/app_version_provider.dart';
 import '../../application/diagnostic_export_controller.dart';
 import '../../application/diagnostic_settings_notifier.dart';
+import '../../application/microphone_permission_provider.dart';
+import '../../application/on_device_speech_recognizer_provider.dart';
 import '../../application/settings_notifier.dart';
 import '../../domain/ports/app_version_reader.dart';
+import '../../domain/ports/permission_manager.dart';
 import '../../l10n/app_localizations.dart';
 import '../widgets/alarm_sound_name.dart';
 import '../widgets/sound_select_sheet.dart';
@@ -127,6 +130,8 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () =>
                   context.push(ImportedSoundManageScreen.routeLocation),
             ),
+            _SectionHeader(label: l.settingsSectionVoiceControl),
+            const _OnDeviceVoiceStopTile(),
             _SectionHeader(label: l.settingsSectionAbout),
             const _VersionTile(),
             ListTile(
@@ -195,6 +200,87 @@ class SettingsScreen extends ConsumerWidget {
     await ref
         .read(settingsNotifierProvider.notifier)
         .setDefaultAlarmSoundId(picked);
+  }
+}
+
+class _OnDeviceVoiceStopTile extends ConsumerWidget {
+  const _OnDeviceVoiceStopTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final bool enabled = ref.watch(
+      settingsNotifierProvider.select(
+        (SettingsState state) => state.onDeviceVoiceStopEnabled,
+      ),
+    );
+    final AsyncValue<bool> availability = ref.watch(
+      onDeviceSpeechRecognitionAvailableProvider,
+    );
+    final bool supported = availability.asData?.value ?? false;
+    final String subtitle = switch (availability) {
+      AsyncLoading<bool>() => l.settingsVoiceStopChecking,
+      AsyncError<bool>() => l.settingsVoiceStopUnavailable,
+      AsyncData<bool>(value: false) => l.settingsVoiceStopUnavailable,
+      AsyncData<bool>(value: true) when enabled =>
+        l.settingsVoiceStopEnabledDescription,
+      AsyncData<bool>(value: true) => l.settingsVoiceStopDescription,
+      _ => l.settingsVoiceStopUnavailable,
+    };
+
+    return SwitchListTile(
+      key: const Key('settings_voice_stop_tile'),
+      secondary: const Icon(Icons.mic_outlined),
+      title: Text(l.settingsVoiceStopLabel),
+      subtitle: Text(subtitle),
+      value: enabled,
+      // 端末内認識が後から利用不可になっても、保存済みの ON 設定は
+      // ユーザーが必ず解除できるようにする。
+      onChanged: enabled || supported
+          ? (bool next) => _setEnabled(context, ref, next)
+          : null,
+    );
+  }
+
+  Future<void> _setEnabled(
+    BuildContext context,
+    WidgetRef ref,
+    bool enabled,
+  ) async {
+    final SettingsNotifier settings = ref.read(
+      settingsNotifierProvider.notifier,
+    );
+    if (!enabled) {
+      await settings.setOnDeviceVoiceStopEnabled(false);
+      return;
+    }
+
+    final manager = ref.read(microphonePermissionManagerProvider);
+    DomainPermissionStatus status = await manager.check();
+    if (status == DomainPermissionStatus.denied ||
+        status == DomainPermissionStatus.unknown) {
+      status = await manager.request();
+    }
+    if (!context.mounted) return;
+    if (status == DomainPermissionStatus.granted ||
+        status == DomainPermissionStatus.notRequired) {
+      await settings.setOnDeviceVoiceStopEnabled(true);
+      return;
+    }
+
+    final AppLocalizations l = AppLocalizations.of(context);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l.settingsVoiceStopPermissionDenied),
+        action: status == DomainPermissionStatus.permanentlyDenied
+            ? SnackBarAction(
+                label: l.settingsOpenAppSettings,
+                onPressed: () => manager.openAppSettings(),
+              )
+            : null,
+      ),
+    );
   }
 }
 
