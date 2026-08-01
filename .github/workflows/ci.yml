@@ -80,3 +80,7 @@ jobs:
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: flutter test
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
+      - name: Android Native Unit Test
+        working-directory: android
+        run: ./gradlew app:testDebugUnitTest
+        if: steps.changes.outputs.source == 'true'

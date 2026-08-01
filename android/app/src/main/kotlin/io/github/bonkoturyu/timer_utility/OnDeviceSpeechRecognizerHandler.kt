@@ -16,7 +16,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
-import java.util.Locale
 
 /**
  * Owns Android's API 31+ on-device speech recognizer.
@@ -94,28 +93,26 @@ class OnDeviceSpeechRecognizerHandler(
                 recognizer = it
             }
 
-    private fun buildModelIntent(localeTag: String): Intent =
+    private fun buildIntent(spec: OnDeviceSpeechIntentSpec): Intent =
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
             )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeTag)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, spec.localeTag)
+            spec.maxResults?.let { putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, it) }
+            spec.partialResults?.let {
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, it)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                spec.biasingPhrases?.let {
+                    putStringArrayListExtra(
+                        RecognizerIntent.EXTRA_BIASING_STRINGS,
+                        ArrayList(it),
+                    )
+                }
+            }
         }
-
-    private fun buildListeningIntent(
-        localeTag: String,
-        biasingPhrases: List<String>,
-    ): Intent = buildModelIntent(localeTag).apply {
-        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
-        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            putStringArrayListExtra(
-                RecognizerIntent.EXTRA_BIASING_STRINGS,
-                ArrayList(biasingPhrases),
-            )
-        }
-    }
 
     private fun checkSupport(
         localeTag: String,
@@ -132,12 +129,25 @@ class OnDeviceSpeechRecognizerHandler(
 
         try {
             getOrCreateRecognizer().checkRecognitionSupport(
-                buildModelIntent(localeTag),
+                buildIntent(OnDeviceSpeechRecognitionPolicy.modelIntentSpec(localeTag)),
                 activity.mainExecutor,
                 object : RecognitionSupportCallback {
                     override fun onSupportResult(recognitionSupport: RecognitionSupport) {
                         logSupportResult(recognitionSupport, localeTag)
-                        result.success(supportStatus(recognitionSupport, localeTag))
+                        result.success(
+                            OnDeviceSpeechRecognitionPolicy.supportStatus(
+                                installedLanguages =
+                                    recognitionSupport.installedOnDeviceLanguages,
+                                pendingLanguages =
+                                    recognitionSupport.pendingOnDeviceLanguages,
+                                downloadableLanguages =
+                                    recognitionSupport.supportedOnDeviceLanguages,
+                                localeTag = localeTag,
+                                downloadCallbacksAvailable =
+                                    Build.VERSION.SDK_INT >=
+                                        Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                            ).wireValue,
+                        )
                     }
 
                     override fun onError(error: Int) {
@@ -149,37 +159,6 @@ class OnDeviceSpeechRecognizerHandler(
             result.success("unavailable")
         } catch (_: RuntimeException) {
             result.success("unavailable")
-        }
-    }
-
-    private fun supportStatus(
-        support: RecognitionSupport,
-        localeTag: String,
-    ): String = when {
-        support.installedOnDeviceLanguages.matches(localeTag) -> "ready"
-        support.pendingOnDeviceLanguages.matches(localeTag) -> "download_pending"
-        support.supportedOnDeviceLanguages.matches(localeTag) -> "download_required"
-        // Some recognizers return a successful callback with empty or
-        // non-canonical language lists. Only the explicit platform error is
-        // strong enough to classify a language as unsupported. Let the model
-        // download API resolve an ambiguous successful response instead.
-        else -> "download_required"
-    }
-
-    private fun List<String>.matches(localeTag: String): Boolean {
-        val requestedLocale = Locale.forLanguageTag(localeTag)
-        val requested = requestedLocale.toLanguageTag()
-        return any { candidate ->
-            val candidateLocale = Locale.forLanguageTag(candidate)
-            candidateLocale.toLanguageTag().equals(requested, ignoreCase = true) ||
-                (
-                    candidateLocale.country.isEmpty() &&
-                        candidateLocale.script.isEmpty() &&
-                        candidateLocale.language.equals(
-                            requestedLocale.language,
-                            ignoreCase = true,
-                        )
-                )
         }
     }
 
@@ -198,11 +177,16 @@ class OnDeviceSpeechRecognizerHandler(
         )
     }
 
-    private fun supportErrorStatus(error: Int): String = when (error) {
-        SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED -> "unsupported"
-        SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE -> "download_required"
-        else -> "unavailable"
-    }
+    private fun supportErrorStatus(error: Int): String =
+        OnDeviceSpeechRecognitionPolicy.supportErrorStatus(
+            when (error) {
+                SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED ->
+                    OnDeviceSpeechSupportError.LANGUAGE_NOT_SUPPORTED
+                SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE ->
+                    OnDeviceSpeechSupportError.LANGUAGE_UNAVAILABLE
+                else -> OnDeviceSpeechSupportError.OTHER
+            },
+        ).wireValue
 
     private fun requestModelDownload(
         localeTag: String,
@@ -217,7 +201,7 @@ class OnDeviceSpeechRecognizerHandler(
             return
         }
 
-        val intent = buildModelIntent(localeTag)
+        val intent = buildIntent(OnDeviceSpeechRecognitionPolicy.modelIntentSpec(localeTag))
         try {
             val target = getOrCreateRecognizer()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -281,7 +265,12 @@ class OnDeviceSpeechRecognizerHandler(
 
         try {
             val target = getOrCreateRecognizer()
-            val intent = buildListeningIntent(localeTag, biasingPhrases)
+            val intent = buildIntent(
+                OnDeviceSpeechRecognitionPolicy.listeningIntentSpec(
+                    localeTag,
+                    biasingPhrases,
+                ),
+            )
             listening = true
             target.startListening(intent)
             result.success(null)
