@@ -62,6 +62,12 @@
 - [x] 未取得モデルのダウンロード要求と、準備中 / 言語非対応を区別した UI を追加する
 - [x] locale 正規化、モデル状態、MethodChannel、設定 / 鳴動画面の回帰テストを追加し、
   静的解析・全テスト・Android build を通す
+- [x] Pixel 6a / Android 17 / Version 1.1.3 (7) で日本語モデルを
+  「この言語は端末内音声認識に対応していません」と誤判定する問題を修正する
+  - 対応確認・モデル取得用 Intent から認識時だけ必要な bias phrase を分離する
+  - 明示的な言語非対応エラー以外は `unsupported` と断定せず、モデル取得へ進める
+  - MethodChannel 回帰テスト 7 件、翻訳 validator 216/216、静的解析 0 issues、
+    全テスト 891 passed (1 skipped)、Native Kotlin compile、debug APK build を通す
 - [ ] Pixel 実機で日本語停止、無関係語、手動 Stop / Snooze、権限拒否、
   ロック画面起動を確認する（ユーザー実施）
 
