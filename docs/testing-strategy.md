@@ -306,7 +306,8 @@ void main() {
 3. `dart run tool/check_translations_doc.dart`
 4. `flutter analyze --fatal-infos`
 5. `flutter test`
-6. `android/gradlew app:testDebugUnitTest`（Pure Kotlin Native policy）
+6. `flutter build apk --debug --no-pub`（Gradle wrapper 生成 + Android build）
+7. `android/gradlew app:testDebugUnitTest`（Pure Kotlin Native policy）
 
 PR ごとに必須実行。失敗すればマージ不可。
 

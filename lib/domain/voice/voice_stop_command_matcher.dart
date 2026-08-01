@@ -10,6 +10,7 @@ class VoiceStopCommandMatcher {
     '止めて',
     'とめて',
     'ストップ',
+    'すとっぷ',
     'アラーム停止',
     'タイマー停止',
     'stop',
