@@ -302,11 +302,12 @@ void main() {
 `.github/workflows/ci.yml` で以下を実行:
 
 1. `flutter pub get`
-2. `dart run build_runner build --delete-conflicting-outputs`
-3. `flutter analyze`
-4. `dart format --set-exit-if-changed .`
-5. `flutter test --coverage`
-6. カバレッジレポートのアーティファクト保存
+2. `dart format --set-exit-if-changed .`
+3. `dart run tool/check_translations_doc.dart`
+4. `flutter analyze --fatal-infos`
+5. `flutter test`
+6. `flutter build apk --debug --no-pub`（Gradle wrapper 生成 + Android build）
+7. `android/gradlew app:testDebugUnitTest`（Pure Kotlin Native policy）
 
 PR ごとに必須実行。失敗すればマージ不可。
 
@@ -384,14 +385,17 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 | カバレッジ付き | `flutter test --coverage` |
 | 特定ファイル | `flutter test test/domain/timer/timer_service_test.dart` |
 | Integration Test | `flutter test integration_test/` |
+| Native Unit Test | `cd android && ./gradlew app:testDebugUnitTest` |
 | ウォッチモード | `flutter test --watch`（dev 時） |
 
 ---
 
 ## IDE からのテスト実行（必須要件）
 
-本プロジェクトのテストはすべて Flutter 標準のテストフレームワーク（`package:test` / `package:flutter_test` / `package:integration_test`）で記述すること。
-これにより Android Studio / IntelliJ IDEA の Run/Debug 設定からテストを直接実行・デバッグできる状態を必須要件とする。
+本プロジェクトの Dart / Flutter テストは Flutter 標準のテストフレームワーク
+（`package:test` / `package:flutter_test` / `package:integration_test`）、Native の
+Pure Kotlin policy は JUnit で記述する。いずれも Android Studio / IntelliJ IDEA の
+Run/Debug 設定から直接実行・デバッグできる状態を必須要件とする。
 
 ### Android Studio / IntelliJ での実行方法
 
@@ -399,12 +403,17 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 - **ファイル単位**: ファイルツリーでテストファイルを右クリック → `Run 'tests in xxx_test.dart'`
 - **ディレクトリ単位**: `test/` ディレクトリを右クリック → `Run 'tests in test'`
 - **Integration Test**: 実機または Emulator を選択した状態で `integration_test/` 配下を実行
+- **Native Unit Test**: `android/app/src/test/` のテストクラスまたはメソッド横の
+  緑の三角アイコンから実行
 
 ### テストランナーの選定根拠
 
 - `flutter test` 単体で Pure Dart / Widget / Integration Test を統一実行できる
+- Android API に依存しない Native policy は JUnit で直接実行し、Android SDK / 実機を
+  必要とせず分岐を固定できる
 - AndroidStudio の Flutter プラグインが `flutter test` をネイティブにサポート
-- CI（`.github/workflows/ci.yml`）と IDE 実行で同一コマンドが使えるため、ローカルと CI の挙動が一致する
+- CI（`.github/workflows/ci.yml`）でも `flutter test` と
+  `app:testDebugUnitTest` を同じ境界で実行するため、ローカルと CI の挙動が一致する
 
 ### 禁止事項
 
@@ -421,4 +430,5 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 
 ---
 
-最終更新日: 2026-07-16（Phase 13 の取り込み音源検証・削除 Saga・参照整合性テストを反映）
+最終更新日: 2026-08-01（端末内音声認識の Pure Kotlin policy、JUnit、
+Pixel 向け Integration Test、CI 実行を反映）

@@ -68,8 +68,22 @@
   - 明示的な言語非対応エラー以外は `unsupported` と断定せず、モデル取得へ進める
   - MethodChannel 回帰テスト 7 件、翻訳 validator 216/216、静的解析 0 issues、
     全テスト 891 passed (1 skipped)、Native Kotlin compile、debug APK build を通す
-- [ ] Pixel 実機で日本語停止、無関係語、手動 Stop / Snooze、権限拒否、
-  ロック画面起動を確認する（ユーザー実施）
+- [x] PR #132 のマージ後レビュー 5 件を follow-up する
+  - Intent 構成とモデル状態判定を Pure Kotlin policy へ抽出し、JUnit で固定する
+  - API 33 の曖昧な応答を永続的な `download_pending` にしない
+  - language-only fallback で `zh-CN` / `zh-TW` を混同しない
+  - Pixel 向け integration test と CI の Native Unit Test 実行を追加する
+  - Native JUnit 10 passed、翻訳 validator 216/216、静的解析 0 issues、
+    全 Flutter テスト 891 passed (1 skipped)、integration / 通常 debug APK build を通す
+  - Gradle wrapper がない fresh worktree で Android debug build による wrapper 生成、
+    debug APK build、Native JUnit 10 passed を確認する
+  - 「停止」「止めて」「とめて」「ストップ」「すとっぷ」と英語停止語を
+    厳密一致の Unit Test で固定する
+- [x] Pixel 6a / Android 17 実機で日本語停止、無関係語、手動 Stop / Snooze、
+  権限拒否、ロック画面起動を確認する
+  - 人声の「停止」でロック画面上の鳴動停止、無関係語で鳴動継続を確認する
+  - 手動 Stop、3 分 Snooze の再予約、マイク権限拒否時の継続鳴動を確認する
+  - Keyguard 表示中の発火で端末が起床し、鳴動画面が前面表示される
 
 ### アラーム鳴動画面のラベル表示（2026-07-30）
 

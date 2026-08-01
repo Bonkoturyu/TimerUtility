@@ -80,3 +80,12 @@ jobs:
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
       - run: flutter test
         if: steps.changes.outputs.source == 'true' || steps.changes.outputs.translations_doc == 'true'
+      # Flutter projectではGradle wrapperをGit管理しないため、fresh checkout上で
+      # Android buildを先に実行してwrapperを生成する。
+      - name: Android Debug APK Build
+        run: flutter build apk --debug --no-pub
+        if: steps.changes.outputs.source == 'true'
+      - name: Android Native Unit Test
+        working-directory: android
+        run: ./gradlew app:testDebugUnitTest
+        if: steps.changes.outputs.source == 'true'

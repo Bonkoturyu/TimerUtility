@@ -63,6 +63,12 @@ Flutter の言語だけの locale は、Android の音声モデルに対応す�
 （`ja-JP` / `en-US` / `ko-KR` / `zh-CN` / `zh-TW`）へ正規化してから渡す。
 API 33+ では `RecognitionSupport` の installed / pending / supported リストを確認し、
 モデル未取得のままマイクを開始しない。
+対応確認・モデル取得用 Intent は言語モデルと locale だけを含み、bias phrase、
+最大候補数、部分認識設定は `startListening` の Intent だけへ付与する。
+API 34+ の曖昧な成功応答はコールバック付きモデル取得で確定し、API 33 では
+永続的な `download_pending` を避けて `unavailable` とする。言語だけの Native tag は
+モデルが一意な日本語・韓国語に限って具体的 tag と照合し、中国語は
+`zh-CN` / `zh-TW` の完全一致を必要とする。
 
 ### `io.github.bonkoturyu.timer_utility/storage` (MethodChannel)
 
@@ -393,8 +399,7 @@ try {
 
 ## テスト戦略
 
-現状の `io.github.bonkoturyu.timer_utility/permission` 周辺の Native ↔ Dart 通信に対するテスト
-状況:
+Native ↔ Dart 通信に対するテスト状況:
 
 - **Dart 側**:
   [`test/infrastructure/platform/permission_channel_test.dart`](../test/infrastructure/platform/permission_channel_test.dart)
@@ -404,7 +409,14 @@ try {
   `clearShowWhenLocked` および `PermissionHandlerAdapter` /
   `FlutterLocalNotificationAdapter` の MethodChannel 経由パスは現時点で
   専用ユニットテスト未整備（実機検証でカバー）
-- **Native 側**: 専用 Unit Test / Integration Test は無し。Phase 6 実機検証
+- **端末内音声認識**:
+  [`OnDeviceSpeechRecognitionPolicyTest.kt`](../android/app/src/test/kotlin/io/github/bonkoturyu/timer_utility/OnDeviceSpeechRecognitionPolicyTest.kt)
+  がモデル確認 / 認識 Intent spec、installed / pending / downloadable / 空リスト、
+  API 33 / 34+、language-only の日本語 / 中国語、明示的な非対応 error を JUnit で検証する。
+  [`on_device_speech_recognizer_integration_test.dart`](../integration_test/on_device_speech_recognizer_integration_test.dart)
+  は実機の MethodChannel を通し、Pixel の日本語モデルを `unsupported` と誤判定しない
+  ことを確認する
+- **permission Channel**: 専用 Native Unit Test は無し。Phase 6 実機検証
   (Pixel 6a / Android 16、2026-04-30) と Phase 6 follow-up (2026-05-04 の
   recents ボタン消失修正) で動作確認済み
 
@@ -422,8 +434,8 @@ try {
 - Kotlin の Unit Test (JUnit) で MethodChannel ハンドラのロジック単体は
   テスト可能
 - ただし MethodChannel 自体のモックは Robolectric 等が必要
-- 実用上は Dart 側のテストでカバーし、Native 側は Integration Test / 実機検証で
-  確認する方針
+- Android 非依存の判定は Pure Kotlin policy へ抽出して JUnit、Channel 結合は
+  Flutter Integration Test / 実機検証で確認する
 
 詳細は [`docs/testing-strategy.md`](testing-strategy.md) 参照。
 
