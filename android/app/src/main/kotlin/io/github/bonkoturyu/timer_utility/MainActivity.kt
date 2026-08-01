@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.StatFs
 import android.provider.Settings
-import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -63,10 +62,6 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Android 15+ enforces edge-to-edge for targetSdk 35+, while this
-        // compatibility API applies equivalent system-bar handling to older
-        // Android versions before Flutter renders its first frame.
-        WindowCompat.enableEdgeToEdge(window)
         applyKeyguardOverrideIfLocked()
     }
 

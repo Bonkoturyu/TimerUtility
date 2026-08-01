@@ -19,6 +19,24 @@
 
 ## 進行中
 
+### Version 1.1.3 Android edge-to-edge 非推奨 API 警告の再発防止（2026-07-31）
+
+- [x] `MainActivity.onCreate()` の `WindowCompat.enableEdgeToEdge(window)` と
+  AndroidX Core `1.17.0` の明示的な固定を削除する
+- [x] Flutter `3.44.8` の API 35 ガード付き edge-to-edge 処理を唯一の制御元に戻す
+- [x] `pubspec.yaml` を `1.1.3+7`
+  （versionName `1.1.3` / versionCode `7`）へ更新する
+- [x] Dart ソース変更なし。翻訳 validator 216/216 aligned、
+  `flutter analyze --fatal-infos` 0 issues、`flutter test` 889 passed
+  (1 skipped) を確認する
+- [x] 署名付き release AAB build を通し、versionName `1.1.3` /
+  versionCode `7` / targetSdk `36`、AndroidX Core / Core-KTX `1.16.0` を確認する
+  (`build/app/outputs/bundle/release/app-release.aab`、66,659,245 bytes、
+  SHA-256 `8018F8B3AB8951AB06793DE6E2F0B63BCCE9ECFA6B7053D7300F73740C43DBCF`)
+- [ ] `1.1.3 (7)` の AAB をクローズドテストへアップロードし、Play Console の
+  `setStatusBarColor` / `setNavigationBarColor` 警告が解消するか確認する
+  （ユーザー実施）
+
 ### 非稼働タイマーの設定時間変更（2026-07-31）
 
 - [x] `idle` / `paused` / `completed` / `cancelled` だけ設定時間を変更できる
@@ -66,8 +84,9 @@
   AndroidX Core `1.17.0` への依存解決を確認する
 - [ ] API 28 / 34 / 35 / 36 で通常画面・アラーム画面、ジェスチャー / 3 ボタン、
   light / dark の表示崩れがないことを確認する（ユーザー実施）
-- [ ] `1.1.2 (6)` の AAB をクローズドテストへアップロードし、Play Console の
-  edge-to-edge 後方互換警告が解消するか確認する（ユーザー実施）
+- [x] `1.1.2 (6)` の AAB をクローズドテストへアップロードしたが、Play Console の
+  edge-to-edge 後方互換警告は残り、追加した `WindowCompat.enableEdgeToEdge` から
+  非推奨 API 警告が再発したことを確認する（ユーザー実施）
 
 ### Version 1.1.1 Flutter / Android 15 互換性更新（2026-07-30）
 
