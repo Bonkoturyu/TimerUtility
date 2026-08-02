@@ -5,10 +5,14 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/ports/imported_sound_repository.dart';
+import '../domain/ports/alarm_sound_player.dart';
+import '../domain/ports/notification_scheduler.dart';
 import '../domain/ports/user_preferences.dart';
 import '../domain/timer/alarm_sound_catalog.dart';
 import 'imported_sound_mutation_coordinator.dart';
 import 'imported_sound_repository_provider.dart';
+import 'alarm_sound_player_provider.dart';
+import 'notification_scheduler_provider.dart';
 import 'user_preferences_provider.dart';
 
 part 'settings_notifier.freezed.dart';
@@ -18,6 +22,15 @@ part 'settings_notifier.g.dart';
 /// the alarm edit screen and the settings screen. Stored values outside
 /// this set fall back to `5` on restore.
 const Set<int> kAllowedDefaultSnoozeMinutes = <int>{5, 10, 15};
+const int kMinAlarmVolumePercent = 10;
+const int kMaxAlarmVolumePercent = 100;
+const int kAlarmVolumeStepPercent = 5;
+const int kDefaultAlarmVolumePercent = 100;
+
+bool isAllowedAlarmVolumePercent(int percent) =>
+    percent >= kMinAlarmVolumePercent &&
+    percent <= kMaxAlarmVolumePercent &&
+    percent % kAlarmVolumeStepPercent == 0;
 
 /// BCP-47 tags the language picker is allowed to persist, in the order
 /// the picker lists them. Every tag ships in every build — zh / zh-Hant
@@ -74,6 +87,7 @@ class SettingsState with _$SettingsState {
     required Locale? localeOverride,
     required int defaultSnoozeMinutes,
     required String defaultAlarmSoundId,
+    required int alarmVolumePercent,
     required bool onDeviceVoiceStopEnabled,
   }) = _SettingsState;
 
@@ -85,6 +99,7 @@ class SettingsState with _$SettingsState {
     localeOverride: null,
     defaultSnoozeMinutes: 5,
     defaultAlarmSoundId: AlarmSoundCatalog.defaultSound.id,
+    alarmVolumePercent: kDefaultAlarmVolumePercent,
     onDeviceVoiceStopEnabled: false,
   );
 }
@@ -140,6 +155,9 @@ class SettingsNotifier extends _$SettingsNotifier {
     final int? storedSnooze = await prefs.getInt(
       UserPreferenceKeys.defaultSnoozeMinutes,
     );
+    final int? storedAlarmVolume = await prefs.getInt(
+      UserPreferenceKeys.alarmVolumePercent,
+    );
     final String? storedSound = await prefs.getString(
       UserPreferenceKeys.defaultAlarmSoundId,
     );
@@ -165,6 +183,11 @@ class SettingsNotifier extends _$SettingsNotifier {
             kAllowedDefaultSnoozeMinutes.contains(storedSnooze))
         ? storedSnooze
         : defaults.defaultSnoozeMinutes;
+    final int alarmVolume =
+        storedAlarmVolume != null &&
+            isAllowedAlarmVolumePercent(storedAlarmVolume)
+        ? storedAlarmVolume
+        : defaults.alarmVolumePercent;
     final Locale? localeOverride = storedLocale == null
         ? defaults.localeOverride
         : parseLocaleTag(storedLocale);
@@ -192,6 +215,7 @@ class SettingsNotifier extends _$SettingsNotifier {
         localeOverride: localeOverride,
         defaultSnoozeMinutes: snooze,
         defaultAlarmSoundId: soundId,
+        alarmVolumePercent: alarmVolume,
         onDeviceVoiceStopEnabled:
             storedVoiceStop ?? defaults.onDeviceVoiceStopEnabled,
       );
@@ -207,6 +231,9 @@ class SettingsNotifier extends _$SettingsNotifier {
         }
       }
     });
+    if (!_disposed && restoreGeneration == _restoreGeneration) {
+      await _applyAlarmVolume(alarmVolume);
+    }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -238,6 +265,51 @@ class SettingsNotifier extends _$SettingsNotifier {
     await ref
         .read(userPreferencesProvider)
         .setInt(UserPreferenceKeys.defaultSnoozeMinutes, minutes);
+  }
+
+  Future<void> setAlarmVolumePercent(int percent) async {
+    if (!isAllowedAlarmVolumePercent(percent)) {
+      throw ArgumentError.value(
+        percent,
+        'percent',
+        'must be $kMinAlarmVolumePercent..$kMaxAlarmVolumePercent '
+            'in $kAlarmVolumeStepPercent percent steps',
+      );
+    }
+    _restoreGeneration++;
+    state = state.copyWith(alarmVolumePercent: percent);
+    await Future.wait<void>(<Future<void>>[
+      ref
+          .read(userPreferencesProvider)
+          .setInt(UserPreferenceKeys.alarmVolumePercent, percent),
+      _applyAlarmVolume(percent),
+    ]);
+  }
+
+  Future<void> _applyAlarmVolume(int percent) async {
+    final AlarmSoundPlayer player = ref.read(alarmSoundPlayerProvider);
+    final NotificationScheduler scheduler = ref.read(
+      notificationSchedulerProvider,
+    );
+    if (player is VolumeControlledAlarmSoundPlayer) {
+      try {
+        await (player as VolumeControlledAlarmSoundPlayer).setVolumePercent(
+          percent,
+        );
+      } catch (_) {
+        // Persistence remains authoritative; startup or the next change
+        // retries the platform sync.
+      }
+    }
+    if (scheduler is AlarmVolumeController) {
+      try {
+        await (scheduler as AlarmVolumeController).setAlarmVolumePercent(
+          percent,
+        );
+      } catch (_) {
+        // Flutter playback still uses the persisted value.
+      }
+    }
   }
 
   Future<void> setDefaultAlarmSoundId(String soundId) async {

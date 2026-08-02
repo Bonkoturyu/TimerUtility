@@ -164,16 +164,18 @@ Phase 3 までの単一 `TimerNotifier` を廃止し、複数タイマーの単�
 責務:
 - 鳴動中エントリのリスト管理（Timer / Alarm 両用、複数同時鳴動対応）
 - AlarmSoundPlayer による音再生制御
+- Native Exactセッションがpending / activeならNative再生へ委譲し、Flutter playerを重ねない
 - ringing 起動時に「自分が引き継ぐ通知」を NotificationScheduler.cancel
   で画面上から除去する。ただし OS Channel 音自体は cancel で止まらないため、
   固定短音の再生中に同梱defaultと選択音源を独立slotへ準備し、選択解決は
-  1000 msで打ち切る。固定3200 msのハンドオフ後は準備済みslotだけを再生する
+  1000 msで打ち切る。inexact経路だけ固定3200 msのハンドオフ後に準備済みslotを再生する
 - cold launchでCollection復元前でも、payload IDからTimerRepository／
   AlarmRepositoryを直接参照して保存済みsoundIdを解決する
 - 再生世代により Stop / Snooze / 別タイマー開始後の遅延 play を無効化する
 - start は isPlaying 検査で idempotent（複数経路から呼ばれても OK）
 - Native からの「アラーム発火」イベント受信（payload prefix で起動元判別）
 - 停止 / スヌーズ操作の受付
+- Stop / Snooze時にNative ServiceとFlutter playerの両方を停止する
 
 非責務:
 - 通知のスケジュール / cancelAll などの全体ライフサイクル

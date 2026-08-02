@@ -138,6 +138,24 @@ Repository: https://github.com/Bonkoturyu/TimerUtility
 
 ## 4. What's new (Release notes、500 文字以内)
 
+### Version 1.1.5
+
+#### 日本語
+
+```text
+- アプリのアラーム音量を10〜100%で調整できるようにしました。
+- 3種類の内蔵アラーム音を、選択する前に試聴できるようにしました。
+- バックグラウンドやロック画面でも、選択した音源と音量で予約時刻から鳴動するよう改善しました。
+```
+
+#### English
+
+```text
+- Added app alarm volume control from 10% to 100%.
+- Added previews for the three built-in alarm sounds before selection.
+- Improved background and lock-screen alarms to start at the scheduled time with the selected sound and volume.
+```
+
 ### Version 1.1.4
 
 #### 日本語

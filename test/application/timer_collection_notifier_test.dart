@@ -617,6 +617,7 @@ void main() {
             title: 'Tea',
             body: any(named: 'body'),
             exact: true,
+            soundId: created.soundId,
             payload: 'timer:${created.id}',
           ),
         ).called(1);

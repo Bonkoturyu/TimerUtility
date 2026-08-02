@@ -6,7 +6,10 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/notifications/notification_strings.dart';
 import '../../domain/ports/notification_scheduler.dart';
+import '../platform/native_alarm_channel.dart';
 import '../platform/permission_channel.dart';
+
+typedef ImportedAlarmSoundPathLookup = Future<String?> Function(String soundId);
 
 /// Channel id constants. Centralised here so callers don't repeat them.
 ///
@@ -76,15 +79,25 @@ const String _channelCueRawResource = 'notif_alert';
 /// that left heads-up paths silent until the user tapped — losing the
 /// "I hear my timer go off in the background" property. The adopted design
 /// uses a short OS cue followed by an explicitly delayed app-player handoff.
-class FlutterLocalNotificationAdapter implements NotificationScheduler {
+class FlutterLocalNotificationAdapter
+    implements
+        NotificationScheduler,
+        AlarmVolumeController,
+        NativeAlarmPlaybackController {
   FlutterLocalNotificationAdapter({
     FlutterLocalNotificationsPlugin? plugin,
     PermissionChannel? permissionChannel,
+    NativeAlarmChannel? nativeAlarmChannel,
+    ImportedAlarmSoundPathLookup? importedSoundPathLookup,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
-       _permissionChannel = permissionChannel ?? PermissionChannel();
+       _permissionChannel = permissionChannel ?? PermissionChannel(),
+       _nativeAlarmChannel = nativeAlarmChannel ?? NativeAlarmChannel(),
+       _importedSoundPathLookup = importedSoundPathLookup;
 
   final FlutterLocalNotificationsPlugin _plugin;
   final PermissionChannel _permissionChannel;
+  final NativeAlarmChannel _nativeAlarmChannel;
+  final ImportedAlarmSoundPathLookup? _importedSoundPathLookup;
 
   /// Locale-resolved channel name/description. Set by [initialize] and
   /// refreshed via [updateChannelNames] when the user switches language.
@@ -116,6 +129,9 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     void Function(String? payload)? onNotificationTap,
   }) async {
     _strings = strings;
+    _nativeAlarmChannel.initialize(
+      onAlarmTap: (String? payload) => onNotificationTap?.call(payload),
+    );
     tz_data.initializeTimeZones();
     // `zonedSchedule` requires `tz.local` to be set to the device's actual
     // timezone; without this the AlarmManager bridge can fail to fire on
@@ -218,6 +234,54 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
     required String title,
     required String body,
     required bool exact,
+    String? soundId,
+    String? payload,
+  }) async {
+    if (exact && soundId != null && payload != null) {
+      String? soundPath;
+      try {
+        soundPath = await _importedSoundPathLookup?.call(soundId);
+      } catch (_) {
+        // A deleted or temporarily unreadable imported source falls back to
+        // the bundled default inside the Native service.
+      }
+      try {
+        await _nativeAlarmChannel.schedule(
+          notificationId: notificationId,
+          fireAt: fireAt,
+          title: title,
+          body: body,
+          payload: payload,
+          soundId: soundId,
+          soundPath: soundPath,
+        );
+        await _plugin.cancel(notificationId);
+        return;
+      } on MissingPluginException {
+        // Non-Android/test hosts retain the plugin scheduling path.
+      } on PlatformException {
+        // A Native boundary failure must not lose the alarm entirely.
+      }
+    } else {
+      await _cancelNativeBestEffort(notificationId);
+    }
+
+    await _schedulePlugin(
+      notificationId: notificationId,
+      fireAt: fireAt,
+      title: title,
+      body: body,
+      exact: exact,
+      payload: payload,
+    );
+  }
+
+  Future<void> _schedulePlugin({
+    required int notificationId,
+    required DateTime fireAt,
+    required String title,
+    required String body,
+    required bool exact,
     String? payload,
   }) async {
     final bool canFsi = await _safeCanUseFullScreenIntent();
@@ -300,16 +364,82 @@ class FlutterLocalNotificationAdapter implements NotificationScheduler {
   }
 
   @override
-  Future<void> cancel(int notificationId) => _plugin.cancel(notificationId);
+  Future<void> cancel(int notificationId) async {
+    await _cancelNativeBestEffort(notificationId);
+    await _plugin.cancel(notificationId);
+  }
 
   @override
-  Future<void> cancelAll() => _plugin.cancelAll();
+  Future<void> cancelAll() async {
+    try {
+      await _nativeAlarmChannel.cancelAll();
+    } on MissingPluginException {
+      // Non-Android/test host.
+    } on PlatformException {
+      // Plugin-owned notifications still need cleanup.
+    }
+    await _plugin.cancelAll();
+  }
+
+  Future<void> _cancelNativeBestEffort(int notificationId) async {
+    try {
+      await _nativeAlarmChannel.cancel(notificationId);
+    } on MissingPluginException {
+      // Non-Android/test host.
+    } on PlatformException {
+      // Continue with plugin cleanup.
+    }
+  }
+
+  @override
+  Future<void> setAlarmVolumePercent(int percent) async {
+    try {
+      await _nativeAlarmChannel.setAlarmVolumePercent(percent);
+    } on MissingPluginException {
+      // Non-Android/test host.
+    } on PlatformException {
+      // Flutter playback still receives the same setting independently.
+    }
+  }
+
+  @override
+  Future<bool> ensureNativePlayback(int notificationId) async {
+    try {
+      return await _nativeAlarmChannel.ensurePlayback(notificationId);
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> stopNativePlayback() async {
+    try {
+      await _nativeAlarmChannel.stopPlayback();
+    } on MissingPluginException {
+      // Non-Android/test host.
+    } on PlatformException {
+      // Flutter player cleanup still runs in the notifier.
+    }
+  }
 
   /// Returns the payload of the notification that launched the app, or
   /// `null` if the app was started normally. Used by `main()` to pick the
   /// initial route so a cold-start tap on the alarm notification lands on
   /// `/alarm-ringing` instead of the home screen.
   Future<String?> coldLaunchPayload() async {
+    try {
+      final String? launchPayload = await _nativeAlarmChannel
+          .takeLaunchPayload();
+      if (launchPayload != null) return launchPayload;
+      final String? activePayload = await _nativeAlarmChannel.activePayload();
+      if (activePayload != null) return activePayload;
+    } on MissingPluginException {
+      // Continue with flutter_local_notifications.
+    } on PlatformException {
+      // Continue with flutter_local_notifications.
+    }
     final NotificationAppLaunchDetails? details = await _plugin
         .getNotificationAppLaunchDetails();
     if (details?.didNotificationLaunchApp ?? false) {

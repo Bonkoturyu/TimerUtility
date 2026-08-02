@@ -4,4 +4,5 @@
 <resources>
     <string name="app_name">TimerUtility</string>
     <string name="interval_notification_channel_name">定時通知</string>
+    <string name="alarm_notification_channel_name">計時器鬧鐘</string>
 </resources>

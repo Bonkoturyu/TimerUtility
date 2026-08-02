@@ -115,6 +115,7 @@ lib/
 │   │   └── permission_handler_adapter.dart          # Phase 4 で実装済み（Phase 6b で PermissionChannel 注入）
 │   ├── platform/
 │   │   ├── permission_channel.dart                  # Phase 6b で実装済み（USE_FULL_SCREEN_INTENT 用 MethodChannel ラッパ）
+│   │   ├── native_alarm_channel.dart                # Native Exact予約・再生セッション MethodChannel
 │   │   └── method_channel_storage_capacity_reader.dart # Phase 13: filesDir volume の空き容量
 │   ├── audio/
 │   │   └── audioplayers_adapter.dart                # Phase 5 で実装済み
@@ -225,9 +226,11 @@ integration_test/                 # 実機テスト
 
 android/app/src/main/kotlin/      # Native 実装
 └── io/github/bonkoturyu/timer_utility/
-    └── MainActivity.kt           # FSI keyguard override + 自前 permission MethodChannel handler
-                                  # (BootReceiver / AlarmReceiver は flutter_local_notifications
-                                  #  内蔵で代替、独自実装なし。docs/platform-channels.md 参照)
+    ├── MainActivity.kt           # FSI keyguard override + MethodChannel handlers
+    ├── NativeAlarmScheduler.kt   # Exact/inexact選択・予約永続化
+    ├── NativeAlarmReceiver.kt    # 発火dispatch
+    ├── NativeAlarmBootReceiver.kt # 端末再起動後の未来予約復元
+    └── AlarmPlaybackService.kt   # mediaPlayback FGS + 選択音源ループ
 
 docs/                             # 設計ドキュメント
 └── (本ドキュメント等)

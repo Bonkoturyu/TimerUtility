@@ -166,8 +166,8 @@ class AlarmSoundCatalog {
   **同梱音源**に適用する。
 - ユーザー取り込み音源には本節の容量・時間・形式制限を適用し、アプリ内での
   トリミング、変換、音量正規化は行わない。
-- 通知 Channel の固定短音から選択音源へ 3200 ms で引き継ぐ既存方針は維持する。
-  ハンドオフ時間は取り込み音源の再生時間に依存させない。
+- Exact未許可時は、通知Channelの固定短音から選択音源へ3200 msで引き継ぐ。
+  Exact許可時はNative Serviceが取り込み内部コピーを予約時刻から直接ループ再生する。
 
 ### 対応形式
 
@@ -316,7 +316,7 @@ flutter:
    - 通知 Channel の `setSound()` で参照可能
    - ただし assets と二重管理になる
 
-2. **通知音は標準 + アラーム画面起動後にカスタム音再生**（採用）
+2. **inexact時は固定通知音 + アラーム画面起動後にカスタム音再生**（採用）
    - 通知 Channel: 固定の短い通知音
    - 通知音の再生中に `audioplayers` で選択音源を prepare
    - 固定ハンドオフ境界後に選択音源のループ再生を開始
@@ -327,8 +327,8 @@ flutter:
 
 ### 採用方針
 
-**案 2** を採用。理由:
-- assets 一元管理
+Exact許可時はNative Service、Exact未許可時は**案 2**を採用する。理由:
+- Exact経路は選択音源とアプリ内音量を予約時刻から適用できる
 - アラーム画面のスヌーズ / 停止操作と音再生のライフサイクルが一致
 - 通知音は短い「タンッ」程度で OK（あくまで存在通知）
 - OS 通知音の長さとユーザー選択音源の長さを分離できる
@@ -339,7 +339,9 @@ flutter:
 ```
 android/app/src/main/res/raw/
 ├── notif_alert.mp3   // 通常タイマー／アラーム Channel 用、約2秒
-└── alarm_default.mp3 // 定間隔通知 Receiver 用（Native側で再生時間を制限）
+├── alarm_default.mp3 // 定間隔通知とNative Exact再生
+├── alarm_gentle.mp3  // Native Exact再生（assets版と同一バイト）
+└── alarm_warning.mp3 // Native Exact再生（assets版と同一バイト）
 ```
 
 ---

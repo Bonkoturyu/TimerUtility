@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/diagnostics/diagnostic_event.dart';
 import '../domain/ports/alarm_sound_player.dart';
+import '../domain/ports/notification_scheduler.dart';
 import '../domain/timer/alarm_sound.dart';
 import '../domain/timer/alarm_sound_catalog.dart';
 import 'alarm_repository_provider.dart';
@@ -146,6 +147,22 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
                 : NotificationFireKind.timerFired,
           ),
         );
+    final NotificationScheduler scheduler = ref.read(
+      notificationSchedulerProvider,
+    );
+    if (scheduler is NativeAlarmPlaybackController) {
+      final bool nativePlayback =
+          await (scheduler as NativeAlarmPlaybackController)
+              .ensureNativePlayback(notificationId);
+      if (!_isCurrent(generation, timerId)) {
+        if (nativePlayback) {
+          await (scheduler as NativeAlarmPlaybackController)
+              .stopNativePlayback();
+        }
+        return;
+      }
+      if (nativePlayback) return;
+    }
     // Start the cue window immediately. Cancellation only removes the
     // notification UI; Pixel 6a / Android 16 measurements showed that it
     // does not stop the OS-owned sound. Preparing in parallel hides decoder
@@ -308,7 +325,7 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   Future<void> stop() async {
     _playbackGeneration++;
     state = AlarmRingingState.idle();
-    await ref.read(alarmSoundPlayerProvider).stop();
+    await _stopPlayers();
   }
 
   /// Mark the snooze button as pressed and stop the audio.
@@ -319,7 +336,18 @@ class AlarmRingingNotifier extends _$AlarmRingingNotifier {
   Future<void> snoozeRequested() async {
     _playbackGeneration++;
     state = state.copyWith(isPlaying: false, snoozeRequested: true);
-    await ref.read(alarmSoundPlayerProvider).stop();
+    await _stopPlayers();
+  }
+
+  Future<void> _stopPlayers() async {
+    final NotificationScheduler scheduler = ref.read(
+      notificationSchedulerProvider,
+    );
+    await Future.wait<void>(<Future<void>>[
+      ref.read(alarmSoundPlayerProvider).stop(),
+      if (scheduler is NativeAlarmPlaybackController)
+        (scheduler as NativeAlarmPlaybackController).stopNativePlayback(),
+    ]);
   }
 }
 

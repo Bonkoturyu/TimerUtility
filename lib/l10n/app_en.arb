@@ -252,6 +252,7 @@
   "homeMenuSettings": "Settings",
   "settingsAppBarTitle": "Settings",
   "settingsSectionDisplay": "Display",
+  "settingsSectionAlarmSound": "App volume",
   "settingsSectionDefaults": "Defaults",
   "settingsSectionVoiceControl": "Voice control",
   "settingsSectionAbout": "About",
@@ -268,6 +269,9 @@
     }
   },
   "settingsDefaultAlarmSoundLabel": "Alarm sound",
+  "settingsAlarmVolumeLabel": "Volume",
+  "settingsAlarmVolumeValue": "{percent}%",
+  "@settingsAlarmVolumeValue": {"placeholders": {"percent": {"type": "int"}}},
   "settingsLanguageLabel": "Language",
   "settingsLanguageSystem": "Follow system",
   "settingsLanguageDialogTitle": "Select language",

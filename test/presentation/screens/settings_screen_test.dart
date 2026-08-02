@@ -242,6 +242,10 @@ void main() {
 
       expect(find.byKey(const Key('settings_theme_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_snooze_tile')), findsOneWidget);
+      expect(
+        find.byKey(const Key('settings_alarm_volume_tile')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('settings_sound_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_licenses_tile')), findsOneWidget);
       expect(find.byKey(const Key('settings_version_tile')), findsOneWidget);
@@ -470,6 +474,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(container.read(settingsNotifierProvider).defaultSnoozeMinutes, 10);
+    });
+
+    testWidgets('音量Sliderでstateと表示が更新される', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      final Finder tile = find.byKey(const Key('settings_alarm_volume_tile'));
+      final ProviderContainer container = ProviderScope.containerOf(
+        tester.element(tile),
+      );
+      final Slider slider = tester.widget<Slider>(
+        find.byKey(const Key('settings_alarm_volume_slider')),
+      );
+      slider.onChanged!(55);
+      await tester.pump();
+      expect(find.text('55%'), findsOneWidget);
+      slider.onChangeEnd!(55);
+      await tester.pumpAndSettle();
+
+      expect(container.read(settingsNotifierProvider).alarmVolumePercent, 55);
+      expect(find.text('55%'), findsOneWidget);
     });
 
     testWidgets('音源 ListTile タップ → SoundSelectSheet → 選択で state 更新', (

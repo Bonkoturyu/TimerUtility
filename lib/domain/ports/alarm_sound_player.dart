@@ -24,6 +24,11 @@ abstract class AlarmSoundPlayer {
   Future<void> dispose();
 }
 
+/// Optional per-player volume control used by the production adapter.
+abstract class VolumeControlledAlarmSoundPlayer {
+  Future<void> setVolumePercent(int percent);
+}
+
 /// Optional alarm-handoff capability used by the production player.
 ///
 /// Kept separate from [AlarmSoundPlayer] so bundled-only adapters and test

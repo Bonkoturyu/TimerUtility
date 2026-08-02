@@ -544,6 +544,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsSectionDisplay => '표시';
 
   @override
+  String get settingsSectionAlarmSound => '앱 음량';
+
+  @override
   String get settingsSectionDefaults => '기본값';
 
   @override
@@ -577,6 +580,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get settingsDefaultAlarmSoundLabel => '알람 사운드';
+
+  @override
+  String get settingsAlarmVolumeLabel => '음량';
+
+  @override
+  String settingsAlarmVolumeValue(int percent) {
+    return '$percent%';
+  }
 
   @override
   String get settingsLanguageLabel => '언어';

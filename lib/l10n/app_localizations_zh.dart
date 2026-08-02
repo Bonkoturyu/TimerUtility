@@ -540,6 +540,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionDisplay => '显示';
 
   @override
+  String get settingsSectionAlarmSound => '应用音量';
+
+  @override
   String get settingsSectionDefaults => '默认值';
 
   @override
@@ -573,6 +576,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDefaultAlarmSoundLabel => '闹钟音源';
+
+  @override
+  String get settingsAlarmVolumeLabel => '音量';
+
+  @override
+  String settingsAlarmVolumeValue(int percent) {
+    return '$percent%';
+  }
 
   @override
   String get settingsLanguageLabel => '语言';
@@ -1271,6 +1282,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get settingsSectionDisplay => '顯示';
 
   @override
+  String get settingsSectionAlarmSound => '應用程式音量';
+
+  @override
   String get settingsSectionDefaults => '預設值';
 
   @override
@@ -1304,6 +1318,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsDefaultAlarmSoundLabel => '鬧鐘音效';
+
+  @override
+  String get settingsAlarmVolumeLabel => '音量';
+
+  @override
+  String settingsAlarmVolumeValue(int percent) {
+    return '$percent%';
+  }
 
   @override
   String get settingsLanguageLabel => '語言';

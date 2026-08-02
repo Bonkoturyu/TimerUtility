@@ -31,6 +31,7 @@ Future<bool> _defaultSelectionDeadline(
 class AudioplayersAdapter
     implements
         AlarmSoundPlayer,
+        VolumeControlledAlarmSoundPlayer,
         HandoffAlarmSoundPlayer,
         ImportedSoundPreviewPlayer,
         StagedImportedSoundPreviewPlayer {
@@ -60,9 +61,28 @@ class AudioplayersAdapter
   int _selectionGeneration = 0;
   int? _fallbackPlayGeneration;
   bool _isPlaying = false;
+  double _volume = 1.0;
 
   @override
   bool get isPlaying => _isPlaying;
+
+  @override
+  Future<void> setVolumePercent(int percent) async {
+    if (percent < 0 || percent > 100) {
+      throw ArgumentError.value(
+        percent,
+        'percent',
+        'must be between 0 and 100',
+      );
+    }
+    _volume = percent / 100;
+    final AudioPlayer? selected = _selectedPlayer;
+    await Future.wait<void>(<Future<void>>[
+      _player.setVolume(_volume),
+      if (selected != null && !identical(selected, _player))
+        selected.setVolume(_volume),
+    ]);
+  }
 
   @override
   Future<void> prepare(AlarmSound sound) {
@@ -355,6 +375,8 @@ class AudioplayersAdapter
     );
     if (!isCurrent()) return false;
     await player.setReleaseMode(ReleaseMode.loop);
+    if (!isCurrent()) return false;
+    await player.setVolume(_volume);
     if (!isCurrent()) return false;
     await player.setSource(source);
     return isCurrent();

@@ -244,6 +244,7 @@ void main() {
           title: 'Wake up',
           body: any(named: 'body'),
           exact: true,
+          soundId: created.soundId,
           payload: 'alarm:${created.id}',
         ),
       ).called(1);

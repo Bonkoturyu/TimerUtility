@@ -566,6 +566,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionDisplay => 'Display';
 
   @override
+  String get settingsSectionAlarmSound => 'App volume';
+
+  @override
   String get settingsSectionDefaults => 'Defaults';
 
   @override
@@ -599,6 +602,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDefaultAlarmSoundLabel => 'Alarm sound';
+
+  @override
+  String get settingsAlarmVolumeLabel => 'Volume';
+
+  @override
+  String settingsAlarmVolumeValue(int percent) {
+    return '$percent%';
+  }
 
   @override
   String get settingsLanguageLabel => 'Language';

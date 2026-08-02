@@ -80,6 +80,10 @@ class UserPreferenceKeys {
   /// catalog's `defaultSound`.
   static const String defaultAlarmSoundId = 'defaultAlarmSoundId';
 
+  /// App-owned alarm playback volume (10..100, in 5 percent steps).
+  /// This does not modify the device's global alarm stream volume.
+  static const String alarmVolumePercent = 'alarmVolumePercent';
+
   /// Manual locale override (BCP-47 language tag, e.g. `'ja'`, `'en'`,
   /// `'zh-Hant'`). Absent / null means "follow the system" — the settings
   /// notifier returns `null` for `localeOverride` and `MaterialApp.locale`

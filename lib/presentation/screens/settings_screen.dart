@@ -94,6 +94,8 @@ class SettingsScreen extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _onLanguageTap(context, ref, settings),
             ),
+            _SectionHeader(label: l.settingsSectionAlarmSound),
+            const _AlarmVolumeTile(),
             _SectionHeader(label: l.settingsSectionDefaults),
             ListTile(
               key: const Key('settings_snooze_tile'),
@@ -203,6 +205,68 @@ class SettingsScreen extends ConsumerWidget {
     await ref
         .read(settingsNotifierProvider.notifier)
         .setDefaultAlarmSoundId(picked);
+  }
+}
+
+class _AlarmVolumeTile extends ConsumerStatefulWidget {
+  const _AlarmVolumeTile();
+
+  @override
+  ConsumerState<_AlarmVolumeTile> createState() => _AlarmVolumeTileState();
+}
+
+class _AlarmVolumeTileState extends ConsumerState<_AlarmVolumeTile> {
+  int? _dragValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l = AppLocalizations.of(context);
+    final int persisted = ref.watch(
+      settingsNotifierProvider.select(
+        (SettingsState state) => state.alarmVolumePercent,
+      ),
+    );
+    final int value = _dragValue ?? persisted;
+    return ListTile(
+      key: const Key('settings_alarm_volume_tile'),
+      leading: const Icon(Icons.volume_up_outlined),
+      isThreeLine: true,
+      title: Text(l.settingsAlarmVolumeLabel),
+      subtitle: Row(
+        children: <Widget>[
+          Expanded(
+            child: Slider(
+              key: const Key('settings_alarm_volume_slider'),
+              min: kMinAlarmVolumePercent.toDouble(),
+              max: kMaxAlarmVolumePercent.toDouble(),
+              divisions:
+                  (kMaxAlarmVolumePercent - kMinAlarmVolumePercent) ~/
+                  kAlarmVolumeStepPercent,
+              value: value.toDouble(),
+              label: l.settingsAlarmVolumeValue(value),
+              onChanged: (double next) {
+                setState(() => _dragValue = next.round());
+              },
+              onChangeEnd: _commit,
+            ),
+          ),
+          SizedBox(
+            width: 56,
+            child: Text(
+              l.settingsAlarmVolumeValue(value),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _commit(double value) async {
+    await ref
+        .read(settingsNotifierProvider.notifier)
+        .setAlarmVolumePercent(value.round());
+    if (mounted) setState(() => _dragValue = null);
   }
 }
 

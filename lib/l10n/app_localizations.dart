@@ -1033,6 +1033,12 @@ abstract class AppLocalizations {
   /// **'表示'**
   String get settingsSectionDisplay;
 
+  /// No description provided for @settingsSectionAlarmSound.
+  ///
+  /// In ja, this message translates to:
+  /// **'アプリ音量'**
+  String get settingsSectionAlarmSound;
+
   /// No description provided for @settingsSectionDefaults.
   ///
   /// In ja, this message translates to:
@@ -1098,6 +1104,18 @@ abstract class AppLocalizations {
   /// In ja, this message translates to:
   /// **'アラーム音源'**
   String get settingsDefaultAlarmSoundLabel;
+
+  /// No description provided for @settingsAlarmVolumeLabel.
+  ///
+  /// In ja, this message translates to:
+  /// **'音量'**
+  String get settingsAlarmVolumeLabel;
+
+  /// No description provided for @settingsAlarmVolumeValue.
+  ///
+  /// In ja, this message translates to:
+  /// **'{percent}%'**
+  String settingsAlarmVolumeValue(int percent);
 
   /// No description provided for @settingsLanguageLabel.
   ///
