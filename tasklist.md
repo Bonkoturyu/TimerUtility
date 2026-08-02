@@ -31,7 +31,11 @@
   versionCode `8` / targetSdk `36` と `jarsigner -verify` 成功を確認する
   (`build/app/outputs/bundle/release/app-release.aab`、66,662,115 bytes、
   SHA-256 `014ADB9336883BAEC40FE2ABBEE1DB9F9A43CD90C0E2846F10A7BD22133D8B57`)
-- [ ] `1.1.4 (8)` の AAB をクローズドテストへアップロードする（ユーザー実施）
+- [x] `1.1.4 (8)` の AAB をクローズドテストへ公開する（ユーザー実施）
+- [x] `main` から Release Workflow を `v1.1.4` で実行し、タグと GitHub Release、
+  署名付き AAB を公開する
+  (Workflow run `30733375845` success、66,656,922 bytes、
+  SHA-256 `C21755A39D42C0A209D964DE426FEFF7177B61FEA24A14E50DF249F8DBD9E114`)
 
 ### Version 1.1.3 Android edge-to-edge 非推奨 API 警告の再発防止（2026-07-31）
 
