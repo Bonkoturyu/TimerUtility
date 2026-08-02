@@ -476,7 +476,7 @@ void main() {
       expect(container.read(settingsNotifierProvider).defaultSnoozeMinutes, 10);
     });
 
-    testWidgets('アプリ内音量Sliderでstateと表示が更新される', (WidgetTester tester) async {
+    testWidgets('音量Sliderでstateと表示が更新される', (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1200));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(_harness());

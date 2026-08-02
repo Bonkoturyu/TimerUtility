@@ -240,7 +240,7 @@
   "homeMenuSettings": "設定",
   "settingsAppBarTitle": "設定",
   "settingsSectionDisplay": "表示",
-  "settingsSectionAlarmSound": "アラーム音",
+  "settingsSectionAlarmSound": "アプリ音量",
   "settingsSectionDefaults": "デフォルト",
   "settingsSectionVoiceControl": "音声操作",
   "settingsSectionAbout": "情報",
@@ -257,7 +257,7 @@
     }
   },
   "settingsDefaultAlarmSoundLabel": "アラーム音源",
-  "settingsAlarmVolumeLabel": "アプリ内の音量",
+  "settingsAlarmVolumeLabel": "音量",
   "settingsAlarmVolumeValue": "{percent}%",
   "@settingsAlarmVolumeValue": {"placeholders": {"percent": {"type": "int"}}},
   "settingsLanguageLabel": "言語",

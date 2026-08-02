@@ -566,7 +566,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSectionDisplay => 'Display';
 
   @override
-  String get settingsSectionAlarmSound => 'Alarm sound';
+  String get settingsSectionAlarmSound => 'App volume';
 
   @override
   String get settingsSectionDefaults => 'Defaults';
@@ -604,7 +604,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDefaultAlarmSoundLabel => 'Alarm sound';
 
   @override
-  String get settingsAlarmVolumeLabel => 'In-app volume';
+  String get settingsAlarmVolumeLabel => 'Volume';
 
   @override
   String settingsAlarmVolumeValue(int percent) {

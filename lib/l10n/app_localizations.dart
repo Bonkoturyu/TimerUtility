@@ -1036,7 +1036,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSectionAlarmSound.
   ///
   /// In ja, this message translates to:
-  /// **'アラーム音'**
+  /// **'アプリ音量'**
   String get settingsSectionAlarmSound;
 
   /// No description provided for @settingsSectionDefaults.
@@ -1108,7 +1108,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAlarmVolumeLabel.
   ///
   /// In ja, this message translates to:
-  /// **'アプリ内の音量'**
+  /// **'音量'**
   String get settingsAlarmVolumeLabel;
 
   /// No description provided for @settingsAlarmVolumeValue.
