@@ -33,13 +33,31 @@
 - [x] 予約の更新・取消・端末再起動後の再登録を Native / plugin 両経路で整合させる
 - [x] Unit / Widget / MethodChannel / Native JUnit、翻訳 validator、静的解析、
   全 Flutter テスト（903 passed / 1 skipped）、debug APK build を通す
-- [!] Exact / inexact、ロック中 / 解除中、プロセス停止、端末再起動、
-  同梱 / 取込音源の実機確認は APK 検証後にユーザー実施が必要
+- [x] Pixel 6a 実機で同梱3音源の試聴、55%での Exact 鳴動、ロック画面 / プロセス停止からの
+  鳴動、Stop 後の即時消音と再開なしを確認する
+- [!] inexact フォールバック、端末再起動後の予約復元、取込音源の本番鳴動は未確認。
+  現行 APK は `USE_EXACT_ALARM` が常時許可されるため、inexact 経路の再現には検証用 APK が必要
 
 **設計根拠**: 通知チャンネルの音量はアプリから制御できないため、音量制御が必要な
 Exact 経路は長時間再生を担える Foreground Service に分離する。Exact 未許可時は
 バックグラウンドからの確実な Service 起動を前提にせず、既存の OS 通知音経路を
 安全側のフォールバックとして維持する。
+
+### Version 1.1.5 アラーム音量・Native Exact 再生（2026-08-02）
+
+- [x] `pubspec.yaml` を `1.1.5+9`
+  （versionName `1.1.5` / versionCode `9`）へ更新する
+- [x] Play Store 用リリースノートを日本語 / 英語で作成する
+- [x] 翻訳 validator 219/219 aligned、`flutter analyze --fatal-infos` 0 issues、
+  `flutter test` 903 passed (1 skipped)、Native JUnit 13 passed を確認する
+- [x] 署名付き release AAB を生成し、AAB manifest の versionName `1.1.5` /
+  versionCode `9` / targetSdk `36` と `jarsigner -verify` 成功を確認する
+  (`build/app/outputs/bundle/release/app-release.aab`、67,646,829 bytes、
+  SHA-256 `41A957EA6344A4D17C163292F352723796BA250EAC2517D7C2863DF2E089303E`)
+- [ ] PR #136 を `main` へマージする
+- [ ] `main` から Release Workflow を `v1.1.5` で実行し、タグ、GitHub Release、
+  署名付き AAB を公開する
+- [ ] `1.1.5 (9)` の AAB を Play Console のクローズドテストへ公開する（ユーザー実施）
 
 ### Version 1.1.4 端末内音声認識の安定性改善（2026-08-02）
 
