@@ -138,6 +138,22 @@ Repository: https://github.com/Bonkoturyu/TimerUtility
 
 ## 4. What's new (Release notes、500 文字以内)
 
+### Version 1.1.4
+
+#### 日本語
+
+```text
+- Pixel端末で、端末内の日本語音声モデルの判定と取得処理を改善しました。
+- 音声停止の安定性と停止表現の認識を改善しました。音声は保存・送信されません。
+```
+
+#### English
+
+```text
+- Improved detection and download handling for on-device Japanese speech models on Pixel devices.
+- Improved voice-stop reliability and stop-phrase recognition. Audio is not saved or sent.
+```
+
 ### Version 1.0.1
 
 #### 日本語
