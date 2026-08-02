@@ -19,6 +19,20 @@
 
 ## 進行中
 
+### Version 1.1.4 端末内音声認識の安定性改善（2026-08-02）
+
+- [x] `pubspec.yaml` を `1.1.4+8`
+  （versionName `1.1.4` / versionCode `8`）へ更新する
+- [x] Play Store 用リリースノートを日本語 / 英語で作成し、
+  v1.1.3 以後の端末内音声認識修正だけを記載する
+- [x] 翻訳 validator 216/216 aligned、`flutter analyze --fatal-infos` 0 issues、
+  `flutter test` 891 passed (1 skipped)、`git diff --check` を確認する
+- [x] 署名付き release AAB を生成し、release manifest の versionName `1.1.4` /
+  versionCode `8` / targetSdk `36` と `jarsigner -verify` 成功を確認する
+  (`build/app/outputs/bundle/release/app-release.aab`、66,662,115 bytes、
+  SHA-256 `014ADB9336883BAEC40FE2ABBEE1DB9F9A43CD90C0E2846F10A7BD22133D8B57`)
+- [ ] `1.1.4 (8)` の AAB をクローズドテストへアップロードする（ユーザー実施）
+
 ### Version 1.1.3 Android edge-to-edge 非推奨 API 警告の再発防止（2026-07-31）
 
 - [x] `MainActivity.onCreate()` の `WindowCompat.enableEdgeToEdge(window)` と
@@ -33,9 +47,9 @@
   versionCode `7` / targetSdk `36`、AndroidX Core / Core-KTX `1.16.0` を確認する
   (`build/app/outputs/bundle/release/app-release.aab`、66,659,245 bytes、
   SHA-256 `8018F8B3AB8951AB06793DE6E2F0B63BCCE9ECFA6B7053D7300F73740C43DBCF`)
-- [ ] `1.1.3 (7)` の AAB をクローズドテストへアップロードし、Play Console の
-  `setStatusBarColor` / `setNavigationBarColor` 警告が解消するか確認する
-  （ユーザー実施）
+- [x] `1.1.3 (7)` の AAB を Play Console へアップロードする（ユーザー実施）
+- [ ] Play Console の `setStatusBarColor` / `setNavigationBarColor` 警告が
+  解消するか確認する（ユーザー実施）
 
 ### 非稼働タイマーの設定時間変更（2026-07-31）
 
