@@ -19,6 +19,28 @@
 
 ## 進行中
 
+### アラーム音量・Native Exact 再生・同梱音源試聴（2026-08-02）
+
+- [x] Exact Alarm 許可時は Android Native の Foreground media playback で
+  選択音源を予約時刻から鳴らし、通知は無音の Full-screen Intent とする
+- [x] Exact Alarm 未許可時だけ、既存の inexact 通知予約へフォールバックし、
+  OS 通知音を約 3.2 秒鳴動後に Flutter のループ再生へ切り替える
+- [x] アプリ内アラーム音量を 10〜100%（5%刻み、既定100%）で永続化し、
+  Native 再生・Flutter 再生・試聴へ同じ値を適用する
+- [x] 同梱3音源に再生 / 停止ボタンを追加し、試聴だけでは選択を変更しない
+- [x] Native 再生中のセッションを Flutter 起動時に復元し、Stop / Snooze で
+  Native と Flutter の両方を確実に停止する
+- [x] 予約の更新・取消・端末再起動後の再登録を Native / plugin 両経路で整合させる
+- [x] Unit / Widget / MethodChannel / Native JUnit、翻訳 validator、静的解析、
+  全 Flutter テスト（903 passed / 1 skipped）、debug APK build を通す
+- [!] Exact / inexact、ロック中 / 解除中、プロセス停止、端末再起動、
+  同梱 / 取込音源の実機確認は APK 検証後にユーザー実施が必要
+
+**設計根拠**: 通知チャンネルの音量はアプリから制御できないため、音量制御が必要な
+Exact 経路は長時間再生を担える Foreground Service に分離する。Exact 未許可時は
+バックグラウンドからの確実な Service 起動を前提にせず、既存の OS 通知音経路を
+安全側のフォールバックとして維持する。
+
 ### Version 1.1.4 端末内音声認識の安定性改善（2026-08-02）
 
 - [x] `pubspec.yaml` を `1.1.4+8`

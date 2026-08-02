@@ -38,24 +38,25 @@ Claude Code は Phase 4 以降の作業前に必ず本ドキュメントを参�
 
 ## 本プロジェクトの戦略
 
-### Foreground Service は使わない
+### Foreground Service はExact鳴動中だけ使用する
 
-詳細は `docs/adr/0003-fullscreen-intent-strategy.md`。
+詳細は `docs/adr/0007-native-exact-alarm-playback.md`。
 
 採用方針:
-- **AlarmManager + 通知スケジュール方式**
-- アラーム発火そのものは OS に予約（`flutter_local_notifications` 経由）
+- **AlarmManager + 通知 + mediaPlayback Foreground Service**
+- Exact予約はNative AlarmManager、inexact予約は固定通知音経路を使用
+- Exact発火後だけForeground Serviceが選択音源のループを所有する
 - カウントダウン表示はフォアグラウンド時のみ
-- バックグラウンドではアプリは何もしない
+- BOOT_COMPLETEDでは未来の予約だけを再登録し、Serviceを直接開始しない
 
 メリット:
-- Android 16 の FGS 制約を回避
-- バッテリー消費最小
+- Flutterプロセス停止中でも選択音源とアプリ内音量を最初から適用可能
+- `mediaPlayback` typeに用途を限定し、常駐表示更新には使用しない
 - 端末スリープ中も時計は止まらないため、絶対時刻ベースで正確
-- Play Store の specialUse 審査不要
 
 デメリット:
-- 通知のリアルタイム秒数更新は不可（許容）
+- 鳴動中はForeground Service通知が必須
+- Exact未許可時の固定Channel音はアプリ内音量で制御できない
 
 ---
 
@@ -178,8 +179,8 @@ Claude Code は Phase 4 以降の作業前に必ず本ドキュメントを参�
 
 | Channel ID | 用途 | importance | サウンド | バイブ |
 |---|---|---|---|---|
-| `timer_alarm` | タイマー鳴動 | HIGH (5) | カスタム音源 | あり |
-| `timer_status` | タイマー実行中の表示（任意） | LOW (2) | なし | なし |
+| `timer_alarm_v7` | inexactフォールバック | HIGH (5) | 固定短音 | あり |
+| `timer_alarm_native_v1` | Exact Native鳴動のFGS/FSI通知 | HIGH (5) | なし | あり |
 
 `timer_alarm` Channel:
 - `setBypassDnd(true)`（おやすみモードを突破、要ユーザー許可）
@@ -191,8 +192,9 @@ Claude Code は Phase 4 以降の作業前に必ず本ドキュメントを参�
 
 - 通知の `setSound()` で `assets/sounds/` の音源は **直接指定不可**
 - `flutter_local_notifications` の `RawResourceAndroidNotificationSound` で `android/app/src/main/res/raw/` 配下の音源を指定する方法がある
-- 本プロジェクトでは: **通知 Channel の固定短音 + 固定ハンドオフ後に audioplayers で選択音源をループ再生** の二段構え
-- Android が所有する Channel 音は通知を cancel しても停止しないため、通知音再生中に選択音源を prepare し、Pixel 6a / Android 16 の実測に基づく 3200 ms 後に再生を開始する
+- Exact許可時はNative `mediaPlayback` Serviceが選択音源を時刻到達時からループ再生する
+- Exact未許可時は通知Channelの固定短音を鳴らし、選択音源をprepareして3200 ms後にFlutter再生へ切り替える
+- Androidが所有するChannel音は通知をcancelしても停止せず、アプリ内音量の対象外
 - audioplayers 側も `AndroidUsageType.alarm` を指定し、OS 通知音と同じアラーム用途で再生する
 - Stop / Snooze / 別タイマー開始時は再生世代を更新し、待機中または prepare 中の古い再生開始を破棄する
 
@@ -206,12 +208,14 @@ Claude Code は Phase 4 以降の作業前に必ず本ドキュメントを参�
 
 - マニフェスト宣言のみ（ランタイム要求なし）
 - BroadcastReceiver で `BOOT_COMPLETED` を受信
-- Native (Kotlin) 側で受信 → Flutter Engine 起動 → タイマー DB 読み出し → 再予約
+- `NativeAlarmBootReceiver` はNativeに永続化した未来のExact予約を再登録する
+- pluginのBootReceiverはplugin所有のinexact予約を再登録する
+- アプリ起動時のCollection復元がDB状態と過去到達エントリを整合させる
 
 ### 制約
 
 - BootReceiver の処理時間は数秒以内に抑える
-- DB 読み出しは Coroutine / Background Thread で
+- BootReceiverからFlutter EngineやmediaPlayback Serviceを直接起動しない
 - Direct Boot Aware にはしない（暗号化解除後の通常ブートで OK）
 
 詳細実装は `docs/platform-channels.md` で扱う。

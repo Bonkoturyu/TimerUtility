@@ -53,16 +53,19 @@ class _ImportController extends ImportedSoundManagementController {
 class _PreviewPlayer
     implements AlarmSoundPlayer, StagedImportedSoundPreviewPlayer {
   String? stagedToken;
+  String? bundledSoundId;
   int stopCalls = 0;
 
   @override
-  bool get isPlaying => stagedToken != null;
+  bool get isPlaying => stagedToken != null || bundledSoundId != null;
 
   @override
   Future<void> dispose() async {}
 
   @override
-  Future<void> play(AlarmSound sound) async {}
+  Future<void> play(AlarmSound sound) async {
+    bundledSoundId = sound.id;
+  }
 
   @override
   Future<void> playStaged(String stagingToken) async {
@@ -76,6 +79,7 @@ class _PreviewPlayer
   Future<void> stop() async {
     stopCalls++;
     stagedToken = null;
+    bundledSoundId = null;
   }
 }
 
@@ -155,6 +159,42 @@ Future<void> _open(WidgetTester tester) async {
 
 void main() {
   setUp(() => TestWidgetsFlutterBinding.ensureInitialized());
+
+  testWidgets('同梱音源の試聴は選択を変えず再タップで停止する', (WidgetTester tester) async {
+    final _ImportController controller = _ImportController(null);
+    final _PreviewPlayer player = _PreviewPlayer();
+    await tester.pumpWidget(_harness(controller, player));
+
+    await tester.tap(find.byKey(const Key('open_sound_sheet')));
+    await tester.pumpAndSettle();
+    final Finder preview = find.byKey(const Key('sound_select_gentle_preview'));
+    await tester.tap(preview);
+    await tester.pump();
+
+    expect(player.bundledSoundId, 'gentle');
+    expect(find.byType(SoundSelectSheet), findsOneWidget);
+    expect(find.byKey(const Key('selected_sound_id')), findsNothing);
+
+    await tester.tap(preview);
+    await tester.pump();
+    expect(player.bundledSoundId, isNull);
+  });
+
+  testWidgets('同梱音源を試聴後に行を選ぶと停止して選択値を返す', (WidgetTester tester) async {
+    final _ImportController controller = _ImportController(null);
+    final _PreviewPlayer player = _PreviewPlayer();
+    await tester.pumpWidget(_harness(controller, player));
+
+    await tester.tap(find.byKey(const Key('open_sound_sheet')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('sound_select_warning_preview')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('sound_select_warning')));
+    await tester.pumpAndSettle();
+
+    expect(player.bundledSoundId, isNull);
+    expect(find.text('warning'), findsOneWidget);
+  });
 
   testWidgets('候補名を表示してstagingを試聴後に確定できる', (WidgetTester tester) async {
     final _PreparedSound prepared = _PreparedSound(_sound());

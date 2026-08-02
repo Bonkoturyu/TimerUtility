@@ -128,6 +128,29 @@ class _SilentHandoffPlayer extends _CapturingHandoffPlayer {
 class _MockNotificationScheduler extends Mock
     implements NotificationScheduler {}
 
+class _NativePlaybackScheduler
+    implements NotificationScheduler, NativeAlarmPlaybackController {
+  _NativePlaybackScheduler({required this.ensureResult});
+
+  final bool ensureResult;
+  int? ensuredNotificationId;
+  int stopPlaybackCalls = 0;
+
+  @override
+  Future<bool> ensureNativePlayback(int notificationId) async {
+    ensuredNotificationId = notificationId;
+    return ensureResult;
+  }
+
+  @override
+  Future<void> stopNativePlayback() async {
+    stopPlaybackCalls++;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _MockTimerRepository extends Mock implements TimerRepository {}
 
 class _MockAlarmRepository extends Mock implements AlarmRepository {}
@@ -155,8 +178,7 @@ class _RecordingSink implements DiagnosticSink {
   Future<void> flush() async {}
 }
 
-({ProviderContainer container, _MockNotificationScheduler scheduler})
-_container(
+({ProviderContainer container, NotificationScheduler scheduler}) _container(
   AlarmSoundPlayer player, {
   bool screenLocked = false,
   DiagnosticSink? diagnosticSink,
@@ -164,20 +186,26 @@ _container(
   Duration selectionTimeout = const Duration(seconds: 1),
   TimerRepository? timerRepository,
   AlarmRepository? alarmRepository,
+  NotificationScheduler? schedulerOverride,
 }) {
-  final scheduler = _MockNotificationScheduler();
-  when(() => scheduler.cancel(any())).thenAnswer((_) async {});
-  when(() => scheduler.cancelAll()).thenAnswer((_) async {});
-  when(
-    () => scheduler.schedule(
-      notificationId: any(named: 'notificationId'),
-      fireAt: any(named: 'fireAt'),
-      title: any(named: 'title'),
-      body: any(named: 'body'),
-      exact: any(named: 'exact'),
-      payload: any(named: 'payload'),
-    ),
-  ).thenAnswer((_) async {});
+  final NotificationScheduler scheduler =
+      schedulerOverride ?? _MockNotificationScheduler();
+  if (schedulerOverride == null) {
+    final _MockNotificationScheduler mock =
+        scheduler as _MockNotificationScheduler;
+    when(() => mock.cancel(any())).thenAnswer((_) async {});
+    when(() => mock.cancelAll()).thenAnswer((_) async {});
+    when(
+      () => mock.schedule(
+        notificationId: any(named: 'notificationId'),
+        fireAt: any(named: 'fireAt'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        exact: any(named: 'exact'),
+        payload: any(named: 'payload'),
+      ),
+    ).thenAnswer((_) async {});
+  }
 
   final c = ProviderContainer(
     overrides: <Override>[
@@ -240,6 +268,43 @@ void main() {
         expect(player.lastPlayed, sound);
       },
     );
+
+    test('Native Exact再生中はFlutter playerを開始しない', () async {
+      final player = _StubAlarmSoundPlayer();
+      final scheduler = _NativePlaybackScheduler(ensureResult: true);
+      final h = _container(player, schedulerOverride: scheduler);
+
+      await h.container
+          .read(alarmRingingNotifierProvider.notifier)
+          .start(
+            timerId: 'native-timer',
+            sound: AlarmSoundCatalog.all[1],
+            notificationId: 77,
+          );
+
+      expect(scheduler.ensuredNotificationId, 77);
+      expect(player.prepareCalls, 0);
+      expect(player.playCalls, 0);
+      expect(h.container.read(alarmRingingNotifierProvider).isPlaying, isTrue);
+    });
+
+    test('Native Exact再生中のstopはNativeとFlutterの両方を停止する', () async {
+      final player = _StubAlarmSoundPlayer();
+      final scheduler = _NativePlaybackScheduler(ensureResult: true);
+      final h = _container(player, schedulerOverride: scheduler);
+      final notifier = h.container.read(alarmRingingNotifierProvider.notifier);
+      await notifier.start(
+        timerId: 'native-timer',
+        sound: AlarmSoundCatalog.defaultSound,
+        notificationId: 78,
+      );
+
+      await notifier.stop();
+
+      expect(scheduler.stopPlaybackCalls, 1);
+      expect(player.stopCalls, 1);
+      expect(h.container.read(alarmRingingNotifierProvider).isPlaying, isFalse);
+    });
 
     test('start cancels the OS notification it is taking over from', () async {
       final player = _StubAlarmSoundPlayer();

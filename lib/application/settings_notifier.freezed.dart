@@ -21,6 +21,7 @@ mixin _$SettingsState {
   Locale? get localeOverride => throw _privateConstructorUsedError;
   int get defaultSnoozeMinutes => throw _privateConstructorUsedError;
   String get defaultAlarmSoundId => throw _privateConstructorUsedError;
+  int get alarmVolumePercent => throw _privateConstructorUsedError;
   bool get onDeviceVoiceStopEnabled => throw _privateConstructorUsedError;
 
   /// Create a copy of SettingsState
@@ -42,6 +43,7 @@ abstract class $SettingsStateCopyWith<$Res> {
     Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
+    int alarmVolumePercent,
     bool onDeviceVoiceStopEnabled,
   });
 }
@@ -65,6 +67,7 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
     Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
+    Object? alarmVolumePercent = null,
     Object? onDeviceVoiceStopEnabled = null,
   }) {
     return _then(
@@ -85,6 +88,10 @@ class _$SettingsStateCopyWithImpl<$Res, $Val extends SettingsState>
                 ? _value.defaultAlarmSoundId
                 : defaultAlarmSoundId // ignore: cast_nullable_to_non_nullable
                       as String,
+            alarmVolumePercent: null == alarmVolumePercent
+                ? _value.alarmVolumePercent
+                : alarmVolumePercent // ignore: cast_nullable_to_non_nullable
+                      as int,
             onDeviceVoiceStopEnabled: null == onDeviceVoiceStopEnabled
                 ? _value.onDeviceVoiceStopEnabled
                 : onDeviceVoiceStopEnabled // ignore: cast_nullable_to_non_nullable
@@ -109,6 +116,7 @@ abstract class _$$SettingsStateImplCopyWith<$Res>
     Locale? localeOverride,
     int defaultSnoozeMinutes,
     String defaultAlarmSoundId,
+    int alarmVolumePercent,
     bool onDeviceVoiceStopEnabled,
   });
 }
@@ -131,6 +139,7 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
     Object? localeOverride = freezed,
     Object? defaultSnoozeMinutes = null,
     Object? defaultAlarmSoundId = null,
+    Object? alarmVolumePercent = null,
     Object? onDeviceVoiceStopEnabled = null,
   }) {
     return _then(
@@ -151,6 +160,10 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
             ? _value.defaultAlarmSoundId
             : defaultAlarmSoundId // ignore: cast_nullable_to_non_nullable
                   as String,
+        alarmVolumePercent: null == alarmVolumePercent
+            ? _value.alarmVolumePercent
+            : alarmVolumePercent // ignore: cast_nullable_to_non_nullable
+                  as int,
         onDeviceVoiceStopEnabled: null == onDeviceVoiceStopEnabled
             ? _value.onDeviceVoiceStopEnabled
             : onDeviceVoiceStopEnabled // ignore: cast_nullable_to_non_nullable
@@ -168,6 +181,7 @@ class _$SettingsStateImpl implements _SettingsState {
     required this.localeOverride,
     required this.defaultSnoozeMinutes,
     required this.defaultAlarmSoundId,
+    required this.alarmVolumePercent,
     required this.onDeviceVoiceStopEnabled,
   });
 
@@ -180,11 +194,13 @@ class _$SettingsStateImpl implements _SettingsState {
   @override
   final String defaultAlarmSoundId;
   @override
+  final int alarmVolumePercent;
+  @override
   final bool onDeviceVoiceStopEnabled;
 
   @override
   String toString() {
-    return 'SettingsState(themeMode: $themeMode, localeOverride: $localeOverride, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId, onDeviceVoiceStopEnabled: $onDeviceVoiceStopEnabled)';
+    return 'SettingsState(themeMode: $themeMode, localeOverride: $localeOverride, defaultSnoozeMinutes: $defaultSnoozeMinutes, defaultAlarmSoundId: $defaultAlarmSoundId, alarmVolumePercent: $alarmVolumePercent, onDeviceVoiceStopEnabled: $onDeviceVoiceStopEnabled)';
   }
 
   @override
@@ -200,6 +216,8 @@ class _$SettingsStateImpl implements _SettingsState {
                 other.defaultSnoozeMinutes == defaultSnoozeMinutes) &&
             (identical(other.defaultAlarmSoundId, defaultAlarmSoundId) ||
                 other.defaultAlarmSoundId == defaultAlarmSoundId) &&
+            (identical(other.alarmVolumePercent, alarmVolumePercent) ||
+                other.alarmVolumePercent == alarmVolumePercent) &&
             (identical(
                   other.onDeviceVoiceStopEnabled,
                   onDeviceVoiceStopEnabled,
@@ -214,6 +232,7 @@ class _$SettingsStateImpl implements _SettingsState {
     localeOverride,
     defaultSnoozeMinutes,
     defaultAlarmSoundId,
+    alarmVolumePercent,
     onDeviceVoiceStopEnabled,
   );
 
@@ -232,6 +251,7 @@ abstract class _SettingsState implements SettingsState {
     required final Locale? localeOverride,
     required final int defaultSnoozeMinutes,
     required final String defaultAlarmSoundId,
+    required final int alarmVolumePercent,
     required final bool onDeviceVoiceStopEnabled,
   }) = _$SettingsStateImpl;
 
@@ -243,6 +263,8 @@ abstract class _SettingsState implements SettingsState {
   int get defaultSnoozeMinutes;
   @override
   String get defaultAlarmSoundId;
+  @override
+  int get alarmVolumePercent;
   @override
   bool get onDeviceVoiceStopEnabled;
 

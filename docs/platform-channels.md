@@ -93,6 +93,26 @@ Phase 13 の取り込み音源を保存するアプリ内部領域と同じ volu
 現在時刻より後の最初の境界へ予約を復元する。
 2 メソッドを提供する。
 
+### `io.github.bonkoturyu.timer_utility/native_alarm` (MethodChannel)
+
+Exact予約とNative再生セッションを扱う。Dart側は`NativeAlarmChannel`、Native側は
+`MainActivity`が境界となる。
+
+| Method | 引数 | 戻り値 | 用途 |
+| --- | --- | --- | --- |
+| `schedule` | `notificationId`, `fireAtUtcMs`, `title`, `body`, `payload`, `soundId`, `soundPath?` | `null` | Exact可ならNative再生、不可ならinexact cueとして永続予約 |
+| `cancel` | `notificationId` | `null` | Native予約と非active通知を取消 |
+| `cancelAll` | なし | `null` | 全Native予約とactive Serviceを停止 |
+| `setAlarmVolumePercent` | `percent` | `null` | app-owned音量を永続化しactive playerへ反映 |
+| `ensurePlayback` | `notificationId` | `bool` | pending Exactを即時開始、またはactive判定 |
+| `stopPlayback` | なし | `null` | active Foreground Serviceを停止 |
+| `takeLaunchPayload` | なし | `String?` | FSI/content Intentの未消費payloadを取得 |
+| `activePayload` | なし | `String?` | 現プロセスでactiveなNativeセッションのpayloadを取得 |
+
+NativeからDartへのwarm-launch通知は同じMethodChannelの`alarmTapped` callbackを使用する。
+payload形式は`timer:<id>` / `alarm:<id>`を維持する。`soundPath`はInfrastructure内だけで
+扱うアプリprivate絶対パスであり、Domainへ公開しない。
+
 ### `io.github.bonkoturyu.timer_utility/permission` (MethodChannel)
 
 `permission_handler` パッケージで扱えない権限・OS 操作を Dart 側から呼び出す
@@ -189,7 +209,7 @@ Phase 6 着手時 (2026-04-29) には Channel を 5 ch 立てる予定だった�
 
 ### `io.github.bonkoturyu.timer_utility/notification` (MethodChannel)
 
-- **採用見送り**: flutter_local_notifications パッケージで完結したため
+- **採用見送り**: この汎用名は使わず、Exact専用の`native_alarm`へ責務を限定したため
 - 代替: [lib/infrastructure/notification/flutter_local_notification_adapter.dart](../lib/infrastructure/notification/flutter_local_notification_adapter.dart)
   （通知の予約・キャンセル・チャンネル作成すべてをパッケージ経由で実施）
 - 将来再採用する条件: パッケージで実現できない通知制御
@@ -197,25 +217,22 @@ Phase 6 着手時 (2026-04-29) には Channel を 5 ch 立てる予定だった�
 
 ### `io.github.bonkoturyu.timer_utility/alarm_event` (EventChannel) ← Phase 6 残課題の本丸
 
-- **採用見送り**: Native → Flutter の能動 push は結局不要だった
-- 代替: flutter_local_notifications の payload + Activity の
-  `onNewIntent` / `getNotificationAppLaunchDetails()` 経由で完結
+- **採用見送り**: 常時Streamは不要で、単発callbackだけで足りるため
+- 代替: plugin payloadと`native_alarm.alarmTapped` callbackをActivityの
+  `onNewIntent`から使用する
   - 通知タップ時の Flutter 側受け口: `lib/main.dart` の
     `onDidReceiveNotificationResponse` および cold-launch 時の
     `getNotificationAppLaunchDetails()`
   - payload 形式: `timer:<id>` / `alarm:<id>` （ADR 0005 で確定）
   - `MainActivity.onNewIntent` で keyguard override を再適用
     （`applyKeyguardOverrideIfLocked`、FSI 経由 warm-launch 対応）
-- 将来再採用する条件: Native 側で独自 receiver / service を持ち、Flutter に
-  能動 push したい場合（例: 独自カスタムウィジェット連携、Phase 12 iOS 版の
-  bridge 用途など）
+- 将来再採用する条件: 複数種類の連続NativeイベントをStreamとして扱う必要が出た場合
 
 ### `io.github.bonkoturyu.timer_utility/boot` (MethodChannel)
 
 - **採用見送り**: Phase 10 で純 Flutter 採用
-- 代替: flutter_local_notifications 内蔵の `ScheduledNotificationBootReceiver`
-  と、アプリ起動時の `TimerCollectionNotifier._restoreFromRepository` /
-  `AlarmCollectionNotifier._loadFromRepository` の組合せ
+- 代替: plugin内蔵BootReceiver、`NativeAlarmBootReceiver`、アプリ起動時の
+  Collection復元の組合せ
 - 詳細: [`docs/android-constraints.md`](android-constraints.md) の起動時復元
   セクション参照
 - 将来再採用する条件: アプリ起動を待たず、boot 直後にバックグラウンドで復元
@@ -234,10 +251,9 @@ Phase 6 着手時 (2026-04-29) には Channel を 5 ch 立てる予定だった�
 
 ## Native 側のクラス設計
 
-実態は **MainActivity 単体** で `io.github.bonkoturyu.timer_utility/permission` Channel を
-直接登録している。当初設計にあった `AlarmEventChannelHandler` /
-`LockscreenChannelHandler` / `PermissionChannelHandler` といったハンドラ分離は
-行っていない（Channel が 1 つしかなく分離する利点が無いため）。
+`MainActivity`はMethodChannel境界を登録し、予約・通知・再生は
+`NativeAlarmScheduler` / `NativeAlarmNotification` / `AlarmPlaybackService`へ分離する。
+BroadcastReceiverは発火dispatchまたは再起動後の再登録だけを担当し、長時間再生を所有しない。
 
 加えて、FSI 経由 cold-launch / warm-launch の双方で keyguard override を
 適用するため、`applyKeyguardOverrideIfLocked` を `onCreate` と `onNewIntent`

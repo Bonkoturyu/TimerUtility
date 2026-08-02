@@ -339,6 +339,7 @@ AppBar 両方で再利用。
 | `settingsAppBarTitle` | 設定 | Settings | AppBar |
 | `settingsSectionDisplay` | 表示 | Display | セクション見出し |
 | `settingsSectionDefaults` | デフォルト | Defaults | セクション見出し |
+| `settingsSectionAlarmSound` | アラーム音 | Alarm sound | セクション見出し |
 | `settingsSectionVoiceControl` | 音声操作 | Voice control | セクション見出し |
 | `settingsSectionAbout` | 情報 | About | セクション見出し |
 | `settingsVersionLabel` | バージョン | Version | ListTile title（subtitle の `1.0.0 (2)` は `package_info_plus` 実行時取得のため非翻訳） |
@@ -349,6 +350,8 @@ AppBar 両方で再利用。
 | `settingsDefaultSnoozeLabel` | スヌーズ分 | Snooze minutes | ListTile title |
 | `settingsDefaultSnoozeOption` | {minutes} 分 | {minutes} min | SegmentedButton ラベル (5/10/15) |
 | `settingsDefaultAlarmSoundLabel` | アラーム音源 | Alarm sound | ListTile title |
+| `settingsAlarmVolumeLabel` | アプリ内の音量 | In-app volume | 音量 Slider の ListTile title |
+| `settingsAlarmVolumeValue` | {percent}% | {percent}% | 音量 Slider の値表示（10〜100%、5%刻み） |
 | `settingsLanguageLabel` | 言語 | Language | ListTile title (言語手動切替) |
 | `settingsLanguageSystem` | システムに合わせる | Follow system | 言語選択ダイアログの先頭オプション (`localeOverride = null`、F-9 の `localeResolutionCallback` に委譲) |
 | `settingsLanguageDialogTitle` | 言語を選択 | Select language | 言語選択ダイアログタイトル |

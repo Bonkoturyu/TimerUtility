@@ -18,6 +18,7 @@ abstract class NotificationScheduler {
     required String title,
     required String body,
     required bool exact,
+    String? soundId,
     String? payload,
   });
 
@@ -57,4 +58,25 @@ abstract class NotificationScheduler {
   /// scheduled notifications are not re-issued by this call (caller
   /// handles that separately when needed — e.g. `rescheduleAllRunning`).
   Future<void> updateChannelNames(NotificationStrings strings);
+}
+
+/// Optional app-wide alarm-volume capability.
+///
+/// The percentage is deliberately independent from the device alarm stream:
+/// implementations adjust only playback owned by this app.
+abstract class AlarmVolumeController {
+  Future<void> setAlarmVolumePercent(int percent);
+}
+
+/// Optional bridge for Android's exact-alarm foreground playback session.
+///
+/// Keeping this separate from [NotificationScheduler] lets tests and
+/// platforms without the Native path retain the scheduling-only contract.
+abstract class NativeAlarmPlaybackController {
+  /// Starts a pending Native alarm immediately, or reports an already-active
+  /// session for [notificationId]. Returns false for the inexact/plugin path.
+  Future<bool> ensureNativePlayback(int notificationId);
+
+  /// Stops the currently active Native playback session, if any.
+  Future<void> stopNativePlayback();
 }

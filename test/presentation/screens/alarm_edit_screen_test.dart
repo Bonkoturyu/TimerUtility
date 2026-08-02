@@ -130,6 +130,7 @@ NotificationScheduler _stubScheduler() {
       title: any(named: 'title'),
       body: any(named: 'body'),
       exact: any(named: 'exact'),
+      soundId: any(named: 'soundId'),
       payload: any(named: 'payload'),
     ),
   ).thenAnswer((_) async {});

@@ -276,7 +276,6 @@ Future<void> main() async {
   _registerBundledAssetLicenses();
   final NotificationStrings notificationStrings =
       await _resolveNotificationStrings();
-  final adapter = FlutterLocalNotificationAdapter();
   final AppDatabase database = AppDatabase();
   final DriftTimerRepository repository = DriftTimerRepository(database);
   final DriftPresetRepository presetRepo = DriftPresetRepository(database);
@@ -307,6 +306,10 @@ Future<void> main() async {
       ImportedAlarmSoundPathResolver(
         repository: importedSoundRepo,
         layout: importedSoundStorageLayout,
+      );
+  final FlutterLocalNotificationAdapter adapter =
+      FlutterLocalNotificationAdapter(
+        importedSoundPathLookup: importedSoundPathResolver.resolve,
       );
   final AudioplayersAdapter alarmSoundPlayer = AudioplayersAdapter(
     importedPathLookup: importedSoundPathResolver.resolve,
@@ -347,6 +350,16 @@ Future<void> main() async {
       TzDatabaseTimezoneResolver();
   final SharedPreferencesUserPreferences userPrefs =
       await SharedPreferencesUserPreferences.create();
+  final int? storedAlarmVolume = await userPrefs.getInt(
+    UserPreferenceKeys.alarmVolumePercent,
+  );
+  final int initialAlarmVolume =
+      storedAlarmVolume != null &&
+          isAllowedAlarmVolumePercent(storedAlarmVolume)
+      ? storedAlarmVolume
+      : kDefaultAlarmVolumePercent;
+  await alarmSoundPlayer.setVolumePercent(initialAlarmVolume);
+  await adapter.setAlarmVolumePercent(initialAlarmVolume);
 
   // PR #29 G3: read the last-visited tab synchronously here (we're
   // still pre-runApp and shared_preferences has resolved) so HomeScreen

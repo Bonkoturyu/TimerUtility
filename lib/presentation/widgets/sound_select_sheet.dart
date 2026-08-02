@@ -41,6 +41,7 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
   late final AlarmSoundPlayer _player;
   late final ImportedSoundManagementController _controller;
   PreparedImportedSound? _prepared;
+  String? _previewingBundledSoundId;
   bool _busy = false;
 
   @override
@@ -118,6 +119,19 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
                           : Icons.radio_button_unchecked,
                     ),
                     title: Text(soundDisplayName(l, sound.id)),
+                    trailing: IconButton(
+                      key: Key('sound_select_${sound.id}_preview'),
+                      tooltip: l.importedSoundPreview,
+                      onPressed: _busy
+                          ? null
+                          : () => _toggleBundledPreview(sound),
+                      icon: Icon(
+                        _previewingBundledSoundId == sound.id &&
+                                _player.isPlaying
+                            ? Icons.stop
+                            : Icons.play_arrow,
+                      ),
+                    ),
                     onTap: () => _select(sound.id),
                   );
                 },
@@ -216,6 +230,29 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
     }
   }
 
+  Future<void> _toggleBundledPreview(AlarmSound sound) async {
+    if (_busy) return;
+    try {
+      if (_previewingBundledSoundId == sound.id && _player.isPlaying) {
+        await _player.stop();
+        if (mounted) setState(() => _previewingBundledSoundId = null);
+        return;
+      }
+      await _stopPreviewBestEffort();
+      await _player.play(sound);
+      if (mounted) {
+        setState(() {
+          _previewingBundledSoundId = _player.isPlaying ? sound.id : null;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _previewingBundledSoundId = null);
+        _showMessage(AppLocalizations.of(context).importedSoundPreviewError);
+      }
+    }
+  }
+
   Future<void> _confirmPrepared() async {
     final PreparedImportedSound? prepared = _prepared;
     if (prepared == null || _busy) return;
@@ -250,6 +287,7 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
 
   Future<void> _select(String soundId) async {
     await _cancelPrepared(updateUi: false);
+    await _stopPreviewBestEffort();
     if (mounted) Navigator.of(context).pop(soundId);
   }
 
@@ -267,6 +305,7 @@ class _SoundSelectSheetState extends ConsumerState<SoundSelectSheet> {
   }
 
   Future<void> _stopPreviewBestEffort() async {
+    _previewingBundledSoundId = null;
     if (!_player.isPlaying) return;
     try {
       await _player.stop();

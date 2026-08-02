@@ -25,9 +25,16 @@ class MainActivity : FlutterActivity() {
         private const val INTERVAL_CHANNEL =
             "io.github.bonkoturyu.timer_utility/interval_notification"
         private const val STORAGE_CHANNEL = "io.github.bonkoturyu.timer_utility/storage"
+        private const val NATIVE_ALARM_CHANNEL =
+            "io.github.bonkoturyu.timer_utility/native_alarm"
+
+        const val EXTRA_ALARM_PAYLOAD = "nativeAlarmPayload"
+        const val EXTRA_ALARM_NOTIFICATION_ID = "nativeAlarmNotificationId"
     }
 
     private var onDeviceSpeechRecognizerHandler: OnDeviceSpeechRecognizerHandler? = null
+    private var nativeAlarmMethodChannel: MethodChannel? = null
+    private var pendingAlarmPayload: String? = null
 
     /**
      * Sets the keyguard-override flags when the device is currently
@@ -61,12 +68,21 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        pendingAlarmPayload = intent?.getStringExtra(EXTRA_ALARM_PAYLOAD)
         super.onCreate(savedInstanceState)
         applyKeyguardOverrideIfLocked()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        val payload = intent.getStringExtra(EXTRA_ALARM_PAYLOAD)
+        if (payload != null) {
+            pendingAlarmPayload = payload
+            nativeAlarmMethodChannel?.invokeMethod("alarmTapped", payload)
+            pendingAlarmPayload = null
+            intent.removeExtra(EXTRA_ALARM_PAYLOAD)
+        }
         applyKeyguardOverrideIfLocked()
     }
 
@@ -147,9 +163,92 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        nativeAlarmMethodChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            NATIVE_ALARM_CHANNEL,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "schedule" -> {
+                        val id = call.argument<Number>("notificationId")?.toInt()
+                        val fireAt = call.argument<Number>("fireAtUtcMs")?.toLong()
+                        val title = call.argument<String>("title")
+                        val body = call.argument<String>("body")
+                        val payload = call.argument<String>("payload")
+                        val soundId = call.argument<String>("soundId")
+                        val soundPath = call.argument<String>("soundPath")
+                        if (id == null || id < 0 || fireAt == null || title == null ||
+                            body == null || payload == null || soundId == null) {
+                            result.error("INVALID_ARGUMENT", "Invalid native alarm schedule", null)
+                        } else {
+                            NativeAlarmScheduler.schedule(
+                                this,
+                                NativeAlarmScheduler.Entry(
+                                    notificationId = id,
+                                    fireAtUtcMs = fireAt,
+                                    title = title,
+                                    body = body,
+                                    payload = payload,
+                                    soundId = soundId,
+                                    soundPath = soundPath,
+                                ),
+                            )
+                            result.success(null)
+                        }
+                    }
+                    "cancel" -> {
+                        val id = call.argument<Number>("notificationId")?.toInt()
+                        if (id == null) {
+                            result.error("INVALID_ARGUMENT", "Missing notificationId", null)
+                        } else {
+                            NativeAlarmScheduler.cancel(this, id)
+                            result.success(null)
+                        }
+                    }
+                    "cancelAll" -> {
+                        NativeAlarmScheduler.cancelAll(this)
+                        AlarmPlaybackService.stop(this)
+                        result.success(null)
+                    }
+                    "setAlarmVolumePercent" -> {
+                        val percent = call.argument<Number>("percent")?.toInt()
+                        if (percent == null || percent !in 0..100) {
+                            result.error("INVALID_ARGUMENT", "Invalid alarm volume", null)
+                        } else {
+                            AlarmPlaybackService.setVolumePercent(this, percent)
+                            result.success(null)
+                        }
+                    }
+                    "ensurePlayback" -> {
+                        val id = call.argument<Number>("notificationId")?.toInt()
+                        if (id == null) {
+                            result.error("INVALID_ARGUMENT", "Missing notificationId", null)
+                        } else {
+                            result.success(NativeAlarmScheduler.ensurePlayback(this, id))
+                        }
+                    }
+                    "stopPlayback" -> {
+                        AlarmPlaybackService.stop(this)
+                        result.success(null)
+                    }
+                    "takeLaunchPayload" -> {
+                        val payload = pendingAlarmPayload ?: intent?.getStringExtra(EXTRA_ALARM_PAYLOAD)
+                        pendingAlarmPayload = null
+                        intent?.removeExtra(EXTRA_ALARM_PAYLOAD)
+                        result.success(payload)
+                    }
+                    "activePayload" -> result.success(
+                        AlarmPlaybackService.activePayload(this),
+                    )
+                    else -> result.notImplemented()
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
+        nativeAlarmMethodChannel?.setMethodCallHandler(null)
+        nativeAlarmMethodChannel = null
         onDeviceSpeechRecognizerHandler?.dispose()
         onDeviceSpeechRecognizerHandler = null
         super.onDestroy()

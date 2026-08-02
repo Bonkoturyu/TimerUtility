@@ -4,13 +4,18 @@ import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timer_utility/application/imported_sound_repository_provider.dart';
+import 'package:timer_utility/application/alarm_sound_player_provider.dart';
+import 'package:timer_utility/application/notification_scheduler_provider.dart';
 import 'package:timer_utility/application/settings_notifier.dart';
 import 'package:timer_utility/application/user_preferences_provider.dart';
 import 'package:timer_utility/domain/ports/imported_sound_repository.dart';
+import 'package:timer_utility/domain/ports/alarm_sound_player.dart';
+import 'package:timer_utility/domain/ports/notification_scheduler.dart';
 import 'package:timer_utility/domain/ports/user_preferences.dart';
 import 'package:timer_utility/domain/sound/imported_sound.dart';
 import 'package:timer_utility/domain/sound/imported_sound_format.dart';
 import 'package:timer_utility/domain/timer/alarm_sound_catalog.dart';
+import 'package:timer_utility/domain/timer/alarm_sound.dart';
 
 /// In-memory [UserPreferences] used for SettingsNotifier unit tests.
 /// 既存テストの `_MemoryUserPrefs` パターンを踏襲し、Phase 11 で追加した
@@ -56,11 +61,46 @@ class _MemoryUserPrefs implements UserPreferences {
 
   int get themeMode => _ints[UserPreferenceKeys.themeMode] ?? -1;
   int get snoozeMinutes => _ints[UserPreferenceKeys.defaultSnoozeMinutes] ?? -1;
+  int get alarmVolume => _ints[UserPreferenceKeys.alarmVolumePercent] ?? -1;
   String? get alarmSoundId => _strings[UserPreferenceKeys.defaultAlarmSoundId];
   String? get localeTag => _strings[UserPreferenceKeys.localeTag];
   bool get voiceStopEnabled =>
       _bools[UserPreferenceKeys.onDeviceVoiceStopEnabled] ?? false;
   bool hasLocaleTag() => _strings.containsKey(UserPreferenceKeys.localeTag);
+}
+
+class _VolumePlayer
+    implements AlarmSoundPlayer, VolumeControlledAlarmSoundPlayer {
+  int? volumePercent;
+
+  @override
+  bool get isPlaying => false;
+
+  @override
+  Future<void> setVolumePercent(int percent) async => volumePercent = percent;
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> play(AlarmSound sound) async {}
+
+  @override
+  Future<void> prepare(AlarmSound sound) async {}
+
+  @override
+  Future<void> stop() async {}
+}
+
+class _VolumeScheduler implements NotificationScheduler, AlarmVolumeController {
+  int? volumePercent;
+
+  @override
+  Future<void> setAlarmVolumePercent(int percent) async =>
+      volumePercent = percent;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _MemoryImportedSoundRepository implements ImportedSoundRepository {
@@ -109,12 +149,20 @@ ImportedSound _importedSound(String id) => ImportedSound.create(
 ProviderContainer _makeContainer(
   UserPreferences prefs, {
   ImportedSoundRepository? importedSoundRepository,
+  AlarmSoundPlayer? alarmSoundPlayer,
+  NotificationScheduler? notificationScheduler,
 }) {
   final container = ProviderContainer(
     overrides: <Override>[
       userPreferencesProvider.overrideWithValue(prefs),
       importedSoundRepositoryProvider.overrideWithValue(
         importedSoundRepository ?? _MemoryImportedSoundRepository(),
+      ),
+      alarmSoundPlayerProvider.overrideWithValue(
+        alarmSoundPlayer ?? _VolumePlayer(),
+      ),
+      notificationSchedulerProvider.overrideWithValue(
+        notificationScheduler ?? _VolumeScheduler(),
       ),
     ],
   );
@@ -123,6 +171,8 @@ ProviderContainer _makeContainer(
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('SettingsState.defaults', () {
     test('returns ThemeMode.system / null locale / 5 分 / default 音源', () {
       final SettingsState s = SettingsState.defaults();
@@ -130,6 +180,7 @@ void main() {
       expect(s.localeOverride, isNull);
       expect(s.defaultSnoozeMinutes, 5);
       expect(s.defaultAlarmSoundId, 'default');
+      expect(s.alarmVolumePercent, 100);
       expect(s.onDeviceVoiceStopEnabled, isFalse);
     });
   });
@@ -166,6 +217,7 @@ void main() {
         ints: <String, int>{
           UserPreferenceKeys.themeMode: ThemeMode.dark.index,
           UserPreferenceKeys.defaultSnoozeMinutes: 10,
+          UserPreferenceKeys.alarmVolumePercent: 65,
         },
         strings: <String, String>{
           UserPreferenceKeys.defaultAlarmSoundId: 'gentle',
@@ -181,6 +233,7 @@ void main() {
       expect(s.themeMode, ThemeMode.dark);
       expect(s.defaultSnoozeMinutes, 10);
       expect(s.defaultAlarmSoundId, 'gentle');
+      expect(s.alarmVolumePercent, 65);
       expect(s.onDeviceVoiceStopEnabled, isTrue);
     });
 
@@ -222,6 +275,17 @@ void main() {
       container.read(settingsNotifierProvider);
       await Future<void>.delayed(Duration.zero);
       expect(container.read(settingsNotifierProvider).defaultSnoozeMinutes, 5);
+    });
+
+    test('不正なアラーム音量は100%へフォールバックする', () async {
+      final prefs = _MemoryUserPrefs(
+        ints: <String, int>{UserPreferenceKeys.alarmVolumePercent: 63},
+      );
+      final container = _makeContainer(prefs);
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(settingsNotifierProvider).alarmVolumePercent, 100);
     });
 
     test('未知の sound id は default にフォールバック', () async {
@@ -366,6 +430,41 @@ void main() {
             .read(settingsNotifierProvider.notifier)
             .setDefaultSnoozeMinutes(7),
         throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('setAlarmVolumePercentはstate・prefs・両playerへ同期する', () async {
+      final prefs = _MemoryUserPrefs();
+      final player = _VolumePlayer();
+      final scheduler = _VolumeScheduler();
+      final container = _makeContainer(
+        prefs,
+        alarmSoundPlayer: player,
+        notificationScheduler: scheduler,
+      );
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await container
+          .read(settingsNotifierProvider.notifier)
+          .setAlarmVolumePercent(55);
+
+      expect(container.read(settingsNotifierProvider).alarmVolumePercent, 55);
+      expect(prefs.alarmVolume, 55);
+      expect(player.volumePercent, 55);
+      expect(scheduler.volumePercent, 55);
+    });
+
+    test('setAlarmVolumePercentは5%刻み以外を拒否する', () async {
+      final container = _makeContainer(_MemoryUserPrefs());
+      container.read(settingsNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+
+      await expectLater(
+        container
+            .read(settingsNotifierProvider.notifier)
+            .setAlarmVolumePercent(63),
+        throwsArgumentError,
       );
     });
 

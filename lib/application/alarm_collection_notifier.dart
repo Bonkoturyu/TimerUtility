@@ -409,6 +409,7 @@ class AlarmCollectionNotifier extends _$AlarmCollectionNotifier {
           title: title,
           body: strings.alarmRingingBody,
           exact: useExact,
+          soundId: alarm.soundId,
           payload: 'alarm:${alarm.id}',
         );
   }

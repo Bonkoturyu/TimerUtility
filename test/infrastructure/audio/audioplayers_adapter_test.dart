@@ -24,6 +24,7 @@ void main() {
     when(() => target.stop()).thenAnswer((_) async {});
     when(() => target.setAudioContext(any())).thenAnswer((_) async {});
     when(() => target.setReleaseMode(any())).thenAnswer((_) async {});
+    when(() => target.setVolume(any())).thenAnswer((_) async {});
     when(() => target.setSource(any())).thenAnswer((_) async {});
     when(() => target.resume()).thenAnswer((_) async {});
     when(() => target.dispose()).thenAnswer((_) async {});
@@ -41,6 +42,22 @@ void main() {
       final AudioplayersAdapter adapter = AudioplayersAdapter(player: player);
 
       expect(adapter.isPlaying, isFalse);
+    });
+
+    test('音量変更は現在のplayerと以後のprepareへ反映する', () async {
+      final AudioplayersAdapter adapter = AudioplayersAdapter(player: player);
+
+      await adapter.setVolumePercent(55);
+      await adapter.prepare(AlarmSoundCatalog.defaultSound);
+
+      verify(() => player.setVolume(0.55)).called(2);
+    });
+
+    test('音量は0から100以外を拒否する', () async {
+      final AudioplayersAdapter adapter = AudioplayersAdapter(player: player);
+
+      await expectLater(adapter.setVolumePercent(-1), throwsArgumentError);
+      await expectLater(adapter.setVolumePercent(101), throwsArgumentError);
     });
 
     test('prepareはassets接頭辞を除いた音源を無音で準備する', () async {
