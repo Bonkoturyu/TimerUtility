@@ -4,7 +4,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 サードパーティ製ソフトウェア (production / dev 依存 + 同梱アセット + Native 依存) の
 ライセンス内訳を一覧化し、各ライセンス本文への参照を提供する。
 
-最終更新日: 2026-06-14 (PixAI 生成モデル情報を追加)
+最終更新日: 2026-08-03 (v1.1.5 の依存関係へ同期)
 
 ---
 
@@ -13,6 +13,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 | パッケージ | ライセンス | 備考 |
 | --- | --- | --- |
 | `flutter` (SDK) | BSD-3-Clause | https://github.com/flutter/flutter |
+| `flutter_localizations` (SDK) | BSD-3-Clause | https://github.com/flutter/flutter |
 | `cupertino_icons` | MIT | https://pub.dev/packages/cupertino_icons |
 | `flutter_riverpod` | MIT | https://pub.dev/packages/flutter_riverpod |
 | `riverpod_annotation` | MIT | https://pub.dev/packages/riverpod_annotation |
@@ -36,6 +37,9 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 | `path` | BSD-3-Clause | dart.dev 公式 |
 | `archive` | MIT | https://pub.dev/packages/archive |
 | `share_plus` | BSD-3-Clause | https://pub.dev/packages/share_plus |
+| `file_selector` | BSD-3-Clause | https://pub.dev/packages/file_selector |
+| `crypto` | BSD-3-Clause | https://pub.dev/packages/crypto |
+| `package_info_plus` | BSD-3-Clause | https://pub.dev/packages/package_info_plus |
 
 ---
 
@@ -44,6 +48,7 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 | パッケージ | ライセンス |
 | --- | --- |
 | `flutter_test` (SDK) | BSD-3-Clause |
+| `integration_test` (SDK) | BSD-3-Clause |
 | `flutter_lints` | BSD-3-Clause |
 | `riverpod_generator` | MIT |
 | `build_runner` | BSD-3-Clause |
@@ -54,6 +59,8 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 | `riverpod_lint` | MIT |
 | `freezed` | MIT |
 | `analyzer_plugin` (override) | BSD-3-Clause |
+| `flutter_launcher_icons` | MIT |
+| `flutter_native_splash` | MIT |
 
 すべて MIT または BSD 系。**GPL / AGPL / LGPL 等のコピーレフトは一切含まれない**。
 

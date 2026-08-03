@@ -133,7 +133,7 @@ lib/
 │   ├── preferences/
 │   │   └── shared_preferences_user_preferences.dart # Phase 9 で実装済み
 │   └── database/
-│       ├── app_database.dart                        # Phase 8 で実装済み（Phase 9 で Presets / Phase 9.5 で Alarms テーブル追加）
+│       ├── app_database.dart                        # Drift DB（ImportedSounds まで含む現行 schemaVersion 7）
 │       ├── app_database.g.dart                      # 自動生成
 │       ├── drift_timer_repository.dart              # Phase 8 で実装済み
 │       ├── drift_preset_repository.dart             # Phase 9 で実装済み

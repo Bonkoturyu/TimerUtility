@@ -1,9 +1,8 @@
 # Release Signing 手順 (TimerUtility)
 
 作成日: 2026-05-17 (Phase 11.9 準備、Phase 11.9-T12〜T14 で実施)
-状態: 運用中。Phase 11.10-T2 相当の外部仕様裏取りは 2026-07-24 に完了し、
+状態: 運用中。Play App Signing と Upload Key Reset の外部仕様は 2026-08-03 に再確認し、
 GitHub Actions の所有者限定手動リリースは 2026-07-29 に実装 (詳細は §6)。
-keytool 推奨値の再確認 / Upload Key Reset フローの現行 URL /
 fastlane supply 連携は継続課題として残存。
 
 本ファイルは TimerUtility を Google Play Store に署名済みの aab として提出するために
@@ -20,8 +19,8 @@ fastlane supply 連携は継続課題として残存。
 | keystore 配置 | **ユーザー手元のみ** (リポジトリへの commit 厳禁) |
 | `key.properties` 配置 | ローカル `android/key.properties`、[.gitignore:29](../.gitignore#L29) で除外済 |
 | パスワード管理 | パスワードマネージャ (1Password / Bitwarden / KeePassXC 等) で別途保管 |
-| Validity | 25 年以上 (Google 推奨) |
-| 鍵長 | RSA 2048 bit (最小)、推奨は 4096 bit |
+| Validity | 9125 日 (約 25 年。本プロジェクトの採用値) |
+| 鍵長 | RSA 2048 bit 以上が Play 要件。本プロジェクトは 4096 bit を採用 |
 | 別アプリへの流用 | **禁止** (鍵を共有すると 1 つ漏れたとき全アプリが影響を受ける) |
 
 ### 1.1 なぜ Play App Signing 加入か
@@ -38,9 +37,9 @@ Play App Signing は Google が「App Signing Key」を Play 側で保管し、�
   GitHub Release で APK を追加配布したい場合も、Upload Key で署名したものを
   別途 attach する運用で並立可能。
 
-> 加入フローの実画面は 2026 年時点で Play Console のオンボーディング途中で
-> 強制提示されるはず。Phase 11.10-T2 で「新規アプリは Play App Signing 加入が
-> 強制 / 任意」「opt-out 手順の有無」を再確認。
+> TimerUtility は初回 AAB アップロード時に Play App Signing へ加入済み。2026-07-24
+> 時点の公式仕様では、新規アプリは Google 生成鍵へ自動 enroll される。現行運用は
+> §5 と Play Console の「アプリの署名」を正とする。
 
 ---
 
@@ -62,9 +61,8 @@ keytool -genkey -v \
 
 - `-keystore upload-keystore.jks`: 出力ファイル名 (任意)。慣例として `upload-keystore.jks`
 - `-keyalg RSA`: 公開鍵アルゴリズム
-- `-keysize 4096`: 鍵長 (4096 bit 推奨。最小は 2048)
-- `-validity 9125`: 有効日数。9125 日 ≒ 25 年。Google 推奨は **2068 年 10 月 22 日まで**
-  または **少なくとも 25 年**
+- `-keysize 4096`: 本プロジェクトの採用値。Play の Upload Key 要件は RSA 2048 bit 以上
+- `-validity 9125`: 本プロジェクトの採用値。9125 日は約 25 年。生成後に実際の失効日を確認する
 - `-alias upload`: alias 名 (任意。fast follow-up の混乱を避けるため `upload` 推奨)
 
 実行時に対話的に聞かれる項目:
@@ -121,33 +119,20 @@ storeFile=/absolute/path/to/upload-keystore.jks
 - このファイルは [.gitignore:29](../.gitignore#L29) (`**/android/key.properties`)
   で除外済なので git に上がらない。Phase 11.9 着手前に再確認: `git check-ignore
   android/key.properties` が 1 を返せばトラッキング外
-- `android/key.properties.template` (中身は上記コマンドラインの placeholder 版)
-  を commit して fork 開発者に書き方を示す予定 (Phase 11.9-T13)
+- `android/key.properties.template` は placeholder 版としてコミット済み。fork 開発者は
+  これを参照し、実値を含む `android/key.properties` はコミットしない
 
 ---
 
 ## 4. `build.gradle.kts` 配線 (Phase 11.9-T14)
 
-現状の `release` ビルドは debug keystore を流用する暫定設定:
+現行実装は `android/key.properties` が存在する場合に upload keystore を読み、release
+署名へ使用する。ファイルがない開発環境ではローカル実行性を保つため debug keystoreへ
+フォールバックする。
 
 ```kotlin
-// android/app/build.gradle.kts (現状、L34-40)
-buildTypes {
-    release {
-        // TODO: Add your own signing config for the release build.
-        // Signing with the debug keys for now, so `flutter run --release` works.
-        signingConfig = signingConfigs.getByName("debug")
-    }
-}
-```
-
-これを `key.properties` 経由で upload keystore を読む構成に書き換える。
-
-### 4.1 改修後の例
-
-```kotlin
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -158,7 +143,7 @@ plugins {
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
 }
 
 android {
@@ -168,32 +153,35 @@ android {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+            storeFile = (keystoreProperties["storeFile"] as String?)?.let { file(it) }
             storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
 ```
 
-注意: `key.properties` が存在しない CI 環境では
-`storeFile` が `null` になり release ビルド時にエラーになる。CI で release
-ビルドを走らせる場合は GitHub Secrets から `key.properties` 相当の値を環境変数で
-受け取り、ビルド直前に動的生成する。Phase 11.10-T9 の `release.yml` で実装済み。
+GitHub Actions の `release.yml` は Secrets から keystore と `key.properties` を
+ビルド直前に生成するため、公開AABがdebug署名へフォールバックすることはない。
 
-### 4.2 ローカル動作確認 (Phase 11.9-T17)
+### 4.1 ローカル動作確認 (Phase 11.9-T17)
 
 ```sh
 flutter build appbundle --release
 ```
 
-成功すれば `build/app/outputs/bundle/release/app-release.aab` が生成される。
-`bundletool` で APK を展開して Pixel 6a に install テストできれば release 署名は完了。
+成功すれば `build/app/outputs/bundle/release/app-release.aab` が生成される。v1.1.5 (9) は
+`jarsigner -verify` 成功後に GitHub Release へ添付され、Play Console の Closed Testing へ
+アップロード済み。
 
 ```sh
 # bundletool は Google が配布する jar
@@ -233,9 +221,11 @@ adb install -r app-release.apk
 
 ### 5.1 紛失時の復旧
 
-Upload Key を紛失した場合は Play Console の「キーをリセット」フォームから
-申請可能 (Google サポート経由、本人確認 + 数日待ち)。App Signing Key 自体は
-Play 側に残っているため、ユーザーのアプリがアップデート不可になる事態は回避できる。
+Upload Key を紛失または侵害した場合は、新しい Upload Key を作成して証明書を PEM 形式で
+export し、Play Console の `Protected with Play` → `Play Store protection` →
+`Manage Play app signing` → `Upload key certificate` からリセットを申請する。
+App Signing Key 自体は Play 側に残るため、Upload Key の交換後も同じアプリを更新できる。
+公式手順: <https://support.google.com/googleplay/android-developer/answer/9842756>
 
 ---
 
@@ -250,7 +240,8 @@ Play 側に残っているため、ユーザーのアプリがアップデート
 実行手順:
 
 1. GitHub の `Actions` → `Release` → `Run workflow` を開く
-2. Branch に `main` を選び、`release_tag` に `v1.0.1` 形式のタグを入力する
+2. Branch に `main` を選び、`release_tag` に `vMAJOR.MINOR.PATCH` 形式のタグを入力する
+   （現行リリースの実績: `v1.1.5`）
 3. `Run workflow` を押す
 4. Workflow が成功すると、実行対象の `main` commit にタグを作り、署名済み AAB を
   添付した GitHub Release を公開する
@@ -305,14 +296,13 @@ Workflow はビルド前に次を検証する。
 
 [CLAUDE.md](../CLAUDE.md) のソース信用原則に従い確認:
 
-1. ✅ (2026-07-24 確認) Play App Signing は新規アプリで **自動 enroll** (aab
+1. ✅ (2026-08-03 再確認) Play App Signing は新規アプリで **自動 enroll** (aab
    初回アップロード時に quantum-ready hybrid signing へ自動加入、能動的な
    「強制/任意」の選択操作は不要)。
    参照: <https://support.google.com/googleplay/android-developer/answer/9842756>
-2. 未確認: Upload Key 紛失時の Reset フォームの 2026 年現行 URL / フロー
-   (紛失時にのみ必要となるため Play Console 実画面着手後に確認)
-3. 未確認: keytool の推奨パラメータ (`-keysize 4096` / `-validity 9125` 等) の
-   Google 推奨値が現行も維持されているか (低優先度、生成済み keystore は
-   すでに要件を満たす値で作成済み)
+2. ✅ (2026-08-03 公式ヘルプ確認) Upload Key Reset は新しい鍵と PEM 証明書を作成し、
+   `Manage Play app signing` の `Upload key certificate` から申請する。
+3. ✅ (2026-08-03 公式ヘルプ確認) Upload Key は RSA 2048 bit 以上が要件。本プロジェクトの
+   `4096 bit / 9125 日` はこの要件を満たす採用値であり、Google の指定推奨値とは表記しない。
 4. 未確認: `fastlane supply` ベースの自動 upload と Play Developer API の
    現行制約 (Phase 11.10-T9 着手時に確認する方針で保留のまま)

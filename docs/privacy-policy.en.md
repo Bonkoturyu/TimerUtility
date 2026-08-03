@@ -1,7 +1,7 @@
 # Privacy Policy (TimerUtility)
 
 Last updated: 2026-08-03
-Version: 1.2
+Version: 1.3
 Canonical version: [Japanese](privacy-policy.md)
 
 Languages: [日本語](privacy-policy.md) / **English** /
@@ -47,9 +47,13 @@ The App does not collect the following on a developer-operated server:
 - Payment information (the App has no in-app purchases)
 
 Google Play's Data Safety definition of collection includes data transmitted
-off the device by an app or SDK. Because the Android `Geocoder` implementation
-may use a network, the Play Console declaration is reviewed separately against
-the actual system provider and current form.
+off the device by an app or SDK. To account for Android `Geocoder` backend
+processing, the App declares approximate location as collected, not shared,
+optional, and used for app functionality. The App and developer do not retain
+raw coordinates or the raw geocoding response; only the derived timezone
+identifier is stored on the device. Because the `Geocoder` API does not
+guarantee the system provider's retention or transport encryption, the App does
+not declare ephemeral processing or encryption in transit.
 
 ---
 
@@ -83,7 +87,8 @@ while a ringing screen is active and discarded after command matching.
   service. Country or region information is mapped to a timezone identifier
   such as `Asia/Tokyo`.
 - Network: The `Geocoder` backend depends on the device, OS, and service
-  provider and may use a network.
+  provider and may use a network. The App cannot control or guarantee the
+  provider's retention period or transport method.
 - Storage: The App does not write raw coordinates or geocoding results to
   Drift, SharedPreferences, or diagnostic logs. Only the inferred timezone
   identifier is stored.

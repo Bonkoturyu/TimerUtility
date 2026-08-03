@@ -48,6 +48,8 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 |---|---|---|---|---|
 | `clockProvider` | function | `Clock` | keepAlive | 時刻取得の抽象化（テスト時に override） |
 | `appDatabaseProvider` | function | `AppDatabase` | keepAlive | Drift DB インスタンス |
+| `appVersionReaderProvider` | function | `AppVersionReader` | keepAlive | 実行中APK/AABのversionName・versionCode取得境界 |
+| `appVersionProvider` | FutureProvider | `AppVersion` | keepAlive | 設定画面向けの実版数読み出し |
 | `notificationSchedulerProvider` | function | `NotificationScheduler` | keepAlive | 通知予約 Adapter（Phase 8 で `show()` 即時通知 API 追加） |
 | `intervalNotificationSchedulerProvider` | function | `IntervalNotificationScheduler` | keepAlive | 定間隔通知のNative連鎖予約。Flutterプロセス停止中も次周期を自己再予約 |
 | `alarmSoundPlayerProvider` | function | `AlarmSoundPlayer` | keepAlive | 同梱／取り込み音源の準備済みhandoff再生 Adapter |
@@ -58,18 +60,24 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `importedSoundRepositoryProvider` | function | `ImportedSoundRepository` | keepAlive | 取り込み音源メタデータ永続化（main.dart で共有DBをoverride） |
 | `importedSoundFileStoreProvider` | function | `ImportedSoundFileStore` | keepAlive | app-private staging／確定／quarantine境界 |
 | `importedSoundReferenceStoreProvider` | function | `ImportedSoundReferenceStore` | keepAlive | Timer／Alarm／Preset参照置換とmetadata削除の単一transaction |
+| `importedSoundImportServiceProvider` | Provider | `ImportedSoundImportService` | keepAlive | ファイル選択、検証、staging、確定を束ねる取込境界 |
 | `importedSoundMutationCoordinatorProvider` | function | `ImportedSoundMutationCoordinator` | keepAlive | Timer／Alarm／Presetの全write、既定音設定、音源削除をFIFO直列化 |
 | `importedSoundDeletionRegistryProvider` | function | `ImportedSoundDeletionRegistry` | keepAlive | deleting／deleted tombstoneを共有し、queued write実行時に削除済み参照をdefaultへ正規化 |
-| `locationDetectorProvider` | function | `LocationDetector` | keepAlive | GPS → IANA TZ ID 解決（Phase 10.5 で実装済み、失敗時 FlutterTimezone fallback） |
+| `locationDetectorProvider` | function | `LocationDetector` | keepAlive | 粗い位置情報 → Android Geocoder → 国コード → IANA TZ ID 解決。失敗・拒否時は FlutterTimezone fallback |
 | `timezoneResolverProvider` | function | `TimezoneResolver` | keepAlive | IANA TZ → wall clock 変換（Phase 10.5 で実装済み、`TzDatabaseTimezoneResolver`、TZ DB は 1 度だけ load） |
 | `permissionManagerProvider` | function | `PermissionManager` | keepAlive | 権限管理 |
 | `microphonePermissionManagerProvider` | function | `MicrophonePermissionManager` | keepAlive | 任意の音声停止機能に限定したマイク権限管理 |
 | `onDeviceSpeechRecognizerProvider` | function | `OnDeviceSpeechRecognizer` | keepAlive | API 31+ 端末内音声認識 MethodChannel adapter |
 | `onDeviceSpeechRecognitionAvailableProvider` | FutureProvider | `bool` | autoDispose | 設定画面向け端末内認識利用可否 |
 | `onDeviceSpeechRecognitionSupportProvider(localeTag)` | FutureProvider.family | `OnDeviceSpeechSupportStatus` | autoDispose | API 33+ の言語モデル状態（利用可 / 取得要 / 準備中 / 非対応） |
+| `screenLockQueryProvider` | function | `ScreenLockQuery` | keepAlive | Native Channel経由のロック状態取得 |
+| `keyguardOverrideControllerProvider` | function | `KeyguardOverrideController` | keepAlive | 鳴動画面終了時のshowWhenLocked解除 |
+| `diagnosticSinkProvider` | function | `DiagnosticSink` | keepAlive | JSON Lines診断ログの保存境界 |
+| `diagnosticLoggerProvider` | function | `DiagnosticLogger` | keepAlive | 設定トグルで書込を制御する共通ロガー |
+| `diagnosticLogExporterProvider` | function | `DiagnosticLogExporter` | keepAlive | 診断ログZIPとShare Sheet連携の境界 |
 | `loggerProvider` | function | `Logger` | keepAlive | ロガー |
 | `notificationIdGeneratorProvider` | function | `NotificationIdGenerator` | keepAlive | OS 通知 ID 生成 |
-| `userPreferencesProvider` | function | `UserPreferences` | keepAlive | `shared_preferences` の薄ラッパ。`getBool` / `setBool` / `getInt` / `setInt` / `remove` を提供 (Phase 11 で `getInt` / `setInt` を追加し `lastHomePageIndex` を扱えるよう拡張) |
+| `userPreferencesProvider` | function | `UserPreferences` | keepAlive | `shared_preferences` 境界。テーマ、言語、既定音源、アプリ音量、音声停止、診断設定等を保持 |
 
 ### Domain Service 層
 
@@ -91,11 +99,15 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | `stopwatchNotifierProvider` | Notifier | `StopwatchState` | keepAlive | ストップウォッチ状態管理、Lifecycle 監視 |
 | `timerCollectionNotifierProvider` | Notifier | `TimerCollection` | keepAlive | 複数タイマー管理（CRUD / 起動時 DB 復元 / 過去到達タイマーの completed 化 + show() 通知 / 200 ms ticker による ringing 検知）。Phase 8 で実装済み、family 案は廃止し本 Notifier に統合 |
 | `alarmRingingNotifierProvider` | Notifier | `AlarmRingingState` | keepAlive | 鳴動中タイマーの管理、音再生制御 |
-| `presetNotifierProvider` | Notifier | `List<Preset>` | keepAlive | プリセット CRUD |
+| `presetCollectionNotifierProvider` | Notifier | `PresetCollection` | keepAlive | プリセット CRUD |
 | `permissionNotifierProvider` | Notifier | `PermissionState` | keepAlive | 各権限の取得状態 |
 | `alarmCollectionNotifierProvider` | Notifier | `List<AlarmEntity>` | keepAlive | 指定時刻アラーム CRUD・ON/OFF 切替・予約管理（Phase 9.5） |
 | `clockEntryCollectionNotifierProvider` | Notifier | `ClockEntryCollection` | keepAlive | 世界時計の CRUD・並べ替え・初回起動時の現在地登録（Phase 10.5 で実装済み、Phase 11 で ClockEntry にリネーム） |
 | `importedSoundDeletionControllerProvider` | Notifier | `void` | keepAlive | 同一ID deleteをcoalesceし、共有FIFO内で削除 Saga と4つのNotifier state同期を完結 |
+| `importedSoundManagementControllerProvider` | AsyncNotifier | `List<ImportedSound>` | keepAlive | 取込準備・確定・取消・改名・削除・再読込 |
+| `settingsNotifierProvider` | Notifier | `SettingsState` | keepAlive | テーマ、言語、既定音源、アプリ音量、音声停止設定を復元・更新 |
+| `diagnosticSettingsNotifierProvider` | Notifier | `DiagnosticSettingsState` | keepAlive | 診断ログの有効状態を復元・更新 |
+| `diagnosticExportControllerProvider` | Notifier | `DiagnosticExportState` | autoDispose | 診断ログZIP生成と共有操作の状態管理 |
 | `onDeviceVoiceStopControllerProvider` | Notifier | `OnDeviceVoiceStopState` | autoDispose | 鳴動画面表示中だけ短時間認識を再試行し、厳密一致した停止コマンドを一度だけ通知 |
 
 ### Presentation 層（UI 補助）
@@ -103,8 +115,7 @@ Claude Code は新規 Provider 追加時に必ず本ドキュメントを更新�
 | Provider | 種別 | 提供型 | スコープ | 責務 |
 |---|---|---|---|---|
 | `currentTimeStreamProvider` | StreamProvider | `DateTime` | autoDispose | UI 更新用の時刻 Stream。Phase 10.5 で実装済み（世界時計向けは 1 秒周期、ストップウォッチ / タイマー向けは 100ms 周期版を別途検討） |
-| `stopwatchTickProvider` | StreamProvider | `Duration` | autoDispose | ストップウォッチ表示更新用 |
-| `timerTickProvider(TimerId)` | StreamProvider.family | `Duration` | autoDispose | 各タイマー残り時間表示更新用 |
+| `homeActivePageIndexProvider` | StateProvider | `int?` | autoDispose | Homeの表示中ページを一時保持し、永続値の復元と分離 |
 
 ---
 
@@ -374,26 +385,11 @@ UI でストップウォッチ / タイマーの表示を更新するための S
 実装: Stream.periodic + Clock 経由
 ```
 
-### `stopwatchTickProvider`
-
-```
-責務: ストップウォッチの表示用経過時間
-依存: stopwatchNotifierProvider, currentTimeStreamProvider
-出力: Duration（100ms 精度）
-```
-
-### `timerTickProvider(TimerId)`
-
-```
-責務: 各タイマーの表示用残り時間
-依存: timerCollectionNotifierProvider, currentTimeStreamProvider
-出力: Duration（100ms 精度）
-```
-
-Phase 8 では本 Provider は導入せず、`TimerListScreen` 側で
+ストップウォッチ / タイマー専用の tick Provider は現時点では導入していない。
+`TimerListScreen` 側で
 `Timer.periodic(200ms)` + `setState` により表示更新している
 (`TimerCollectionNotifier` 側の ticker と独立)。後続 Phase で本 Provider
-を導入する場合は `timerCollectionNotifierProvider` 経由で TimerEntity
+を導入する場合は `timerCollectionNotifierProvider` 経由で `TimerEntity`
 を取得する設計とする。
 
 これらは UI 表示専用で、ドメインの状態には影響しない。
@@ -435,8 +431,8 @@ lib/application/
 ├── timer_collection_notifier.g.dart
 ├── alarm_ringing_notifier.dart
 ├── alarm_ringing_notifier.g.dart
-├── preset_notifier.dart
-├── preset_notifier.g.dart
+├── preset_collection_notifier.dart
+├── preset_collection_notifier.g.dart
 ├── permission_notifier.dart
 ├── permission_notifier.g.dart
 ├── alarm_collection_notifier.dart      // Phase 9.5
@@ -448,11 +444,10 @@ lib/application/
 ├── timezone_resolver_provider.dart     // Phase 10.5 で実装済み
 ├── clock_tick/                         // Phase 10.5 で実装済み
 │   └── current_time_stream_provider.dart
-├── tick/
-│   ├── current_time_stream_provider.dart
-│   ├── stopwatch_tick_provider.dart
-│   └── timer_tick_provider.dart
-└── infrastructure_providers.dart    // インフラ系 Provider 一括定義
+├── settings_notifier.dart
+├── imported_sound_management_controller.dart
+├── diagnostic_settings_notifier.dart
+└── diagnostic_export_controller.dart
 ```
 
 ---
@@ -485,4 +480,4 @@ lib/application/
 
 ---
 
-最終更新日: 2026-07-16（Phase 13-D/E の再生解決・削除 Saga・Notifier 同期を反映）
+最終更新日: 2026-08-03（アプリ音量、実版数、診断、取込音源管理、現行Provider名を反映）

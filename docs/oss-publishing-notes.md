@@ -4,7 +4,7 @@
 ライセンス監査・特許リスク評価・プロジェクトの特異性・公開チェックリスト
 を集約する。
 
-最終更新日: 2026-05-02
+最終更新日: 2026-08-03
 
 ---
 
@@ -31,6 +31,7 @@
 | パッケージ | ライセンス | 備考 |
 | --- | --- | --- |
 | `flutter` (SDK) | BSD-3-Clause | |
+| `flutter_localizations` (SDK) | BSD-3-Clause | Flutter SDK |
 | `cupertino_icons` | MIT | |
 | `flutter_riverpod` | MIT | |
 | `riverpod_annotation` | MIT | |
@@ -46,12 +47,24 @@
 | `freezed_annotation` | MIT | |
 | `timezone` | BSD-2-Clause | |
 | `flutter_timezone` | BSD-3-Clause | |
+| `intl` | BSD-3-Clause | dart.dev 公式 |
+| `shared_preferences` | BSD-3-Clause | |
+| `geolocator` | MIT | |
+| `geocoding` | MIT | |
+| `path_provider` | BSD-3-Clause | |
+| `path` | BSD-3-Clause | dart.dev 公式 |
+| `file_selector` | BSD-3-Clause | |
+| `crypto` | BSD-3-Clause | dart.dev 公式 |
+| `archive` | MIT | |
+| `share_plus` | BSD-3-Clause | |
+| `package_info_plus` | BSD-3-Clause | |
 
 ### 2.3 dev_dependencies
 
 | パッケージ | ライセンス |
 | --- | --- |
 | `flutter_test` (SDK) | BSD-3-Clause |
+| `integration_test` (SDK) | BSD-3-Clause |
 | `flutter_lints` | BSD-3-Clause |
 | `riverpod_generator` | MIT |
 | `build_runner` | BSD-3-Clause |
@@ -62,6 +75,8 @@
 | `riverpod_lint` | MIT |
 | `freezed` | MIT |
 | `analyzer_plugin` (override) | BSD-3-Clause |
+| `flutter_launcher_icons` | MIT |
+| `flutter_native_splash` | MIT |
 
 ### 2.4 結論
 

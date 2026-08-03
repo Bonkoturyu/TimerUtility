@@ -82,7 +82,7 @@ unlock, check the **"Phase 6 implementation retrospective"** notes in
 - **状態管理**: [Riverpod](https://riverpod.dev/) (`flutter_riverpod` 2.x +
   `riverpod_generator`)
 - **ルーティング**: [go_router](https://pub.dev/packages/go_router) 14.x
-- **永続化**: [Drift](https://drift.simonbinder.eu/) (SQLite、schemaVersion 5)
+- **永続化**: [Drift](https://drift.simonbinder.eu/) (SQLite、schemaVersion 7)
 - **通知**:
   [`flutter_local_notifications`](https://pub.dev/packages/flutter_local_notifications)
   19.x

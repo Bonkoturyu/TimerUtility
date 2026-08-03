@@ -62,7 +62,7 @@ Dart SDK 制約 (`^3.11.5`) との衝突は事前確認の限り見当たらな�
 | --- | --- | --- |
 | 1 | [android/app/build.gradle.kts:9](../android/app/build.gradle.kts#L9) | `namespace = "com.bonkotu.timer.timer_utility"` → `"io.github.bonkoturyu.timer_utility"` |
 | 2 | [android/app/build.gradle.kts:25](../android/app/build.gradle.kts#L25) | `applicationId = "..."` 同じ値に |
-| 3 | [android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/MainActivity.kt:1](../android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/MainActivity.kt#L1) | `package com.bonkotu.timer.timer_utility` → `package io.github.bonkoturyu.timer_utility` |
+| 3 | [android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/MainActivity.kt:1（旧パス）](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L1) | `package com.bonkotu.timer.timer_utility` → `package io.github.bonkoturyu.timer_utility` |
 | 4 | Kotlin ディレクトリ | `android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/` → `android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/` (`git mv` でファイル移動) |
 
 [android/app/src/main/AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml)
@@ -79,7 +79,7 @@ Dart SDK 制約 (`^3.11.5`) との衝突は事前確認の限り見当たらな�
 
 | # | ファイル | 現状 | 推奨変更後 |
 | --- | --- | --- | --- |
-| 5 | [android/app/src/main/kotlin/.../MainActivity.kt:23](../android/app/src/main/kotlin/com/bonkotu/timer/timer_utility/MainActivity.kt#L23) | `PERMISSION_CHANNEL = "com.bonkotu.timer/permission"` | `"io.github.bonkoturyu.timer_utility/permission"` (or 同等の新 prefix) |
+| 5 | [android/app/src/main/kotlin/.../MainActivity.kt:23（現行パス）](../android/app/src/main/kotlin/io/github/bonkoturyu/timer_utility/MainActivity.kt#L23) | `PERMISSION_CHANNEL = "com.bonkotu.timer/permission"` | `"io.github.bonkoturyu.timer_utility/permission"` (or 同等の新 prefix) |
 | 6 | [lib/infrastructure/platform/permission_channel.dart:11](../lib/infrastructure/platform/permission_channel.dart#L11) | `channelName = 'com.bonkotu.timer/permission'` | 同上 |
 | 7 | [lib/presentation/screens/alarm_ringing_screen.dart:23](../lib/presentation/screens/alarm_ringing_screen.dart#L23) | `'com.bonkotu.timer/permission'` (ハードコード) | `PermissionChannel.channelName` 定数参照に refactor + 新名 |
 
