@@ -1,7 +1,7 @@
 # Platform Channels
 
 Native (Kotlin) ↔ Flutter (Dart) 間のメッセージ仕様。
-Phase 6 までに **採用された Channel** と、当初予定で **採用見送り** になった
+現在までに **採用された Channel** と、当初予定で **採用見送り** になった
 Channel をそれぞれ記載する。実装の細部は本ドキュメントよりも実コード
 (`MainActivity.kt` / `permission_channel.dart`) を正とする。
 
@@ -36,7 +36,8 @@ Channel をそれぞれ記載する。実装の細部は本ドキュメントよ
 
 ## 実装済み Channel
 
-実装済み Channel は権限制御用、定間隔通知用、保存容量取得用、端末内音声認識用の4本。
+実装済み Channel は権限制御用、定間隔通知用、保存容量取得用、Nativeアラーム用、
+端末内音声認識用の5本。
 
 ### `io.github.bonkoturyu.timer_utility/on_device_speech` (MethodChannel)
 
@@ -466,6 +467,10 @@ Native ↔ Dart 通信に対するテスト状況:
 | Phase 6 | `/permission/canUseFullScreenIntent`, `/permission/openFullScreenIntentSettings` | FSI 権限関連 |
 | Phase 6 実機検証フォロー | `/permission/clearShowWhenLocked` 追加 | FSI 起動後の `setShowWhenLocked(true)` 解除 |
 | Phase 7〜10.5 | (採用なし) | Native 連携なしで完結 |
+| 定間隔通知 | `/interval_notification/schedule`, `/interval_notification/cancel` | Native Receiver による自己再予約と再起動復元 |
+| Phase 13 | `/storage/getAvailableBytes` | 取り込み音源の保存前に空き容量を確認 |
+| Native アラーム再設計 | `/native_alarm/*` | Exact 予約、inexact フォールバック、Native 再生、アプリ音量を統合 |
+| 端末内音声停止 | `/on_device_speech/*` | 端末内モデルの確認・取得・認識セッションを管理 |
 
 ---
 
@@ -479,6 +484,5 @@ Native ↔ Dart 通信に対するテスト状況:
 
 ---
 
-最終更新日: 2026-05-13（Phase 6 docs cleanup。4 Channel 採用見送りを確定し、
-`clearShowWhenLocked` を後付け文書化、構成を「実装済み Channel」と「採用見送りの
-当初設計」に分離）
+最終更新日: 2026-08-03（実装済み Channel を5本へ同期。Nativeアラーム再生と
+端末内音声認識を含む現行構成へ更新）

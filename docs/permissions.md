@@ -90,6 +90,11 @@ OS ダイアログで許可された場合、取得した座標を Android `Geoc
 
 Android `Geocoder` の仕様: <https://developer.android.com/reference/android/location/Geocoder>
 
+Google Play Data Safety では、バックエンドサービスへの端末外送信が発生し得る経路を
+保守的に扱い、「おおよその位置情報」を収集あり、共有なし、任意、アプリ機能目的として
+申告する。アプリと開発者は座標を保持しないが、システムプロバイダー側の保持期間と
+通信暗号化は保証できないため、一時処理と転送中暗号化は申告しない。
+
 ---
 
 ## アプリ内の権限状態

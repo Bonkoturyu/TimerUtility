@@ -44,7 +44,7 @@ Claude Code は新規ロジック追加時に必ず本ドキュメントを参�
               ▲
 ┌──────────────────────────────────────────────┐
 │  Domain Unit Test (test/domain/)             │
-│  - Pure Dart テスト (package:test)            │
+│  - Pure Dart domain を flutter_test で検証     │
 │  - withClock で時間制御                       │
 │  - 最も高速・最も多く書く                      │
 └──────────────────────────────────────────────┘
@@ -100,8 +100,7 @@ Claude Code は新規ロジック追加時に必ず本ドキュメントを参�
 
 | パッケージ | 用途 |
 |---|---|
-| `package:test` | Pure Dart のユニットテスト（domain 層） |
-| `flutter_test` | Widget Test、Flutter 依存テスト |
+| `flutter_test` | domain 層の Unit Test、Widget Test、Flutter 依存テスト |
 | `fake_async` | 仮想時間制御 |
 | `mocktail` | モック生成（**mockito ではない**） |
 | `clock` | `withClock()` での時刻固定 |
@@ -120,12 +119,13 @@ Claude Code は新規ロジック追加時に必ず本ドキュメントを参�
 
 ### Domain Unit Test
 
-`package:test` のみを使用。Flutter には依存しない。
+production code の `lib/domain/` は Pure Dart を維持する。テストコードは Flutter SDK
+のピン留めと依存解決を統一するため、`package:flutter_test` の `test()` / `expect()`
+API を使用する。Domain の依存方向は production code の import で判定する。
 
 ```
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:clock/clock.dart';
-// import 'package:flutter_test/flutter_test.dart';  ← 使わない
 
 void main() {
   group('StopwatchService', () {
@@ -150,7 +150,7 @@ void main() {
 
 ```
 import 'package:fake_async/fake_async.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('Timer は 60 秒後に ringing になる', () {
@@ -380,7 +380,7 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 
 | 用途 | コマンド |
 | --- | --- |
-| Pure Dart テスト | `dart test test/domain/` |
+| Domain Unit Test | `flutter test test/domain/` |
 | 全テスト | `flutter test` |
 | カバレッジ付き | `flutter test --coverage` |
 | 特定ファイル | `flutter test test/domain/timer/timer_service_test.dart` |
@@ -393,7 +393,7 @@ Phase 完了時にチェックリスト形式で実施。結果の詳細は
 ## IDE からのテスト実行（必須要件）
 
 本プロジェクトの Dart / Flutter テストは Flutter 標準のテストフレームワーク
-（`package:test` / `package:flutter_test` / `package:integration_test`）、Native の
+（`package:flutter_test` / `package:integration_test`）、Native の
 Pure Kotlin policy は JUnit で記述する。いずれも Android Studio / IntelliJ IDEA の
 Run/Debug 設定から直接実行・デバッグできる状態を必須要件とする。
 

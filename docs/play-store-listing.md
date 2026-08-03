@@ -4,7 +4,7 @@
 最終同期: 2026-08-03
 状態: ja/en Main store listing と Content Rating / Target Audience / 権限申告は
 Play Console へ送信済み。Release notes は v1.1.5 まで記録済み。Data Safety は
-Android `Geocoder` のプロバイダー処理を踏まえて再確認する。
+Android `Geocoder` の処理を踏まえた更新内容を確定し、Play Console 転記待ち。
 
 本ファイルは Play Console アップロード時に貼り込むテキスト + Data Safety 申告 +
 Content Rating 回答を集約する。実物のスクリーンショットは Pixel 6a で撮影し、
@@ -97,7 +97,7 @@ TimerUtility は、複数のタイマーを同時に動かせる Android 用タ�
 ■ ベータテスター向けの診断ログ機能 — 必要なときだけオンにできるトグル付き、位置情報やユーザーが入力したラベル文字列は記録対象から除外。
 
 【プライバシー】
-TimerUtility は開発者のバックエンドへ個人情報を送信せず、広告 SDK、解析 SDK、クラッシュレポート SDK も同梱していません。位置情報は、世界時計の登録が空の初回初期化時に Android のシステムサービスで一時処理され、アプリには保存されません。
+TimerUtility は開発者のバックエンドへ個人情報を送信せず、広告 SDK、解析 SDK、クラッシュレポート SDK も同梱していません。位置情報は、世界時計の登録が空の初回初期化時に Android のシステムサービスへ渡され、アプリや開発者は保存しません。
 詳細: https://bonkoturyu.github.io/TimerUtility/privacy-policy
 
 【オープンソース】
@@ -129,7 +129,7 @@ TimerUtility is an Android timer app that lets you run multiple timers simultane
 - Beta tester-friendly diagnostic logging — an opt-in toggle, with location data and user-entered label strings excluded from logs.
 
 [Privacy]
-TimerUtility sends no personal information to a developer-operated backend and bundles no advertising, analytics, or crash-reporting SDK. When an empty world-clock list is initialized for the first time, location is processed transiently by an Android system service and is not persisted by the App.
+TimerUtility sends no personal information to a developer-operated backend and bundles no advertising, analytics, or crash-reporting SDK. When an empty world-clock list is initialized for the first time, location is passed to an Android system service and is not persisted by the App or developer.
 Details: https://bonkoturyu.github.io/TimerUtility/privacy-policy.en
 
 [Open source]
@@ -205,7 +205,7 @@ Repository: https://github.com/Bonkoturyu/TimerUtility
 - 日本語、英語、中国語 (簡体字 / 繁体字)、韓国語
 - ダークモード、色覚多様性 (CVD) 対応モード
 - 端末再起動後の自動復元
-- 個人情報の収集・送信はゼロ
+- 開発者運用サーバーへの個人情報送信なし
 ご利用いただきありがとうございます。
 ```
 
@@ -219,7 +219,7 @@ Initial release.
 - Japanese, English, Chinese (Simplified / Traditional), Korean.
 - Dark mode and color-vision-deficiency (CVD) awareness mode.
 - Automatic restore after device reboot.
-- Zero personal data collection or transmission.
+- No personal information is sent to a developer-operated backend.
 Thank you for trying TimerUtility.
 ```
 
@@ -227,22 +227,25 @@ Thank you for trying TimerUtility.
 
 ## 5. Data Safety 申告
 
-> 2026-08-03 文書監査で位置情報の説明を訂正。Android `Geocoder` は端末・OS・
-> サービスプロバイダーによってネットワークを利用し得るため、下表は Play Console
-> 実画面と実機経路を再確認してから再提出する。公式仕様:
-> <https://developer.android.com/reference/android/location/Geocoder>
+> 2026-08-03 に実装、`geocoding_android` 4.0.1、Android `Geocoder`、Google Play
+> Data Safety 定義を再監査した。`Geocoder` は端末実装によってバックエンドサービスを
+> 利用し得るため、概略位置を収集ありとして保守的に申告する。プロバイダー側の
+> 保存期間と通信方式は保証できないため、一時処理・転送中暗号化は選択しない。公式仕様:
+> <https://developer.android.com/reference/android/location/Geocoder> /
+> <https://support.google.com/googleplay/android-developer/answer/10787469>
 
 | Data Safety 項目 | 申告内容 | 根拠 |
 | --- | --- | --- |
-| Does your app collect or share any of the required user data types? | **要再確認** | 開発者バックエンドはないが、`Geocoder` のプロバイダー処理を含めて Play の定義へ照合する |
-| Is all of the user data collected by your app encrypted in transit? | **要再確認** | Approximate location の申告結論に合わせる |
-| Do you provide a way for users to request their data to be deleted? | 開発者保有データなし。端末内データはストレージ消去 / アンインストールで削除 | [docs/privacy-policy.md](privacy-policy.md) §10 |
-| Approximate location | **要再確認** (世界時計の登録が空の初回初期化時に Android `Geocoder` が一時処理。アプリは座標を永続化せず、開発者も受領しない) | [docs/privacy-policy.md](privacy-policy.md) §4 |
+| Does your app collect or share any of the required user data types? | **Yes: collected / No: shared** | `ACCESS_COARSE_LOCATION` の座標を `Geocoder` バックエンドが端末外で処理する可能性を含める。サービスプロバイダー処理なので sharing には含めない |
+| Is all of the user data collected by your app encrypted in transit? | **No** | `Geocoder` API はプロバイダー通信の暗号化を保証しないため、全端末での暗号化を断言しない |
+| Do you provide a way for users to request their data to be deleted? | **No** (開発者が保持するデータなし) | 本アプリと開発者は概略位置を保持しない。端末内データはストレージ消去 / アンインストールで削除できる。詳細は [privacy-policy.md](privacy-policy.md) §10 |
+| Approximate location | **Collected / Not shared / Not processed ephemerally / Optional / App functionality** | 世界時計の登録が空の初回初期化時だけ利用。権限拒否時もシステムタイムゾーンへフォールバックでき、本アプリと開発者は生座標とGeocoder応答を保存せず、導出したタイムゾーン識別子だけを端末内へ保存する。ただしシステムプロバイダー側の保持を保証できない。詳細は [privacy-policy.md](privacy-policy.md) §4 |
 | Crash logs / diagnostics | **Not collected** (診断ログはユーザー明示オン時のみ端末内に保存、Share Sheet 経由のユーザー操作でのみ外部に渡る、自動送信なし) | [docs/privacy-policy.md](privacy-policy.md) §6 |
 | Voice or sound recordings | **Not collected** (マイク入力は端末内認識へ一時的に渡すだけで、録音・保存・送信・ログ記録を行わない) | [docs/privacy-policy.md](privacy-policy.md) §3 |
 
-→ 過去の「No data collected / No data shared」申告は、Approximate location の扱いを
-再評価してから維持または修正する。
+→ 過去の「No data collected / No data shared」申告から上表へ更新する。Play Console
+実画面では回答を保存し、最終 Submit の直前に表示内容を再確認する。Play Consoleを
+確認・操作する前に、対象画面、確認項目、変更・送信の有無をユーザーへ明示する。
 
 ---
 
@@ -259,7 +262,7 @@ Thank you for trying TimerUtility.
 | Controlled substances (alcohol, tobacco, drugs) | None | 言及なし |
 | Gambling / Simulated gambling | None | 該当なし |
 | User-generated content / Social features | None | チャット / SNS / シェア機能なし (診断ログの Share Sheet は OS 機能の呼び出しのみで本アプリ内に投稿先がない) |
-| Location sharing | None | 他ユーザーや開発者への共有機能なし。現在地推定時は Android `Geocoder` が一時処理 |
+| Location sharing | None | 他ユーザーや開発者への共有機能なし。現在地推定時は Android `Geocoder` システムサービスへ処理を依頼 |
 | Personal information sharing | None | 個人情報を扱わない |
 | In-app purchases | None | 課金なし |
 | Loot boxes / Gacha | None | 該当なし |
@@ -286,7 +289,7 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 
 | Manifest 上の権限 | Play Console 用説明文 (短縮版) |
 | --- | --- |
-| `ACCESS_COARSE_LOCATION` | 世界時計の登録が空の初回初期化時に現在地のタイムゾーンを推定。Android `Geocoder` が一時処理し、アプリは座標を永続化しません。 |
+| `ACCESS_COARSE_LOCATION` | 世界時計の登録が空の初回初期化時に現在地のタイムゾーンを推定。Android `Geocoder` システムサービスへ渡し、アプリや開発者は座標を永続化しません。 |
 | `RECORD_AUDIO` | ユーザーが有効化した端末内音声認識で、鳴動を停止します。録音・保存はしません。 |
 | `POST_NOTIFICATIONS` | タイマー / アラームの通知を表示します。 |
 | `SCHEDULE_EXACT_ALARM` | 指定時刻にアラームを正確に発火させるため、Doze モードを回避します。 |
@@ -324,8 +327,14 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 
 各撮影は ja / en の 2 言語で行い、Play Console の locale 別 listing にそれぞれ
 アップロード済み。2026-06-17 時点で ja / en とも 7 枚を撮影済み。
-zh / zh_Hant / ko の listing は Phase 11.10 以降の追加対応とする (初版リリース時は
-ja / en のみで提出)。
+
+zh / zh_Hant / ko の store listing は、ユーザー確認時点の配信地域が日本・米国に限定
+されていること、未翻訳言語には Google Play の自動翻訳を利用できること、公開直後で
+言語別需要を判断できる実績データがないことから、2026-08-03 時点では追加しない。
+Closed Testing 後に Play Console の端末言語別統計または言語推奨でインストール増加の
+可能性が示された場合に、まずテキスト翻訳を追加する。画像は既定言語の素材を流用できる。
+
+参照: <https://support.google.com/googleplay/android-developer/answer/9844778>
 
 ### 9.2 撮影済みファイル (2026-06-17、Pixel 6a / profile APK、ja)
 
@@ -388,8 +397,8 @@ ja / en のみで提出)。
 大きな仕様変更・ブロッカーは検出されず、既存の草稿方針のまま提出可と判断。
 
 > **2026-08-03 追記:** 上記は 2026-07-24 時点の判断。Android `Geocoder` が
-> プロバイダーによってネットワークを利用し得る点を今回の監査で確認したため、
-> Data Safety の Approximate location だけは §5 のとおり再確認対象へ変更した。
+> プロバイダーによってネットワークを利用し得る点を今回の監査で確認し、Data Safety の
+> Approximate location は §5 の申告内容へ変更する方針を確定した。
 
 1. ✅ Data Safety フォームの最新項目構成 (2026 年現行)
 2. ✅ Play App Signing の 2026 年加入フロー (新規アプリで強制 / 任意)
@@ -408,8 +417,8 @@ ja / en のみで提出)。
 - Store listing: App name 30 文字、Short description 80 文字、Full description
   4000 文字。全角 / 半角とも同一カウント。
   参照: <https://support.google.com/googleplay/android-developer/answer/9859152>
-- Target SDK: 2025-08-31 以降、新規アプリ / アプリ更新は Android 15
-  (API level 35) 以上が必要。TimerUtility は API 36 主ターゲット方針だが、
+- Target SDK: 2026-08-31 以降、新規アプリ / アプリ更新は Android 16
+  (API level 36) 以上が必要。TimerUtility は API 36 主ターゲットで要件を満たすが、
   提出前に `targetSdk = flutter.targetSdkVersion` の実解決値を確認する。
   参照: <https://support.google.com/googleplay/android-developer/answer/11926878>
 - Closed testing: 2023-11-13 後に作成された Personal developer account は、
@@ -422,10 +431,9 @@ ja / en のみで提出)。
 
 Google Play Developer 登録完了を機に、残り論点を WebFetch / WebSearch で裏取り。
 
-- Data Safety (2026-07-24 時点の判断): データを一切収集しないアプリも申告フォーム
-  入力は必須。「No」回答 + Privacy Policy URL 提示で「No data collected /
-  No data shared」と表示される。当時は §5 の方針のまま提出可と判断したが、
-  2026-08-03 の `Geocoder` 再評価により Approximate location は再確認対象。
+- Data Safety: データを一切収集しないアプリも申告フォーム入力は必須。2026-07-24
+  時点では「No data collected / No data shared」で提出したが、2026-08-03 の
+  `Geocoder` 再評価により Approximate location を §5 の内容へ修正する方針を確定した。
   参照: <https://support.google.com/googleplay/android-developer/answer/10787469>
 - Play App Signing: 新規アプリは aab 初回アップロード時に「quantum-ready hybrid
   signing (Google 生成鍵)」へ自動 enroll される。能動的な「加入」操作は不要
@@ -445,8 +453,8 @@ Google Play Developer 登録完了を機に、残り論点を WebFetch / WebSear
   参照: <https://developer.android.com/develop/ui/views/launch/icon_design_adaptive>
 - targetSdk 実値: `flutter.targetSdkVersion` の実解決値をコード直接確認
   (手元 Flutter SDK の `packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt`
-  に `targetSdkVersion: Int = 36` とハードコード)。Play 要求 (2025-08-31 以降
-  API35 以上) を満たす。
+  に `targetSdkVersion: Int = 36` とハードコード)。2026-08-31 以降の Play 要求
+  (API 36 以上) を満たす。
 - USE_FULL_SCREEN_INTENT: 事前審査ではなく Play Console App content 画面での
   自己申告。Alarm/Calling core functionality 申告により 2025-01-22 以降も
   デフォルト許可対象。
@@ -462,3 +470,22 @@ Google Play Developer 登録完了を機に、残り論点を WebFetch / WebSear
   で本文を直接取得できず、WebSearch スニペット経由の確認にとどまる (通常の公式
   ページ本文確認より信頼度が一段階低い)。公開前にブラウザで目視再確認を推奨。
   参照 (スニペット経由): <https://pixabay.com/service/license-summary/>
+
+### 11.3 中国語・韓国語 Store listing の判断 (2026-08-03)
+
+**結論: 現時点では ja / en の手動 Store listing を維持し、zh-Hans / zh-Hant / ko は
+追加しない。** アプリ内 UI とプライバシーポリシーの 5 言語対応は維持する。
+
+- Store listing の翻訳は配信国ではなくユーザーの言語設定に一致すると表示されるため、
+  日本・米国のみの配信でも中韓言語ユーザーへの効果はあり得る。
+- 手動翻訳がない言語では、ユーザーが Google Play の自動翻訳を選択できる。テキストだけ
+  追加した場合、画像は既定言語の素材へフォールバックする。
+- Google Play の翻訳推奨は、言語別のインストール分布・成長率・カテゴリ傾向・変換率・
+  潜在市場を、十分な実績データがある場合に評価する。現時点では TimerUtility 固有の
+  zh / ko 需要を裏付けるデータがない。
+- Play Console の翻訳推奨が表示された場合、統計の Language dimension で zh / ko の
+  訪問・インストールが確認できた場合、または中国語圏・韓国への配信拡大時に再評価する。
+
+参照:
+<https://support.google.com/googleplay/android-developer/answer/9844778> /
+<https://support.google.com/googleplay/android-developer/answer/139628>

@@ -11,11 +11,13 @@
   で署名付き AAB を公開済み。
 - Play Console はアプリ作成、Internal Testing、ja/en Store listing、Content Rating、
   Target Audience、Data Safety、Exact Alarm / FullScreenIntent 申告まで実施済み。
-- Closed Testing の 12 テスター × 14 日間 opt-in と本番アクセス申請は未完了。
+- v1.1.5 (9) の Closed Testing 公開は完了。12 テスター × 14 日間 opt-in と
+  本番アクセス申請は未完了。
 - プライバシーポリシーは日本語を正典とし、英語・簡体字中国語・繁体字中国語・韓国語を
-  同じ Version 1.2 へ同期した。
+  同じ Version 1.3 へ同期した。
 - Android `Geocoder` は端末・OS・サービスプロバイダーによってネットワークを使う可能性が
-  あるため、Play Console の Data Safety は現行実装に基づいて再確認する。
+  あるため、Data Safety は Approximate location を collected / not shared /
+  not ephemeral / optional / app functionality とする内容を確定し、Play Console 転記待ち。
 
 以下の Context、方針、Phase 別タスク表は、当時の版数・ブランチ・判断を残すための履歴である。
 未完了表記を現在のリリース状態として読まないこと。現行進捗は [tasklist.md](../tasklist.md) を正とする。
@@ -250,17 +252,17 @@ PR #91 検証: `flutter analyze`、`flutter test` (673 passed / 1 skipped)、
 
 ---
 
-## 保留論点 (Phase 11.10 着手前に裏取り) — 2026-07-24 裏取り完了
+## 保留論点 (Phase 11.10 着手前に裏取り) — 2026-08-03 現行化
 
 CLAUDE.md ソース信用原則に従い WebFetch / WebSearch で確認済み。詳細ソースは
 [docs/play-store-listing.md §11.2](play-store-listing.md#L382)。
 
-1. ✅ Data Safety フォームの最新項目構成 — データ収集なしのアプリも入力必須。「No」回答 + Privacy Policy URL で「No data collected / No data shared」表示。既存方針のまま提出可
+1. ✅ Data Safety フォームの最新項目構成 — Android `Geocoder` が端末実装によってバックエンドサービスを利用し得るため、Approximate location は collected / not shared / not ephemeral / optional / app functionality として申告する。過去の「No data collected / No data shared」申告は Play Console で更新が必要
 2. ✅ Play App Signing の 2026 年加入フロー — 新規アプリは aab 初回アップロード時に自動 enroll (quantum-ready hybrid signing)。能動的な「加入」操作は不要
 3. ✅ Internal Testing 人数上限・期間 — 上限 100 人、期間制限の記載なし
 4. ✅ 新規 Personal developer account 向け Closed Testing 12 testers・14 日連続 opt-in 要件 — 現行値のまま (2023-11 開始 20 人 → 2024-12 に 12 人へ緩和済)。opt-out すると連続日数がリセットされる点に注意
 5. ✅ Adaptive Icon monochrome 必須化時期 — 公式ページ (developer.android.com) では必須ではなく推奨。Android 16 QPR2 以降は未提供でも自動生成。一部ブログの「2025-10-15 必須化」説は公式ページに記載なく却下 (仮説扱い)。本アプリは Phase 11.9-T1/T3 で monochrome 実装済みのため影響なし
-6. ✅ 現行 Play 要求 target SDK — 2025-08-31 以降 API35 以上必須。`flutter.targetSdkVersion` の実値は `FlutterExtension.kt` に `36` とハードコードされておりコード直接確認済み (API36) → クリア
+6. ✅ 現行 Play 要求 target SDK — 2026-08-31 以降、新規アプリ / アプリ更新は API36 以上必須。`flutter.targetSdkVersion` の実値は `FlutterExtension.kt` に `36` とハードコードされておりコード直接確認済み → クリア
 7. ✅ SCHEDULE_EXACT_ALARM + USE_FULL_SCREEN_INTENT の事前申請審査要否 — どちらも事前審査ではなく Play Console 上の自己申告 (App content 画面 / Permissions Declaration Form)。restricted permission review 対象は `USE_EXACT_ALARM` のみで、「alarm/timer アプリ」は acceptable use case に明記済み、本アプリは該当
 8. ⚠️ Pixabay Content License 2024 改定とアプリ同梱再配布の現行解釈 ([docs/oss-publishing-notes.md:79-81](oss-publishing-notes.md#L79-L81)) — 「Standalone (単体) 再配布」は禁止だがアプリ内蔵アセットとしてのバンドルは許可範囲という解釈。ただし公式ページ本文は WebFetch が 403 Forbidden で直接取得できず、WebSearch スニペット経由の確認にとどまる (信頼度: 公式ページ本文確認より一段階低い)。公開前に目視で再確認推奨
 
@@ -269,7 +271,7 @@ CLAUDE.md ソース信用原則に従い WebFetch / WebSearch で確認済み。
 ## 全体検証
 
 - Phase 11.8 完了時: GitHub Public 化、Community Standards 100%、回帰なし
-- Phase 11.9 現時点: 新 applicationId + 新アイコンの aab がローカル build 成功、679 テスト緑、Privacy Policy 公開。残りは Play Console 実画面での Store listing / Data Safety 確定と、必要に応じた bundletool / Pixel 6a install 確認
+- 現行状態: v1.1.5 (9) を Closed Testing へ公開済み。12 testers × 14 日連続 opt-in、本番アクセス申請、確定済み Data Safety 回答の Play Console 転記が残る
 - Phase 11.10 完了時: Production rollout 開始、CI 緑、Pre-launch report 警告ゼロ
 
 ---

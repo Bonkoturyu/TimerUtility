@@ -2,7 +2,8 @@
 
 作成日: 2026-06-20
 最終同期: 2026-08-03
-状態: v1.1.5 公開後の現行索引。Closed Testing と Data Safety 再確認が残作業
+状態: v1.1.5 公開後の現行索引。Closed Testing への AAB 公開済み。
+12 テスター × 14 日間の継続と Data Safety 申告更新が残作業
 
 関連: [play-store-listing.md](play-store-listing.md) /
 [closed-test-plan.md](closed-test-plan.md) /
@@ -66,10 +67,12 @@
 - [x] Content Rating
 - [x] Target Audience and Content (13 歳以上)
 - [x] 広告 ID、FullScreenIntent、Exact Alarm のアプリコンテンツ申告
-- [x] Data Safety を「No data collected / No data shared」で送信
-- [ ] Android `Geocoder` のプロバイダー処理を踏まえて Approximate location の
-  Data Safety 回答を再確認し、必要なら修正
-- [ ] v1.1.5 (9) を Closed Testing へ公開し、12 テスター × 14 日間の opt-in を完了
+- [x] 初回 Data Safety を「No data collected / No data shared」で送信
+- [x] Android `Geocoder` のプロバイダー処理を踏まえて Approximate location の
+  Data Safety 回答を確定（収集あり・共有なし・一時処理ではない・任意・アプリ機能目的）
+- [ ] 上記 Data Safety 回答を Play Console へ転記して送信
+- [x] v1.1.5 (9) を Closed Testing へ公開（2026-08-03 ユーザー確認）
+- [ ] 12 テスター × 14 日間の連続 opt-in を完了
 - [ ] 本番アクセス申請の文章質問票を提出
 
 Data Safety の再確認方針と転記文は [play-store-listing.md §5](play-store-listing.md#5-data-safety-申告)、

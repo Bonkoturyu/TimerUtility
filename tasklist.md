@@ -59,7 +59,7 @@ Exact 経路は長時間再生を担える Foreground Service に分離する。
   署名付き AAB を公開する
   ([GitHub Release v1.1.5](https://github.com/Bonkoturyu/TimerUtility/releases/tag/v1.1.5)、
   target commit `21eda8f8655830709cfc91c468ffabec3bc77d0c`)
-- [ ] `1.1.5 (9)` の AAB を Play Console のクローズドテストへ公開する（ユーザー実施）
+- [x] `1.1.5 (9)` の AAB を Play Console のクローズドテストへ公開する（ユーザー実施、2026-08-03 完了確認）
 
 ### Version 1.1.4 端末内音声認識の安定性改善（2026-08-02）
 
@@ -255,7 +255,13 @@ Exact 経路は長時間再生を担える Foreground Service に分離する。
 - [x] Main store listing（ja/en）保存（短い説明・詳しい説明・アイコン・Feature Graphic・スクリーンショット7枚×2言語）
 - [x] コンテンツのレーティング送信（全地域で最年少レーティング確定）
 - [x] ターゲットユーザーおよびコンテンツ送信（13歳以上を対象）
-- [x] データセーフティ送信（「No data collected / No data shared」方針）
+- [x] 初回データセーフティ送信（当時は「No data collected / No data shared」方針）
+- [x] Android `Geocoder` 経路を Google Play Data Safety 定義へ再照合し、
+  Approximate location を collected / not shared / not ephemeral / optional /
+  app functionality とする転記内容を確定（Play Console 更新待ち）
+- [ ] Privacy Policy v1.3 を `main` へ統合後、GitHub Pages を再ビルドして
+  ja / en / zh-Hans / zh-Hant / ko の5 URLが HTTP 200 になることを確認する
+  （2026-08-03 時点: ja / en は200、zh-Hans / zh-Hant / ko は旧 build のため404）
 - [x] アプリのコンテンツ申告3件（広告ID=不使用、全画面インテント=目覚まし時計としてインストール時事前付与を希望、正確なアラーム=目覚まし時計）
 - [ ] Closed Testing: 12テスター×14日間連続opt-in の募集開始（[docs/closed-test-plan.md](docs/closed-test-plan.md) に募集文・記録テンプレ用意済み。別の Android アプリのテスター募集とまとめて実施予定のため意図的に保留中）
 - [ ] 本番アクセス申請時の文章質問票への回答（同ファイル「Production access 申請用メモ」に下書きあり）
@@ -280,8 +286,10 @@ Exact 経路は長時間再生を担える Foreground Service に分離する。
 - [x] #121 統合後に `flutter analyze --fatal-infos` 0 issues /
   `flutter test` 718 passed (1 skipped)
 - [ ] Pixel 6a 実機で 5 言語の切替表示 + 通知チャンネル名の追従を確認（ユーザー実施）
-- [ ] Play Console のストアリスティングに zh / ko を追加するかの判断（アプリ内
-  l10n とは別管理。初回提出は ja / en のみで確定済み）
+- [x] Play Console のストアリスティングに zh / ko を追加するか判断
+  （2026-08-03: 現在の日本・米国配信では追加を見送り。Google Play の自動翻訳を
+  利用し、Closed Testing 後の端末言語別統計または Play Console の言語推奨で需要が
+  確認できた場合に再検討。アプリ内 l10n と5言語のPrivacy Policyは維持）
 
 ### Phase 13 — ユーザー取り込み音源（完了）
 
@@ -377,8 +385,8 @@ Exact 経路は長時間再生を担える Foreground Service に分離する。
 - 1 日以上かかるタスクは `BACKLOG.md` の Phase に格上げを検討
 - 完了タスクの詳細ログ（Phase 1〜11 / 各種 Follow-up）は [docs/dev-log.md](docs/dev-log.md) を参照
 
-最終更新日: 2026-07-29（PR #116 のユーザー取り込み音源を現行 main へ統合し、
-未解決レビュー2件を修正。版数を `1.1.0+4` へ更新し、Phase 13 を完了として反映）
+最終更新日: 2026-08-03（v1.1.5 (9) の Closed Testing 公開、`Geocoder` を踏まえた
+Data Safety 転記内容、zh / ko Store listing の判断、現行文書同期を反映）
 
 過去の更新: 2026-07-29（Version 1.0.1 手動リリース準備 —
 `pubspec.yaml` を `1.0.1+3` へ更新し、翻訳整合・format・analyze・全テストを通過。
