@@ -1,8 +1,24 @@
 # TimerUtility OSS 公開 → Play Store 提出 実装計画
 
 作成日: 2026-05-16
-状態: 承認済 / Phase 13 先行方針へ同期済 (2026-07-16)
+状態: 履歴計画 / 現行スナップショットを 2026-08-03 に追記
 関連: [docs/oss-publishing-notes.md](oss-publishing-notes.md) (公開可否・特許リスク監査) / [BACKLOG.md](../BACKLOG.md) (Phase 11 残タスク) / [tasklist.md](../tasklist.md)
+
+## 現行スナップショット (2026-08-03)
+
+- 公開版は `v1.1.5` / versionCode `9`。PR #136 をマージし、
+  [GitHub Release v1.1.5](https://github.com/Bonkoturyu/TimerUtility/releases/tag/v1.1.5)
+  で署名付き AAB を公開済み。
+- Play Console はアプリ作成、Internal Testing、ja/en Store listing、Content Rating、
+  Target Audience、Data Safety、Exact Alarm / FullScreenIntent 申告まで実施済み。
+- Closed Testing の 12 テスター × 14 日間 opt-in と本番アクセス申請は未完了。
+- プライバシーポリシーは日本語を正典とし、英語・簡体字中国語・繁体字中国語・韓国語を
+  同じ Version 1.2 へ同期した。
+- Android `Geocoder` は端末・OS・サービスプロバイダーによってネットワークを使う可能性が
+  あるため、Play Console の Data Safety は現行実装に基づいて再確認する。
+
+以下の Context、方針、Phase 別タスク表は、当時の版数・ブランチ・判断を残すための履歴である。
+未完了表記を現在のリリース状態として読まないこと。現行進捗は [tasklist.md](../tasklist.md) を正とする。
 
 ## Context
 

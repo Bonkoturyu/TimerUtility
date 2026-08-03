@@ -28,7 +28,7 @@ Claude Code は新規 Entity 追加・既存 Entity 変更時に必ず本ドキ�
 └─────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────┐
-│  Alarm Aggregate（Phase 9.5 予定）              │
+│  Alarm Aggregate（Phase 9.5 で実装済み）        │
 │  ・AlarmEntity                                  │
 │  ・AlarmRepeat (sealed ValueObject)             │
 │  ・AlarmService                                 │
@@ -154,8 +154,8 @@ TimerEntity {
   endAt: DateTime?                   // 絶対時刻（running 時のみ非 null）
   status: TimerStatus
   pausedRemaining: Duration?         // paused 時の残り時間退避
-  alarmSound: AlarmSound             // 鳴動時の音源（Phase 5 で追加予定）
-  snooze: SnoozeState                // スヌーズ履歴（Phase 7 で追加予定）
+  alarmSound: AlarmSound             // 鳴動時の音源（Phase 5 で追加）
+  snooze: SnoozeState                // スヌーズ履歴（Phase 7 で追加）
   createdAt: DateTime
 }
 ```
@@ -166,8 +166,8 @@ Phase 別フィールド追加履歴:
 |---|---|---|
 | `id, label, duration, endAt, status, pausedRemaining, createdAt` | Phase 3 | 単体タイマーの基本構造 |
 | `notificationId` | Phase 4 | `NotificationIdGenerator` で createIdle 時に発番、不変 |
-| `alarmSound` | Phase 5（予定） | `AlarmSoundCatalog` の ID を保持 |
-| `snooze` | Phase 7（予定） | `SnoozeState` ValueObject |
+| `alarmSound` | Phase 5 | `AlarmSoundCatalog` の ID を保持 |
+| `snooze` | Phase 7 | `SnoozeState` ValueObject |
 
 不変条件:
 - `duration > Duration.zero`
@@ -368,7 +368,7 @@ Preset {
 
 ---
 
-## Alarm Aggregate（Phase 9.5 予定）
+## Alarm Aggregate（Phase 9.5 で実装済み）
 
 「指定時刻に鳴らす目覚まし系アラーム」を表す。Timer Aggregate とは別 Aggregate。
 分離理由は `docs/adr/0005-alarm-vs-timer-separation.md` 参照。
@@ -755,7 +755,7 @@ factory TimerEntity.create({
 |---|---|
 | `timers` | `TimerEntity` |
 | `presets` | `Preset` |
-| `alarms` | `AlarmEntity`（Phase 9.5 で追加予定） |
+| `alarms` | `AlarmEntity`（Phase 9.5 で追加、実装済み） |
 | `clock_entries` | `ClockEntry`（Phase 10.5 で実装済み、Phase 11 で `clock_locations` → `clock_entries` にリネーム、schemaVersion 4→5） |
 | `imported_sounds` | `ImportedSound`（Phase 13、schemaVersion 6→7。contentHash UNIQUE） |
 

@@ -1,187 +1,195 @@
 # Privacy Policy (TimerUtility)
 
-Last updated: 2026-07-30
-Version: 1.1
-Canonical version: [docs/privacy-policy.md](privacy-policy.md) (Japanese)
-This document: English translation
+Last updated: 2026-08-03
+Version: 1.2
+Canonical version: [Japanese](privacy-policy.md)
 
-TimerUtility ("the App") respects user privacy and adopts a **zero-collection
-architecture** as a design priority. This policy clarifies what data the App
-handles, and — more importantly — what it does not.
+Languages: [日本語](privacy-policy.md) / **English** /
+[简体中文](privacy-policy.zh-Hans.md) / [繁體中文](privacy-policy.zh-Hant.md) /
+[한국어](privacy-policy.ko.md)
+
+TimerUtility (the "App") minimizes the data needed for its features and does
+not send user data to a developer-operated backend. This policy distinguishes
+processing by the App, Android system services, and destinations selected by
+the user.
 
 ---
 
 ## 1. Summary
 
-- **The App does not collect or transmit any personal information.**
-- All data (timers, alarms, world-clock entries, settings, diagnostic logs)
-  is stored only on the user's device.
-- The App has no network communication features (there is no backend server).
-- No advertising SDK, analytics SDK, or crash-reporting SDK is bundled.
-- Location data is used only ephemerally for world-clock timezone inference;
-  it never leaves the device and is not persisted.
-- Microphone audio is used ephemerally only for opt-in, on-device voice-stop
-  recognition. It is never recorded, stored, or transmitted.
+- The App has no developer-operated backend. The developer does not
+  automatically receive or remotely store user data from the App.
+- Timers, alarms, world clocks, imported sounds, preferences, and diagnostic
+  logs are stored on the device.
+- The App bundles no advertising, analytics, or crash-reporting SDK.
+- Only when an empty world-clock list is initialized for the first time does
+  the App, after the OS permission prompt is granted, pass coarse location to
+  Android's `Geocoder` system service. That service may
+  use a network depending on the device and provider. The App does not persist
+  raw coordinates, and the developer does not receive them.
+- Microphone input is used transiently only for user-enabled, on-device voice
+  stop. It is not recorded, stored, transmitted, or written to diagnostics.
+- Diagnostic logs are never uploaded automatically. The user selects a
+  destination through the Android Share Sheet.
 
 ---
 
-## 2. Data NOT collected (corresponds to "no data collected" on the Play Store
-Data Safety form)
+## 2. Data not collected by the developer
 
-The App does **not** collect any of the following:
+The App does not collect the following on a developer-operated server:
 
-- Personally identifying information (name, email, phone, address, date of birth)
-- Account identifiers (Google account, social media accounts)
-- Device identifiers (IMEI, advertising ID, ANDROID_ID)
-- Access to contacts / calendar / photos / camera
-- Collection, storage, or transmission of audio data
-- App usage statistics, crash reports, or analytics data
-- Payment / billing information (no in-app purchases are implemented)
+- Name, email address, phone number, postal address, or date of birth
+- Google, social-media, or other account identifiers
+- IMEI, advertising ID, ANDROID_ID, or other device identifiers
+- Contacts, calendar, photos, or camera data
+- Audio recordings
+- Usage analytics, crash reports, or analytics data
+- Payment information (the App has no in-app purchases)
+
+Google Play's Data Safety definition of collection includes data transmitted
+off the device by an app or SDK. Because the Android `Geocoder` implementation
+may use a network, the Play Console declaration is reviewed separately against
+the actual system provider and current form.
 
 ---
 
-## 3. Data handled only on-device
-
-The following data is stored within the App's private storage on the user's
-device to support its features, and is **never transmitted off the device**.
+## 3. Data stored on the device
 
 | Data | Purpose | Storage | How to delete |
 | --- | --- | --- | --- |
-| Timer settings (count, durations, labels, sound, snooze configuration) | Multi-timer feature, boot-time restore | On-device SQLite (Drift) | In-app UI, or Android Settings → Apps → Clear storage |
-| Alarm settings (time, weekday repeat, enabled state, sound) | Scheduled-alarm feature | On-device SQLite (Drift) | Same as above |
-| Presets | Preset feature | On-device SQLite (Drift) | Same as above |
-| World-clock entries (timezone identifiers and display order) | World-clock feature | On-device SQLite (Drift) | Same as above |
-| User preferences (theme, language, default sound, CVD mode, diagnostic-log toggle, etc.) | Persisting settings-screen options | On-device SharedPreferences | Same as above |
-| Diagnostic logs (only when the user explicitly enables them) | Tester/developer troubleshooting | On-device app-private directory (JSON Lines, rotation: 14 days / 50 MB total / 1 MB per file) | Toggle off in the Settings screen, or clear storage |
+| Timer settings (duration, label, sound, snooze, etc.) | Multiple timers and restore | SQLite (Drift) | In-app UI, clear storage, or uninstall |
+| Alarm settings (time, repeat, sound, etc.) | Scheduled alarms | SQLite (Drift) | Same as above |
+| Presets | Preset feature | SQLite (Drift) | Same as above |
+| World clocks (timezone identifiers and order) | World-clock feature | SQLite (Drift) | Same as above |
+| Imported sound files, display names, and metadata | Preview and alarm playback | App-private files / SQLite (Drift) | Imported-sound management UI, clear storage, or uninstall |
+| Preferences (theme, language, default sound, app volume, CVD, voice stop, diagnostics, etc.) | Persist settings | SharedPreferences | Clear storage or uninstall |
+| Diagnostic logs (only when explicitly enabled) | Troubleshooting | App-private files (JSON Lines; up to 14 days / 50 MB total / 1 MB each) | Clear storage or uninstall |
 
-All of this data is fully removed when the App is uninstalled (standard Android
-OS behavior).
+An imported sound is a user-selected file copied from the Android file picker
+into App-private storage. The App does not automatically send it elsewhere.
 
-Microphone input is not stored. It is passed transiently to Android's on-device
-speech recognizer only while the user-enabled voice-stop feature and the
-alarm/timer ringing screen are active. Recognition candidates are discarded
-after command matching and are never written to diagnostic logs.
+Microphone input and recognition candidates are not stored. They are used only
+while a ringing screen is active and discarded after command matching.
 
 ---
 
-## 4. Location data handling
+## 4. Location data
 
-The App uses location data **only** to automatically infer the user's current
-timezone in the world-clock feature.
+- Permission: `ACCESS_COARSE_LOCATION` only. The App does not request
+  `ACCESS_FINE_LOCATION`.
+- When used: Only when an empty world-clock list is initialized for the first
+  time. The OS permission dialog asks the user to allow or deny access.
+- Processing: Coarse coordinates are passed to Android's `Geocoder` system
+  service. Country or region information is mapped to a timezone identifier
+  such as `Asia/Tokyo`.
+- Network: The `Geocoder` backend depends on the device, OS, and service
+  provider and may use a network.
+- Storage: The App does not write raw coordinates or geocoding results to
+  Drift, SharedPreferences, or diagnostic logs. Only the inferred timezone
+  identifier is stored.
+- If denied: The App falls back to the device's system timezone.
 
-- Permission: `ACCESS_COARSE_LOCATION` (coarse accuracy only; the App does
-  **not** request `ACCESS_FINE_LOCATION`).
-- When used: Only when the user explicitly performs "Add current location"
-  in the world-clock screen.
-- How used: Coordinates are passed to the on-device `geocoding` API to derive
-  a country code, which is then mapped to a timezone identifier (e.g.,
-  `Asia/Tokyo`).
-- **Coordinates never leave the device.** They are held only in memory during
-  conversion and are not written to Drift / SharedPreferences.
-- If the user denies location permission, the App falls back to the device's
-  system timezone via `FlutterTimezone.getLocalTimezone`.
+Official Android `Geocoder` documentation:
+<https://developer.android.com/reference/android/location/Geocoder>
 
 ---
 
 ## 5. Permission rationale
 
-The nine permissions declared in [AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml)
-are used solely as follows.
+The App declares the following 11 permissions in
+[AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml).
 
-| Permission | Purpose | When prompted |
+| Permission | Purpose | Prompt |
 | --- | --- | --- |
-| `ACCESS_COARSE_LOCATION` | Current-location timezone inference in world clock (see §4) | OS dialog during "Add current location" |
-| `RECORD_AUDIO` | Stop a ringing alarm/timer using opt-in, on-device speech recognition | OS dialog when voice stop is enabled in Settings |
-| `POST_NOTIFICATIONS` | Display timer / alarm notifications (required on Android 13+) | OS dialog when the first timer/alarm is created |
-| `SCHEDULE_EXACT_ALARM` | Exact-time alarm delivery (avoids Doze) | Settings deep-link on Android 14+ |
-| `USE_EXACT_ALARM` | Alternative permission auto-granted to clock/alarm-category apps on Android 14+ | Auto-granted (no user prompt) |
-| `USE_FULL_SCREEN_INTENT` | Show alarms over the lock screen (Android 14+ requires pre-approval) | Settings deep-link on Android 14+ |
-| `WAKE_LOCK` | Wake CPU when an alarm fires | Auto-granted |
-| `VIBRATE` | Vibration for notifications / alarms | Auto-granted |
-| `RECEIVE_BOOT_COMPLETED` | Auto-restore timers / alarms after device reboot | Auto-granted |
+| `ACCESS_COARSE_LOCATION` | Initial current-location timezone inference (§4) | OS dialog when an empty world-clock list is first initialized |
+| `RECORD_AUDIO` | On-device voice stop while ringing | OS dialog when voice stop is enabled |
+| `POST_NOTIFICATIONS` | Timer and alarm notifications | OS dialog on Android 13+ |
+| `SCHEDULE_EXACT_ALARM` | Schedule exact alarms | Settings link on applicable versions |
+| `USE_EXACT_ALARM` | Exact alarms for clock/alarm use | System-granted; no dialog |
+| `USE_FULL_SCREEN_INTENT` | Show the ringing screen over the lock screen | Settings link on applicable versions |
+| `WAKE_LOCK` | Wake the CPU when ringing starts | Automatically granted |
+| `VIBRATE` | Notification and alarm vibration | Automatically granted |
+| `RECEIVE_BOOT_COMPLETED` | Restore schedules after reboot | Automatically granted |
+| `FOREGROUND_SERVICE` | Run background alarm playback service | Automatically granted |
+| `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Declare that service as media playback | Automatically granted |
 
 ---
 
 ## 6. Diagnostic logging
 
-The App records internal operational events **only when the user explicitly
-turns on** the "Record diagnostic logs" toggle in the Settings screen.
+The App stores operational logs on the device only when the user enables
+"Record diagnostic logs" in Settings.
 
-- Contents: timer / alarm start-stop-snooze events, error information, and
-  permission grant results. **PII is masked in advance**:
-  - Latitude/longitude is never recorded (only timezone identifiers).
-  - User-entered timer / alarm label strings are not recorded.
-- Storage: on-device app-private directory (JSON Lines, rotation: 14 days /
-  50 MB total / 1 MB per file).
-- Sharing: only when the user presses "Share diagnostic logs" does the App
-  bundle the logs into a zip and hand it to the Android OS Share Sheet, where
-  the **user chooses the destination** (email, Drive, messaging app, etc.).
-  **The App never auto-uploads anything.**
-- Deletion: Turning off the toggle stops new recordings (existing files
-  remain). Full deletion is via "Clear storage" or uninstall.
+- Contents: timer/alarm start, stop, snooze, errors, and permission results.
+- Excluded: latitude/longitude, microphone input, recognition candidates, and
+  user-entered labels.
+- Sharing: Only after "Share diagnostic logs" is selected does the App hand a
+  zip file to the Android Share Sheet. The user chooses the destination and
+  performs the send action. There is no automatic upload.
+- Deletion: Turning the toggle off stops new entries. Clear storage or
+  uninstall to remove existing files completely.
 
 ---
 
 ## 7. Third-party services
 
-The App **does not use any third-party analytics, advertising, or backend
-services.**
+The App uses no third-party advertising, analytics, crash-reporting, or
+developer backend service. It does use Android system services for location,
+`Geocoder`, on-device speech recognition, and notifications. Their processing
+also follows the device, OS, and service provider's implementation and privacy
+settings.
 
-The bundled third-party libraries (Flutter SDK, Riverpod, Drift,
-flutter_local_notifications, audioplayers, permission_handler, geolocator,
-geocoding, share_plus, etc.) are client libraries that wrap OS APIs and do not
-make outbound network requests. (`geocoding` uses Android's built-in
-`Geocoder` API, which uses on-device data and does not contact Google's
-servers.)
-
-A full dependency listing is in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+When diagnostic logs are shared, the policy of the user-selected email, cloud
+storage, messaging, or other destination applies. See
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for the dependency list.
 
 ---
 
 ## 8. Children's privacy
 
-The App is not designed for children under 13 (COPPA threshold). However,
-because the App collects **no personal information whatsoever**, no additional
-privacy risk arises if a child uses it.
+The App is not directed to children under 13. If a child uses it, the same
+handling described in this policy applies, and the developer does not receive
+personal information from the App.
 
 ---
 
-## 9. Data encryption
+## 9. Security and communications
 
-The App handles no personal, credential, or networked data, so there is no
-data subject to encryption-in-transit requirements. Drift / SharedPreferences
-files follow Android OS's standard app-private storage protections
-(accessible only after device unlock).
+On-device data is stored in Android app-private storage and follows OS access
+controls. The App exposes no developer-operated network endpoint. The App
+cannot control transport used by Android system services or a destination the
+user selects in the Share Sheet.
 
 ---
 
-## 10. User rights
+## 10. User rights and deletion
 
-Because the App does not collect personal information, there is no data
-subject to GDPR / CCPA / Japan-APPI "access, correction, deletion" requests.
+The developer holds no user data on a server, so there is no server-side data
+for the developer to access, correct, or delete. On-device data can be removed
+as follows:
 
-To remove all on-device App data:
+- Imported sounds: delete them in the imported-sound management UI.
+- Timers and alarms: delete them through the corresponding in-app UI.
+- All data: Android Settings > Apps > TimerUtility > Storage & cache > Clear
+  storage, or uninstall the App.
 
-- Android Settings → Apps → TimerUtility → Storage & cache → Clear storage
-- Or uninstall the App
+Data already shared to another app through the Share Sheet must be deleted at
+that destination.
 
 ---
 
 ## 11. Changes to this policy
 
-If this policy is updated, the "Last updated" date at the top of this file is
-revised and published via GitHub Pages. Material changes are announced in
-GitHub Release notes and the Play Store "What's new" entry.
+Updates revise the date and version above and are published on GitHub Pages.
+Material changes are announced in GitHub Release notes or the Play Store
+"What's new" section.
 
 ---
 
 ## 12. Contact
 
-For questions or concerns about this policy:
+- GitHub Issues: <https://github.com/Bonkoturyu/TimerUtility/issues>
+- Maintainer: [@Bonkoturyu](https://github.com/Bonkoturyu)
 
-- GitHub Issues: https://github.com/Bonkoturyu/TimerUtility/issues
-- Maintainer: [@Bonkoturyu](https://github.com/Bonkoturyu) (via GitHub
-  profile contact)
-
-For sensitive matters such as security vulnerabilities, please use the
-maintainer's GitHub profile contact rather than a public issue.
+For sensitive matters such as security vulnerabilities, use the contact method
+on the maintainer's GitHub profile instead of a public issue.

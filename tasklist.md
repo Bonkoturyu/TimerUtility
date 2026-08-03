@@ -54,9 +54,11 @@ Exact 経路は長時間再生を担える Foreground Service に分離する。
   versionCode `9` / targetSdk `36` と `jarsigner -verify` 成功を確認する
   (`build/app/outputs/bundle/release/app-release.aab`、67,646,829 bytes、
   SHA-256 `41A957EA6344A4D17C163292F352723796BA250EAC2517D7C2863DF2E089303E`)
-- [ ] PR #136 を `main` へマージする
-- [ ] `main` から Release Workflow を `v1.1.5` で実行し、タグ、GitHub Release、
+- [x] PR #136 を `main` へマージする
+- [x] `main` から Release Workflow を `v1.1.5` で実行し、タグ、GitHub Release、
   署名付き AAB を公開する
+  ([GitHub Release v1.1.5](https://github.com/Bonkoturyu/TimerUtility/releases/tag/v1.1.5)、
+  target commit `21eda8f8655830709cfc91c468ffabec3bc77d0c`)
 - [ ] `1.1.5 (9)` の AAB を Play Console のクローズドテストへ公開する（ユーザー実施）
 
 ### Version 1.1.4 端末内音声認識の安定性改善（2026-08-02）
