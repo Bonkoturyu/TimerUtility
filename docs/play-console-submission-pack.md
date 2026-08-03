@@ -1,16 +1,28 @@
 # Play Console 提出パック
 
 作成日: 2026-06-20
-状態: Play Console 実画面作業前のローカル棚卸しメモ
-関連: [play-store-listing.md](play-store-listing.md) / [oss-and-play-release-plan.md](oss-and-play-release-plan.md)
+最終同期: 2026-08-03
+状態: v1.1.5 公開後の現行索引。Closed Testing と Data Safety 再確認が残作業
+
+関連: [play-store-listing.md](play-store-listing.md) /
+[closed-test-plan.md](closed-test-plan.md) /
+[oss-and-play-release-plan.md](oss-and-play-release-plan.md)
 
 ---
 
-## 目的
+## 現行リリース
 
-Play Console を開いたときに、提出に必要なローカル成果物と転記元を迷わず参照できるようにする。
-Play Console 実画面での Store listing / Data Safety 確定は後続作業とし、本ファイルでは
-リポジトリ内で準備済みの素材だけを索引化する。
+| 項目 | 値 |
+| --- | --- |
+| Version | `1.1.5` |
+| Version code | `9` |
+| GitHub Release | [v1.1.5](https://github.com/Bonkoturyu/TimerUtility/releases/tag/v1.1.5) |
+| Target commit | `21eda8f8655830709cfc91c468ffabec3bc77d0c` |
+| AAB | Release Workflow で署名付き成果物を公開済み。ローカル生成先は `build/app/outputs/bundle/release/app-release.aab` |
+| Android | targetSdk `36`、署名検証済み |
+
+秘密鍵と実体の `android/key.properties` は gitignore 対象。リポジトリには
+`android/key.properties.template` だけを含める。
 
 ---
 
@@ -18,18 +30,18 @@ Play Console 実画面での Store listing / Data Safety 確定は後続作業�
 
 | 用途 | パス / URL | 状態 |
 | --- | --- | --- |
-| AAB | `build/app/outputs/bundle/release/app-release.aab` | 生成済み、51.4 MB |
-| Upload key template | `android/key.properties.template` | commit 対象として配置済み |
-| Upload key 実体 | `android/key.properties` | gitignore 除外、ローカル作成済み |
 | Play Store icon | `design/icon/play-store-icon-512.png` | 512 px PNG、配置済み |
 | Feature graphic (ja) | `design/store/feature-graphic-1024x500.png` | 配置済み |
 | Feature graphic (en) | `design/store/feature-graphic-1024x500-en.png` | 配置済み |
 | Phone screenshots (ja) | `design/screenshots/phone/ja/*.png` | Pixel 6a、7 枚、1080x2400 |
 | Phone screenshots (en) | `design/screenshots/phone/en/*.png` | Pixel 6a、7 枚、1080x2400 |
-| Privacy Policy (ja) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy` | GitHub Pages 公開確認済み |
-| Privacy Policy (en) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.en` | GitHub Pages 公開確認済み |
-| Store listing text | `docs/play-store-listing.md` | ja / en 草稿あり |
-| Closed test plan | `docs/closed-test-plan.md` | Phase 11.10 以降で使用 |
+| Privacy Policy (ja) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy` | 日本語正典 |
+| Privacy Policy (en) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.en` | 英語 |
+| Privacy Policy (zh-Hans) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.zh-Hans` | 簡体字中国語 |
+| Privacy Policy (zh-Hant) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.zh-Hant` | 繁体字中国語 |
+| Privacy Policy (ko) | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.ko` | 韓国語 |
+| Store listing / release notes | `docs/play-store-listing.md` | ja / en、v1.1.5 まで記録 |
+| Closed test plan | `docs/closed-test-plan.md` | 募集文と記録テンプレートあり |
 
 ---
 
@@ -47,40 +59,25 @@ Play Console 実画面での Store listing / Data Safety 確定は後続作業�
 
 ---
 
-## 転記順
+## Play Console 状態
 
-1. Main store listing:
-   - App name: `TimerUtility`
-   - Category: Tools
-   - Short description / Full description: [play-store-listing.md](play-store-listing.md) §2 / §3
-   - Contact details / Privacy Policy URL: [play-store-listing.md](play-store-listing.md) §9 / §10
-2. Store graphics:
-   - `design/icon/play-store-icon-512.png`
-   - ja listing: `design/store/feature-graphic-1024x500.png` + `design/screenshots/phone/ja/*.png`
-   - en listing: `design/store/feature-graphic-1024x500-en.png` + `design/screenshots/phone/en/*.png`
-3. Release:
-   - AAB: `build/app/outputs/bundle/release/app-release.aab`
-   - Release notes: [play-store-listing.md](play-store-listing.md) §4
-4. App content:
-   - Data Safety: [play-store-listing.md](play-store-listing.md) §5
-   - Content Rating: [play-store-listing.md](play-store-listing.md) §6
-   - Target Audience and Content: [play-store-listing.md](play-store-listing.md) §7
-   - Permissions explanations: [play-store-listing.md](play-store-listing.md) §8
+- [x] アプリ作成と Internal Testing
+- [x] ja / en Main store listing と画像素材
+- [x] Content Rating
+- [x] Target Audience and Content (13 歳以上)
+- [x] 広告 ID、FullScreenIntent、Exact Alarm のアプリコンテンツ申告
+- [x] Data Safety を「No data collected / No data shared」で送信
+- [ ] Android `Geocoder` のプロバイダー処理を踏まえて Approximate location の
+  Data Safety 回答を再確認し、必要なら修正
+- [ ] v1.1.5 (9) を Closed Testing へ公開し、12 テスター × 14 日間の opt-in を完了
+- [ ] 本番アクセス申請の文章質問票を提出
 
----
-
-## Phase 11.9 クローズ条件
-
-- [ ] Play Console 実画面で Store listing の ja / en 転記内容を確定
-- [ ] Play Console 実画面で Data Safety を「No data collected / No data shared」方針で確定
-- [ ] Content Rating / Target Audience and Content を実画面の質問票で確定
-- [ ] 必要な権限説明を Play Console 実画面に転記
-- [ ] 必要に応じて `bundletool` で生成 AAB を APK 化し、Pixel 6a に install して release 署名経路を確認
-- [ ] Phase 11.9 完了記録を `BACKLOG.md` / `tasklist.md` / `docs/dev-log.md` に反映
+Data Safety の再確認方針と転記文は [play-store-listing.md §5](play-store-listing.md#5-data-safety-申告)、
+データ処理の正典は [privacy-policy.md](privacy-policy.md) を参照する。
 
 ---
 
 ## 注意
 
-Play Console の仕様・画面順・必要項目は変わり得る。外部仕様に関する最終判断は
-Phase 11.10-T2 で公式 Help と Play Console 実画面を確認してから行う。
+Play Console のフォーム、要件、表示順は変更され得る。提出時は公式 Help と実画面を
+再確認し、リポジトリの草稿より実時間の validator / Console 表示を優先する。

@@ -7,6 +7,23 @@
 - **短期タスク (直近の作業項目)**: [tasklist.md](tasklist.md) を参照
 - 本ファイルは Phase ヘッダ + DoD + 進捗サマリ、および進行中 / 未着手 Phase の詳細のみを保持する
 
+## 現行スナップショット (2026-08-03)
+
+- 公開版: `v1.1.5` / versionCode `9`。アプリ音量、同梱3音源の試聴、取込音源、
+  Native Exact Alarm 再生を含む。
+- リリース: PR #136 マージ後、
+  [GitHub Release v1.1.5](https://github.com/Bonkoturyu/TimerUtility/releases/tag/v1.1.5)
+  で署名付き AAB を公開済み。
+- Play Console: Internal Testing と ja/en listing、Content Rating、Target Audience、
+  アプリコンテンツ申告まで完了。Closed Testing と本番アクセス申請は未完了。
+- Data Safety: Android `Geocoder` のプロバイダー処理を踏まえ、Approximate location の
+  回答を再確認する。
+- プライバシーポリシー: 日本語を正典とする Version 1.2 を、英語・簡体字中国語・
+  繁体字中国語・韓国語へ同期。
+
+以下の各 Phase 内にある版数、ブランチ、AAB サイズ、テスト件数は、その Phase 完了時点の
+履歴値である。現行の短期進捗と検証値は [tasklist.md](tasklist.md) を正とする。
+
 ---
 
 ## 凡例
@@ -397,7 +414,7 @@ iOS 版開始時または Play Store 公開前のタイミングで、以下の�
 
 **DoD**: 通常枠の取り込み音源を安全に登録・管理・鳴動でき、失敗時にも既存参照と
 内部ファイルの整合性が保たれる
-**依存**: Phase 11.9 のソース・署名付き AAB 作成まで完了済み。
+**実装開始時の依存関係（履歴）**: Phase 11.9 のソース・署名付き AAB 作成まで完了済み。
 Play Console 実画面確定と Phase 11.10 は依存条件から外し、2026-07-16 のユーザー判断で
 Phase 13 を先行する。初回提出候補 `1.0.0+2` は `release/1.0.0` に保持し、
 Phase 13 は `feature/phase-13-user-imported-sounds` で開発する。Phase 12 は Phase 13 後に再検討
@@ -437,7 +454,10 @@ Phase 13 は `feature/phase-13-user-imported-sounds` で開発する。Phase 12 
 
 ---
 
-最終更新日: 2026-07-29（PR #116 のユーザー取り込み音源を現行 main へ統合し、
+最終更新日: 2026-08-03（v1.1.5 公開、Native Exact Alarm 再生、5言語の
+プライバシーポリシー、Data Safety 再確認事項を現行スナップショットへ反映）
+
+過去の更新: 2026-07-29（PR #116 のユーザー取り込み音源を現行 main へ統合し、
 Phase 13 を完了として反映。Play Console 実画面対応は Closed Testing 待ちを継続）
 
 過去の更新: 2026-07-27（Play Console 実画面対応の進捗を Phase 11.10 として新設し反映。

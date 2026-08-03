@@ -1,20 +1,21 @@
 # Play Store 掲載素材 (TimerUtility)
 
-作成日: 2026-05-17 (Phase 11.9 準備、Play Store 提出は Phase 11.10)
-状態: 草稿。2026-06-17 に Play Console 公式 Help を再確認し、
-short description / target SDK / closed testing 要件の現行仕様を反映済み。
-Play Console 実画面で Data Safety / Content Rating / 権限申告を最終確認して確定する。
+作成日: 2026-05-17
+最終同期: 2026-08-03
+状態: ja/en Main store listing と Content Rating / Target Audience / 権限申告は
+Play Console へ送信済み。Release notes は v1.1.5 まで記録済み。Data Safety は
+Android `Geocoder` のプロバイダー処理を踏まえて再確認する。
 
 本ファイルは Play Console アップロード時に貼り込むテキスト + Data Safety 申告 +
-Content Rating 自己評価の暫定回答を集約する。実物のスクリーンショットは
-`design/screenshots/` に Phase 11.9-T11 で Pixel 6a 実機撮影後配置。
+Content Rating 回答を集約する。実物のスクリーンショットは Pixel 6a で撮影し、
+`design/screenshots/` に ja/en 各7枚を配置済み。
 
 ---
 
 ## 0. Play Console 転記順
 
-Play Console 実画面では項目名や順序が変わる可能性があるため、Phase 11.10-T2 で
-公式 Help / 実画面を再確認してから確定する。現時点の草稿は以下の順で貼り込める。
+Play Console 実画面では項目名や順序が変わり得る。再提出時は公式 Help / 実画面を
+再確認し、以下の順で現行資料を転記する。
 
 1. Store settings / Main store listing:
    - App name: §1 `TimerUtility`
@@ -47,7 +48,7 @@ Play Console 実画面では項目名や順序が変わる可能性があるた�
 | 対象 OS | Android 8.0 (API 26) 以上、Android 16 (API 36) 主ターゲット |
 | 対応言語 | 日本語、英語、中国語簡体字、中国語繁体字、韓国語 |
 | 開発元 | BON (`@Bonkoturyu` / GitHub) |
-| 配布元 | Google Play (予定)、ソースコードは GitHub Public |
+| 配布元 | Google Play (Internal Testing 実施済み)、ソースコードは GitHub Public |
 
 ---
 
@@ -84,7 +85,8 @@ TimerUtility は、複数のタイマーを同時に動かせる Android 用タ�
 ■ 端末内音声停止 — 設定で有効化すると、鳴動中に「停止」と話して止められます。音声は保存・送信しません。
 ■ 世界時計 — 最大 6 都市、アナログ・デジタル・コンパクトの 3 デザインを切替表示
 ■ プリセット — 一般 / 料理 / Pomodoro の 3 テンプレートを内蔵
-■ カスタムアラーム音 — 3 種類の内蔵音源 + 個別タイマー単位での音源指定
+■ カスタムアラーム音 — 3 種類の内蔵音源を試聴でき、端末内の音源も取り込めます。タイマー、アラーム、プリセットごとに音源を指定できます。
+■ アプリ音量 — アラーム音を 10〜100% で調整できます。
 
 【こだわっている点】
 ■ ロック画面でしっかり鳴る — Android 14+ の USE_FULL_SCREEN_INTENT 制約と SCHEDULE_EXACT_ALARM 制約に正面から対応し、Doze モードを回避します。
@@ -95,7 +97,7 @@ TimerUtility は、複数のタイマーを同時に動かせる Android 用タ�
 ■ ベータテスター向けの診断ログ機能 — 必要なときだけオンにできるトグル付き、位置情報やユーザーが入力したラベル文字列は記録対象から除外。
 
 【プライバシー】
-TimerUtility は個人情報を一切収集・送信しません。すべてのデータは端末内にのみ保存されます。広告 SDK、解析 SDK、クラッシュレポート SDK は同梱していません。位置情報は、世界時計で現在地の時刻を表示するためだけに一時的に使用し、外部に送信することはありません。
+TimerUtility は開発者のバックエンドへ個人情報を送信せず、広告 SDK、解析 SDK、クラッシュレポート SDK も同梱していません。位置情報は、世界時計の登録が空の初回初期化時に Android のシステムサービスで一時処理され、アプリには保存されません。
 詳細: https://bonkoturyu.github.io/TimerUtility/privacy-policy
 
 【オープンソース】
@@ -115,7 +117,8 @@ TimerUtility is an Android timer app that lets you run multiple timers simultane
 - Optional on-device voice stop for ringing alarms and timers. Audio is never stored or transmitted.
 - World clock with up to 6 cities and three display designs (analog, digital, compact) switchable via swipe.
 - Built-in presets for general use, cooking, and the Pomodoro technique.
-- Three bundled alarm sounds, with per-timer sound selection.
+- Preview three bundled alarm sounds, import audio from the device, and choose a sound per timer, alarm, or preset.
+- Adjustable in-app alarm volume from 10% to 100%.
 
 [What we cared about]
 - Reliable lock-screen ringing. Properly handles the Android 14+ USE_FULL_SCREEN_INTENT and SCHEDULE_EXACT_ALARM constraints, working around Doze.
@@ -126,7 +129,7 @@ TimerUtility is an Android timer app that lets you run multiple timers simultane
 - Beta tester-friendly diagnostic logging — an opt-in toggle, with location data and user-entered label strings excluded from logs.
 
 [Privacy]
-TimerUtility collects and transmits no personal information. All data is stored only on the device. The App does not bundle any ad, analytics, or crash-reporting SDK. Location data is used ephemerally for world-clock timezone inference and never leaves the device.
+TimerUtility sends no personal information to a developer-operated backend and bundles no advertising, analytics, or crash-reporting SDK. When an empty world-clock list is initialized for the first time, location is processed transiently by an Android system service and is not persisted by the App.
 Details: https://bonkoturyu.github.io/TimerUtility/privacy-policy.en
 
 [Open source]
@@ -224,27 +227,29 @@ Thank you for trying TimerUtility.
 
 ## 5. Data Safety 申告
 
-> Phase 11.10-T2 で Play Console の最新フォーム構成を WebFetch 確認し、項目順 /
-> 文言を再調整する前提。本セクションは現時点 (知識ベース) の Data Safety フォーム
-> 構成に基づく草稿。
+> 2026-08-03 文書監査で位置情報の説明を訂正。Android `Geocoder` は端末・OS・
+> サービスプロバイダーによってネットワークを利用し得るため、下表は Play Console
+> 実画面と実機経路を再確認してから再提出する。公式仕様:
+> <https://developer.android.com/reference/android/location/Geocoder>
 
 | Data Safety 項目 | 申告内容 | 根拠 |
 | --- | --- | --- |
-| Does your app collect or share any of the required user data types? | **No** | [docs/privacy-policy.md](privacy-policy.md) §2、ネットワーク通信機能なし |
-| Is all of the user data collected by your app encrypted in transit? | **N/A** (収集なし) | 同上 |
-| Do you provide a way for users to request their data to be deleted? | **N/A** (収集なし) | 同上 |
-| Approximate location | **Not collected** (端末内のみで一時利用、緯度経度は端末外に送信しない、永続化しない) | [docs/privacy-policy.md](privacy-policy.md) §4 |
+| Does your app collect or share any of the required user data types? | **要再確認** | 開発者バックエンドはないが、`Geocoder` のプロバイダー処理を含めて Play の定義へ照合する |
+| Is all of the user data collected by your app encrypted in transit? | **要再確認** | Approximate location の申告結論に合わせる |
+| Do you provide a way for users to request their data to be deleted? | 開発者保有データなし。端末内データはストレージ消去 / アンインストールで削除 | [docs/privacy-policy.md](privacy-policy.md) §10 |
+| Approximate location | **要再確認** (世界時計の登録が空の初回初期化時に Android `Geocoder` が一時処理。アプリは座標を永続化せず、開発者も受領しない) | [docs/privacy-policy.md](privacy-policy.md) §4 |
 | Crash logs / diagnostics | **Not collected** (診断ログはユーザー明示オン時のみ端末内に保存、Share Sheet 経由のユーザー操作でのみ外部に渡る、自動送信なし) | [docs/privacy-policy.md](privacy-policy.md) §6 |
 | Voice or sound recordings | **Not collected** (マイク入力は端末内認識へ一時的に渡すだけで、録音・保存・送信・ログ記録を行わない) | [docs/privacy-policy.md](privacy-policy.md) §3 |
 
-→ Data Safety フォームの結論: 「No data collected」「No data shared」両方申告。
+→ 過去の「No data collected / No data shared」申告は、Approximate location の扱いを
+再評価してから維持または修正する。
 
 ---
 
 ## 6. Content Rating 自己評価
 
-> Play Console の IARC 質問票への暫定回答。Phase 11.10 で実際の質問項目を見て
-> 再評価。
+> Play Console の IARC 質問票へ送信済みの回答要約。全地域で最年少レーティングが
+> 確定済み。再提出時は実画面の質問項目を再確認する。
 
 | 質問カテゴリ | 回答 | 補足 |
 | --- | --- | --- |
@@ -254,7 +259,7 @@ Thank you for trying TimerUtility.
 | Controlled substances (alcohol, tobacco, drugs) | None | 言及なし |
 | Gambling / Simulated gambling | None | 該当なし |
 | User-generated content / Social features | None | チャット / SNS / シェア機能なし (診断ログの Share Sheet は OS 機能の呼び出しのみで本アプリ内に投稿先がない) |
-| Location sharing | None | 位置情報を端末外に送信しない |
+| Location sharing | None | 他ユーザーや開発者への共有機能なし。現在地推定時は Android `Geocoder` が一時処理 |
 | Personal information sharing | None | 個人情報を扱わない |
 | In-app purchases | None | 課金なし |
 | Loot boxes / Gacha | None | 該当なし |
@@ -281,7 +286,8 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 
 | Manifest 上の権限 | Play Console 用説明文 (短縮版) |
 | --- | --- |
-| `ACCESS_COARSE_LOCATION` | 世界時計の現在地タイムゾーン推定にのみ使用。緯度経度の値は端末を離れず、永続化もしません。 |
+| `ACCESS_COARSE_LOCATION` | 世界時計の登録が空の初回初期化時に現在地のタイムゾーンを推定。Android `Geocoder` が一時処理し、アプリは座標を永続化しません。 |
+| `RECORD_AUDIO` | ユーザーが有効化した端末内音声認識で、鳴動を停止します。録音・保存はしません。 |
 | `POST_NOTIFICATIONS` | タイマー / アラームの通知を表示します。 |
 | `SCHEDULE_EXACT_ALARM` | 指定時刻にアラームを正確に発火させるため、Doze モードを回避します。 |
 | `USE_EXACT_ALARM` | Android 14+ で時計 / アラームカテゴリのアプリに認められる代替権限。 |
@@ -289,12 +295,14 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 | `WAKE_LOCK` | アラーム鳴動時に CPU をスリープから起こします。 |
 | `VIBRATE` | 通知 / アラームのバイブレーションを発生させます。 |
 | `RECEIVE_BOOT_COMPLETED` | 端末再起動後にタイマー / アラームを自動的に復元します。 |
+| `FOREGROUND_SERVICE` | バックグラウンドでアラーム音を継続再生します。 |
+| `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | アラーム再生 Service を media playback 種別として実行します。 |
 
 ---
 
 ## 9. ストア掲載素材リスト
 
-| 素材 | 必須 | サイズ / 形式 | 配置場所 (予定) |
+| 素材 | 必須 | サイズ / 形式 | 配置場所 |
 | --- | --- | --- | --- |
 | アプリアイコン (高解像度) | 必須 | 512 × 512 PNG、32-bit、1 MB 以内 | `design/icon/play-store-icon-512.png` |
 | Feature graphic | 推奨 | 1024 × 500 PNG / JPEG | ja: `design/store/feature-graphic-1024x500.png` / en: `design/store/feature-graphic-1024x500-en.png` |
@@ -302,7 +310,7 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 | スクリーンショット (7" タブレット) | 推奨 | 横幅 1080 px 以上 | 当面不提出 (Pixel 6a 実機のみのため) |
 | スクリーンショット (10" タブレット) | 推奨 | 横幅 1080 px 以上 | 当面不提出 |
 | プロモーション動画 | 任意 | YouTube URL | 当面不提出 |
-| プライバシーポリシー URL | 必須 | HTTPS | `https://bonkoturyu.github.io/TimerUtility/privacy-policy` (Phase 11.9-T9 で GitHub Pages 有効化後に確定) |
+| プライバシーポリシー URL | 必須 | HTTPS | ja: `/privacy-policy` / en: `/privacy-policy.en` / zh-Hans: `/privacy-policy.zh-Hans` / zh-Hant: `/privacy-policy.zh-Hant` / ko: `/privacy-policy.ko` (host: `https://bonkoturyu.github.io/TimerUtility`) |
 
 ### 9.1 スクリーンショット撮影シナリオ (Phase 11.9-T11、Pixel 6a 実機)
 
@@ -315,7 +323,7 @@ Play Console の "Permissions" セクションに貼る短い説明文。同内�
 7. Preset Manage Screen (プリセット管理)
 
 各撮影は ja / en の 2 言語で行い、Play Console の locale 別 listing にそれぞれ
-アップロード予定。2026-06-17 時点で ja / en とも 7 枚を撮影済み。
+アップロード済み。2026-06-17 時点で ja / en とも 7 枚を撮影済み。
 zh / zh_Hant / ko の listing は Phase 11.10 以降の追加対応とする (初版リリース時は
 ja / en のみで提出)。
 
@@ -351,9 +359,9 @@ ja / en のみで提出)。
 
 | 素材 | ファイル / 状態 |
 | --- | --- |
-| Short Description | §2 English に草稿あり |
-| Full Description | §3 English に草稿あり |
-| What's new | §4 English に草稿あり |
+| Short Description | §2 English を Play Console へ保存済み |
+| Full Description | §3 English を Play Console へ保存済み |
+| What's new | §4 English に v1.1.5 まで記録 |
 | Privacy Policy | `https://bonkoturyu.github.io/TimerUtility/privacy-policy.en` |
 | Feature Graphic | `design/store/feature-graphic-1024x500-en.png` |
 | Phone screenshots | `design/screenshots/phone/en/` に ja と同 7 シナリオを配置済み |
@@ -378,6 +386,10 @@ ja / en のみで提出)。
 [CLAUDE.md](../CLAUDE.md) のソース信用原則に従い、Google Play Developer 登録完了
 (2026-07-24) を機に以下 8 項目を WebFetch / WebSearch で裏取り済み。詳細は §11.2。
 大きな仕様変更・ブロッカーは検出されず、既存の草稿方針のまま提出可と判断。
+
+> **2026-08-03 追記:** 上記は 2026-07-24 時点の判断。Android `Geocoder` が
+> プロバイダーによってネットワークを利用し得る点を今回の監査で確認したため、
+> Data Safety の Approximate location だけは §5 のとおり再確認対象へ変更した。
 
 1. ✅ Data Safety フォームの最新項目構成 (2026 年現行)
 2. ✅ Play App Signing の 2026 年加入フロー (新規アプリで強制 / 任意)
@@ -410,9 +422,10 @@ ja / en のみで提出)。
 
 Google Play Developer 登録完了を機に、残り論点を WebFetch / WebSearch で裏取り。
 
-- Data Safety: データを一切収集しないアプリも申告フォーム入力は必須。「No」回答 +
-  Privacy Policy URL 提示で「No data collected / No data shared」と表示される。
-  §5 の既存方針のまま提出可。
+- Data Safety (2026-07-24 時点の判断): データを一切収集しないアプリも申告フォーム
+  入力は必須。「No」回答 + Privacy Policy URL 提示で「No data collected /
+  No data shared」と表示される。当時は §5 の方針のまま提出可と判断したが、
+  2026-08-03 の `Geocoder` 再評価により Approximate location は再確認対象。
   参照: <https://support.google.com/googleplay/android-developer/answer/10787469>
 - Play App Signing: 新規アプリは aab 初回アップロード時に「quantum-ready hybrid
   signing (Google 生成鍵)」へ自動 enroll される。能動的な「加入」操作は不要

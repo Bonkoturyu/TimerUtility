@@ -2,7 +2,7 @@
 
 Flutter 製のストップウォッチ + タイマー + アラーム + 世界時計アプリ。Android 16 (API 36)
 を主ターゲットとし、ロック画面上のアラーム表示 (FullScreenIntent) と複数タイマー同時稼働、
-端末再起動後の復元に対応する。
+端末再起動後の復元に対応する。現在のリリースは **v1.1.5 (versionCode 9)**。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -21,10 +21,16 @@ Flutter 製のストップウォッチ + タイマー + アラーム + 世界時
 - **ストップウォッチ**: Lap 記録、ms 精度、`fake_async` で完全テスト可能な `Clock` 注入設計
 - **複数タイマー**: 同時稼働上限 10 本、Drift で永続化、端末再起動後も復元
 - **指定時刻アラーム**: 曜日繰り返し / once / スヌーズ (3/5/10 分)、Doze 回避のため
-  `SCHEDULE_EXACT_ALARM` 経由
+  Exact Alarm を利用。Exact を利用できない場合だけ inexact 予約へフォールバック
+- **アラーム音**: 同梱 3 音源の試聴、端末内音源の取り込み、タイマー / アラーム /
+  プリセットごとの音源選択に対応
+- **アプリ音量**: 10〜100%で調整可能。Exact 経路では予約時刻から選択音源を Native
+  Foreground Service でループ再生し、設定音量を適用
+- **inexact 時の音声引き継ぎ**: OS の短い通知音から約 3.2 秒後に選択音源のループ再生へ移行
 - **ロック画面アラーム鳴動**: `USE_FULL_SCREEN_INTENT` + `setShowWhenLocked` で
   ロック解除なしに鳴動画面を直接表示
-- **世界時計**: 最大 6 都市、3 デザイン (PageView 切替)、初回 GPS で現在地登録、
+- **音声停止**: ユーザーが有効化した場合のみ、端末内音声認識で鳴動を停止
+- **世界時計**: 最大 6 都市、3 デザイン (PageView 切替)、初回の位置情報で現在地登録、
   拒否時は `FlutterTimezone` fallback
 - **プリセット**: 一般 / 料理 / Pomodoro の 6 件 × 3 テンプレ、♪ ボタンで音源差替
 - **多言語対応**: ja / en / zh-Hans (简体中文) / zh-Hant (繁體中文) / ko の 5 言語を
@@ -137,13 +143,14 @@ flutter analyze --fatal-infos
 flutter test
 ```
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) と同じチェックがローカルで
-走る。`flutter test` は 707 件 (1 skipped) すべて緑になる前提。
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) と同じ Flutter 側チェックが
+ローカルで走る。現在のテスト件数と最新の検証結果は [tasklist.md](tasklist.md) を参照。
 
 ### Release build (任意)
 
-Phase 11.9 完了までは **debug 署名で release ビルド** する暫定設定 ([android/app/build.gradle.kts:35-40](android/app/build.gradle.kts#L35-L40))。
-upload keystore の配線は Phase 11.9 で行う予定。
+`android/key.properties` が存在する環境では upload keystore で署名し、存在しない場合は
+ローカル検証用に debug 署名へフォールバックする。秘密鍵と実体の
+`android/key.properties` はリポジトリへ含めない。
 
 ```sh
 flutter build apk --release
@@ -181,8 +188,8 @@ Presentation → Application (Riverpod Notifier) → Domain ← Infrastructure
 | テスト戦略 / 自動化範囲 | [docs/testing-strategy.md](docs/testing-strategy.md) |
 | 権限取得フロー | [docs/permissions.md](docs/permissions.md) |
 | 同梱音源仕様 | [docs/assets-spec.md](docs/assets-spec.md) |
-| 翻訳 (ja / en) | [docs/translations.md](docs/translations.md) |
-| 過去の意思決定 | [docs/adr/](docs/adr/) (ADR 0001〜0005) |
+| 翻訳 (ja / en / zh-Hans / zh-Hant / ko) | [docs/translations.md](docs/translations.md) |
+| 過去の意思決定 | [docs/adr/](docs/adr/) (ADR 0001〜0007) |
 
 Phase 別タスク管理:
 
@@ -207,13 +214,12 @@ GitHub ハンドルベースの reverse-domain)。fork してビルド・配布�
 [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml)
 の `<activity android:name=".MainActivity">` や `${applicationName}` プレースホルダは
 `build.gradle.kts` の `namespace` 変更で自動追従するため、Manifest 側は基本的に編集
-不要 (receiver 宣言はすべて `flutter_local_notifications` のサードパーティクラスを
-参照しているので fork 側で書き換える対象ではない)。
+不要。自前 receiver / service も相対クラス名で宣言されているため、Kotlin の package と
+ディレクトリ階層を揃えて変更すれば追従する。サードパーティ receiver のクラス名は変更しない。
 
-自前 `MethodChannel` のチャネル名 `io.github.bonkoturyu.timer_utility/permission` も
-`<reverse-domain>/permission` (例: `com.example.timer_utility/permission`) の形に
-置換することを推奨 (衝突防止、新 `applicationId` と同じ reverse-domain prefix
-を使うのが自然)。詳細は [docs/platform-channels.md](docs/platform-channels.md)。
+自前 `MethodChannel` の prefix も衝突防止のため新しい reverse-domain に置換する。
+対象は `/permission`、`/interval_notification`、`/storage`、`/native_alarm`、
+`/on_device_speech`。詳細は [docs/platform-channels.md](docs/platform-channels.md)。
 
 ---
 
@@ -231,3 +237,13 @@ Code of Conduct は [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) (Contributor Covena
 同梱音源 (Pixabay Content License) と全依存パッケージ (MIT / BSD 系) のライセンス内訳は
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) および
 [assets/sounds/LICENSES.md](assets/sounds/LICENSES.md) を参照。
+
+---
+
+## Privacy Policy
+
+- [日本語](docs/privacy-policy.md)
+- [English](docs/privacy-policy.en.md)
+- [简体中文](docs/privacy-policy.zh-Hans.md)
+- [繁體中文](docs/privacy-policy.zh-Hant.md)
+- [한국어](docs/privacy-policy.ko.md)
