@@ -70,7 +70,7 @@
 - [x] 初回 Data Safety を「No data collected / No data shared」で送信
 - [x] Android `Geocoder` のプロバイダー処理を踏まえて Approximate location の
   Data Safety 回答を確定（収集あり・共有なし・一時処理ではない・任意・アプリ機能目的）
-- [ ] 上記 Data Safety 回答を Play Console へ転記して送信
+- [x] 上記 Data Safety 回答を Play Console へ転記して送信
 - [x] v1.1.5 (9) を Closed Testing へ公開（2026-08-03 ユーザー確認）
 - [ ] 12 テスター × 14 日間の連続 opt-in を完了
 - [ ] 本番アクセス申請の文章質問票を提出
@@ -79,6 +79,20 @@ Data Safety の再確認方針と転記文は [play-store-listing.md §5](play-s
 データ処理の正典は [privacy-policy.md](privacy-policy.md) を参照する。
 
 ---
+
+## 1.1.5 運用記録（確定）
+
+- リリース版: `VersionName 1.1.5` / `VersionCode 9`
+- リリース日: 2026-08-03
+- Data Safety 確認元: `C:\\Users\\bonko\\Downloads\\data_safety_export.csv`
+  - 個人データ収集: `true`（目的: `App functionality`）
+  - 一時データ（保存・転送）は `false`、削除不可: `No`（`DATA_DELETION_NO`）
+  - 共有データ: なし
+  - 位置情報: 近似位置（approximate）を収集、共有なし
+  - 転送時暗号化: `false`
+  - ユーザー制御: `Optional`
+
+この内容を、Play Console の最終提出履歴と整合する形で保存済み。
 
 ## 注意
 
