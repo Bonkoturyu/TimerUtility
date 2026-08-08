@@ -78,6 +78,8 @@
   "alarmSoundDefault": "기본",
   "alarmSoundGentle": "부드러움",
   "alarmSoundWarning": "경고",
+  "alarmSoundCustom1": "사용자 지정 1",
+  "alarmSoundCustom2": "사용자 지정 2",
 
   "notificationTimerEndedTitle": "타이머",
   "notificationTimerEndedBody": "시간이 되었습니다.",

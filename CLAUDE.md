@@ -26,7 +26,9 @@ Flutter 製のストップウォッチ + タイマーアプリ。Android 16 (API
 
 ### SubAgent 委譲ポリシー
 
-- 明確に分離でき、委譲の必要性を説明できる調査・実装・テストだけを SubAgent へ委譲する。Codex では Terra または Luna を優先する
+- 明確に分離でき、完了条件と所有範囲を定義できる調査・実装・テストは、SubAgent への委譲を原則として検討する
+- Codex の `impl-helper` は Terra / high で判断を伴う実装・テストを担当し、`luna-helper` は Luna / max で大量の機械的編集・文書同期・境界付き調査・独立検証を担当する
+- 単一の短い作業、要件解釈、アーキテクチャ判断、統合、最終検証はメインエージェントが直接行う
 - SubAgent は同時に 1 体までとし、並列数を増やすこと自体を目的に起動しない
 - 親エージェントは要件解釈、設計判断、成果の統合、最終検証に集中する
 - SubAgent の成果を全文再生成せず、差分と要点だけを確認して統合する
@@ -216,6 +218,7 @@ Auto 起動中の Claude Code は以下に厳格に従うこと。
 - 3 手順以上、複数ファイル横断、または未知を含む作業では
   `.agents/skills/hard-task-protocol/SKILL.md` を使用する
 - メインエージェントが要件、Plan、設計判断、統合、最終検証を所有する
+- Codex SubAgent の既定は Terra / high とし、大量処理向けの `luna-helper` は Luna / max を使用する
 - 同時に動かす SubAgent は 1 つまでとし、再帰委譲と同一ファイルの同時編集を禁止する
 - Opus 5 は `.agents/skills/delegate-to-claude/SKILL.md` 経由で、
   境界付きの調査、設計批評、レビュー、検証に限って使用する

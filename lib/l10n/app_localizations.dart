@@ -511,6 +511,18 @@ abstract class AppLocalizations {
   /// **'警告'**
   String get alarmSoundWarning;
 
+  /// No description provided for @alarmSoundCustom1.
+  ///
+  /// In ja, this message translates to:
+  /// **'カスタム１'**
+  String get alarmSoundCustom1;
+
+  /// No description provided for @alarmSoundCustom2.
+  ///
+  /// In ja, this message translates to:
+  /// **'カスタム２'**
+  String get alarmSoundCustom2;
+
   /// No description provided for @notificationTimerEndedTitle.
   ///
   /// In ja, this message translates to:

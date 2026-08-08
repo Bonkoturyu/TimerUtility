@@ -19,6 +19,33 @@
 
 ## 進行中
 
+### Codex SubAgentルーティング更新（2026-08-09）
+
+- [x] 未指定SubAgentと `impl-helper` を Terra / high に設定する
+- [x] 大量の機械的編集・文書同期・境界付き調査・独立検証向けに
+  Luna / max の `luna-helper` を追加する
+- [x] `CLAUDE.md` を正典として `AGENTS.md` と `docs/ai-collaboration.md` を同期する
+- [x] 同時1体、再帰委譲禁止、同一ファイル同時編集禁止、Git操作非委譲を維持する
+- [x] `codex --strict-config --version` と正典・ミラー差分を検証する
+
+### 同梱アラーム音5種類化（2026-08-08）
+
+- [x] 既存 `alarm_gentle.mp3` / `alarm_warning.mp3` を Bhutan / Spain 名へ
+  変更し、表示名を「カスタム１」「カスタム２」とする
+- [x] Freesound の CC0 音源を新しい「やさしい」「警告」として同梱する
+- [x] Flutter / Native Exact 再生のカタログ、5言語表示、ライセンス表示を
+  5音源構成へ同期する
+- [x] 音源メタデータ、Flutter / Native 間の同一バイト、関連テストを検証する
+- [x] 翻訳 validator 221/221 aligned、`flutter analyze --fatal-infos` 0 issues、
+  `flutter test` 905 passed（1 skipped）、Native JUnit、`git diff --check` を通す
+- [x] 検証後に採用資料と `assets/sounds/temp/` を削除する
+- [!] Pixel 6a 実機で5音源の試聴、短い警告音のループ境界、Native Exact鳴動を
+  確認する
+
+**設計根拠**: 永続化済みの `gentle` / `warning` ID は新しい用途名に引き続き
+対応させ、旧音源には新規 `bhutan` / `spain` ID を割り当てる。DB スキーマ変更を
+避けつつ、Flutter 試聴と Android Native Exact 再生で同じ5音源を解決する。
+
 ### アラーム音量・Native Exact 再生・同梱音源試聴（2026-08-02）
 
 - [x] Exact Alarm 許可時は Android Native の Foreground media playback で

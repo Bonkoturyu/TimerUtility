@@ -180,6 +180,23 @@ void main() {
     expect(player.bundledSoundId, isNull);
   });
 
+  testWidgets('旧BhutanとSpain音源をカスタム１・２として表示する', (WidgetTester tester) async {
+    final _ImportController controller = _ImportController(null);
+    final _PreviewPlayer player = _PreviewPlayer();
+    await tester.pumpWidget(_harness(controller, player));
+
+    await tester.tap(find.byKey(const Key('open_sound_sheet')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('カスタム１'), findsOneWidget);
+    expect(find.text('カスタム２'), findsOneWidget);
+    expect(
+      find.byKey(const Key('sound_select_bhutan_preview')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('sound_select_spain_preview')), findsOneWidget);
+  });
+
   testWidgets('同梱音源を試聴後に行を選ぶと停止して選択値を返す', (WidgetTester tester) async {
     final _ImportController controller = _ImportController(null);
     final _PreviewPlayer player = _PreviewPlayer();

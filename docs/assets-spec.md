@@ -13,8 +13,8 @@ assets/
 │   ├── alarm_default.mp3
 │   ├── alarm_gentle.mp3
 │   ├── alarm_warning.mp3
-│   ├── alarm_chime.mp3
-│   └── ...
+│   ├── alarm_bhutan.mp3
+│   └── alarm_spain.mp3
 ├── images/
 │   └── (アプリ内画像、Phase 11 で追加)
 └── icons/
@@ -30,12 +30,12 @@ assets/
 | 項目 | 要件 |
 |---|---|
 | フォーマット | MP3（推奨）または WAV |
-| サンプリングレート | 44.1 kHz |
-| ビットレート | 128 kbps 以上（MP3 の場合） |
-| チャンネル | ステレオ |
-| 長さ | **8〜15 秒**（ループ再生前提） |
+| サンプリングレート | 24〜48 kHz |
+| ビットレート | 128 kbps 以上を推奨（MP3 の場合） |
+| チャンネル | Mono または Stereo |
+| 長さ | **1〜15 秒**（ループ再生前提） |
 | ファイルサイズ | 1 ファイル 500 KB 以下 |
-| 音量 | -3 dB ピーク以下（クリッピング回避） |
+| 音量 | 0 dBFS 未満（クリッピング回避、-3 dBFS 以下を推奨） |
 | フェードイン / アウト | 推奨（ブツ切り音は避ける） |
 
 ### ループ再生
@@ -45,25 +45,24 @@ assets/
 
 ### 音量正規化
 
-すべての音源を同じピーク音量に揃える（-3 dB 推奨）。
-ユーザーが音源を切り替えても音量が大きく変わらないようにする。
+配布元の原音特性を保つため、同梱時の一律なピーク正規化は必須としない。
+全音源へ同じアプリ音量設定を適用し、クリッピングがないことを採用時に確認する。
+音源ごとの聴感差は、試聴機能でユーザーが確認できるようにする。
 
 ---
 
-## 同梱音源リスト（仮）
-
-具体的な音源は Phase 5 着手時に最終決定。仮の構成例:
+## 同梱音源リスト
 
 | ファイル名 | ID | 表示名（日本語） | 表示名（英語） | 特徴 |
 |---|---|---|---|---|
 | `alarm_default.mp3` | `default` | デフォルト | Default | 標準的なアラーム音 |
 | `alarm_gentle.mp3` | `gentle` | やさしい | Gentle | 穏やかな起床向け |
 | `alarm_warning.mp3` | `warning` | 警告 | Warning | 強めの注意喚起 |
-| `alarm_chime.mp3` | `chime` | チャイム | Chime | 学校チャイム風 |
-| `alarm_bell.mp3` | `bell` | ベル | Bell | 単音ベル |
-| `alarm_digital.mp3` | `digital` | デジタル | Digital | 電子音 |
+| `alarm_bhutan.mp3` | `bhutan` | カスタム１ | Custom 1 | Bhutan EAS alarm |
+| `alarm_spain.mp3` | `spain` | カスタム２ | Custom 2 | Spain EAS alarm |
 
-最低 5 種類、最大 10 種類程度を目安に同梱。
+5種類を同梱する。永続化済みの `gentle` / `warning` ID は新しいCC0音源に対応し、
+従来の音源は `bhutan` / `spain` IDへ移して引き続き選択可能とする。
 
 ---
 
@@ -162,7 +161,7 @@ class AlarmSoundCatalog {
 
 ### 同梱音源との仕様境界
 
-- 本書「音源仕様」の 8〜15 秒、500 KB 以下、ピーク -3 dB 等は、品質を管理できる
+- 本書「音源仕様」の 1〜15 秒、500 KB 以下、ピーク 0 dBFS 未満等は、品質を管理できる
   **同梱音源**に適用する。
 - ユーザー取り込み音源には本節の容量・時間・形式制限を適用し、アプリ内での
   トリミング、変換、音量正規化は行わない。
@@ -341,7 +340,9 @@ android/app/src/main/res/raw/
 ├── notif_alert.mp3   // 通常タイマー／アラーム Channel 用、約2秒
 ├── alarm_default.mp3 // 定間隔通知とNative Exact再生
 ├── alarm_gentle.mp3  // Native Exact再生（assets版と同一バイト）
-└── alarm_warning.mp3 // Native Exact再生（assets版と同一バイト）
+├── alarm_warning.mp3 // Native Exact再生（assets版と同一バイト）
+├── alarm_bhutan.mp3  // Native Exact再生（assets版と同一バイト）
+└── alarm_spain.mp3   // Native Exact再生（assets版と同一バイト）
 ```
 
 ---

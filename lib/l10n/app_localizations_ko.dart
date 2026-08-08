@@ -236,6 +236,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get alarmSoundWarning => '경고';
 
   @override
+  String get alarmSoundCustom1 => '사용자 지정 1';
+
+  @override
+  String get alarmSoundCustom2 => '사용자 지정 2';
+
+  @override
   String get notificationTimerEndedTitle => '타이머';
 
   @override

@@ -11,6 +11,8 @@ object AlarmPlaybackPolicy {
     fun bundledResourceName(soundId: String): String = when (soundId) {
         "gentle" -> "alarm_gentle"
         "warning" -> "alarm_warning"
+        "bhutan" -> "alarm_bhutan"
+        "spain" -> "alarm_spain"
         else -> "alarm_default"
     }
 }

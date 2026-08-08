@@ -222,6 +222,8 @@ CVD (色覚多様性) 対応として **方針 (a) 冗長表示** を採用 (Pha
 | `alarmSoundDefault` | デフォルト | Default | カタログ表示名 |
 | `alarmSoundGentle` | やさしい | Gentle | カタログ表示名 |
 | `alarmSoundWarning` | 警告 | Warning | カタログ表示名（soundId='warning'） |
+| `alarmSoundCustom1` | カスタム１ | Custom 1 | カタログ表示名（soundId='bhutan'） |
+| `alarmSoundCustom2` | カスタム２ | Custom 2 | カタログ表示名（soundId='spain'） |
 | `timerSoundSheetTitle` | 音源を選択 | Choose sound | bottom sheet タイトル（タイマー / プリセット共通） |
 
 > 将来 ~10 音源まで増える予定。新規音源を追加するときは `alarmSound<XXX>` 形式で本表に追記する。

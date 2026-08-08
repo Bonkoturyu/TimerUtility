@@ -8,6 +8,13 @@ void main() {
       expect(AlarmSoundCatalog.all, isNotEmpty);
     });
 
+    test('contains the five bundled sounds in display order', () {
+      expect(
+        AlarmSoundCatalog.all.map((AlarmSound sound) => sound.id),
+        <String>['default', 'gentle', 'warning', 'bhutan', 'spain'],
+      );
+    });
+
     test('every entry has unique id and a sounds asset path', () {
       final Set<String> seen = <String>{};
       for (final AlarmSound s in AlarmSoundCatalog.all) {

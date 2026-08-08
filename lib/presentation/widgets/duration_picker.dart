@@ -14,6 +14,8 @@ String soundDisplayName(AppLocalizations l, String soundId) {
     'default' => l.alarmSoundDefault,
     'gentle' => l.alarmSoundGentle,
     'warning' => l.alarmSoundWarning,
+    'bhutan' => l.alarmSoundCustom1,
+    'spain' => l.alarmSoundCustom2,
     _ => soundId,
   };
 }
