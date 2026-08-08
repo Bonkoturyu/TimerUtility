@@ -85,13 +85,17 @@
 
 ### 2.5 同梱アセット (assets/sounds/)
 
-`assets/sounds/LICENSES.md` で全 3 音源の出典・ライセンスを記録済み:
+`assets/sounds/LICENSES.md` で全5音源の出典・ライセンスを記録済み:
 
 - `alarm_default.mp3` — Pixabay (`freesound_community`)
-- `alarm_gentle.mp3` — Pixabay (`JeremayJimenez`)
-- `alarm_warning.mp3` — Pixabay (`JeremayJimenez`)
+- `alarm_gentle.mp3` — Freesound (`Mihacappy`、CC0)
+- `alarm_warning.mp3` — Freesound (`SamsterBirdies`、CC0)
+- `alarm_bhutan.mp3` — Pixabay (`JeremayJimenez`)
+- `alarm_spain.mp3` — Pixabay (`JeremayJimenez`)
 
-**Pixabay Content License** (商用利用可・帰属表示不要・再配布可)。
+Pixabay 配布分は **Pixabay Content License**、Freesound 配布分は **CC0**。
+いずれも商用利用可・帰属表示不要。取得日と取得形式は
+`assets/sounds/LICENSES.md` に記録する。
 2024 年に追加された「Pixabay コンテンツのみで作られた音源コレクションの
 再配布禁止」条項にも該当しない (アプリの一部としての同梱は対象外)。
 

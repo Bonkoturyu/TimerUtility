@@ -234,6 +234,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alarmSoundWarning => '警示';
 
   @override
+  String get alarmSoundCustom1 => '自定义 1';
+
+  @override
+  String get alarmSoundCustom2 => '自定义 2';
+
+  @override
   String get notificationTimerEndedTitle => '定时器';
 
   @override
@@ -973,6 +979,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get alarmSoundWarning => '警示';
+
+  @override
+  String get alarmSoundCustom1 => '自訂 1';
+
+  @override
+  String get alarmSoundCustom2 => '自訂 2';
 
   @override
   String get notificationTimerEndedTitle => '計時器';

@@ -78,6 +78,8 @@
   "alarmSoundDefault": "預設",
   "alarmSoundGentle": "輕柔",
   "alarmSoundWarning": "警示",
+  "alarmSoundCustom1": "自訂 1",
+  "alarmSoundCustom2": "自訂 2",
 
   "notificationTimerEndedTitle": "計時器",
   "notificationTimerEndedBody": "時間到了。",

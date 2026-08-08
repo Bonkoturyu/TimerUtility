@@ -78,6 +78,8 @@
   "alarmSoundDefault": "默认",
   "alarmSoundGentle": "轻柔",
   "alarmSoundWarning": "警示",
+  "alarmSoundCustom1": "自定义 1",
+  "alarmSoundCustom2": "自定义 2",
 
   "notificationTimerEndedTitle": "定时器",
   "notificationTimerEndedBody": "时间到。",

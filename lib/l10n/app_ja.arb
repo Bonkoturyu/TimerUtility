@@ -103,6 +103,8 @@
   "alarmSoundDefault": "デフォルト",
   "alarmSoundGentle": "やさしい",
   "alarmSoundWarning": "警告",
+  "alarmSoundCustom1": "カスタム１",
+  "alarmSoundCustom2": "カスタム２",
 
   "notificationTimerEndedTitle": "タイマー",
   "notificationTimerEndedBody": "時間になりました。",

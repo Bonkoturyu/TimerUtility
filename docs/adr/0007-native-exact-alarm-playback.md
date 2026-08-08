@@ -34,7 +34,7 @@
 
 - Exact経路は選択音源とアプリ内音量を最初から適用でき、Flutterプロセス停止中も鳴動する。
 - inexactフォールバックの最初の固定Channel音はOS所有なので、アプリ内音量の対象外である。
-- Native側にも同梱3音源を `res/raw` として配置するため、APK容量と二重管理が増える。
+- Native側にも同梱5音源を `res/raw` として配置するため、APK容量と二重管理が増える。
 - Manifestに `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MEDIA_PLAYBACK` とService宣言が必要になる。
 - 実機ではExact / inexact、ロック状態、プロセス停止、再起動、取り込み音源を個別に検証する。
 

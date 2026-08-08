@@ -16,6 +16,8 @@ class AlarmPlaybackPolicyTest {
         assertEquals("alarm_default", AlarmPlaybackPolicy.bundledResourceName("default"))
         assertEquals("alarm_gentle", AlarmPlaybackPolicy.bundledResourceName("gentle"))
         assertEquals("alarm_warning", AlarmPlaybackPolicy.bundledResourceName("warning"))
+        assertEquals("alarm_bhutan", AlarmPlaybackPolicy.bundledResourceName("bhutan"))
+        assertEquals("alarm_spain", AlarmPlaybackPolicy.bundledResourceName("spain"))
     }
 
     @Test

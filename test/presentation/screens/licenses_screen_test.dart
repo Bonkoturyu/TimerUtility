@@ -19,6 +19,16 @@ void main() {
       entries.map((LicenseEntry entry) => entry.packages.first),
       contains(packageName),
     );
+    expect(
+      entries.map((LicenseEntry entry) => entry.packages.first),
+      containsAll(<String>[
+        'alarm_default.mp3 (bundled)',
+        'alarm_gentle.mp3 (bundled)',
+        'alarm_warning.mp3 (bundled)',
+        'alarm_bhutan.mp3 (bundled)',
+        'alarm_spain.mp3 (bundled)',
+      ]),
+    );
     LicenseRegistry.addLicense(
       () => Stream<LicenseEntry>.fromIterable(entries),
     );

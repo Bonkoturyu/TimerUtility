@@ -80,16 +80,18 @@ TimerUtility は MIT ライセンスで配布される。本ファイルは Time
 
 ### 4.1 音源 (`assets/sounds/`)
 
-3 件の MP3 はすべて [Pixabay Content License](https://pixabay.com/service/license-summary/)
-で配布されているもの。商用利用可・帰属表示不要・再配布可。2024 年改定の「Pixabay
-コンテンツのみで作られた音源コレクションの再配布禁止」条項にも該当しない
-(アプリの一部としての同梱は対象外)。
+選択可能な5音源のうち3件は
+[Pixabay Content License](https://pixabay.com/service/license-summary/)、2件は
+[Creative Commons Zero (CC0)](https://creativecommons.org/publicdomain/zero/1.0/)
+で配布されている。いずれもアプリへの同梱と商用利用が可能で、帰属表示は必須ではない。
 
-| ファイル | 作者 | 出典 |
-| --- | --- | --- |
-| `alarm_default.mp3` | `freesound_community` | https://pixabay.com/sound-effects/film-special-effects-digital-watch-alarm-81203/ |
-| `alarm_gentle.mp3` | `JeremayJimenez` | https://pixabay.com/sound-effects/technology-bhutan-eas-alarm-bhutan-not-a-ai-515416/ |
-| `alarm_warning.mp3` | `JeremayJimenez` | https://pixabay.com/sound-effects/spain-eas-alarm-spain-437846/ |
+| ファイル | 作者 | ライセンス | 出典 |
+| --- | --- | --- | --- |
+| `alarm_default.mp3` | `freesound_community` | Pixabay Content License | https://pixabay.com/sound-effects/film-special-effects-digital-watch-alarm-81203/ |
+| `alarm_gentle.mp3` | `Mihacappy` | CC0 | https://freesound.org/people/Mihacappy/sounds/850176/ |
+| `alarm_warning.mp3` | `SamsterBirdies` | CC0 | https://freesound.org/people/SamsterBirdies/sounds/467882/ |
+| `alarm_bhutan.mp3` | `JeremayJimenez` | Pixabay Content License | https://pixabay.com/sound-effects/technology-bhutan-eas-alarm-bhutan-not-a-ai-515416/ |
+| `alarm_spain.mp3` | `JeremayJimenez` | Pixabay Content License | https://pixabay.com/sound-effects/spain-eas-alarm-spain-437846/ |
 
 詳細 (取得日 / 加工有無等) は [assets/sounds/LICENSES.md](assets/sounds/LICENSES.md) を参照。
 
